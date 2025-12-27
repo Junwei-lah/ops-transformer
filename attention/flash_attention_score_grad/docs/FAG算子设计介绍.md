@@ -49,7 +49,27 @@ for S1_c_i/S1_v_i=128/8:
 
 上述示例中，仅在S1方向开了配比，S2方向C/V计算的长度是一致的，当然，也可以在S1/S2方向均开启配比；这样做的好处是，Cube一次可以发射大块的数据，避免因为小块数据不断发射带来的通信开销，也能最大程度地使用Cube单元的buffer。
 
+### 3.2 **<term>Ascend 950PR/Ascend 950DT</term>**
 
+Ascend 950PR/Ascend 950DT同样是AIC和AIV分离的架构，保留了AIC AIV并行执行特性，同时新增了AIC和AIV之间的高速数据交互通路L0C->UB和UB->L1。降低了CV之间交互的成本，流水并行度更高，且相比于<term>Atlas A2 训练系列产品</term>复杂的tiling切块策略，在950上仅使用一种基本块就可以获得较好的性能。
+
+ 对于FAG算子，Vector计算涉及多个输入、输出、中间计算结果、double-buffer设计等，需要将buffer分配成多份，最优分配方案中最大一份为32KB，由于Vector计算使用的数据类型是float32，因此Vector的tiling基本块为64 * 128，由于Cube与Vector核数为1：2的数量比，为了充分利用cube核的算力，Cube侧考虑采用128 * 128的基本块，即每个cube核计算完128 * 128的数据后，均分给两个vector核处理。伪代码如下：
+
+```c++
+// C-Tiling: (S1_i,D)x(D,S2_i) => (S1_i, S2_i):(128,128)
+// V-Tiling: (S1_i / 2, S2_i) => (64,128)
+
+// C侧 matmul计算
+Bmm((S1_i,D)x(D,S2_i)) => 128*128  // value@dy,q@k输出结果128*128，放到L0C上
+fixp_l0c_to_ub(S1_i / 2,S2_i); => v0: 64*128, v1: 64*128 // 通过CV通路L0C->UB，均分写到两个V核的UB上
+// V侧 Vector计算
+Vector(S1_i / 2,S2_i)       // 进行Vector计算
+copy_ub_to_l1(S1_i/2*S2_i)  // Vector计算结束，得到输出数据，通过CV通路UB->L1，两个v核数据聚合拷贝到L1上
+Bmm((S1_i,S2_i)*(S2_i,D));	// dq，最终结果输出到workspace
+Bmm((S2_i,S1_i)*(S1_i,D));  // dkv，最终结果输出到workspace
+```
+
+上述示例中，通过两个拷贝指令fixp_l0c_to_ub和copy_ub_to_l1分别将cube侧计算的数据和vector侧计算的数据copy到vector侧和cube侧，这两个拷贝都是核内高速通道。
 
 ## 4 流水设计
 
@@ -169,6 +189,65 @@ N1 * G * alignedS1 * alignedS2 <= bestBasicBlockNum。 </td>
 </tbody>
 </table>
 
+**Ascend 950PR/Ascend 950DT** 
+
+<table style="undefined;table-layout: fixed; width: 1576px">
+<colgroup>
+  <col style="width: 170px">
+  <col style="width: 170px">
+  <col style="width: 310px">
+  <col style="width: 212px">
+</colgroup>
+<thead>
+  <tr>
+    <th>模板</th>
+    <th>切分轴</th>
+    <th>走入条件</th>
+    <th>适用范围</th>
+  </tr>
+</thead>
+<tbody>
+ <tr>
+    <td>BN2</td>
+    <td>多核切BN2</td>
+    <td>S1<=128 and S2 <= 128 and G=1，非FP32。</td>
+    <td>普通场景</td>
+  </tr>
+  <tr>
+    <td>BN2S2模板</td>
+    <td>多核切BN2S2</td>
+    <td>非FP32，TND，B * N2 * S2 > cubeCoreNum and  G = 1。 </td>
+    <td>普通场景</td>
+  </tr>
+  <tr>
+    <td>确定性计算模板</td>
+    <td>多核切BN2GS1S2</td>
+    <td>开启确定性计算</td>
+    <td>确定性计算场景</td>
+  </tr>
+  <tr>
+    <td>BN2GS1S2模板</td>
+    <td>多核切BN2GS1S2</td>
+    <td>上述场景都不满足</td>
+    <td>普通场景</td>
+  </tr>
+</tbody>
+</table>
+
+每一类模板都有其独特的UB及Block切分轴，能处理某一类具备特定shape特征输入的场景，针对该类shape特征进行模板设计。
+
+- **根据特殊场景及特定优化进行模板特化**
+
+  每一个融合算子有一个基础模板，并辅以多个特化模板：
+
+    - 基础模板覆盖功能以及大部分此类shape特征输入的性能。
+    - 特化模板是覆盖特定场景的极致性能，主要根据某些适用于特定场景的特殊手段进行的优化，不适合进行泛化。
+
+  例如，根据特殊场景空tensor特化而出的empty_input模板，基于角色的Cube核管理（RCM）优化方案设计的确定性计算模板等。
+
+- **根据不同计算流水进行模板特化**
+
+  为了充分发挥硬件优势，通常融合算子都需要进行流水设计，以提高融合算子性能，不同的流水设计对代码的架构影响非常大，为了提升代码的可维可测可读性，需要根据不同的计算流水进行模板特化，达到特定场景的极致性能。
 
 
 
@@ -189,7 +268,8 @@ N1 * G * alignedS1 * alignedS2 <= bestBasicBlockNum。 </td>
 
   例如，S1 = 512, S2 = 1024， S1.i = 64, S2.i = 128, 表示把[S1, S2]切分成大小是[64, 128]的基本块，S1.o = 512 / 64 = 8, S2.o = 1024 / 128 = 8 ，一共切分成8 * 8个基本块。
 
-  - **<term>Atlas A2 训练系列产品</term>**FAG算子的模板划分如下，以下模板，序号越大，模板的优先级越高，序号1的模板是泛化模板（支持所有shape）：
+  - **<term>Atlas A2 训练系列产品</term>**  
+  FAG算子的模板划分如下，以下模板，序号越大，模板的优先级越高，序号1的模板是泛化模板（支持所有shape）：
 
     > 1. 核间切分B、N2、G、S1轴，核内切分S1轴、S2轴模板：
     >
@@ -244,6 +324,54 @@ N1 * G * alignedS1 * alignedS2 <= bestBasicBlockNum。 </td>
     >
     >    依据：如果希望单纯的把B.i放入CV基本块中，那么内层轴N2 * G * S1 * S2就需要足够小，一般是根据这个只小于64KB的话，Bmm1和Bmm2的数据量一般不会超过L1的一半，那么B轴切分时有意义的，否则单个Matmul就把L1用满，多个Matmul之间的数据搬入没有办法和计算并行。
 
+  - **<term>Ascend 950PR/Ascend 950DT</term>**  
+  FAG算子的模板划分如下，以下模板，序号越大，模板的优先级越高，序号1的模板是泛化模板（支持所有shape），虽然存在多个模板，但在实现时仅存在两个模板文件，一个是确定性计算另一个是非确定性计算模板，其中非确定性计算模板包含了BN2，BN2S2，BN2GS1S2三种切分模板，在代码中通过模板参数隔离各自的实现逻辑：
+
+    >    1. 核间切分B、N2、G、S1、S2轴模板：
+    >
+    >       tiling代码文件：ops-transformer-dev/attention/common/op_host/arch-310/flash_attention_score_grad_tiling_s1s2_bn2gs1s2_regbase.cpp
+    >
+    >       tiling代码类：FlashAttentionScoreGradTilingUs1s2Bs2Regbase
+    >
+    >       kernel代码：ops-transformer-dev/attention/common/op_kernel/arch-310/flash_attention_score_grad_kernel.h
+    >
+    >       条件：支持所有shape，其他模板如果不支持，就会走到这个模板
+    >       依据：这个模板按照最通用的做法，可以支持所有的Shape。但是在部分场景下性能不是最优，此时根据不同场景判断路由到以下其他特化模板。
+    >
+    >    2. 核间切分B、N2轴模板：
+    >
+    >       tiling代码文件：ops-transformer-dev/attention/common/op_host/arch-310/flash_attention_score_grad_tiling_s1s2_bn2gs1s2_regbase.cpp
+    >
+    >       tiling代码类：FlashAttentionScoreGradTilingUs1s2Bs2Regbase
+    >
+    >       kernel代码：ops-transformer-dev/attention/common/op_kernel/arch-310/flash_attention_score_grad_kernel.h
+    >
+    >       条件：S1<=128 and S2 <= 128 and G=1，非FP32。
+    >       依据：S1<=128 and S2 <= 128 and G=1时，不存在多核切分S1S2轴，即不存在多核累加，可以省去前置GM清零和后置cast和musl计算，性能更优。
+    >
+    >    3. 核间切分B、N2、S2轴模板：
+    >
+    >       tiling代码文件：ops-transformer-dev/attention/common/op_host/arch-310/flash_attention_score_grad_tiling_s1s2_bn2gs1s2_regbase.cpp
+    >
+    >       tiling代码类：FlashAttentionScoreGradTilingUs1s2Bs2Regbase
+    >
+    >       kernel代码：ops-transformer-dev/attention/common/op_kernel/arch-310/flash_attention_score_grad_kernel.h
+    >
+    >       条件：非FP32，TND，B * N2 * S2 > cubeCoreNum and  G = 1。
+    >       依据：B * N2 * S2 > cubeCoreNum and  G = 1场景，dk和dv的计算无需多核累加，可以省去前置dk dv GM清零和后置cast和musl计算，性能更优。
+    >
+    >    4. 确定性计算模板
+    >
+    >       tiling代码文件：ops-transformer-dev/attention/common/op_host/arch-310/flash_attention_score_grad_tiling_s1s2_bn2gs1s2_regbase.cpp
+    >
+    >       tiling代码类：FlashAttentionScoreGradTilingUs1s2Bs2Regbase
+    >
+    >       kernel代码：ops-transformer-dev/attention/common/op_kernel/arch-310/flash_attention_score_grad_kernel_deter.h
+    >
+    >       条件：开启确定性计算。
+    >       依据：确定性计算场景对分核有比较严格的要求，通过特定分核方式避免多核同地址累加，达到确定性计算的效果。
+
+## 
 
 ## 6 编程视角
 
@@ -263,7 +391,9 @@ ops-transformer-dev/attention/flash_attention_score_grad/op_kernel/flash_attenti
 
 以Cube为主核对于FlashAttention来说由于V0、V1的Matmul任务可以复用左矩阵，且输出的部分结果可以在L0C累加，减少了对于带宽的依赖诉求，大部分场景性能会更优。
 
+**<term>Ascend 950PR/Ascend 950DT</term>**
 
+为了实现极致性能，除部分确定性计算场景，全部切换到AscendC低阶API实现，且无论是高阶还是低阶都是以Cube为主核实现。
 
 ### 6.2 AscendC低阶API
 
@@ -277,4 +407,6 @@ ops-transformer-dev/attention/flash_attention_score_grad/op_kernel/flash_attenti
 
 这个模板更加彻底地使用了以Cube为主核，Vector为从核，这时Matmul的任务都已经完全从Cube侧发起，通过同步通知Vector侧。
 
+**<term>Ascend 950PR/Ascend 950DT</term>**
 
+除部分确定性计算场景，其余场景全部采用低阶API实现，可以实现极致的内存复用。
