@@ -15,8 +15,8 @@
 #ifndef MOE_GATING_TOP_K_SOFTMAX_FULLLOAD_GENERALIZED_REGBASE_H
 #define MOE_GATING_TOP_K_SOFTMAX_FULLLOAD_GENERALIZED_REGBASE_H
 #include "kernel_utils.h"
-#include "../../inc/platform.h"
-#include "../../inc/load_store_utils.h"
+#include "op_kernel/platform_util.h"
+#include "op_kernel/load_store_utils.h"
 
 namespace MoeGatingTopKSoftmax {
 using namespace AscendC;
@@ -34,7 +34,7 @@ constexpr uint8_t INDEX_PATTERN = 2;
 constexpr int64_t BUFFER_NUM = 1;
 constexpr int64_t CONSTANT_THREE = 3;
 constexpr int64_t CONSTANT_TWO = 2;
-constexpr int64_t B32_VF_COUNT = platform::GetVRegSize() / sizeof(int32_t);
+constexpr int64_t B32_VF_COUNT = Ops::Base::GetVRegSize() / sizeof(int32_t);
 
 static constexpr AscendC::MicroAPI::CastTrait castTrait = {AscendC::MicroAPI::RegLayout::ZERO,
     AscendC::MicroAPI::SatMode::NO_SAT,
@@ -138,7 +138,7 @@ __aicore__ inline void MoeGatingTopKSoftmaxFullloadGenerlized<T, hasFinished, ne
 
     // init copy in que
     pipe_->InitBuffer(xInQueue_, BUFFER_NUM, expertCountAlign_ * sizeof(T) * perLoopRowCount_);
-    pipe_->InitBuffer(finishedInQueue_, BUFFER_NUM, platform::GetUbBlockSize() * perLoopRowCount_);
+    pipe_->InitBuffer(finishedInQueue_, BUFFER_NUM, Ops::Base::GetUbBlockSize() * perLoopRowCount_);
 
     // init copy out que
     pipe_->InitBuffer(yOutQueue_, BUFFER_NUM, kAlign_ * sizeof(float) * perLoopRowCount_);

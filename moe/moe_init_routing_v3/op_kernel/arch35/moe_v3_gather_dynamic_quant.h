@@ -17,7 +17,7 @@
 
 #include "moe_v3_common.h"
 #include "kernel_operator.h"
-#include "../../inc/load_store_utils.h"
+#include "op_kernel/load_store_utils.h"
 
 namespace MoeInitRoutingV3 {
 using namespace AscendC;

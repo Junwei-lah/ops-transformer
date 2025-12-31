@@ -17,7 +17,7 @@
 #include <map>
 #include "assert.h"
 
-#include "graph.h"
+#include "graph/graph.h"
 #include "types.h"
 #include "tensor.h"
 #include "ge_error_codes.h"
