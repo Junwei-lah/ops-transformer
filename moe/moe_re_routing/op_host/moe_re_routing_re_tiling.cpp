@@ -49,7 +49,7 @@ ge::graphStatus MoeReRoutingReTiling::SplitUb()
     // 切分ub
     int64_t reserveUbSize = INDEX_UB_SIZE * DOUBLE_BUFFER * ge::GetSizeByDataType(expertDtype_);
     int64_t canUseUbSize = (ubSize_ - reserveUbSize) / DOUBLE_BUFFER;
-    ubFactor_ = Ops::Base::CeilDiv(canUseUbSize, static_cast<int64_t>(Ops::Base::GetUbBlockSize(context_)));
+    ubFactor_ = Ops::Base::CeilAlign(canUseUbSize, static_cast<int64_t>(Ops::Base::GetUbBlockSize(context_)));
     return ge::GRAPH_SUCCESS;
 }
 

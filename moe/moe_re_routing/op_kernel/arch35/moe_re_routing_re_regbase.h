@@ -17,8 +17,8 @@
 #define MOE_RE_ROUTING_RE_REGBASE_H
 
 #include "kernel_operator.h"
-#include "../../inc/kernel_utils.h"
 #include "platform.h"
+#include "op_kernel/math_util.h"
 
 namespace MoeReRouting {
 using namespace AscendC;
@@ -90,9 +90,9 @@ __aicore__ inline void MoeReRoutingReRegbase<T, TIndex, TScale, hasScales>::Init
         dstScaleGm_.SetGlobalBuffer((__gm__ TScale *)permutePerTokenScales);
     }
     this->pipe_->InitBuffer(
-        queBind_, DOUBLE_BUFFER, ops::CeilDiv(tilingData_->ubFactor, static_cast<int64_t>(BLOCK_SIZE / sizeof(T))));
+        queBind_, DOUBLE_BUFFER, Ops::Base::CeilAlign(tilingData_->ubFactor, static_cast<int64_t>(BLOCK_SIZE / sizeof(T))));
     this->pipe_->InitBuffer(
-        idxOutQue_, DOUBLE_BUFFER, ops::CeilDiv(INDEX_UB_SIZE * sizeof(TIndex), BLOCK_SIZE / sizeof(TIndex)));
+        idxOutQue_, DOUBLE_BUFFER, Ops::Base::CeilAlign(INDEX_UB_SIZE * sizeof(TIndex), BLOCK_SIZE / sizeof(TIndex)));
 }
 
 template <typename T, typename TIndex, typename TScale, bool hasScales>
@@ -171,16 +171,16 @@ __aicore__ inline void MoeReRoutingReRegbase<T, TIndex, TScale, hasScales>::Proc
 {
     int64_t ubFactor = 0;
     if (isScale) {
-        ubFactor = ops::CeilDiv(tilingData_->ubFactor / sizeof(TScale), BLOCK_SIZE / sizeof(TScale));
+        ubFactor = Ops::Base::CeilAlign(tilingData_->ubFactor / sizeof(TScale), BLOCK_SIZE / sizeof(TScale));
     } else {
-        ubFactor = ops::CeilDiv(tilingData_->ubFactor / sizeof(T), BLOCK_SIZE / sizeof(T));
+        ubFactor = Ops::Base::CeilAlign(tilingData_->ubFactor / sizeof(T), BLOCK_SIZE / sizeof(T));
     }
     if (ubFactor < tokSclSize) {
         if (!isScale) {
             CopyOutIndex(currTokenNum, tokensSrc_, tokensDst_);
         }
         for (int64_t tIdx = 0; tIdx < currTokenNum; tIdx++) {
-            int64_t ubLoopCnt = ops::CeilDiv(tokSclSize, ubFactor);
+            int64_t ubLoopCnt = Ops::Base::CeilDiv(tokSclSize, ubFactor);
             int64_t subTokSclSize = ubFactor;
             for (int64_t loopIdx = 0; loopIdx < ubLoopCnt; loopIdx++) {
                 if (loopIdx == ubLoopCnt - 1 && tokSclSize % ubFactor != 0) {
@@ -193,8 +193,8 @@ __aicore__ inline void MoeReRoutingReRegbase<T, TIndex, TScale, hasScales>::Proc
             }
         }
     } else {
-        int64_t tokenFactor = ops::FloorDiv(ubFactor, tokSclSize);
-        int64_t ubLoopCnt = ops::CeilDiv(currTokenNum, tokenFactor);
+        int64_t tokenFactor = Ops::Base::FloorDiv(ubFactor, tokSclSize);
+        int64_t ubLoopCnt = Ops::Base::CeilDiv(currTokenNum, tokenFactor);
         int64_t currTokenFactor = tokenFactor;
         for (int64_t loopIdx = 0; loopIdx < ubLoopCnt; loopIdx++) {
             if (loopIdx == ubLoopCnt - 1 && currTokenNum % tokenFactor != 0) {
@@ -275,7 +275,7 @@ __aicore__ inline void MoeReRoutingReRegbase<T, TIndex, TScale, hasScales>::Copy
         head = dstOffset;
         offset = srcOffset;
     }
-    int64_t loopCnt = ops::CeilDiv(rows, INDEX_UB_SIZE);
+    int64_t loopCnt = Ops::Base::CeilDiv(rows, INDEX_UB_SIZE);
     int64_t subRows = INDEX_UB_SIZE;
     for (int64_t loopIdx = 0; loopIdx < loopCnt; loopIdx++) {
         if (loopIdx == loopCnt - 1 && rows % INDEX_UB_SIZE != 0) {

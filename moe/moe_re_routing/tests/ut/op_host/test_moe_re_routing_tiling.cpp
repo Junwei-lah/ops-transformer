@@ -129,7 +129,7 @@ TEST_F(MoeReRoutingTiling, moe_re_routing_regbase_tiling_000) {
                                                 },
                                                 &compileInfo,"Ascend910_95");
     uint64_t expectTilingKey = 210100;
-    string expectTilingData = "7168 1 16 16 16 1 4063 0 ";
+    string expectTilingData = "7168 1 16 16 16 1 130016 0 ";
     std::vector<size_t> expectWorkspaces = {1024 * 1024 * 16};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -154,7 +154,7 @@ TEST_F(MoeReRoutingTiling, moe_re_routing_regbase_tiling_block_1) {
                                                 },
                                                 &compileInfo,"Ascend910_95");
     uint64_t expectTilingKey = 210100;
-    string expectTilingData = "7168 1 16 16 16 1 4063 0 ";
+    string expectTilingData = "7168 1 16 16 16 1 130016 0 ";
     std::vector<size_t> expectWorkspaces = {1024 * 1024 * 16};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -179,7 +179,7 @@ TEST_F(MoeReRoutingTiling, moe_re_routing_regbase_tiling_001) {
                                                 },
                                                 &compileInfo,"Ascend910_95");
     uint64_t expectTilingKey = 200100;
-    string expectTilingData = "7168 1 4 4 16 4 1 4 1 4064 0 ";
+    string expectTilingData = "7168 1 4 4 16 4 1 4 1 130048 0 ";
     std::vector<size_t> expectWorkspaces = {1024 * 1024 * 16};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
