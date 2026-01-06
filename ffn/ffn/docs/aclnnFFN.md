@@ -189,6 +189,7 @@ REG_OP(FFN)
 #include <vector>
 #include "acl/acl.h"
 #include "aclnnop/aclnn_ffn.h"
+#include "aclnn/opdev/fp16_t.h"
 
 #define CHECK_RET(cond, return_expr) \
   do {                               \
@@ -224,7 +225,7 @@ int Init(int32_t deviceId, aclrtStream* stream) {
 template <typename T>
 int CreateAclTensor(const std::vector<T>& hostData, const std::vector<int64_t>& shape, void** deviceAddr,
                     aclDataType dataType, aclTensor** tensor) {
-  auto size = GetShapeSize(shape) * sizeof(T);
+  auto size = GetShapeSize(shape) * aclDataTypeSize(dataType);
   // 调用aclrtMalloc申请device侧内存
   auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
@@ -267,10 +268,10 @@ int main() {
   aclTensor* out = nullptr;
   aclTensor* weight1 = nullptr;
   aclTensor* weight2 = nullptr;
-  std::vector<float> selfHostData = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-  std::vector<float> outHostData = {0, 0, 0, 0};
-  std::vector<float> weight1HostData = {0.1, 0.2, 0.3, 0.4};
-  std::vector<float> weight2HostData = {0.4, 0.3, 0.2, 0.1};
+  std::vector<op::fp16_t> selfHostData = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+  std::vector<op::fp16_t> outHostData = {0, 0, 0, 0};
+  std::vector<op::fp16_t> weight1HostData = {0.1, 0.2, 0.3, 0.4};
+  std::vector<op::fp16_t> weight2HostData = {0.4, 0.3, 0.2, 0.1};
   // 创建self aclTensor
   ret = CreateAclTensor(selfHostData, selfShape, &selfDeviceAddr, aclDataType::ACL_FLOAT16, &self);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
@@ -310,12 +311,12 @@ int main() {
 
   // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
   auto size = GetShapeSize(outShape);
-  std::vector<float> resultData(size, 0);
+  std::vector<op::fp16_t> resultData(size, 0);
   ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), outDeviceAddr,
                     size * sizeof(resultData[0]), ACL_MEMCPY_DEVICE_TO_HOST);
   CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return ret);
   for (int64_t i = 0; i < size; i++) {
-    LOG_PRINT("result[%ld] is: %f\n", i, resultData[i]);
+    std::cout << "index: " << i << ": " << static_cast<float>(resultData[i]) << std::endl;
   }
 
   // 6. 释放aclTensor，需要根据具体API的接口定义修改
