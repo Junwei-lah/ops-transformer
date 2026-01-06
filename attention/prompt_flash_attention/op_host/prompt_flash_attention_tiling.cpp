@@ -2958,8 +2958,8 @@ ge::graphStatus PromptFlashAttentionTiling::AtbSplitBlock(ContextParamsForPFATil
     auto platformInfoPtr = context_->GetPlatformInfo();
     OP_CHECK_IF(platformInfoPtr == nullptr,
         OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), "platformInfoPtr is null"), return ge::GRAPH_FAILED);
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    uint32_t nzRealCoreNum = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
+    auto ascendcPlatformLocal = platform_ascendc::PlatformAscendC(platformInfoPtr);
+    uint32_t nzRealCoreNum = ascendcPlatformLocal.CalcTschBlockDim(aivNum, aicNum, aivNum);
     if (nzRealCoreNum == 0U) {
         return ge::GRAPH_FAILED;
     }
