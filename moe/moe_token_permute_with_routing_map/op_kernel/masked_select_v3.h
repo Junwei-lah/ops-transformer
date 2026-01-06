@@ -273,7 +273,7 @@ private:
 
     __aicore__ inline void CopyIn(int32_t progress)
     {
-        uint32_t ind = progress * this->tileLength;
+        uint64_t ind = progress * this->tileLength;
         uint32_t length = this->tileLength;
         if (progress == this->tileNum - 1) {
             // 最后一个block，最后一个tile
@@ -297,7 +297,7 @@ private:
     __aicore__ inline void CopyInMask(int32_t progress)
     {
         LocalTensor<uint8_t> maskLocal = inQueueMask.AllocTensor<uint8_t>();
-        uint32_t ind = progress * this->tileLength;
+        uint64_t ind = progress * this->tileLength;
         uint32_t length = this->tileLength;
         if (progress == this->tileNum - 1) {
             // 最后一个block，最后一个tile

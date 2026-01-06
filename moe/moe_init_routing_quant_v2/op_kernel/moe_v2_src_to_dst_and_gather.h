@@ -397,7 +397,7 @@ __aicore__ inline void MoeV2SrcToDstAndGather<T, TilingData>::CopyOutLoops(int64
     for (int64_t idx = 0; idx < currentLoopRows; idx++) {
         int32_t expertIdx = inLocal[length].GetValue(idx);
         SetWaitFlag<HardEvent::S_MTE3>(HardEvent::S_MTE3);
-        int32_t index = 0;
+        int64_t index = 0;
         while (this->lastExpertId < expertIdx) {
             while (this->tokenCount < this->expertCapacity) {
                 index = this->lastExpertId * this->expertCapacity + this->tokenCount;
@@ -449,7 +449,7 @@ __aicore__ inline void MoeV2SrcToDstAndGather<T, TilingData>::CopyOutRemain()
     }
     while (this->lastExpertId < this->expertNum) {
         while (this->tokenCount < this->expertCapacity) {
-            int32_t index = this->lastExpertId * this->expertCapacity + this->tokenCount;
+            int64_t index = this->lastExpertId * this->expertCapacity + this->tokenCount;
             int64_t col = this->perLoopCols;
             DataCopyPad(dynamicQuantScaleGm[index], this->scaleOutTmpLocal, quantScaleParams);
             for (int64_t i = 0; i < this->colLoops; i++) {
