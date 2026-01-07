@@ -573,12 +573,7 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetFlagInAttn()
 
     uint64_t sendMaskTokenCnt = curBsCnt_ * (axisK_ + sharedExpertNum_);
     uint64_t attnTokenInfoTableOffset = (microBatchId_ * axisBS_ * (axisK_ + sharedExpertNum_) + sendMaskTokenCnt) * sizeof(int32_t);
-    GM_ADDR selfRankAddr;
-    if (winContext_->userMemType == 0) {
-        selfRankAddr = (GM_ADDR)(((HcclRankRelationResV2 *)(winContext_->remoteRes[rankId_].nextDevicePtr))->windowsIn);
-    } else {
-        selfRankAddr = (GM_ADDR)(winContext_->userMemRes[rankId_].addr);
-    }
+    GM_ADDR selfRankAddr = (GM_ADDR)(winContext_->localWindowsIn);
     GM_ADDR attnTokenInfoTableGM = (__gm__ uint8_t*)(selfRankAddr + attnTokenInfoTableOffset);
     GlobalTensor<int32_t> attnTableGMTensor;
     attnTableGMTensor.SetGlobalBuffer((__gm__ int32_t*)attnTokenInfoTableGM);
