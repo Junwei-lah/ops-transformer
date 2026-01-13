@@ -16,6 +16,22 @@ if (BUILD_OPEN_PROJECT)  # custom
     set(MC2_OPT ON PARENT_SCOPE)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(matmul_reduce_scatter_depends mc2/common mc2/3rd PARENT_SCOPE)
+
+    # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
+    # -DAICORE_EXCEPTION_RESTART：启用AI Core在发生异常时的自动重启机制
+    set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
+    if("${CONDITION_UNIT}" STREQUAL "ascend910_93")
+        add_ops_compile_options(
+            OP_NAME MatmulReduceScatter
+            OPTIONS --cce-auto-sync=off
+                    -DAICORE_EXCEPTION_RESTART
+        )
+    elseif("${CONDITION_UNIT}" STREQUAL "ascend910b")
+        add_ops_compile_options(
+            OP_NAME MatmulReduceScatter
+            OPTIONS --cce-auto-sync=off
+        )
+    endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE matmul_reduce_scatter matmul_reduce_scatter ACLNNTYPE aclnn aclnn_inner) 
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE) 

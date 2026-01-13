@@ -16,6 +16,21 @@ if (BUILD_OPEN_PROJECT)  # custom
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(moe_distribute_dispatch_depends mc2/common mc2/3rd PARENT_SCOPE)
+
+    # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
+    # -mllvm -cce-aicore-dcci-before-kernel-end=false：禁用在kernel函数结束前插入DCCI指令
+    set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
+    if("${CONDITION_UNIT}" STREQUAL "ascend910_93")
+        add_ops_compile_options(
+            OP_NAME MoeDistributeDispatch
+            OPTIONS --cce-auto-sync=off
+        )
+    elseif("${CONDITION_UNIT}" STREQUAL "ascend910b")
+        add_ops_compile_options(
+            OP_NAME MoeDistributeDispatch
+            OPTIONS --cce-auto-sync=off
+        )
+    endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE moe_distribute_dispatch moe_distribute_dispatch ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE) 

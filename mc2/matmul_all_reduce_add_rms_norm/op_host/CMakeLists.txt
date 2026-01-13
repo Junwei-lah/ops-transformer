@@ -16,6 +16,15 @@ if (BUILD_OPEN_PROJECT)  # custom
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(matmul_all_reduce_add_rms_norm_depends mc2/3rd mc2/common  mc2/matmul_all_reduce PARENT_SCOPE)
+
+    # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
+    set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
+    if("${CONDITION_UNIT}" STREQUAL "ascend910b")
+        add_ops_compile_options(
+            OP_NAME MatmulAllReduceAddRmsNorm
+            OPTIONS --cce-auto-sync=off
+        )
+    endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE matmul_all_reduce_add_rms_norm matmul_all_reduce_add_rms_norm ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE) 

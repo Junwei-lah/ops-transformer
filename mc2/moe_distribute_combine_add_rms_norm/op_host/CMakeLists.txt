@@ -23,6 +23,15 @@ if (BUILD_OPEN_PROJECT)  # custom
         DESTINATION
         ${IMPL_INSTALL_DIR}/ascendc/3rd
     )
+
+    # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
+    set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
+    if("${CONDITION_UNIT}" STREQUAL "ascend910_93")
+        add_ops_compile_options(
+            OP_NAME MoeDistributeCombineAddRmsNorm
+            OPTIONS --cce-auto-sync=off
+        )
+    endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE moe_distribute_combine_add_rms_norm moe_distribute_combine_add_rms_norm ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE) 
