@@ -97,7 +97,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV2(
           <td>MatMul计算的右矩阵，即计算公式中的x2。</td>
           <td><ul><li>当前版本仅支持二维输入。</li><li>支持转置/不转置场景。</li></ul></td>
           <td>INT8</td>
-          <td>ND</td>
+          <td>ND、FRACTAL_NZ</td>
           <td>2</td>
           <td>√</td>
         </tr>
