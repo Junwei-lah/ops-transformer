@@ -413,6 +413,8 @@ void FiaTilingNonQuant::Split()
     }
     SetSplitOutput(res);
 
+    fiaInfo_->isExistRowInvalid = IsExistRowInvalid(baseInfo);
+
     if (IsFlashDecode()) {
         splitKVFlag_ = true;
         kvSplit_++;
@@ -500,6 +502,7 @@ void FiaTilingNonQuant::FillTilingMaskParams()
     tilingData_.maskParams.set_nextToken(fiaInfo_->nextToken);
     uint32_t isRowInvalid = static_cast<uint32_t>(fiaInfo_->innerPrecise) >> 1;
     tilingData_.maskParams.set_isRowInvalid(isRowInvalid);
+    tilingData_.maskParams.set_isExistRowInvalid(static_cast<uint32_t>(fiaInfo_->isExistRowInvalid));
 }
 
 void FiaTilingNonQuant::FillTilingLeftPaddingParams()
@@ -612,6 +615,68 @@ void FiaTilingNonQuant::CalcScheduleMode()
 {
     scheduleMode_ = ScheduleMode::BATCH_MODE;
     OP_LOGI(fiaInfo_->opName, "FIA schedule mode: %u.", static_cast<uint32_t>(scheduleMode_));
+}
+
+bool FiaTilingNonQuant::IsExistRowInvalid(const BaseInfo &baseInfo)
+{
+    if (!baseInfo.attenMaskFlag) {
+        return false;
+    }
+
+    auto mode = static_cast<SparseMode>(baseInfo.sparseMode);
+    if (mode == SparseMode::LEFT_UP_CAUSAL) {
+        return false;
+    }
+
+    if (mode == SparseMode::ALL_MASK) {
+        return true;
+    }
+
+    for (uint32_t bIdx = 0; bIdx < baseInfo.bSize; bIdx++) {
+        int32_t s1Size = GetS1SeqSize(bIdx, baseInfo);
+        int32_t s2Size = GetS2SeqSize(bIdx, baseInfo);
+        if ((s1Size == 0) || (s2Size == 0)) {
+            // 空tensor认为不会有无效行
+            continue;
+        }
+
+        int64_t safePreToken = baseInfo.preToken;
+        int64_t safeNextToken = baseInfo.nextToken;
+        int64_t preTokenLeftUp = 0;
+        int64_t nextTokenLeftUp = 0;
+
+        GetSafeActToken(mode, s1Size, s2Size, safePreToken, safeNextToken);
+        if (mode == SparseMode::BAND) {
+            preTokenLeftUp = safePreToken;
+            nextTokenLeftUp = s2Size - s1Size + safeNextToken;
+        } else if (mode == SparseMode::DEFAULT_MASK) {
+            preTokenLeftUp = s2Size - s1Size + safePreToken;
+            nextTokenLeftUp = safeNextToken;
+        } else {
+            preTokenLeftUp = 0;
+            nextTokenLeftUp = s2Size - s1Size;
+        }
+
+        if ((preTokenLeftUp < 0) || (nextTokenLeftUp < 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void FiaTilingNonQuant::GetSafeActToken(SparseMode mode, int64_t actSeqLensQ, int64_t actSeqLensKv, int64_t &safePreToken, int64_t &safeNextToken) const
+{
+    if (mode == SparseMode::DEFAULT_MASK) {
+        safePreToken = std::max(-actSeqLensKv, safePreToken);
+        safePreToken = std::min(safePreToken, actSeqLensQ);
+        safeNextToken = std::max(-actSeqLensQ, safeNextToken);
+        safeNextToken = std::min(safeNextToken, actSeqLensKv);
+    } else if (mode == SparseMode::BAND) {
+        safePreToken = std::max(-actSeqLensQ, safePreToken);
+        safePreToken = std::min(safePreToken, actSeqLensKv);
+        safeNextToken = std::max(-actSeqLensKv, safeNextToken);
+        safeNextToken = std::min(safeNextToken, actSeqLensQ);
+    }
 }
 
 ge::graphStatus FiaTilingNonQuant::DoOpTiling()
