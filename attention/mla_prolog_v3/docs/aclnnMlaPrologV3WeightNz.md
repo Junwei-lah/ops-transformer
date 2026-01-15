@@ -1,4 +1,4 @@
-                                                                           # aclnnMlaPrologV3WeightNz
+# aclnnMlaPrologV3WeightNz
 
 [📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/attention/mla_prolog_v3)
 
@@ -149,20 +149,20 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
   | ropeSin         | 输入      | 用于计算旋转位置编码的正弦参数矩阵，Device侧的aclTensor。              | - 支持B=0,S=0,T=0的空Tensor | BFLOAT16       | BFLOAT16| ND         | - BS合轴：(T,Dr) <br>- BS非合轴：(B,S,Dr)         |×   |
   | ropeCos         | 输入      | 用于计算旋转位置编码的余弦参数矩阵，Device侧的aclTensor。           | - 支持B=0,S=0,T=0的空Tensor  | BFLOAT16       | BFLOAT16| ND         | - BS合轴：(T,Dr) <br>- BS非合轴：(B,S,Dr)         |×   |
   | kvCacheRef      | 输入      | 用于cache索引的aclTensor，计算结果原地更新（对应公式中的$k^C$）。  | - 支持B=0,Skv=0的空Tensor；Nkv与N关联，N是超参，故Nkv不支持等于0  | BFLOAT16、INT8 | BFLOAT16、FLOAT8_E4M3FN | ND   | - CacheMode="PA_BSND"/"PA_NZ"/"PA_BLK_BSND"/"PA_BLK_NZ": (BlockNum,BlockSize,Nkv,Dtile) <br> - CacheMode="BSND": (B,S,Nkv,Dtile) <br> - CacheMode="TND": (T,Nkv,Dtile) |×   |
-  | krCacheRef      | 输入      | 用于key位置编码的cache，计算结果原地更新（对应公式中的$k^R$），Device侧的aclTensor。    | - 支持B=0,Skv=0的空Tensor；Nkv与N关联，N是超参，故Nkv不支持等于0 | BFLOAT16、INT8 | BFLOAT16 | ND         | - CacheMode="PA_BSND"/"PA_NZ"/"PA_BLK_BSND"/"PA_BLK_NZ": (BlockNum,BlockSize,Nkv,Dr) <br> - CacheMode="BSND": (B,S,Nkv,Dr) <br> - CacheMode="TND"时: (T,Nkv,Dr)   |×   |
+  | krCacheRef      | 输入      | 用于key位置编码的cache，计算结果原地更新（对应公式中的$k^R$），Device侧的aclTensor。    | - 支持B=0,Skv=0的空Tensor；Nkv与N关联，N是超参，故Nkv不支持等于0 | BFLOAT16、INT8 | BFLOAT16 | ND         | - CacheMode="PA_BSND"/"PA_NZ"/"PA_BLK_BSND"/"PA_BLK_NZ": (BlockNum,BlockSize,Nkv,Dr) <br> - CacheMode="BSND": (B,S,Nkv,Dr) <br> - CacheMode="TND"时: (T,Nkv,Dr) <br> - 当ckvkrRepoMode=1时: 维度应包含0，支持维度为(0) |×   |
   | cacheIndexOptional | 输入      | 用于存储kvCache和krCache的索引，Device侧的aclTensor。| - 支持B=0,S=0,T=0的空Tensor <br>- cacheMode="PA_BSND"/"PA_NZ": 取值范围需在[0,BlockNum*BlockSize)内 <br>- cacheMode="PA_BLK_BSND"/"PA_BLK_NZ": 取值范围需在[0,BlockNum)内 <br>- cacheMode="TND"/"BSND": nullptr | INT64   | INT64 | ND  | CacheMode="PA_BSND"/"PA_NZ": <br>1. BS合轴：(T) <br>2. BS非合轴：(B,S) <br>- CacheMode="PA_BLK_BSND"/"PA_BLK_NZ": <br> 1. BS合轴：(Sum(Ceil(S_i/BlockSize)))，S_i为每个Batch中的S的长度 <br> 2. BS非合轴：(B,Ceil(S/BlockSize)) <br>- CacheMode="TND"/"BSND": nullptr |×   |
-  | dequantScaleXOptional      | 输入      | token_x的反量化参数。 | - 支持B=0,S=0,T=0的空Tensor   | FLOAT          | FLOAT8_E8M0 | ND         | - BS合轴：(T) <br>- BS非合轴：(B\*S,1) <br> mxfp8全量化场景： <br>  - BS合轴：(T, He/32) <br>  - BS非合轴：(B*S, He/32)                               |×   |
+  | dequantScaleXOptional      | 输入      | token_x的反量化参数。 | - 支持B=0,S=0,T=0的空Tensor（仅INT8、FLOAT8_E4M3FN dtype场景需传）   | FLOAT          | FLOAT8_E8M0 | ND         | - BS合轴：(T) <br>- BS非合轴：(B\*S,1) <br> mxfp8全量化场景： <br>  - BS合轴：(T, He/32) <br>  - BS非合轴：(B*S, He/32)                               |×   |
   | dequantScaleWDqOptional    | 输入      | weight_dq的反量化参数。   | - 支持非空Tensor（仅INT8、FLOAT8_E4M3FN dtype场景需传）    | FLOAT          | FLOAT8_E8M0| ND          | (1,Hcq) <br> mxfp8全量化场景： <br>  (Hcq, He/32)                                 |×   |
-  | dequantScaleWUqQrOptional  | 输入      | 用于MatmulQcQr矩阵乘后反量化操作的per-channel参数，Device侧的aclTensor。 | - 支持非空Tensor（仅INT8 dtype场景需传）  | FLOAT          | FLOAT8_E8M0 | ND         | (1,N*(D+Dr))<br> mxfp8全量化场景： <br>  (N*(D+Dr), Hcq/32)     |×   |
-  | dequantScaleWDkvKrOptional | 输入      | weight_dkv_kr的反量化参数。   | - 支持非空Tensor（仅INT8 dtype场景需传）   | FLOAT          | FLOAT8_E8M0| ND         | (1,Hckv+Dr) <br> mxfp8全量化场景： <br>  (Hckv+Dr, He/32) |×   |
-  | quantScaleCkvOptional      | 输入      | 用于对kvCache输出数据做量化操作的参数，Device侧的aclTensor。 | - 支持非空Tensor（仅INT8 dtype量化输出场景需传）  | FLOAT          | FLOAT| ND         | - 部分量化场景：(1,Hckv) <br> - 全量化、mxfp8全量化场景：(1)  |×   |
+  | dequantScaleWUqQrOptional  | 输入      | 用于MatmulQcQr矩阵乘后反量化操作的per-channel参数，Device侧的aclTensor。 | - 支持非空Tensor（仅INT8、FLOAT8_E4M3FN dtype场景需传）  | FLOAT          | FLOAT8_E8M0 | ND         | (1,N*(D+Dr))<br> mxfp8全量化场景： <br>  (N*(D+Dr), Hcq/32)     |×   |
+  | dequantScaleWDkvKrOptional | 输入      | weight_dkv_kr的反量化参数。   | - 支持非空Tensor（仅INT8、FLOAT8_E4M3FN dtype场景需传）   | FLOAT          | FLOAT8_E8M0| ND         | (1,Hckv+Dr) <br> mxfp8全量化场景： <br>  (Hckv+Dr, He/32) |×   |
+  | quantScaleCkvOptional      | 输入      | 用于对kvCache输出数据做量化操作的参数，Device侧的aclTensor。 | - 支持非空Tensor（仅INT8、FLOAT8_E4M3FN dtype量化输出场景需传）  | FLOAT          | FLOAT| ND         | - 部分量化场景：(1,Hckv) <br> - 全量化、mxfp8全量化场景：(1)  |×   |
   | quantScaleCkrOptional      | 输入      | 用于对krCache输出数据做量化操作的参数，Device侧的aclTensor。| - 支支持非空Tensor（仅INT8 dtype量化输出场景需传）    | FLOAT    | - | ND   | (1,Dr)     |×   |
   | smoothScalesCqOptional     | 输入      | 用于对RmsNormCq输出做动态量化操作的参数，Device侧的aclTensor。   | - 支持非空Tensor（仅INT8 dtype场景可选传）| FLOAT  | - | ND | (1,Hcq)                       |×   |
   | actualSeqLenOptional     | 输入      | 表示每个batch中的序列长度，以前缀和的形式储存，Device侧的aclTensor。 | - BS合轴且CacheMode="PA_BLK_BSND"/"PA_BLK_NZ"时需传  | INT64    | - | ND   | (B)     |×   |
   | kNopeClipAlphaOptional     | 输入      | 表示对kvCache做clip操作时的缩放因子，Device侧的aclTensor。  | - 不支持空Tensor | FLOAT  | - | ND | (1)    |×   |
   | rmsnormEpsilonCq           | 输入      | 计算$c^Q$的RmsNorm公式中的$\epsilon$参数，Host侧参数。        | - 用户未特意指定时，建议传入1e-05 - 仅支持double类型 | DOUBLE         | - | -          | - |-   |
   | rmsnormEpsilonCkv          | 输入      | 计算$c^{KV}$的RmsNorm公式中的$\epsilon$参数，Host侧参数。   | - 用户未特意指定时，建议传入1e-05 - 仅支持double类型   | DOUBLE         | - | -          | -  |-   |
-  | cacheModeOptional          | 输入      | 表示kvCache的模式，Host侧参数。| - 用户未特意指定时，建议传入"PA_BSND" <br> - 仅支持char*类型 <br> - 可选值为："PA_BSND"、"PA_NZ"、"PA_BLK_BSND"、"PA_BLK_NZ"、"BSND"、"TND" | CHAR*          | CHAR* | -          | - |-   |
+  | cacheModeOptional          | 输入      | 表示kvCache的模式，Host侧参数。| - 用户未特意指定时，建议传入"PA_BSND" <br> - 仅支持char*类型 <br> - 可选值为："PA_BSND"、 "PA_NZ"、 "PA_BLK_BSND"、 "PA_BLK_NZ"、 "BSND"、 "TND" <br> - A2、A3支持所有可选值，A5当前仅支持"PA_BSND"和"PA_NZ" | CHAR*          | CHAR* | -          | - |-   |
   | queryNormFlag     | 输入      | 表示是否输出query_norm，Host侧参数。  | - False表示不输出query_norm，true表示输出queryNormOptional，默认值为false | BOOL  | BOOL| -- | --    |-   |
   | weightQuantMode     | 输入      | 表示weight_dq、weight_uq_qr、weight_uk、weight_dkv_kr的量化模式，Host侧参数。  | - 0表示非量化，1表示weight_uq_qr量化，2表示weight_dq、weight_uq_qr、weight_dkv_kr量化，3表示weight_dq、weight_uq_qr、weight_dkv_kr mxfp8量化，默认值为0 | INT  | INT| -- | --    |-   |
   | kvCacheQuantMode     | 输入      | 表示kv_cache的量化模式，Host侧参数。  | - 0表示非量化，1表示per-tensor量化，2表示per-channel量化，3-表示per-tile量化，默认值为0| INT64  | INT64| -- | --    |-   |
@@ -172,11 +172,11 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
   | tileSize     | 输入      | 表示per-tile量化时每个tile的大小，仅在kv_cache_quant_mode为3时有效，Host侧参数。  | - 默认值为128 | INT64 | - | -- | --    |-   |
   | qcQrScale     | 输入      |   表示Query的尺度矫正系数。  | - 用户不特意指定时需要传入1.0 | DOUBLE | - | -   | -  |- |
   | kcScale     | 输入      |   表示Key的尺度矫正系数。  | - 用户不特意指定时需要传入1.0 | DOUBLE | - | -    | -  |- |
-  | queryOut                   | 输出      | 公式中Query的输出tensor（对应$q^N$），Device侧的aclTensor。     | - 不支持空Tensor  | BFLOAT16、INT8 | BFLOAT16、FLOAT8_E4M3FN | ND         | - BS合轴：(T,N,Hckv) <br>- BS非合轴：(B,S,N,Hckv) |×   |
-  | queryRopeOut               | 输出      | 公式中Query位置编码的输出tensor（对应$q^R$），Device侧的aclTensor。  | - 不支持空Tensor | BFLOAT16       | BFLOAT16 | ND         | - BS合轴：(T,N,Dr) <br>- BS非合轴：(B,S,N,Dr)     |×   |
-  | dequantScaleQNopeOutOptional  | 输出           | 公式中Query输出的量化参数，Device侧的aclTensor。  | - 不支持空Tensor     | FLOAT      | FLOAT| ND   | - BS合轴：(T,N,1) <br>- BS非合轴：(B*S,N,1)   |×   |
-  | queryNormOutOptional     | 输出      | 公式中tokenX做rmsNorm后的输出tensor（对应$c^Q$），Device侧的aclTensor。  | - 不支持空Tensor <br> - A5暂不支持该输出，传入nullptr即可 | BFLOAT16、INT8  | - | ND | - BS合轴：(T,Hcq) <br> - BS非合轴：(B*S,Hcq)    |×   |
-  | dequantScaleQNormOutOptional     | 输出      | query_norm的输出tensor的量化参数，Device侧的aclTensor。  | - 不支持空Tensor <br> - A5暂不支持该输出，传入nullptr即可 | FLOAT  | - | ND | - BS合轴：（T,1）<br> - BS非合轴：（B*S,1）   |×   |
+  | queryOut                   | 输出      | 公式中Query的输出tensor（对应$q^N$），Device侧的aclTensor。     | -  | BFLOAT16、INT8 | BFLOAT16、FLOAT8_E4M3FN | ND         | - BS合轴：(T,N,Hckv) <br>- BS非合轴：(B,S,N,Hckv) |×   |
+  | queryRopeOut               | 输出      | 公式中Query位置编码的输出tensor（对应$q^R$），Device侧的aclTensor。  | - | BFLOAT16       | BFLOAT16 | ND         | - BS合轴：(T,N,Dr) <br>- BS非合轴：(B,S,N,Dr)     |×   |
+  | dequantScaleQNopeOutOptional  | 输出           | 公式中Query输出的量化参数，Device侧的aclTensor。  | -     | FLOAT      | FLOAT| ND   | - BS合轴：(T,N,1) <br>- BS非合轴：(B*S,N,1)   |×   |
+  | queryNormOutOptional     | 输出      | 公式中tokenX做rmsNorm后的输出tensor（对应$c^Q$），Device侧的aclTensor。  | - A5暂不支持该输出，传入nullptr即可 | BFLOAT16、INT8  | - | ND | - BS合轴：(T,Hcq) <br> - BS非合轴：(B*S,Hcq)    |×   |
+  | dequantScaleQNormOutOptional     | 输出      | query_norm的输出tensor的量化参数，Device侧的aclTensor。  | - A5暂不支持该输出，传入nullptr即可 | FLOAT  | - | ND | - BS合轴：（T,1）<br> - BS非合轴：（B*S,1）   |×   |
   | workspaceSize              | 输出      | 返回需在Device侧申请的workspace大小。  | - 仅用于输出结果，无需输入配置 - 数据类型为uint64_t* | -              | -| -          | -                                  |-   |
   | executor                   | 输出      | 返回op执行器，包含算子计算流程。        | - 仅用于输出结果，无需输入配置 - 数据类型为aclOpExecutor**    | -              | -| -          | -                                  |-   |
 
@@ -225,19 +225,22 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
   | BlockNum     | PagedAttention 场景下的块数    | 1. 当CacheMode="PA_BSND"/"PA_NZ"时，取值大于或等于 `(B*S)/BlockSize` 向上取整的结果。<br> 2. 当CacheMode="PA_BLK_BSND"/"PA_BLK_NZ"时，取值大于或等于`B` * `(S / BlockSize)`向上取整的结果（即`B * Ceil(S/BlockSize)`）。注：BS合轴场景，每个Batch中的S长度可以不同，因此BlockNum的取值需大于或等于各Batch中S长度除以BlockSize后的向上取整结果相加。 |
   | BlockSize    | PagedAttention 场景下的块大小  | 取值范围：16~1024，且为16的倍数<br> Ascend 950PR/Ascend 950DT AI处理器取值范围：16、128                                              |
   | T            | BS 合轴后的大小                | 取值范围：不限制；注：若采用 BS 合轴，此时 tokenX、ropeSin、ropeCos 均为 2 维，cacheIndex 为 1 维，queryOut、queryRopeOut 为 3 维 |
-  | Dtile        | krCache的D维度的大小           | - Per-tile量化场景下，取值固定为656 <br> - 其他场景下，取值固定为Hckv（512）                                                       |
+  | Dtile        | kvCache的D维度的大小           | - Per-tile量化场景下，取值固定为656 <br> - 其他场景下，取值固定为Hckv（512）                                                       |
 
 -   shape约束
     -   若tokenX的维度采用BS合轴，即(T, He)
         - ropeSin和ropeCos的shape为(T, Dr)
-        - cacheIndex的shape为(T)
+        - 当CacheMode为PA_BSND或PA_NZ时，cacheIndex的shape为(T)
+        - 当CacheMode为PA_BLK_BSND或PA_BLK_NZ时，cacheIndex的shape为(Sum(Ceil(S_i/BlockSize)))，S_i为每个Batch中的S的长度
+        - 当CacheMode为PA_BLK_BSND或PA_BLK_NZ时，actualSeqLenOptional需要传入，维度为(B)
         - dequantScaleXOptional的shape为(T, 1)
         - queryOut的shape为(T, N, Hckv)
         - queryRopeOut的shape为(T, N, Dr)
         - 全量化场景和mxfp8全量化场景下，dequantScaleQNopeOutOptional的shape为(T, N, 1)，其他场景下为(1)
     - 若tokenX的维度不采用BS合轴，即(B, S, He)
         - ropeSin和ropeCos的shape为(B, S, Dr)
-        - cacheIndex的shape为(B, S)
+        - 当CacheMode为PA_BSND或PA_NZ时，cacheIndex的shape为(B, S)
+        - 当CacheMode为PA_BLK_BSND或PA_BLK_NZ时，cacheIndex的shape为(B,Ceil(S/BlockSize))
         - dequantScaleXOptional的shape为(B*S, 1)
         - queryOut的shape为(B, S, N, Hckv)
         - queryRopeOut的shape为(B, S, N, Dr)
@@ -245,11 +248,21 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
     -   B、S、T、Skv值允许一个或多个取0，即Shape与B、S、T、Skv值相关的入参允许传入空Tensor，其余入参不支持传入空Tensor。
         - 如果B、S、T取值为0，则queryOut、queryRopeOut输出空Tensor，kvCacheRef、krCacheRef不做更新。
         - 如果Skv取值为0，则queryOut、queryRopeOut、dequantScaleQNopeOutOptional正常计算，kvCacheRef、krCacheRef不做更新，即输出空Tensor。
+    - 当CacheMode为BSND时
+        - tokenX应不采用BS合轴，即维度为(B, S, He)
+        - kvCache的维度为(B,S,Nkv,Dr)
+    - 当CacheMode为TND时
+        - tokenX应采用BS合轴，即维度为(T, He)
+        - kvCache的维度为(T,Nkv,Dr)
+    - 当ckvkrRepoMode=1时
+        - krCache的维度应包含0，支持维度为(0)
+
+
 - 特殊约束
-  - per-tile量化模式下，ckvkrRepoMode和quantScaleRepoMode必须同时为1。
+  - per-tile量化模式下，ckvkrRepoMode和quantScaleRepoMode必须同时为1；其他量化模式以及非量化场景下，ckvkrRepoMode和quantScaleRepoMode必须同时为0。
   - per-tile量化模式下，CacheMode只支持PA_BSND, BSND和TND。
   - 当ckvkrRepoMode值为1时，krCache必须为空Tensor（即shape的乘积为0）。
-- aclnnMlaPrologV3WeightNz接口支持场景：
+- aclnnMlaPrologV3WeightNz接口支持场景：A2、A3当前不支持mxfp8全量化场景，A5当前仅支持非量化场景和mxfp8全量化场景
   <table style="table-layout: auto;" border="1">
     <tr>
       <th colspan="2">场景</th>
@@ -670,7 +683,7 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
   </div>
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+A2、A3示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
   ```Cpp
   #include <iostream>
@@ -1060,4 +1073,386 @@ aclnnStatus aclnnMlaPrologV3WeightNz(
 
       return 0;
   }
+  ```
+
+A5示例代码如下，仅供参考。
+
+  ```Cpp
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include "acl/acl.h"
+#include "aclnnop/aclnn_mla_prolog_v3_weight_nz.h"
+#include <unistd.h>
+
+#define CHECK_RET(cond, return_expr)    \
+    do {                                \
+        if (!(cond)) {                  \
+            return_expr;                \
+        }                               \
+    } while (0)
+
+#define LOG_PRINT(message, ...)         \
+    do {                                \
+        printf(message, ##__VA_ARGS__); \
+    } while (0)
+
+int64_t GetShapeSize(const std::vector<int64_t>& shape) {
+    int64_t shape_size = 1;
+    for (auto i : shape) {
+        shape_size *= i;
+    }
+    return shape_size;
+}
+
+int Init(int32_t deviceId, aclrtStream* stream) {
+    // 固定写法，资源初始化
+    auto ret = aclInit(nullptr);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclInit failed. ERROR: %d\n", ret); return ret);
+    ret = aclrtSetDevice(deviceId);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSetDevice failed. ERROR: %d\n", ret); return ret);
+    ret = aclrtCreateStream(stream);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtCreateStream failed. ERROR: %d\n", ret); return ret);
+    return 0;
+}
+
+template <typename T>
+int CreateAclTensorND(const std::vector<T>& shape, void** deviceAddr, void** hostAddr,
+                    aclDataType dataType, aclTensor** tensor) {
+    auto size = GetShapeSize(shape) * sizeof(T);
+    // 调用aclrtMalloc申请device侧内存
+    auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
+    // 调用aclrtMalloc申请host侧内存
+    ret = aclrtMalloc(hostAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
+    // 调用aclCreateTensor接口创建aclTensor
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, nullptr, 0, aclFormat::ACL_FORMAT_ND,
+                              shape.data(), shape.size(), *deviceAddr);
+    // 调用aclrtMemcpy将host侧数据拷贝到device侧内存上
+    ret = aclrtMemcpy(*deviceAddr, size, *hostAddr, GetShapeSize(shape)*aclDataTypeSize(dataType), ACL_MEMCPY_HOST_TO_DEVICE);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMemcpy failed. ERROR: %d\n", ret); return ret);
+    return 0;
+}
+
+template <typename T>
+int CreateAclTensorNZ(const std::vector<T>& shape, void** deviceAddr, void** hostAddr,
+                    aclDataType dataType, aclTensor** tensor) {
+    auto size = GetShapeSize(shape) * sizeof(T);
+    // 调用aclrtMalloc申请device侧内存
+    auto ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
+    // 调用aclrtMalloc申请host侧内存
+    ret = aclrtMalloc(hostAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
+    // 调用aclCreateTensor接口创建aclTensor
+    *tensor = aclCreateTensor(shape.data(), shape.size(), dataType, nullptr, 0, aclFormat::ACL_FORMAT_FRACTAL_NZ,
+                              shape.data(), shape.size(), *deviceAddr);
+    // 调用aclrtMemcpy将host侧数据拷贝到device侧内存上
+    ret = aclrtMemcpy(*deviceAddr, size, *hostAddr, GetShapeSize(shape)*aclDataTypeSize(dataType), ACL_MEMCPY_HOST_TO_DEVICE);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMemcpy failed. ERROR: %d\n", ret); return ret);
+    return 0;
+}
+
+int TransToNZShape(std::vector<int64_t> &shapeND, size_t typeSize) {
+    if (typeSize == static_cast<size_t>(0)) {
+        return 0;
+    }
+    int64_t h = shapeND[0];
+    int64_t w = shapeND[1];
+    int64_t h0 = static_cast<int64_t>(16);
+    int64_t w0 = static_cast<int64_t>(32) / static_cast<int64_t>(typeSize);
+    int64_t h1 = h / h0;
+    int64_t w1 = w / w0;
+    shapeND[0] = w1;
+    shapeND[1] = h1;
+    shapeND.emplace_back(h0);
+    shapeND.emplace_back(w0);
+    return 0;
+}
+
+int main() {
+    // 1. 固定写法，device/stream初始化, 参考AscendCL对外接口列表
+    // 根据自己的实际device填写deviceId
+    int32_t deviceId = 0;
+    aclrtStream stream;
+    auto ret = Init(deviceId, &stream);
+    // check根据自己的需要处理
+    CHECK_RET(ret == 0, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
+    // 2. 构造输入与输出，需要根据API的接口定义构造
+    std::vector<int64_t> tokenXShape = {8,1,7168};            // B,S,He
+    std::vector<int64_t> weightDqShape = {7168,1536};          // He,Hcq
+    std::vector<int64_t> weightUqQrShape = {1536,24576};        // Hcq,N*(D+Dr)
+    std::vector<int64_t> weightUkShape = {128, 128, 512};        // N,D,Hckv
+    std::vector<int64_t> weightDkvKrShape = {7168, 576};        // He,Hckv+Dr
+    std::vector<int64_t> rmsnormGammaCqShape = {1536};          // Hcq
+    std::vector<int64_t> rmsnormGammaCkvShape = {512};          // Hckv
+    std::vector<int64_t> ropeSinShape = {8,1,64};             // B,S,Dr
+    std::vector<int64_t> ropeCosShape = {8,1,64};             // B,S,Dr
+    std::vector<int64_t> kvCacheShape = {1,16,1,512};      // BolckNum,BlockSize,Nkv,Hckv
+    std::vector<int64_t> krCacheShape = {1,16,1,64};       // BolckNum,BlockSize,Nkv,Dr
+    std::vector<int64_t> cacheIndexShape = {8,1};              // B,S
+    std::vector<int64_t> dequantScaleXShape = {8,224};           // B*S, 1
+    std::vector<int64_t> dequantScaleWDqShape = {1536,224};      // 1, Hcq
+    std::vector<int64_t> dequantScaleWUqQrShape = {24576,48};    // 1, N*(D+Dr)
+    std::vector<int64_t> dequantScaleWDkvKrShape = {576,224};    // 1, Hckv+Dr
+    std::vector<int64_t> quantScaleCkvShape = {1};    // 1
+    std::vector<int64_t> queryShape = {8,1,128,512};          // B,S,N,Hckv
+    std::vector<int64_t> queryRopeShape = {8,1,128,64};       // B,S,N,Dr
+    std::vector<int64_t> dequantScaleQNopeShape = {8,128,1};   // B*S, N, 1
+    double rmsnormEpsilonCq = 1e-5;
+    double rmsnormEpsilonCkv = 1e-5;
+    char cacheMode[] = "PA_BSND";
+
+    void* tokenXDeviceAddr = nullptr;
+    void* weightDqDeviceAddr = nullptr;
+    void* weightUqQrDeviceAddr = nullptr;
+    void* weightUkDeviceAddr = nullptr;
+    void* weightDkvKrDeviceAddr = nullptr;
+    void* rmsnormGammaCqDeviceAddr = nullptr;
+    void* rmsnormGammaCkvDeviceAddr = nullptr;
+    void* ropeSinDeviceAddr = nullptr;
+    void* ropeCosDeviceAddr = nullptr;
+    void* cacheIndexDeviceAddr = nullptr;
+    void* kvCacheDeviceAddr = nullptr;
+    void* krCacheDeviceAddr = nullptr;
+    void* dequantScaleXDeviceAddr = nullptr;
+    void* dequantScaleWDqDeviceAddr = nullptr;
+    void* dequantScaleWUqQrDeviceAddr = nullptr;
+    void* dequantScaleWDkvKrDeviceAddr = nullptr;
+    void* quantScaleCkvDeviceAddr = nullptr;
+    void* queryDeviceAddr = nullptr;
+    void* queryRopeDeviceAddr = nullptr;
+    void* dequantScaleQNopeDeviceAddr = nullptr;
+
+    void* tokenXHostAddr = nullptr;
+    void* weightDqHostAddr = nullptr;
+    void* weightUqQrHostAddr = nullptr;
+    void* weightUkHostAddr = nullptr;
+    void* weightDkvKrHostAddr = nullptr;
+    void* rmsnormGammaCqHostAddr = nullptr;
+    void* rmsnormGammaCkvHostAddr = nullptr;
+    void* ropeSinHostAddr = nullptr;
+    void* ropeCosHostAddr = nullptr;
+    void* cacheIndexHostAddr = nullptr;
+    void* kvCacheHostAddr = nullptr;
+    void* krCacheHostAddr = nullptr;
+    void* dequantScaleXHostAddr = nullptr;
+    void* dequantScaleWDqHostAddr = nullptr;
+    void* dequantScaleWUqQrHostAddr = nullptr;
+    void* dequantScaleWDkvKrHostAddr = nullptr;
+    void* quantScaleCkvHostAddr = nullptr;
+    void* queryHostAddr = nullptr;
+    void* queryRopeHostAddr = nullptr;
+    void* dequantScaleQNopeHostAddr = nullptr;
+
+    aclTensor* tokenX = nullptr;
+    aclTensor* weightDq = nullptr;
+    aclTensor* weightUqQr = nullptr;
+    aclTensor* weightUk = nullptr;
+    aclTensor* weightDkvKr = nullptr;
+    aclTensor* rmsnormGammaCq = nullptr;
+    aclTensor* rmsnormGammaCkv = nullptr;
+    aclTensor* ropeSin = nullptr;
+    aclTensor* ropeCos = nullptr;
+    aclTensor* kvCache = nullptr;
+    aclTensor* krCache = nullptr;
+    aclTensor* cacheIndex = nullptr;
+    aclTensor* dequantScaleX = nullptr;
+    aclTensor* dequantScaleWDq = nullptr;
+    aclTensor* dequantScaleWUqQr = nullptr;
+    aclTensor* dequantScaleWDkvKr = nullptr;
+    aclTensor* quantScaleCkv = nullptr;
+    bool queryNormFlag = false;
+    int64_t weightQuantMode = 3;
+    int64_t kvQuantMode = 1;
+    int64_t queryQuantMode = 1;
+    int64_t ckvkrRepoMode = 0;
+    int64_t quantScaleRepoMode = 0;
+    int64_t tileSize = 128;
+    double qcQrScale = 1.0f;
+    double kcScale = 1.0f;
+    aclTensor* query = nullptr;
+    aclTensor* queryRope = nullptr;
+    aclTensor* dequantScaleQNope = nullptr;
+
+    // 转换三个NZ格式变量的shape
+    constexpr size_t EXAMPLE_INT8_SIZE = sizeof(int8_t);
+    constexpr size_t EXAMPLE_BFLOAT16_SIZE = sizeof(int16_t);
+    ret = TransToNZShape(weightDqShape, EXAMPLE_INT8_SIZE);
+    CHECK_RET(ret == 0, LOG_PRINT("trans NZ shape failed.\n"); return ret);
+    ret = TransToNZShape(weightUqQrShape, EXAMPLE_INT8_SIZE);
+    CHECK_RET(ret == 0, LOG_PRINT("trans NZ shape failed.\n"); return ret);
+    ret = TransToNZShape(weightDkvKrShape, EXAMPLE_INT8_SIZE);
+    CHECK_RET(ret == 0, LOG_PRINT("trans NZ shape failed.\n"); return ret);
+
+    // 创建tokenX aclTensor
+    ret = CreateAclTensorND(tokenXShape, &tokenXDeviceAddr, &tokenXHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &tokenX);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建weightDq aclTensor
+    ret = CreateAclTensorNZ(weightDqShape, &weightDqDeviceAddr, &weightDqHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &weightDq);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建weightUqQr aclTensor
+    ret = CreateAclTensorNZ(weightUqQrShape, &weightUqQrDeviceAddr, &weightUqQrHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &weightUqQr);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建weightUk aclTensor
+    ret = CreateAclTensorND(weightUkShape, &weightUkDeviceAddr, &weightUkHostAddr, aclDataType::ACL_BF16, &weightUk);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建weightDkvKr aclTensor
+    ret = CreateAclTensorNZ(weightDkvKrShape, &weightDkvKrDeviceAddr, &weightDkvKrHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &weightDkvKr);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建rmsnormGammaCq aclTensor
+    ret = CreateAclTensorND(rmsnormGammaCqShape, &rmsnormGammaCqDeviceAddr, &rmsnormGammaCqHostAddr, aclDataType::ACL_BF16, &rmsnormGammaCq);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建rmsnormGammaCkv aclTensor
+    ret = CreateAclTensorND(rmsnormGammaCkvShape, &rmsnormGammaCkvDeviceAddr, &rmsnormGammaCkvHostAddr, aclDataType::ACL_BF16, &rmsnormGammaCkv);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建ropeSin aclTensor
+    ret = CreateAclTensorND(ropeSinShape, &ropeSinDeviceAddr, &ropeSinHostAddr, aclDataType::ACL_BF16, &ropeSin);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建ropeCos aclTensor
+    ret = CreateAclTensorND(ropeCosShape, &ropeCosDeviceAddr, &ropeCosHostAddr, aclDataType::ACL_BF16, &ropeCos);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建cacheIndex aclTensor
+    ret = CreateAclTensorND(cacheIndexShape, &cacheIndexDeviceAddr, &cacheIndexHostAddr, aclDataType::ACL_INT64, &cacheIndex);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建kvCache aclTensor
+    ret = CreateAclTensorND(kvCacheShape, &kvCacheDeviceAddr, &kvCacheHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &kvCache);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建krCache aclTensor
+    ret = CreateAclTensorND(krCacheShape, &krCacheDeviceAddr, &krCacheHostAddr, aclDataType::ACL_BF16, &krCache);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建dequantScaleX aclTensor
+    ret = CreateAclTensorND(dequantScaleXShape, &dequantScaleXDeviceAddr, &dequantScaleXHostAddr, aclDataType::ACL_FLOAT8_E8M0, &dequantScaleX);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建dequantScaleWDq aclTensor
+    ret = CreateAclTensorND(dequantScaleWDqShape, &dequantScaleWDqDeviceAddr, &dequantScaleWDqHostAddr, aclDataType::ACL_FLOAT8_E8M0, &dequantScaleWDq);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建dequantScaleWUqQr aclTensor
+    ret = CreateAclTensorND(dequantScaleWUqQrShape, &dequantScaleWUqQrDeviceAddr, &dequantScaleWUqQrHostAddr, aclDataType::ACL_FLOAT8_E8M0, &dequantScaleWUqQr);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建dequantScaleWDkvKr aclTensor
+    ret = CreateAclTensorND(dequantScaleWDkvKrShape, &dequantScaleWDkvKrDeviceAddr, &dequantScaleWDkvKrHostAddr, aclDataType::ACL_FLOAT8_E8M0, &dequantScaleWDkvKr);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建quantScaleCkv aclTensor
+    ret = CreateAclTensorND(quantScaleCkvShape, &quantScaleCkvDeviceAddr, &quantScaleCkvHostAddr, aclDataType::ACL_FLOAT, &quantScaleCkv);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建query aclTensor
+    ret = CreateAclTensorND(queryShape, &queryDeviceAddr, &queryHostAddr, aclDataType::ACL_FLOAT8_E4M3FN, &query);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建queryRope aclTensor
+    ret = CreateAclTensorND(queryRopeShape, &queryRopeDeviceAddr, &queryRopeHostAddr, aclDataType::ACL_BF16, &queryRope);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+    // 创建dequantScaleQNope aclTensor
+    ret = CreateAclTensorND(dequantScaleQNopeShape, &dequantScaleQNopeDeviceAddr, &dequantScaleQNopeHostAddr, aclDataType::ACL_FLOAT, &dequantScaleQNope);
+    CHECK_RET(ret == ACL_SUCCESS, return ret);
+
+
+    // 3. 调用CANN算子库API，需要修改为具体的API
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    // 调用aclnnMlaPrologV3WeightNz第一段接口
+    ret = aclnnMlaPrologV3WeightNzGetWorkspaceSize(tokenX, weightDq, weightUqQr, weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv, ropeSin, ropeCos, kvCache, krCache, cacheIndex,
+        dequantScaleX, dequantScaleWDq, dequantScaleWUqQr, dequantScaleWDkvKr, quantScaleCkv, nullptr, nullptr, nullptr, nullptr, rmsnormEpsilonCq, rmsnormEpsilonCkv, cacheMode,
+        weightQuantMode, kvQuantMode, queryQuantMode, ckvkrRepoMode, quantScaleRepoMode, tileSize, qcQrScale, kcScale,
+        query, queryRope, dequantScaleQNope, nullptr, nullptr, &workspaceSize, &executor);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnMlaPrologV3WeightNzGetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
+    // 根据第一段接口计算出的workspaceSize申请device内存
+    void* workspaceAddr = nullptr;
+    if (workspaceSize > static_cast<uint64_t>(0)) {
+        ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+    }
+    // 调用aclnnMlaPrologV3WeightNz第二段接口
+    ret = aclnnMlaPrologV3WeightNz(workspaceAddr, workspaceSize, executor, stream);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnMlaPrologV3WeightNz failed. ERROR: %d\n", ret); return ret);
+
+    // 4. 固定写法，同步等待任务执行结束
+    ret = aclrtSynchronizeStream(stream);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtSynchronizeStream failed. ERROR: %d\n", ret); return ret);
+
+    // 5. 获取输出的值，将device侧内存上的结果拷贝至host侧，需要根据具体API的接口定义修改
+    auto size = GetShapeSize(queryShape);
+    std::vector<float> resultData(size, 0);
+    ret = aclrtMemcpy(resultData.data(), resultData.size() * sizeof(resultData[0]), queryDeviceAddr, size * sizeof(float),
+                      ACL_MEMCPY_DEVICE_TO_HOST);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("copy result from device to host failed. ERROR: %d\n", ret); return ret);
+    for (int64_t i = 0; i < size; i++) {
+        LOG_PRINT("result[%ld] is: %f\n", i, resultData[i]);
+    }
+    // 6. 释放aclTensor和aclScalar，需要根据具体API的接口定义修改
+    aclDestroyTensor(tokenX);
+    aclDestroyTensor(weightDq);
+    aclDestroyTensor(weightUqQr);
+    aclDestroyTensor(weightUk);
+    aclDestroyTensor(weightDkvKr);
+    aclDestroyTensor(rmsnormGammaCq);
+    aclDestroyTensor(rmsnormGammaCkv);
+    aclDestroyTensor(ropeSin);
+    aclDestroyTensor(ropeCos);
+    aclDestroyTensor(cacheIndex);
+    aclDestroyTensor(kvCache);
+    aclDestroyTensor(krCache);
+    aclDestroyTensor(dequantScaleX);
+    aclDestroyTensor(dequantScaleWDq);
+    aclDestroyTensor(dequantScaleWUqQr);
+    aclDestroyTensor(dequantScaleWDkvKr);
+    aclDestroyTensor(quantScaleCkv);
+    aclDestroyTensor(query);
+    aclDestroyTensor(queryRope);
+    aclDestroyTensor(dequantScaleQNope);
+
+    // 7. 释放device 资源
+    aclrtFree(tokenXDeviceAddr);
+    aclrtFree(weightDqDeviceAddr);
+    aclrtFree(weightUqQrDeviceAddr);
+    aclrtFree(weightUkDeviceAddr);
+    aclrtFree(weightDkvKrDeviceAddr);
+    aclrtFree(rmsnormGammaCqDeviceAddr);
+    aclrtFree(rmsnormGammaCkvDeviceAddr);
+    aclrtFree(ropeSinDeviceAddr);
+    aclrtFree(ropeCosDeviceAddr);
+    aclrtFree(cacheIndexDeviceAddr);
+    aclrtFree(kvCacheDeviceAddr);
+    aclrtFree(krCacheDeviceAddr);
+    aclrtFree(dequantScaleXDeviceAddr);
+    aclrtFree(dequantScaleWDqDeviceAddr);
+    aclrtFree(dequantScaleWUqQrDeviceAddr);
+    aclrtFree(dequantScaleWDkvKrDeviceAddr);
+    aclrtFree(quantScaleCkvDeviceAddr);
+    aclrtFree(queryDeviceAddr);
+    aclrtFree(queryRopeDeviceAddr);
+    aclrtFree(dequantScaleQNopeDeviceAddr);
+
+    // 8. 释放host 资源
+    aclrtFree(tokenXHostAddr);
+    aclrtFree(weightDqHostAddr);
+    aclrtFree(weightUqQrHostAddr);
+    aclrtFree(weightUkHostAddr);
+    aclrtFree(weightDkvKrHostAddr);
+    aclrtFree(rmsnormGammaCqHostAddr);
+    aclrtFree(rmsnormGammaCkvHostAddr);
+    aclrtFree(ropeSinHostAddr);
+    aclrtFree(ropeCosHostAddr);
+    aclrtFree(cacheIndexHostAddr);
+    aclrtFree(kvCacheHostAddr);
+    aclrtFree(krCacheHostAddr);
+    aclrtFree(dequantScaleXHostAddr);
+    aclrtFree(dequantScaleWDqHostAddr);
+    aclrtFree(dequantScaleWUqQrHostAddr);
+    aclrtFree(dequantScaleWDkvKrHostAddr);
+    aclrtFree(quantScaleCkvHostAddr);
+    aclrtFree(queryHostAddr);
+    aclrtFree(queryRopeHostAddr);
+    aclrtFree(dequantScaleQNopeHostAddr);
+
+    if (workspaceSize > static_cast<uint64_t>(0)) {
+        aclrtFree(workspaceAddr);
+    }
+    aclrtDestroyStream(stream);
+    aclrtResetDevice(deviceId);
+    aclFinalize();
+
+    _exit(0);
+}
   ```
