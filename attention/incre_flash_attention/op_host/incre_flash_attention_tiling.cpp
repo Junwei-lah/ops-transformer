@@ -445,10 +445,12 @@ ge::graphStatus IFATiling::QKVPreProcess4TND(const std::string layout)
 
         batchSizeQ_ = batchSize_ = ifaContext_->actualSeqLengthsQ.tensor->GetShapeSize();
         tSeqSize_ = ifaContext_->query.shape->GetStorageShape().GetDim(0);
+        uint32_t tKVSeqSize = ifaContext_->key.shape->GetStorageShape().GetDim(0); 
         OP_CHECK_IF((tSeqSize_ > 1024U * 1024U / qTypeSize), // T不大于1M
                    OP_LOGE(ifaContext_->opName, "%s query T should <= 1M", layout.c_str()), return ge::GRAPH_FAILED);
 
         const int64_t *actualSeqQTnd = ifaContext_->actualSeqLengthsQ.tensor->GetData<int64_t>();
+        const int64_t *actualSeqKVTnd = ifaContext_->actualSeqLengths.tensor->GetData<int64_t>();
         std::vector<int64_t> actualSeqQ(actualLenQDims_);
         int64_t tmpQSeqSize = 0;
 
@@ -463,6 +465,12 @@ ge::graphStatus IFATiling::QKVPreProcess4TND(const std::string layout)
         OP_CHECK_IF((tSeqSize_ != actualSeqQTnd[actualLenQDims_ - 1]),
             OP_LOGE(ifaContext_->opName, "%s T(%u) should be equal to the last element of the query's actual sequence lengths(%ld).", layout.c_str(), tSeqSize_, actualSeqQTnd[actualLenQDims_ - 1]),
             return ge::GRAPH_FAILED);
+
+        if (!pageAttentionFlag_) {
+            OP_CHECK_IF((tKVSeqSize != actualSeqKVTnd[actualLenDims_ - 1]),
+                OP_LOGE(ifaContext_->opName, "%s T(%u) should be equal to the last element of the key/value's actual sequence lengths(%ld).", layout.c_str(), tKVSeqSize, actualSeqKVTnd[actualLenDims_ - 1]),
+                return ge::GRAPH_FAILED);
+        }
 
         qSeqSize_ = static_cast<uint32_t>(tmpQSeqSize);
         OP_LOGI(ifaContext_->opName, "TND MAX actualSeqQ:%u", qSeqSize_);

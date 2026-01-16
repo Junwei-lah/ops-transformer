@@ -1014,7 +1014,9 @@ ge::graphStatus CheckFAIQKV(gert::TilingContext *context, bool isPageAttention)
 
     const std::string inputLayoutStr = std::string(context->GetAttrs()->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
     if (inputLayoutStr == "TND") {
-        CheckFAIIsTND(context, isPageAttention);
+        if (CheckFAIIsTND(context, isPageAttention) != ge::GRAPH_SUCCESS) {
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
