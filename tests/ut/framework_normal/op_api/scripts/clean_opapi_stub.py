@@ -14,6 +14,8 @@ import sys
 import shutil
 import logging
 import json
+import shutil
+
 
 def to_camel_case(name: str) -> str:
     parts = name.split('_')
@@ -49,6 +51,12 @@ def main():
     if not os.path.exists(ascend910b_dir):
         logging.warning("Base directory not found: %s", ascend910b_dir)
         sys.exit(0)
+
+    support_chip_names = ["ascend910b", "ascend910_93", "ascend910_95"]
+    support_chip_names.remove(chip_name)
+    for ln_chip_name in support_chip_names:
+        ln_config_dir_path = os.path.join(base_path, "opp", "built-in", "op_impl", "ai_core", "tbe", "kernel", "config", ln_chip_name)
+        shutil.rmtree(ln_config_dir_path, ignore_errors=True)
 
     modified = False
     for op in op_names:

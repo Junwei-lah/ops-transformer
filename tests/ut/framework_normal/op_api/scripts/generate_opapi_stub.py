@@ -39,6 +39,13 @@ def main():
         logging.error("binary_info_config.json not found at %s", config_path)
         sys.exit(1)
 
+    support_chip_names = ["ascend910b", "ascend910_93", "ascend910_95"]
+    support_chip_names.remove(chip_name)
+    for ln_chip_name in support_chip_names:
+        ln_config_path = os.path.join(base_path, "opp", "built-in", "op_impl", "ai_core", "tbe", "kernel", "config", ln_chip_name, "ops_legacy", "binary_info_config.json")
+        os.makedirs(os.path.dirname(ln_config_path), exist_ok=True)
+        os.symlink(config_path, ln_config_path)
+
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)

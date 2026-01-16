@@ -122,25 +122,37 @@ if(UT_TEST_ALL OR OP_API_UT)
       endif()
 
       add_custom_command(
-          TARGET ${OP_API_UT_EXE}
-          POST_BUILD
-          COMMAND
-              ${CMAKE_COMMAND} -E env
-              LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
-              LD_PRELOAD=${LIBASAN_PATH}:${LIBSTDC_PATH} ASAN_OPTIONS=detect_leaks=0
-              ${PRELOAD}
-              bash -c "./${OP_API_UT_EXE};"sudo ${Python3_EXECUTABLE} ${OPS_TRANSFORMER_DIR}/tests/ut/framework_normal/op_api/scripts/clean_opapi_stub.py ${ALL_OP} ${ASCEND_DIR} ${CHIP_NAME}""
-          COMMENT "Run ops op_api utest with asan"
+        TARGET ${OP_API_UT_EXE}
+        POST_BUILD
+        COMMAND
+          ${CMAKE_COMMAND} -E env
+          LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
+          LD_PRELOAD=${LIBASAN_PATH}:${LIBSTDC_PATH} ASAN_OPTIONS=detect_leaks=0
+          ${PRELOAD}
+          bash -c "\
+          ./${OP_API_UT_EXE};\
+          OP_API_UT_EXE_RET=$?;\
+          sudo ${Python3_EXECUTABLE} ${OPS_TRANSFORMER_DIR}/tests/ut/framework_normal/op_api/scripts/clean_opapi_stub.py ${ALL_OP} ${ASCEND_DIR} ${CHIP_NAME};\
+          exit $OP_API_UT_EXE_RET\
+          "
+        COMMENT "Run ops op_api utest with asan"
+        VERBATIM
       )
     else()
       add_custom_command(
-              TARGET ${OP_API_UT_EXE}
-              POST_BUILD
-              COMMAND
-                ${CMAKE_COMMAND} -E env
-                LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
-                bash -c "./${OP_API_UT_EXE};"sudo ${Python3_EXECUTABLE} ${OPS_TRANSFORMER_DIR}/tests/ut/framework_normal/op_api/scripts/clean_opapi_stub.py ${ALL_OP} ${ASCEND_DIR} ${CHIP_NAME}""
-              COMMENT "Run ops op_api utest"
+        TARGET ${OP_API_UT_EXE}
+        POST_BUILD
+        COMMAND
+          ${CMAKE_COMMAND} -E env
+          LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}
+          bash -c "\
+          ./${OP_API_UT_EXE};\
+          OP_API_UT_EXE_RET=$?;\
+          sudo ${Python3_EXECUTABLE} ${OPS_TRANSFORMER_DIR}/tests/ut/framework_normal/op_api/scripts/clean_opapi_stub.py ${ALL_OP} ${ASCEND_DIR} ${CHIP_NAME};\
+          exit $OP_API_UT_EXE_RET\
+          "
+        COMMENT "Run ops op_api utest"
+        VERBATIM
       )
     endif()
   endif()
