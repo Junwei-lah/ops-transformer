@@ -1463,7 +1463,7 @@ static ge::graphStatus CheckOutShapeInDim3(const gert::TilingContext *context, c
             outputLayoutStr.c_str(), outShape.GetDimNum()), return ge::GRAPH_FAILED);
     OP_CHECK_IF((exceptOutShape != outShape),
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(),
-                                    "Except outputLayout is %s and Out shape size[%ld, %ld, %ld] does NOT match "
+                                    "Expect outputLayout is %s and Out shape size[%ld, %ld, %ld] does NOT match "
                                     "Attention Out shape size[%ld, %ld, %ld]!",
                                     outputLayoutStr.c_str(),
                                     exceptOutShape.GetDim(DIM_0),
@@ -1485,7 +1485,7 @@ static ge::graphStatus CheckOutShapeInDim4(const gert::TilingContext *context, c
             outputLayoutStr.c_str(), outShape.GetDimNum()), return ge::GRAPH_FAILED);
     OP_CHECK_IF((exceptOutShape != outShape),
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(),
-                                    "Except outputLayout is %s and Out shape size[%ld, %ld, %ld, %ld] does NOT match "
+                                    "Expect outputLayout is %s and Out shape size[%ld, %ld, %ld, %ld] does NOT match "
                                     "Attention Out shape size[%ld, %ld, %ld, %ld]!",
                                     outputLayoutStr.c_str(),
                                     exceptOutShape.GetDim(DIM_0),
