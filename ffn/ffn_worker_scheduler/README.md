@@ -4,27 +4,98 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>昇腾910_95 AI处理器</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                              |    √     |
+| <term>Atlas 训练系列产品</term>                              |    √     |
+| <term>Atlas 200/300/500 推理产品</term>                      |    ×     |
 
 ## 功能说明
 
-- 算子功能：对输入的每个元素进行反余弦操作后输出。
+- 算子功能：Attention和FFN分离场景下，FFN侧数据扫描算子。该算子接收AttentionToFFN算子发送的数据，进行扫描并完成数据整理。
+
+    **不建议直接使用，需要与AttentionToFFN，FFNWorkerBatching配合使用。**
+
+    1. 接收AttentionToFFN算子发送的数据。该数据以ScheduleContext结构体内存排布方式存储。其具体定义参见[调用示例](#调用示例)。该结构体包含CommonArea，ControlArea，AttentionArea，FfnArea域。本接口涉及CommonArea(用于存储配置信息，如session_num，micro_batch_num，micro_batch_size，selected_expert_num)，ControlArea(用于上层控制进程是否退出)，FfnArea域(负责管理本算子计算过程中所需的输入及输出缓冲区，其中token_info_buf字段用来存储该算子的输入信息)。
+
+    2. 扫描token_info_buf存储的信息，当通信数据准备就绪时，本算子开始进行数据整理。整理如下图所示，将layer id， session id，micro batch id，expert ids分别写入layer_id_buf，session_id_buf，micro_batch_id_buf，expert_ids_buf的device内存上。
+
+    ```mermaid
+    graph TB
+        %% 输入缓冲区
+        A[token_info_buf输入]
+
+        %% Session 层级结构
+        A --> Session0
+        A --> Session1
+
+        %% Session 0 内部结构
+        subgraph Session0[session 0]
+            direction TB
+            S0_M1[micro batch id 0]:::micro
+            S0_L1[layer id 0]:::layer
+            S0_S1[session id 0]:::session0
+            S0_E1[expert ids 0]:::expert
+        end
+
+        %% Session 1 内部结构
+        subgraph Session1[session 1]
+            direction TB
+            S1_M1[micro batch id 0]:::micro
+            S1_L1[layer id 0]:::layer
+            S1_S1[session id 1]:::session1
+            S1_E1[expert ids 0]:::expert
+        end
+
+        %% 输出缓冲区索引区域
+        subgraph Output[输出区域]
+            direction TB
+            O1[layer_ids_buf]:::layer
+            O2[session_ids_buf]:::output
+            O3[micro_batch_ids_buf]:::micro
+            O4[expert_ids_buf]:::expert
+        end
+
+        %% 数据流向
+        S0_L1 -.-> O1
+        S0_S1 -.-> O2
+        S0_M1 -.-> O3
+        S0_E1 -.-> O4
+
+        S1_L1 -.-> O1
+        S1_S1 -.-> O2
+        S1_M1 -.-> O3
+        S1_E1 -.-> O4
+
+        classDef layer fill:#c8e6c9
+        classDef session0 fill:#ffcdd2
+        classDef session1 fill:#ffccbc
+        classDef output fill:#e3f2fd
+        classDef micro fill:#e1f5fe
+        classDef expert fill:#bbdefd
+        
+        %% 添加子图背景色样式
+        style Session0 fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+        style Session1 fill:#fce4ec,stroke:#e91e63,stroke-width:2px
+        style Output fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    ```
+    3. 完成数据整理后，后续可供FFNWorkerBatching算子使用。
 
 - 计算公式：
 1. 初始化，根据入参ScheduleContext中的session_num和sync_group_size计算分组个数。
-  2. 若分组个数为1，表示全同步处理数据，待全部session数据准备就绪后，进行数据整理。
-  3. 若分组个数不为1，表示非全同步处理数据，待group内的session数据准备就绪后，进行数据整理。
-
+  1. 若分组个数为1，表示全同步处理数据，待全部session数据准备就绪后，进行数据整理。
+  2. 若分组个数不为1，表示非全同步处理数据，待group内的session数据准备就绪后，进行数据整理。
      $$
-     \text{Initialize:} \quad\text{group_num} = \frac{\text{session_num}}{\text{sync_group_size}}
+     \text{Initialize:} \quad\text{group\_num} = \frac{\text{session\_num}}{\text{sync\_group\_size}}
      $$
 
 $$
 \text{Process} =
 \begin{cases}
-\text{check_all_session_ready()} \quad \text{data_reorganization()} & \text{if } \text{group_num} = 1 \\
-\text{check_all_sessions_of_group_ready()} \quad \text{data_reorganization()} & \text{otherwise}
+\text{check\_all\_session\_ready()} \quad \text{data\_reorganization()} & \text{if } \text{group\_num} = 1 \\
+\text{check\_all\_sessions\_of\_group\_ready()} \quad \text{data\_reorganization()} & \text{otherwise}
 \end{cases}
 $$
 
@@ -110,7 +181,7 @@ $$
 
 - **返回值：**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
 
@@ -150,9 +221,3 @@ $$
 
 ## 约束说明
 - aclnnInplaceFfnWorkerScheduler默认为确定性实现，暂不支持非确定性实现，确定性计算配置也不会生效。
-
-## 调用说明
-
-| 调用方式 | 调用样例                                             | 说明                                                                             |
-|---------|--------------------------------------------------|--------------------------------------------------------------------------------|
-| aclnn调用 | [test_aclnn_ffn_worker_scheduler](./examples/test_aclnn_ffn_worker_scheduler.cpp) | 通过[aclnnFfnWorkerScheduler](./docs/aclnnSinh&aclnnInplaceSinh.md)接口方式调用FfnWorkerScheduler算子。 |
