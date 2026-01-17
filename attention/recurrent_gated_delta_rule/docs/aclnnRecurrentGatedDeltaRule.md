@@ -59,9 +59,9 @@ aclnnStatus aclnnRecurrentGatedDeltaRule(
     aclrtStream   stream)
 ```
 
-### aclnnRecurrentGatedDeltaRuleGetWorkspaceSize
+## aclnnRecurrentGatedDeltaRuleGetWorkspaceSize
 
-- 参数说明
+- **参数说明**
 
   <table style="undefined; table-layout: fixed; width: 1450px"><colgroup>
   <col style="width: 170px">
@@ -221,7 +221,7 @@ aclnnStatus aclnnRecurrentGatedDeltaRule(
   
   其中 $B$ 表示batch size，令 $L_i$ 表示第i个序列的长度，则 $T=\sum_i^B L_i$ 表示累积序列长度。$N_k$ 表示key的头数，$N_v$ 表示value的头数，$D_k$ 表示key向量的维度，$D_v$ 表示value向量的维度。
 
-- 返回值
+- **返回值**
 
   aclnnStatus： 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
   
@@ -259,9 +259,9 @@ aclnnStatus aclnnRecurrentGatedDeltaRule(
   </table>
 
 
-### aclnnRecurrentGatedDeltaRule
+## aclnnRecurrentGatedDeltaRule
 
-- 参数说明
+- **参数说明**
   <table style="undefined;table-layout: fixed; width: 1050px"><colgroup>
   <col style="width: 250px">
   <col style="width: 130px">
@@ -298,11 +298,12 @@ aclnnStatus aclnnRecurrentGatedDeltaRule(
   </tbody>
   </table>
 
-- 返回值
+- **返回值**
+
   aclnnStatus： 返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-
 ## 约束说明
+
 - 确定性计算：
   - aclnnRecurrentGatedDeltaRule默认确定性实现。
 - 输入shape大小需满足约束：$L_i \le 8$，$N_k \le 256$，$N_v \le 256$，$D_k \le 256$，$D_v \le 256$。

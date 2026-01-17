@@ -259,9 +259,11 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
         </tr>
       </tbody>
     </table>
+
 - **返回值：**
 
     <p>aclnnStatus：返回状态码，具体参见<a href="../../../docs/zh/context/aclnn返回码.md">aclnn返回码</a>。</p>
+
     <p>第一段接口完成入参校验，出现以下场景报错：</p>
 
     <table style="undefined;table-layout: fixed; width: 1030px"><colgroup>
@@ -291,6 +293,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
     </tr>
     </tbody>
     </table>
+
 ## aclnnWeightQuantMatmulAllReduceAddRmsNorm
 
 - **参数说明：**
@@ -326,6 +329,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
         <td>指定执行任务的Stream。</td>
     </tr>
     </tbody></table>
+
 - **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -348,6 +352,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：一个模型中的通算融合MC2算子，仅支持相同通信域。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp

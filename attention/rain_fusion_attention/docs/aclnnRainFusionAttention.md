@@ -35,6 +35,7 @@ RainFusionAttention输入query、key、value的数据排布格式支持从多种
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用"aclnnRainFusionAttentionGetWorkspaceSize"接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用"aclnnRainFusionAttention"接口执行计算。
+
 ```c++
 aclnnStatus aclnnRainFusionAttentionGetWorkspaceSize(
   const aclTensor   *query,
@@ -59,6 +60,7 @@ aclnnStatus aclnnRainFusionAttentionGetWorkspaceSize(
   uint64_t          *workspaceSize,
   aclOpExecutor    **executor)
 ```
+
 ```c++
 aclnnStatus aclnnRainFusionAttention(
   void             *workspace,
@@ -67,10 +69,11 @@ aclnnStatus aclnnRainFusionAttention(
   const aclrtStream stream)
 ```
 
-### aclnnRainFusionAttentionGetWorkspaceSize
+## aclnnRainFusionAttentionGetWorkspaceSize
 
 - **参数说明：**
-<table style="undefined;table-layout: fixed; width: 1565px">
+
+  <table style="undefined;table-layout: fixed; width: 1565px">
   <colgroup>
     <col style="width: 146px">
     <col style="width: 135px">
@@ -332,49 +335,52 @@ aclnnStatus aclnnRainFusionAttention(
       <td>-</td>
     </tr>
   </tbody>
-</table>
+  </table>
 
 
 - **返回值：**
 
-返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
-<table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-<col style="width: 319px">
-<col style="width: 144px">
-<col style="width: 671px">
-</colgroup>
-<thead>
-  <tr>
-    <th>返回码</th>
-    <th>错误码</th>
-    <th>描述</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>ACLNN_ERR_PARAM_NULLPTR</td>
-    <td>161001</td>
-    <td>输入query，key，value，selectIdx，selectNumIdx传入的是空指针。</td>
-  </tr>
-  <tr>
-    <td rowspan="4">ACLNN_ERR_PARAM_INVALID</td>
-    <td rowspan="4">161002</td>
-    <td>query，key，value 数据类型不在支持的范围之内。</td>
-  </tr>
-  <tr>
-    <td>qInputLayout或kvInputLayout不合法。</td>
-  </tr>
-  <tr>
-    <td>blockShape不合法（元素数量少于2或值小于等于0）。</td>
-  </tr>
-  <tr>
-    <td>innerPrecise不合法（必须为0或1）。</td>
-  </tr>
-</tbody>
-</table>
+  返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/context/aclnn返回码.md)。
+
+  第一段接口完成入参校验，出现以下场景时报错：
+
+  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
+  <col style="width: 319px">
+  <col style="width: 144px">
+  <col style="width: 671px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回码</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>输入query，key，value，selectIdx，selectNumIdx传入的是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="4">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="4">161002</td>
+      <td>query，key，value 数据类型不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>qInputLayout或kvInputLayout不合法。</td>
+    </tr>
+    <tr>
+      <td>blockShape不合法（元素数量少于2或值小于等于0）。</td>
+    </tr>
+    <tr>
+      <td>innerPrecise不合法（必须为0或1）。</td>
+    </tr>
+  </tbody>
+  </table>
 
 
-### aclnnRainFusionAttention
+## aclnnRainFusionAttention
 
 - **参数说明：**
 

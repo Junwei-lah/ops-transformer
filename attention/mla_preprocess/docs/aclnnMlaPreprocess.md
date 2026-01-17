@@ -8,6 +8,7 @@
 |<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      √     |
 
 ## 功能说明
+
 -  **接口功能**：推理场景，Multi-Head Latent Attention前处理的计算。主要计算过程如下：
     -  首先对输入$x$ RmsNormQuant后乘以$W^{DQKV}$进行下采样后分为通路1和通路2。
     -  通路1做RmsNormQuant后乘以$W^{UQ}$后再分为通路3和通路4。
@@ -59,6 +60,7 @@
 
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnMlaPreprocessGetWorkspaceSize”接口获取入参并根据流程计算所需workspace大小，再调用“aclnnMlaPreprocess”接口执行计算。
 
 ```cpp
@@ -117,7 +119,9 @@ aclnnStatus aclnnMlaPreprocess(
 
 
 ## aclnnMlaPreprocessGetWorkspaceSize
+
 - **参数说明：**
+
   <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
   <col style="width: 151px">
   <col style="width: 121px">

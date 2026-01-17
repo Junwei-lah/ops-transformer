@@ -88,12 +88,34 @@
 
 - 上述场景根据构造的参数来区别，符合第一种入参构造走场景一，符合第二种构造走场景二，符合第三种构造走场景三，符合第四种构造走场景四，符合第五种构造走场景五，符合第六种构造走场景六。场景一、场景二、场景六没有compressLensOptional、seqLensOptional、compressSeqOffsetOptional这三个可选参数。场景四没有compressSeqOffsetOptional可选参数。
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：仅支持场景一、二、四、五、六。
+
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnScatterPaKvCacheGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnScatterPaKvCache”接口执行计算。
 
-* `aclnnStatus aclnnScatterPaKvCacheGetWorkspaceSize(const aclTensor *key, aclTensor *keyCacheRef, const aclTensor *slotMapping, const aclTensor *value, aclTensor *valueCacheRef, const aclTensor *compressLensOptional, const aclTensor *compressSeqOffsetOptional, const aclTensor *seqLensOptional, char *cacheModeOptional, char *scatterModeOptional, const aclIntArray *stridesOptional, const aclIntArray *offsetsOptional, uint64_t *workspaceSize, aclOpExecutor **executor)`
-* `aclnnStatus aclnnScatterPaKvCache(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnScatterPaKvCacheGetWorkspaceSize(
+  const aclTensor   *key, 
+  aclTensor         *keyCacheRef, 
+  const aclTensor   *slotMapping, 
+  const aclTensor   *value, 
+  aclTensor         *valueCacheRef, 
+  const aclTensor   *compressLensOptional, 
+  const aclTensor   *compressSeqOffsetOptional, 
+  const aclTensor   *seqLensOptional, 
+  char              *cacheModeOptional, 
+  char              *scatterModeOptional, 
+  const aclIntArray *stridesOptional, 
+  const aclIntArray *offsetsOptional, 
+  uint64_t          *workspaceSize, 
+  aclOpExecutor    **executor)`
+```Cpp
+aclnnStatus aclnnScatterPaKvCache(
+  void          *workspace, 
+  uint64_t       workspaceSize, 
+  aclOpExecutor *executor, 
+  aclrtStream    stream)
+```
 
 ## aclnnScatterPaKvCacheGetWorkspaceSize
 
@@ -123,29 +145,89 @@
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-  ```
   第一段接口完成入参校验，出现以下场景时报错：
-  返回161001（ACLNN_ERR_PARAM_NULLPTR）：1. 传入的key、keyCacheRef、slotMapping、value、valueCacheRef是空指针。
-  返回161002（ACLNN_ERR_PARAM_INVALID）：1. 参数key、value的数据类型不在支持的范围之内。
-                                        2. key、keyCacheRef、value、valueCacheRef的数据类型不一致。
-                                        3. slotMapping、compressLensOptional、compressSeqOffsetOptional、seqLensOptional的数据类型不一致。
-  返回561002（ACLNN_ERR_PARAM_INVALID）：1. key的维数不等于3维或4维，value的维数不等于0维、3维或4维。
-  ```
+
+  <table style="undefined;table-layout: fixed; width: 1203px"><colgroup>
+  <col style="width: 297px">
+  <col style="width: 126px">
+  <col style="width: 780px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的key、keyCacheRef、slotMapping、value、valueCacheRef是空指针。</td>
+    </tr>
+    <tr>
+      <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="3">161002</td>
+      <td>参数key、value的数据类型不在支持的范围之内。</td>
+    </tr>
+    <tr>
+      <td>key、keyCacheRef、value、valueCacheRef的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>slotMapping、compressLensOptional、compressSeqOffsetOptional、seqLensOptional的数据类型不一致。</td>
+    </tr>
+    <tr>
+      <td>ACLNN_ERR_PARAM_INVALID</td>
+      <td>561002</td>
+      <td>key的维数不等于3维或4维，value的维数不等于0维、3维或4维。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnScatterPaKvCache
 
 - **参数说明：**
 
-  * workspace(void*, 入参)：在Device侧申请的workspace内存地址。
-  * workspaceSize(uint64_t, 入参)：在Device侧申请的workspace大小，由第一段接口aclnnScatterPaKvCacheGetWorkspaceSize获取。
-  * executor(aclOpExecutor*, 入参)：op执行器，包含了算子计算流程。
-  * stream(aclrtStream, 入参)：指定执行任务的Stream。
+  <table style="undefined;table-layout: fixed; width: 1150px"><colgroup>
+  <col style="width: 168px">
+  <col style="width: 128px">
+  <col style="width: 854px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnScatterPaKvCacheGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - 确定性计算：
     - aclnnScatterPaKvCache默认确定性实现。
 - 除了key和value，输入参数不支持非连续；

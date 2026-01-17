@@ -13,7 +13,7 @@
   </tr></thead>
 <tbody>
   <tr>
-    <td>Ascend 950PR/Ascend 950DT AI处理器</td>
+    <td>Ascend 950PR/Ascend 950DT</td>
     <td style="text-align: center;">√</td>
   </tr>
   <tr>

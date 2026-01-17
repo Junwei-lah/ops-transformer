@@ -1,4 +1,5 @@
 # aclnnInplaceMatmulAllReduceAddRmsNorm
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -249,6 +250,7 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
     </tr>
     </tbody>
     </table>
+
 ## aclnnInplaceMatmulAllReduceAddRmsNorm
 
 - **参数说明：**
@@ -284,6 +286,7 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
         <td>指定执行任务的stream。</td>
     </tr>
     </tbody></table>
+    
 -   **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

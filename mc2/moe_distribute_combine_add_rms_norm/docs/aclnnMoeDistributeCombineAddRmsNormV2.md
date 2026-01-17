@@ -106,410 +106,410 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
 
 ## aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize
 
-### 参数说明
+- **参数说明**
 
-<table style="undefined;table-layout: fixed; width: 1576px"> 
-<colgroup>
- <col style="width: 170px">
- <col style="width: 170px">
- <col style="width: 800px">
- <col style="width: 400px">
- <col style="width: 200px">
- </colgroup>
- <thead>
-  <tr>
-   <th>参数名</th>
-   <th>输入/输出</th>
-   <th>描述</th>
-   <th>数据类型</th>
-   <th>数据格式</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>expandX</td>
-   <td>输入</td>
-   <td>根据expertIds扩展的token特征，Device侧2D Tensor，shape为 <code>max(tpWorldSize, 1) * A, H</code>。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>expertIds</td>
-   <td>输入</td>
-   <td>每个token的topK个专家索引，Device侧2D Tensor，shape为 <code>Bs, K</code>。</td>
-   <td>INT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>assistInfoForCombine</td>
-   <td>输入</td>
-   <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>assistInfoForCombineOut</code>输出，Device侧1D Tensor，shape为 <code>A * 128,</code>。</td>
-   <td>INT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>epSendCounts</td>
-   <td>输入</td>
-   <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>epRecvCounts</code>输出，Device侧1D Tensor，shape为 <code>epWorldSize * max(tpWorldSize, 1) * localExpertNum,</code>。</td>
-   <td>INT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>expertScales</td>
-   <td>输入</td>
-   <td>每个token的topK个专家权重，Device侧2D Tensor，shape为 <code>Bs, K</code>。</td>
-   <td>FLOAT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>residualX</td>
-   <td>输入</td>
-   <td>AddRmsNorm中Add的右矩阵，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>gamma</td>
-   <td>输入</td>
-   <td>RmsNorm中的gamma参数，Device侧1D Tensor，shape为 <code>H,</code>。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>tpSendCountsOptional</td>
-   <td>输入</td>
-   <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>tpRecvCounts</code>输出，有TP域通信时传1D Tensor（shape <code>tpWorldSize,</code>），否则传空指针。</td>
-   <td>INT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>xActiveMaskOptional</td>
-   <td>输入</td>
-   <td>标识token是否参与通信，Device侧1D（shape <code>BS,</code>）或2D（shape <code>BS, K</code>）Tensor；true需排在false前，可传有效数据或空指针（默认所有token参与通信）。</td>
-   <td>BOOL</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>activationScaleOptional</td>
-   <td>输入</td>
-   <td>预留参数，当前版本不支持，传空指针。</td>
-   <td>-</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>weightScaleOptional</td>
-   <td>输入</td>
-   <td>预留参数，当前版本不支持，传空指针。</td>
-   <td>-</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>groupListOptional</td>
-   <td>输入</td>
-   <td>预留参数，当前版本不支持，传空指针。</td>
-   <td>-</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>expandScalesOptional</td>
-   <td>输入</td>
-   <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>expandScales</code>输出，预留参数，当前版本不支持，传空指针。</td>
-   <td>-</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>sharedExpertXOptional</td>
-   <td>输入</td>
-   <td>共享专家计算后的token，Device侧2D（shape <code>Bs, H</code>）或3D（shape <code>Bs, 1, H</code>）Tensor，数据类型与expandX一致；可传/可不传。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>elasticInfoOptional</td>
-   <td>输入</td>
-   <td>EP通信域动态缩容信息，可传有效数据或空指针（空指针表示不使能缩容）；传入有效数据时为1D Tensor（shape <code>4 + 2 * epWorldSize,</code>），前4位为缩容配置，后2*epWorldSize为rank映射表。</td>
-   <td>INT32</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>oriXOptional</td>
-   <td>输入</td>
-   <td>未经过FFN的token数据（公式中的oriXOptional），copyExpertNum/constExpertNum>0时必传；传入时为2D Tensor（shape <code>Bs, H</code>），数据类型与expandX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>constExpertAlpha1Optional</td>
-   <td>输入</td>
-   <td>constExpert场景的计算系数（公式中的constExpertAlpha1Optional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>constExpertAlpha2Optional</td>
-   <td>输入</td>
-   <td>constExpert场景的计算系数（公式中的constExpertAlpha2Optional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>constExpertVOptional</td>
-   <td>输入</td>
-   <td>constExpert场景的计算系数（公式中的constExpertVOptional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND（支持非连续Tensor）</td>
-  </tr>
-  <tr>
-   <td>groupEp</td>
-   <td>输入</td>
-   <td>EP通信域名称（专家并行），字符串长度[1, 128)，不可与groupTp相同。</td>
-   <td>STRING</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>epWorldSize</td>
-   <td>输入</td>
-   <td>EP通信域大小，取值范围(1, 768]。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>epRankId</td>
-   <td>输入</td>
-   <td>EP域本卡ID，取值范围[0, epWorldSize)，同一通信域内不重复。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>moeExpertNum</td>
-   <td>输入</td>
-   <td>MoE专家数量，取值范围(0, 1024]，且满足 <code>moeExpertNum % (epWorldSize - sharedExpertRankNum) = 0</code>。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>groupTp</td>
-   <td>输入</td>
-   <td>TP通信域名称（数据并行），字符串长度[1, 128)，不可与groupEp相同。</td>
-   <td>STRING</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>tpWorldSize</td>
-   <td>输入</td>
-   <td>TP通信域大小，取值范围[0, 2]，0/1表示无TP域通信，有TP域通信时仅支持2。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>tpRankId</td>
-   <td>输入</td>
-   <td>TP域本卡ID，取值范围[0, 1]，同一通信域内不重复；无TP域通信时传0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>expertShardType</td>
-   <td>输入</td>
-   <td>共享专家卡分布类型，仅支持0（共享专家卡排在MoE专家卡前面）。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>sharedExpertNum</td>
-   <td>输入</td>
-   <td>共享专家数量，当前版本不支持，传0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>sharedExpertRankNum</td>
-   <td>输入</td>
-   <td>共享专家卡数量，当前版本不支持，仅支持传入0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>globalBs</td>
-   <td>输入</td>
-   <td>EP域全局batch size：<br>- 各卡Bs一致时：<code>globalBs = Bs*epWorldSize</code> 或 0；<br>- 各卡Bs不一致时：<code>globalBs = maxBs*epWorldSize</code>（maxBs为单卡Bs最大值）。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>outDtype</td>
-   <td>输入</td>
-   <td>预留参数，指定输出x的数据类型，当前版本不支持，传0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>commQuantMode</td>
-   <td>输入</td>
-   <td>通信量化类型，当前版本不支持，传0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>groupListType</td>
-   <td>输入</td>
-   <td>预留参数，group List格式，当前版本不支持，传0。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>commAlg</td>
-   <td>输入</td>
-   <td>通信亲和内存布局算法，预留字段，当前版本不支持，传空指针。</td>
-   <td>STRING</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>normEps</td>
-   <td>输入</td>
-   <td>防止AddRmsNorm除0错误的参数，数据类型为float（如1e-6）。</td>
-   <td>FLOAT</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>zeroExpertNum</td>
-   <td>输入</td>
-   <td>零专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum, moeExpertNum+zeroExpertNum)</code>。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>copyExpertNum</td>
-   <td>输入</td>
-   <td>copy专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum+zeroExpertNum, moeExpertNum+zeroExpertNum+copyExpertNum)</code>。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>constExpertNum</td>
-   <td>输入</td>
-   <td>常量专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum+zeroExpertNum+copyExpertNum, moeExpertNum+zeroExpertNum+copyExpertNum+constExpertNum)</code>。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>yOut</td>
-   <td>输出</td>
-   <td>RmsNorm后的结果，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>，数据类型、格式与residualX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>rstdOut</td>
-   <td>输出</td>
-   <td>RmsNorm计算的标准化系数，Device侧3D Tensor，shape为 <code>Bs, 1, 1</code>。</td>
-   <td>FLOAT32</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>xOut</td>
-   <td>输出</td>
-   <td>Add后的结果，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>，数据类型、格式与residualX一致。</td>
-   <td>BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>workspaceSize</td>
-   <td>输出</td>
-   <td>返回需要在Device侧申请的workspace大小。</td>
-   <td>UINT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>executor</td>
-   <td>输出</td>
-   <td>返回op执行器，包含了算子的计算流程。</td>
-   <td>aclOpExecutor*</td>
-   <td>-</td>
-  </tr>
- </tbody>
-</table>
+    <table style="undefined;table-layout: fixed; width: 1576px"> 
+    <colgroup>
+    <col style="width: 170px">
+    <col style="width: 170px">
+    <col style="width: 800px">
+    <col style="width: 400px">
+    <col style="width: 200px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>参数名</th>
+    <th>输入/输出</th>
+    <th>描述</th>
+    <th>数据类型</th>
+    <th>数据格式</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>expandX</td>
+    <td>输入</td>
+    <td>根据expertIds扩展的token特征，Device侧2D Tensor，shape为 <code>max(tpWorldSize, 1) * A, H</code>。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>expertIds</td>
+    <td>输入</td>
+    <td>每个token的topK个专家索引，Device侧2D Tensor，shape为 <code>Bs, K</code>。</td>
+    <td>INT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>assistInfoForCombine</td>
+    <td>输入</td>
+    <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>assistInfoForCombineOut</code>输出，Device侧1D Tensor，shape为 <code>A * 128,</code>。</td>
+    <td>INT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>epSendCounts</td>
+    <td>输入</td>
+    <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>epRecvCounts</code>输出，Device侧1D Tensor，shape为 <code>epWorldSize * max(tpWorldSize, 1) * localExpertNum,</code>。</td>
+    <td>INT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>expertScales</td>
+    <td>输入</td>
+    <td>每个token的topK个专家权重，Device侧2D Tensor，shape为 <code>Bs, K</code>。</td>
+    <td>FLOAT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>residualX</td>
+    <td>输入</td>
+    <td>AddRmsNorm中Add的右矩阵，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>gamma</td>
+    <td>输入</td>
+    <td>RmsNorm中的gamma参数，Device侧1D Tensor，shape为 <code>H,</code>。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>tpSendCountsOptional</td>
+    <td>输入</td>
+    <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>tpRecvCounts</code>输出，有TP域通信时传1D Tensor（shape <code>tpWorldSize,</code>），否则传空指针。</td>
+    <td>INT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>xActiveMaskOptional</td>
+    <td>输入</td>
+    <td>标识token是否参与通信，Device侧1D（shape <code>BS,</code>）或2D（shape <code>BS, K</code>）Tensor；true需排在false前，可传有效数据或空指针（默认所有token参与通信）。</td>
+    <td>BOOL</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>activationScaleOptional</td>
+    <td>输入</td>
+    <td>预留参数，当前版本不支持，传空指针。</td>
+    <td>-</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>weightScaleOptional</td>
+    <td>输入</td>
+    <td>预留参数，当前版本不支持，传空指针。</td>
+    <td>-</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>groupListOptional</td>
+    <td>输入</td>
+    <td>预留参数，当前版本不支持，传空指针。</td>
+    <td>-</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>expandScalesOptional</td>
+    <td>输入</td>
+    <td>对应<code>aclnnMoeDistributeDispatchV3</code>的<code>expandScales</code>输出，预留参数，当前版本不支持，传空指针。</td>
+    <td>-</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>sharedExpertXOptional</td>
+    <td>输入</td>
+    <td>共享专家计算后的token，Device侧2D（shape <code>Bs, H</code>）或3D（shape <code>Bs, 1, H</code>）Tensor，数据类型与expandX一致；可传/可不传。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>elasticInfoOptional</td>
+    <td>输入</td>
+    <td>EP通信域动态缩容信息，可传有效数据或空指针（空指针表示不使能缩容）；传入有效数据时为1D Tensor（shape <code>4 + 2 * epWorldSize,</code>），前4位为缩容配置，后2*epWorldSize为rank映射表。</td>
+    <td>INT32</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>oriXOptional</td>
+    <td>输入</td>
+    <td>未经过FFN的token数据（公式中的oriXOptional），copyExpertNum/constExpertNum>0时必传；传入时为2D Tensor（shape <code>Bs, H</code>），数据类型与expandX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>constExpertAlpha1Optional</td>
+    <td>输入</td>
+    <td>constExpert场景的计算系数（公式中的constExpertAlpha1Optional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>constExpertAlpha2Optional</td>
+    <td>输入</td>
+    <td>constExpert场景的计算系数（公式中的constExpertAlpha2Optional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>constExpertVOptional</td>
+    <td>输入</td>
+    <td>constExpert场景的计算系数（公式中的constExpertVOptional），constExpertNum>0时必传；传入时为2D Tensor（shape <code>constExpertNum, H</code>），数据类型与expandX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND（支持非连续Tensor）</td>
+    </tr>
+    <tr>
+    <td>groupEp</td>
+    <td>输入</td>
+    <td>EP通信域名称（专家并行），字符串长度[1, 128)，不可与groupTp相同。</td>
+    <td>STRING</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>epWorldSize</td>
+    <td>输入</td>
+    <td>EP通信域大小，取值范围(1, 768]。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>epRankId</td>
+    <td>输入</td>
+    <td>EP域本卡ID，取值范围[0, epWorldSize)，同一通信域内不重复。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>moeExpertNum</td>
+    <td>输入</td>
+    <td>MoE专家数量，取值范围(0, 1024]，且满足 <code>moeExpertNum % (epWorldSize - sharedExpertRankNum) = 0</code>。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>groupTp</td>
+    <td>输入</td>
+    <td>TP通信域名称（数据并行），字符串长度[1, 128)，不可与groupEp相同。</td>
+    <td>STRING</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>tpWorldSize</td>
+    <td>输入</td>
+    <td>TP通信域大小，取值范围[0, 2]，0/1表示无TP域通信，有TP域通信时仅支持2。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>tpRankId</td>
+    <td>输入</td>
+    <td>TP域本卡ID，取值范围[0, 1]，同一通信域内不重复；无TP域通信时传0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>expertShardType</td>
+    <td>输入</td>
+    <td>共享专家卡分布类型，仅支持0（共享专家卡排在MoE专家卡前面）。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>sharedExpertNum</td>
+    <td>输入</td>
+    <td>共享专家数量，当前版本不支持，传0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>sharedExpertRankNum</td>
+    <td>输入</td>
+    <td>共享专家卡数量，当前版本不支持，仅支持传入0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>globalBs</td>
+    <td>输入</td>
+    <td>EP域全局batch size：<br>- 各卡Bs一致时：<code>globalBs = Bs*epWorldSize</code> 或 0；<br>- 各卡Bs不一致时：<code>globalBs = maxBs*epWorldSize</code>（maxBs为单卡Bs最大值）。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>outDtype</td>
+    <td>输入</td>
+    <td>预留参数，指定输出x的数据类型，当前版本不支持，传0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>commQuantMode</td>
+    <td>输入</td>
+    <td>通信量化类型，当前版本不支持，传0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>groupListType</td>
+    <td>输入</td>
+    <td>预留参数，group List格式，当前版本不支持，传0。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>commAlg</td>
+    <td>输入</td>
+    <td>通信亲和内存布局算法，预留字段，当前版本不支持，传空指针。</td>
+    <td>STRING</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>normEps</td>
+    <td>输入</td>
+    <td>防止AddRmsNorm除0错误的参数，数据类型为float（如1e-6）。</td>
+    <td>FLOAT</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>zeroExpertNum</td>
+    <td>输入</td>
+    <td>零专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum, moeExpertNum+zeroExpertNum)</code>。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>copyExpertNum</td>
+    <td>输入</td>
+    <td>copy专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum+zeroExpertNum, moeExpertNum+zeroExpertNum+copyExpertNum)</code>。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>constExpertNum</td>
+    <td>输入</td>
+    <td>常量专家数量，取值范围[0, MAX_INT32)，其中MAX_INT32值为2147483647，合法专家ID范围<code>[moeExpertNum+zeroExpertNum+copyExpertNum, moeExpertNum+zeroExpertNum+copyExpertNum+constExpertNum)</code>。</td>
+    <td>INT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>yOut</td>
+    <td>输出</td>
+    <td>RmsNorm后的结果，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>，数据类型、格式与residualX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>rstdOut</td>
+    <td>输出</td>
+    <td>RmsNorm计算的标准化系数，Device侧3D Tensor，shape为 <code>Bs, 1, 1</code>。</td>
+    <td>FLOAT32</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>xOut</td>
+    <td>输出</td>
+    <td>Add后的结果，Device侧3D Tensor，shape为 <code>Bs, 1, H</code>，数据类型、格式与residualX一致。</td>
+    <td>BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>workspaceSize</td>
+    <td>输出</td>
+    <td>返回需要在Device侧申请的workspace大小。</td>
+    <td>UINT64</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>executor</td>
+    <td>输出</td>
+    <td>返回op执行器，包含了算子的计算流程。</td>
+    <td>aclOpExecutor*</td>
+    <td>-</td>
+    </tr>
+    </tbody>
+    </table>
 
-### 返回值
+- **返回值**
 
-第一段接口完成入参校验，出现以下场景时报错：
+    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
 
-<table style="undefined;table-layout: fixed; width: 1576px"> 
-<colgroup>
- <col style="width: 170px">
- <col style="width: 170px">
- <col style="width: 400px">
- </colgroup>
- <thead>
-  <tr>
-   <th>返回值</th>
-   <th>错误码</th>
-   <th>描述</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>ACLNN_ERR_PARAM_NULLPTR</td>
-   <td>161001</td>
-   <td>1. 输入和输出的必选参数Tensor是空指针。</td>
-  </tr>
-  <tr>
-   <td>ACLNN_ERR_PARAM_INVALID</td>
-   <td>161002</td>
-   <td>1. 输入和输出的数据类型不在支持的范围内。</td>
-  </tr>
-  <tr>
-   <td>ACLNN_ERR_INNER_TILING_ERROR</td>
-   <td>561002</td>
-   <td>1. 输入和输出的shape不在支持的范围内；<br>2. 参数的取值不在支持的范围内。</td>
-  </tr>
- </tbody>
-</table>
+    第一段接口完成入参校验，出现以下场景时报错：
+
+    <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
+    <col style="width: 305px">
+    <col style="width: 119px">
+    <col style="width: 725px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>返回值</th>
+    <th>错误码</th>
+    <th>描述</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>ACLNN_ERR_PARAM_NULLPTR</td>
+    <td>161001</td>
+    <td>1. 输入和输出的必选参数Tensor是空指针。</td>
+    </tr>
+    <tr>
+    <td>ACLNN_ERR_PARAM_INVALID</td>
+    <td>161002</td>
+    <td>1. 输入和输出的数据类型不在支持的范围内。</td>
+    </tr>
+    <tr>
+    <td>ACLNN_ERR_INNER_TILING_ERROR</td>
+    <td>561002</td>
+    <td>1. 输入和输出的shape不在支持的范围内；<br>2. 参数的取值不在支持的范围内。</td>
+    </tr>
+    </tbody>
+    </table>
 
 ## aclnnMoeDistributeCombineAddRmsNormV2
 
-### 参数说明
+- **参数说明**
 
-<table style="undefined;table-layout: fixed; width: 1576px"> 
-<colgroup>
- <col style="width: 170px">
- <col style="width: 170px">
- <col style="width: 800px">
- </colgroup>
- <thead>
-  <tr>
-   <th>参数名</th>
-   <th>输入/输出</th>
-   <th>描述</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>workspace</td>
-   <td>输入</td>
-   <td>在Device侧申请的workspace内存地址。</td>
-  </tr>
-  <tr>
-   <td>workspaceSize</td>
-   <td>输入</td>
-   <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize</code>获取。</td>
-  </tr>
-  <tr>
-   <td>executor</td>
-   <td>输入</td>
-   <td>op执行器，包含了算子计算流程。</td>
-  </tr>
-  <tr>
-   <td>stream</td>
-   <td>输入</td>
-   <td>指定执行任务的AscendCL Stream。</td>
-  </tr>
- </tbody>
-</table>
+    <table style="undefined;table-layout: fixed; width: 1150px"><colgroup>
+    <col style="width: 168px">
+    <col style="width: 128px">
+    <col style="width: 854px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>参数名</th>
+    <th>输入/输出</th>
+    <th>描述</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>workspace</td>
+    <td>输入</td>
+    <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+    <td>workspaceSize</td>
+    <td>输入</td>
+    <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize</code>获取。</td>
+    </tr>
+    <tr>
+    <td>executor</td>
+    <td>输入</td>
+    <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+    <td>stream</td>
+    <td>输入</td>
+    <td>指定执行任务的AscendCL Stream。</td>
+    </tr>
+    </tbody>
+    </table>
 
-### 返回值
+- **返回值**
 
-返回aclnnStatus状态码，具体参见aclnn返回码。
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 
 ## 约束说明

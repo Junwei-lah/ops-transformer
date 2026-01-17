@@ -47,171 +47,174 @@ aclnnStatus aclnnMatmulReduceScatter(
 
 ## aclnnMatmulReduceScatterGetWorkspaceSize
 
-**参数说明**
+- **参数说明**
 
-<table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
- <col style="width: 120px">
- <col style="width: 120px">
- <col style="width: 160px">
- <col style="width: 150px">
- <col style="width: 80px">
- </colgroup>
- <thead>
-  <tr>
-   <th>参数名</th>
-   <th>输入/输出</th>
-   <th>描述</th>
-   <th>数据类型</th>
-   <th>数据格式</th>
-  </tr></thead>
- <tbody>
-  <tr>
-   <td>x1</td>
-   <td>输入</td>
-   <td>即计算公式中的x1，数据类型与x2保持一致。当前版本仅支持二维输入，且仅支持不转置场景。</td>
-   <td>FLOAT16、BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>x2</td>
-   <td>输入</td>
-   <td>即计算公式中的x2，数据类型与x1保持一致。支持通过转置构造的非连续的Tensor，当前版本仅支持二维输入。</td>
-   <td>FLOAT16、BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>bias</td>
-   <td>输入</td>
-   <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：暂不支持bias输入为非0的场景。</td>
-   <td>FLOAT16、BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>group</td>
-   <td>输入</td>
-   <td>Host侧标识通信域的字符串，即通信域名称，通过Hccl接口HcclGetCommName获取commName作为该参数。</td>
-   <td>STRING</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>reduceOp</td>
-   <td>输入</td>
-   <td>Host侧的reduce操作类型，当前版本仅支持“sum”。</td>
-   <td>STRING</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>commTurn</td>
-   <td>输入</td>
-   <td>Host侧整型，通信数据切分数（总数据量/单次通信量），当前版本仅支持输入0。</td>
-   <td>INT64</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>streamMode</td>
-   <td>输入</td>
-   <td>Host侧整型，流模式的枚举，当前只支持枚举值1。</td>
-   <td>INT64</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>output</td>
-   <td>输出</td>
-   <td>mm计算+reducescatter通信的结果，数据类型与x1保持一致。</td>
-   <td>FLOAT16、BFLOAT16</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>workspaceSize</td>
-   <td>输出</td>
-   <td>返回需要在Device侧申请的workspace大小。</td>
-   <td>UINT64</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>executor</td>
-   <td>输出</td>
-   <td>返回Op执行器，包含了算子的计算流程。</td>
-   <td>aclOpExecutor*</td>
-   <td>ND</td>
-  </tr>
- </tbody></table>
+    <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
+    <col style="width: 120px">
+    <col style="width: 120px">
+    <col style="width: 160px">
+    <col style="width: 150px">
+    <col style="width: 80px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>参数名</th>
+    <th>输入/输出</th>
+    <th>描述</th>
+    <th>数据类型</th>
+    <th>数据格式</th>
+    </tr></thead>
+    <tbody>
+    <tr>
+    <td>x1</td>
+    <td>输入</td>
+    <td>即计算公式中的x1，数据类型与x2保持一致。当前版本仅支持二维输入，且仅支持不转置场景。</td>
+    <td>FLOAT16、BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>x2</td>
+    <td>输入</td>
+    <td>即计算公式中的x2，数据类型与x1保持一致。支持通过转置构造的非连续的Tensor，当前版本仅支持二维输入。</td>
+    <td>FLOAT16、BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>bias</td>
+    <td>输入</td>
+    <td><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：暂不支持bias输入为非0的场景。</td>
+    <td>FLOAT16、BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>group</td>
+    <td>输入</td>
+    <td>Host侧标识通信域的字符串，即通信域名称，通过Hccl接口HcclGetCommName获取commName作为该参数。</td>
+    <td>STRING</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>reduceOp</td>
+    <td>输入</td>
+    <td>Host侧的reduce操作类型，当前版本仅支持“sum”。</td>
+    <td>STRING</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>commTurn</td>
+    <td>输入</td>
+    <td>Host侧整型，通信数据切分数（总数据量/单次通信量），当前版本仅支持输入0。</td>
+    <td>INT64</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>streamMode</td>
+    <td>输入</td>
+    <td>Host侧整型，流模式的枚举，当前只支持枚举值1。</td>
+    <td>INT64</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>output</td>
+    <td>输出</td>
+    <td>mm计算+reducescatter通信的结果，数据类型与x1保持一致。</td>
+    <td>FLOAT16、BFLOAT16</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>workspaceSize</td>
+    <td>输出</td>
+    <td>返回需要在Device侧申请的workspace大小。</td>
+    <td>UINT64</td>
+    <td>ND</td>
+    </tr>
+    <tr>
+    <td>executor</td>
+    <td>输出</td>
+    <td>返回Op执行器，包含了算子的计算流程。</td>
+    <td>aclOpExecutor*</td>
+    <td>ND</td>
+    </tr>
+    </tbody></table>
 
-**返回值**
-第一段接口完成入参校验，出现以下场景时报错：
+- **返回值**
 
-<table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
- <col style="width: 250px">
- <col style="width: 130px">
- <col style="width: 800px">
- </colgroup>
- <thead>
-  <tr>
-   <th>返回值</th>
-   <th>错误码</th>
-   <th>描述</th>
-  </tr></thead>
- <tbody>
-  <tr>
-   <td>ACLNN_ERR_PARAM_NULLPTR</td>
-   <td>161001</td>
-   <td>1. 传入的x1、x2或output是空指针。</td>
-  </tr>
-  <tr>
-    <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
-    <td rowspan="3">161002</td>
-    <td>x1、x2、bias或output的数据类型不符合约束要求。</td>
-  </tr>
-  <tr>
-    <td>streamMode不在合法范围内。</td>
-  </tr>
-  <tr>
-    <td>x1、x2或output的shape不符合约束要求。</td>
-  </tr>
- </tbody></table>
+    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
+
+    第一段接口完成入参校验，出现以下场景时报错：
+
+    <table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
+    <col style="width: 250px">
+    <col style="width: 130px">
+    <col style="width: 800px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>返回值</th>
+    <th>错误码</th>
+    <th>描述</th>
+    </tr></thead>
+    <tbody>
+    <tr>
+    <td>ACLNN_ERR_PARAM_NULLPTR</td>
+    <td>161001</td>
+    <td>1. 传入的x1、x2或output是空指针。</td>
+    </tr>
+    <tr>
+        <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
+        <td rowspan="3">161002</td>
+        <td>x1、x2、bias或output的数据类型不符合约束要求。</td>
+    </tr>
+    <tr>
+        <td>streamMode不在合法范围内。</td>
+    </tr>
+    <tr>
+        <td>x1、x2或output的shape不符合约束要求。</td>
+    </tr>
+    </tbody></table>
 
 
 ## aclnnMatmulReduceScatter
 
-**参数说明**
+- **参数说明**
 
-<table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
- <col style="width: 250px">
- <col style="width: 130px">
- <col style="width: 800px">
- </colgroup>
- <thead>
-  <tr>
-   <th>参数名</th>
-   <th>输入/输出</th>
-   <th>描述</th>
-  </tr></thead>
- <tbody>
-  <tr>
-   <td>workspace</td>
-   <td>输入</td>
-   <td>在Device侧申请的workspace内存地址。</td>
-  </tr>
-  <tr>
-   <td>workspaceSize</td>
-   <td>输入</td>
-   <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMatmulReduceScatterGetWorkspaceSize</code>获取。</td>
-  </tr>
-  <tr>
-   <td>executor</td>
-   <td>输入</td>
-   <td>op执行器，包含了算子计算流程。</td>
-  </tr>
-  <tr>
-   <td>stream</td>
-   <td>输入</td>
-   <td>指定执行任务的Stream。</td>
-  </tr>
- </tbody></table>
+    <table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
+    <col style="width: 250px">
+    <col style="width: 130px">
+    <col style="width: 800px">
+    </colgroup>
+    <thead>
+    <tr>
+    <th>参数名</th>
+    <th>输入/输出</th>
+    <th>描述</th>
+    </tr></thead>
+    <tbody>
+    <tr>
+    <td>workspace</td>
+    <td>输入</td>
+    <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+    <td>workspaceSize</td>
+    <td>输入</td>
+    <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMatmulReduceScatterGetWorkspaceSize</code>获取。</td>
+    </tr>
+    <tr>
+    <td>executor</td>
+    <td>输入</td>
+    <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+    <td>stream</td>
+    <td>输入</td>
+    <td>指定执行任务的Stream。</td>
+    </tr>
+    </tbody></table>
 
-**返回值**
+- **返回值**
 
-返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 

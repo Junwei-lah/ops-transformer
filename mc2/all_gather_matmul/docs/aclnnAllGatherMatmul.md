@@ -98,7 +98,7 @@ aclnnStatus aclnnAllGatherMatmul(
           <td>bias</td>
           <td>输入</td>
           <td>即计算公式中的bias。</td>
-          <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：暂不支持bias输入为非0的场景。</li></ul></td>
+          <td><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：暂不支持bias输入为非0的场景。</li></ul></td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
           <td>1</td>
@@ -189,7 +189,7 @@ aclnnStatus aclnnAllGatherMatmul(
 
 -   **返回值：**
 
-    返回aclnnStatus状态码，第一段接口完成入参校验，出现以下场景时报错：
+    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
 
     第一段接口会完成入参校验，出现以下场景时报错：
     
@@ -225,7 +225,9 @@ aclnnStatus aclnnAllGatherMatmul(
     </table>
 
 ## aclnnAllGatherMatmul
+
 -   **参数说明：**
+
     <table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
     <col style="width: 250px">
     <col style="width: 130px">
@@ -258,6 +260,7 @@ aclnnStatus aclnnAllGatherMatmul(
         <td>指定执行任务的stream。</td>
     </tr>
     </tbody></table>
+
 -   **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -282,6 +285,7 @@ aclnnStatus aclnnAllGatherMatmul(
 示例代码如下，仅供参考，具体编译和执行过程请参考编译与运行样例。
 
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+
     ```Cpp
     #include <thread>
     #include <iostream>
