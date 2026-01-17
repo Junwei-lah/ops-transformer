@@ -248,7 +248,14 @@ aclnnStatus aclnnGroupedMatmulV5(
           <td>actType</td>
           <td>输入</td>
           <td>代表激活函数类型。</td>
-          <td>取值范围为0-5。综合约束请参见<a href="#约束说明">约束说明</a>。</td>
+          <td>取值范围为0-5。<br>
+            0：GMM_ACT_TYPE_NONE；<br>
+            1：GMM_ACT_TYPE_RELU；<br>
+            2：GMM_ACT_TYPE_GELU_TANH；<br>
+            3：GMM_ACT_TYPE_GELU_ERR_FUNC；<br>
+            4：GMM_ACT_TYPE_FAST_GELU；<br>
+            5：GMM_ACT_TYPE_SILU；<br>
+            综合约束请参见<a href="#约束说明">约束说明</a>。</td>
           <td>-</td>
           <td>-</td>
           <td>-</td>
@@ -512,7 +519,7 @@ aclnnStatus aclnnGroupedMatmulV5(
       |---------|----------------|--------------|--------|------------|----------------|-----------------|---------------|-----------|-----------------|----------------------|-----------------------|---------|
       | INT8 | INT8 (ND) | INT32/null | UINT64 | null | null | null | null | INT64 | null | null | null | INT8 |
       | INT8 | INT8 (ND/NZ) | INT32/null |BFLOAT16| null | null | null | FLOAT/null | INT64 | null | null | null | BFLOAT16|
-      | INT8 | INT8 (ND/NZ) | BFLOAT16/null |FLOAT/BFLOAT16| null | null | null | FLOAT/null | INT64 | null | null | null | BFLOAT16|
+      | INT8 | INT8 (NZ) | BFLOAT16/null |FLOAT/BFLOAT16| null | null | null | FLOAT/null | INT64 | null | null | null | BFLOAT16|
       | INT8 | INT8 (ND/NZ) | INT32/null | FLOAT | null | null | null | FLOAT/null | INT64 | null | null | null | FLOAT16 |
       | INT8 | INT8 (ND/NZ) | INT32/null | null | null | null | null | null | INT64 | null | null | null | INT32 |
 
