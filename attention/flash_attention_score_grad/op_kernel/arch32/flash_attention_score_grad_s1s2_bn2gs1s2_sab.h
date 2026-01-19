@@ -3538,7 +3538,7 @@ FlashAttentionScoreGradS1s2Bn2gs1s2SameAB<FAGT>::SubGrapB(int64_t curIdx, int64_
     }
     AscendC::PipeBarrier<PIPE_V>();
 
-    if (has_sink) { 
+    if (unlikely(has_sink)) {
         AscendC::PipeBarrier<PIPE_ALL>();
         DataCopy(dyvBuffer, vecClc1Buffer,s1ExtendSubGraph * s2ExtendAlign);
         AscendC::PipeBarrier<PIPE_ALL>();
@@ -3608,7 +3608,7 @@ FlashAttentionScoreGradS1s2Bn2gs1s2SameAB<FAGT>::SubGrapB(int64_t curIdx, int64_
         AscendC::SetFlag<HardEvent::MTE3_MTE2>(static_cast<int32_t>(mte2WaitMte3B));
     }
     
-    if (has_sink) {
+    if (unlikely(has_sink)) {
         // SubGrapSink
         AscendC::PipeBarrier<PIPE_V>();
         Mul(dyvBuffer, dyvBuffer, simpleSoftmaxResBuf, s1ExtendSubGraph * s2ExtendAlign);
@@ -3795,7 +3795,7 @@ __aicore__ inline void FlashAttentionScoreGradS1s2Bn2gs1s2SameAB<FAGT>::ComputeV
         GetTPipePtr()->ReleaseEventID<HardEvent::MTE3_MTE2>(mte2WaitMte3A);
         GetTPipePtr()->ReleaseEventID<HardEvent::MTE3_MTE2>(mte2WaitMte3B);
     }
-    if (TilingData->s1s2BNGS1S2BaseParams.sink == 1) {
+    if (unlikely(TilingData->s1s2BNGS1S2BaseParams.sink == 1)) {
         int dsinksumLoc = cSubIdx;
         dsinksumLoc += 2 * dbParam.s2oIdx;
         dsinksumLoc +=  2 * s2Outer * dbParam.s1oIdx;

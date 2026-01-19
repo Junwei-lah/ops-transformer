@@ -1026,7 +1026,7 @@ public:
 
         // reduce dsinksum
 
-        if (tilingData->s1s2BNGS1S2BaseParams.sink == 1) {
+        if (unlikely(tilingData->s1s2BNGS1S2BaseParams.sink == 1)) {
             AscendC::LocalTensor<float> vecIn = inQueue.template AllocTensor<float>();
             AscendC::LocalTensor<float> vecOut = outQueue.template AllocTensor<float>();
             int s1Pad = (tilingData->postTilingData.s1 + 255)/256*256;

@@ -417,7 +417,7 @@ public:
             }
         }
 
-        if (TilingData->s1s2BNGS1S2BaseParams.sink == 1) {
+        if (unlikely(TilingData->s1s2BNGS1S2BaseParams.sink == 1)) {
         int s1Pad = (TilingData->postTilingData.s1 + 255)/256*256;
         int s2Pad = (TilingData->postTilingData.s2 + 255)/256*256; 
         size_t dsinksumSize = TilingData->postTilingData.b * TilingData->postTilingData.n2 * TilingData->postTilingData.g * s1Pad * s2Pad / TilingData->postTilingData.baseMN;
