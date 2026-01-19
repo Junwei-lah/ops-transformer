@@ -145,7 +145,7 @@ aclnnStatus aclnnNsaCompressWithCache(
         <td>PageAttention中KV存储使用的block映射表。</td>
         <td>
           <ul style="list-style-type: circle;">
-            <li>使用该功能可传入nullptr。</li>
+            <li>不使用该功能可传入nullptr。</li>
             <li>blockTableOptional的值不超过blockNum，否则会发生越界。</li>
           </ul>
         </td>
@@ -215,7 +215,7 @@ aclnnStatus aclnnNsaCompressWithCache(
         <td>压缩之后的cache</td>
         <td>数据类型与input保持一致。</td>
         <td>INT64</td>
-        <td>-</td>
+        <td>ND</td>
         <td>[result_len, N, D]</td>
         <td>x</td>
       </tr>
@@ -267,12 +267,15 @@ aclnnStatus aclnnNsaCompressWithCache(
       <td>计算输入和必选计算输出是空指针。</td>
     </tr>
     <tr>
-      <td>ACLNN_ERR_PARAM_INVALID</td>
-      <td>161002</td>
+      <td rowspan="2">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="2">161002</td>
       <td>计算输入和输出的数据类型和格式不在支持的范围内。</td>
     </tr>
     <tr>
-      <td rowspan="6">ACLNN_ERR_RUNTIME_ERROR</td>
+      <td>input、weight、outputCache为空tensor。</td>
+    </tr>
+    <tr>
+      <td rowspan="6">ACLNN_ERR_INNER_TILING_ERROR</td>
       <td rowspan="6">561002</td>
       <td>input和weight不满足broadcast关系，即input的第三维大小与weight的第二维大小不相等。</td>
     </tr>
