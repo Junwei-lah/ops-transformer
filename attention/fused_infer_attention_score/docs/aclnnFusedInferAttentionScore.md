@@ -958,11 +958,11 @@ int main()
     int32_t sequenceLengthQ = 1;
     int32_t sequenceLengthKV = 512;
     int32_t headDims = 128;
-    std::vector<int64_t> queryShape = {batchSize, numHeads, sequenceLengthQ, headDims};          // BNSD
-    std::vector<int64_t> keyShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};   // BNSD
-    std::vector<int64_t> valueShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims}; // BNSD
-    std::vector<int64_t> attenMaskShape = {batchSize, 1, 1, sequenceLengthKV};                       // B11S
-    std::vector<int64_t> outShape = {batchSize, numHeads, sequenceLengthQ, headDims};            // BNSD
+    std::vector<int64_t> queryShape = {batchSize, numHeads, sequenceLengthQ, headDims};           // BNSD
+    std::vector<int64_t> keyShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};    // BNSD
+    std::vector<int64_t> valueShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};  // BNSD
+    std::vector<int64_t> attenMaskShape = {batchSize, 1, sequenceLengthQ, sequenceLengthKV};      // B 1 S1 S2
+    std::vector<int64_t> outShape = {batchSize, numHeads, sequenceLengthQ, headDims};             // BNSD
     void* queryDeviceAddr = nullptr;
     void* keyDeviceAddr = nullptr;
     void* valueDeviceAddr = nullptr;
@@ -973,11 +973,16 @@ int main()
     aclTensor* valueTensor = nullptr;
     aclTensor* attenMaskTensor = nullptr;
     aclTensor* outTensor = nullptr;
-    std::vector<op::fp16_t> queryHostData(batchSize * numHeads * sequenceLengthQ * headDims, 1.0);
-    std::vector<op::fp16_t> keyHostData(batchSize * numKeyValueHeads * sequenceLengthKV * headDims, 1.0);
-    std::vector<op::fp16_t> valueHostData(batchSize * numKeyValueHeads * sequenceLengthKV * headDims, 1.0);
-    std::vector<int8_t> attenMaskHostData(batchSize * sequenceLengthKV, 0);
-    std::vector<op::fp16_t> outHostData(batchSize * numHeads * sequenceLengthQ * headDims, 1.0);
+    int64_t queryShapeSize = GetShapeSize(queryShape);          // BNSD
+    int64_t keyShapeSize = GetShapeSize(keyShape);              // BNSD
+    int64_t valueShapeSize = GetShapeSize(valueShape);          // BNSD
+    int64_t attenMaskShapeSize = GetShapeSize(attenMaskShape);  // B 1 S1 S2
+    int64_t outShapeSize = GetShapeSize(outShape);              // BNSD
+    std::vector<op::fp16_t> queryHostData(queryShapeSize, 1.0);
+    std::vector<op::fp16_t> keyHostData(keyShapeSize, 1.0);
+    std::vector<op::fp16_t> valueHostData(valueShapeSize, 1.0);
+    std::vector<int8_t> attenMaskHostData(attenMaskShapeSize, 0);
+    std::vector<op::fp16_t> outHostData(outShapeSize, 1.0);
 
     // 创建query aclTensor
     ret = CreateAclTensor(queryHostData, queryShape, &queryDeviceAddr, aclDataType::ACL_FLOAT16, &queryTensor);

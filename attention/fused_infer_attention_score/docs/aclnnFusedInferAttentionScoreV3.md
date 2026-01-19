@@ -1362,28 +1362,33 @@ int main() {
   int32_t numHeads = 2;
   int32_t sequenceLengthQ = 1;
   int32_t headDims = 16;
-  int32_t keyNumHeads = 2;
+  int32_t numKeyValueHeads = 2;
   int32_t sequenceLengthKV = 16;
-  std::vector<int64_t> queryShape = {batchSize, numHeads, sequenceLengthQ, headDims}; // BNSD
-  std::vector<int64_t> keyShape = {batchSize, keyNumHeads, sequenceLengthKV, headDims}; // BNSD
-  std::vector<int64_t> valueShape = {batchSize, keyNumHeads, sequenceLengthKV, headDims}; // BNSD
-  std::vector<int64_t> attenShape = {batchSize, 1, 1, sequenceLengthKV}; // B11S
-  std::vector<int64_t> outShape = {batchSize, numHeads, sequenceLengthQ, headDims}; // BNSD
+  std::vector<int64_t> queryShape = {batchSize, numHeads, sequenceLengthQ, headDims};           // BNSD
+  std::vector<int64_t> keyShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};    // BNSD
+  std::vector<int64_t> valueShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};  // BNSD
+  std::vector<int64_t> attenMaskShape = {batchSize, 1, sequenceLengthQ, sequenceLengthKV};      // B 1 S1 S2
+  std::vector<int64_t> outShape = {batchSize, numHeads, sequenceLengthQ, headDims};             // BNSD
   void *queryDeviceAddr = nullptr;
   void *keyDeviceAddr = nullptr;
   void *valueDeviceAddr = nullptr;
-  void *attenDeviceAddr = nullptr;
+  void *attenMaskDeviceAddr = nullptr;
   void *outDeviceAddr = nullptr;
   aclTensor *queryTensor = nullptr;
   aclTensor *keyTensor = nullptr;
   aclTensor *valueTensor = nullptr;
-  aclTensor *attenTensor = nullptr;
+  aclTensor *attenMaskTensor = nullptr;
   aclTensor *outTensor = nullptr;
-  std::vector<float> queryHostData(batchSize * numHeads * sequenceLengthQ * headDims, 1.0f);
-  std::vector<float> keyHostData(batchSize * keyNumHeads * sequenceLengthKV * headDims, 1.0f);
-  std::vector<float> valueHostData(batchSize * keyNumHeads * sequenceLengthKV * headDims, 1.0f);
-  std::vector<int8_t> attenHostData(batchSize * sequenceLengthKV, 0);
-  std::vector<float> outHostData(batchSize * numHeads * sequenceLengthQ * headDims, 1.0f);
+  int64_t queryShapeSize = GetShapeSize(queryShape);          // BNSD
+  int64_t keyShapeSize = GetShapeSize(keyShape);              // BNSD
+  int64_t valueShapeSize = GetShapeSize(valueShape);          // BNSD
+  int64_t attenMaskShapeSize = GetShapeSize(attenMaskShape);  // B 1 S1 S2
+  int64_t outShapeSize = GetShapeSize(outShape);              // BNSD
+  std::vector<op::fp16_t> queryHostData(queryShapeSize, 1.0f);
+  std::vector<op::fp16_t> keyHostData(keyShapeSize, 1.0f);
+  std::vector<op::fp16_t> valueHostData(valueShapeSize, 1.0f);
+  std::vector<int8_t> attenMaskHostData(attenMaskShapeSize, 0);
+  std::vector<op::fp16_t> outHostData(outShapeSize, 1.0f);
 
   // 创建query aclTensor
   ret = CreateAclTensor(queryHostData, queryShape, &queryDeviceAddr, aclDataType::ACL_FLOAT16, &queryTensor);
@@ -1401,8 +1406,8 @@ int main() {
   aclTensor *tensorsOfValue[kvTensorNum];
   tensorsOfValue[0] = valueTensor;
   auto tensorValueList = aclCreateTensorList(tensorsOfValue, kvTensorNum);
-  // 创建atten aclTensor
-  ret = CreateAclTensor(attenHostData, attenShape, &attenDeviceAddr, aclDataType::ACL_BOOL, &attenTensor);
+  // 创建attenMask aclTensor
+  ret = CreateAclTensor(attenMaskHostData, attenMaskShape, &attenMaskDeviceAddr, aclDataType::ACL_BOOL, &attenMaskTensor);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
   // 创建out aclTensor
   ret = CreateAclTensor(outHostData, outShape, &outDeviceAddr, aclDataType::ACL_FLOAT16, &outTensor);
@@ -1411,7 +1416,6 @@ int main() {
   std::vector<int64_t> actualSeqlenVector = {sequenceLengthKV};
   auto actualSeqLengths = aclCreateIntArray(actualSeqlenVector.data(), actualSeqlenVector.size());
 
-  int64_t numKeyValueHeads = numHeads;
   double scaleValue = 1 / sqrt(headDims); // 1/sqrt(d)
   int64_t preTokens = 65535;
   int64_t nextTokens = 65535;
@@ -1459,13 +1463,13 @@ int main() {
   aclDestroyTensor(queryTensor);
   aclDestroyTensor(keyTensor);
   aclDestroyTensor(valueTensor);
-  aclDestroyTensor(attenTensor);
+  aclDestroyTensor(attenMaskTensor);
   aclDestroyTensor(outTensor);
   aclDestroyIntArray(actualSeqLengths);
   aclrtFree(queryDeviceAddr);
   aclrtFree(keyDeviceAddr);
   aclrtFree(valueDeviceAddr);
-  aclrtFree(attenDeviceAddr);
+  aclrtFree(attenMaskDeviceAddr);
   aclrtFree(outDeviceAddr);
   if (workspaceSize > 0) {
       aclrtFree(workspaceAddr);

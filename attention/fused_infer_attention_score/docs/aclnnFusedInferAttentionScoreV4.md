@@ -2139,31 +2139,37 @@ int main() {
     }
 
     // 2. To construct input and output, it is necessary to customize the construction according to the API interface.
-    std::vector<int64_t> queryShape = {1, 2, 1, 16}; // BNSD
-    std::vector<int64_t> keyShape = {1, 2, 2, 16};   // BNSD
-    std::vector<int64_t> valueShape = {1, 2, 2, 16}; // BNSD
-    std::vector<int64_t> attenShape = {1, 1, 1, 2};  // B 1 S1 S2
-    std::vector<int64_t> outShape = {1, 2, 1, 16};   // BNSD
+    int32_t batchSize = 1;
+    int32_t numHeads = 2;
+    int32_t sequenceLengthQ = 1;
+    int32_t headDims = 16;
+    int32_t numKeyValueHeads = 2;
+    int32_t sequenceLengthKV = 16;
+    std::vector<int64_t> queryShape = {batchSize, numHeads, sequenceLengthQ, headDims};           // BNSD
+    std::vector<int64_t> keyShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};    // BNSD
+    std::vector<int64_t> valueShape = {batchSize, numKeyValueHeads, sequenceLengthKV, headDims};  // BNSD
+    std::vector<int64_t> attenMaskShape = {batchSize, 1, sequenceLengthQ, sequenceLengthKV};      // B 1 S1 S2
+    std::vector<int64_t> outShape = {batchSize, numHeads, sequenceLengthQ, headDims};             // BNSD
     void *queryDeviceAddr = nullptr;
     void *keyDeviceAddr = nullptr;
     void *valueDeviceAddr = nullptr;
-    void *attenDeviceAddr = nullptr;
+    void *attenMaskDeviceAddr = nullptr;
     void *outDeviceAddr = nullptr;
     aclTensor *queryTensor = nullptr;
     aclTensor *keyTensor = nullptr;
     aclTensor *valueTensor = nullptr;
-    aclTensor *attenTensor = nullptr;
+    aclTensor *attenMaskTensor = nullptr;
     aclTensor *outTensor = nullptr;
-    int64_t queryShapeSize = GetShapeSize(queryShape); // BNSD
-    int64_t keyShapeSize = GetShapeSize(keyShape);     // BNSD
-    int64_t valueShapeSize = GetShapeSize(valueShape); // BNSD
-    int64_t attenShapeSize = GetShapeSize(attenShape); // B 1 S1 S2
-    int64_t outShapeSize = GetShapeSize(outShape);     // BNSD
-    std::vector<float> queryHostData(queryShapeSize, 1);
-    std::vector<float> keyHostData(keyShapeSize, 1);
-    std::vector<float> valueHostData(valueShapeSize, 1);
-    std::vector<float> attenHostData(attenShapeSize, 1);
-    std::vector<float> outHostData(outShapeSize, 1);
+    int64_t queryShapeSize = GetShapeSize(queryShape);          // BNSD
+    int64_t keyShapeSize = GetShapeSize(keyShape);              // BNSD
+    int64_t valueShapeSize = GetShapeSize(valueShape);          // BNSD
+    int64_t attenMaskShapeSize = GetShapeSize(attenMaskShape);  // B 1 S1 S2
+    int64_t outShapeSize = GetShapeSize(outShape);              // BNSD
+    std::vector<op::fp16_t> queryHostData(queryShapeSize, 1);
+    std::vector<op::fp16_t> keyHostData(keyShapeSize, 1);
+    std::vector<op::fp16_t> valueHostData(valueShapeSize, 1);
+    std::vector<int8_t> attenMaskHostData(attenMaskShapeSize, 1);
+    std::vector<op::fp16_t> outHostData(outShapeSize, 1);
 
     // Create query aclTensor.
     ret = CreateAclTensor(queryHostData, queryShape, &queryDeviceAddr, aclDataType::ACL_FLOAT16, &queryTensor);
@@ -2187,8 +2193,8 @@ int main() {
     aclTensor *tensorsOfValue[kvTensorNum];
     tensorsOfValue[0] = valueTensor;
     auto tensorValueList = aclCreateTensorList(tensorsOfValue, kvTensorNum);
-    // Create atten aclTensor.
-    ret = CreateAclTensor(attenHostData, attenShape, &attenDeviceAddr, aclDataType::ACL_BOOL, &attenTensor);
+    // Create attenMask aclTensor.
+    ret = CreateAclTensor(attenMaskHostData, attenMaskShape, &attenMaskDeviceAddr, aclDataType::ACL_BOOL, &attenMaskTensor);
     if (!CHECK_RET(ret == ACL_SUCCESS)) {
         return ret;
     }
@@ -2200,8 +2206,7 @@ int main() {
 
     std::vector<int64_t> actualSeqlenVector = {2};
     auto actualSeqLengths = aclCreateIntArray(actualSeqlenVector.data(), actualSeqlenVector.size());
-    int64_t numHeads = 2; // N
-    int64_t numKeyValueHeads = numHeads;
+    
     double scaleValue = 1 / sqrt(2); // 1/sqrt(d)
     int64_t preTokens = 2147483647;
     int64_t nextTokens = 2147483647;
@@ -2269,13 +2274,13 @@ int main() {
     aclDestroyTensor(queryTensor);
     aclDestroyTensor(keyTensor);
     aclDestroyTensor(valueTensor);
-    aclDestroyTensor(attenTensor);
+    aclDestroyTensor(attenMaskTensor);
     aclDestroyTensor(outTensor);
     aclDestroyIntArray(actualSeqLengths);
     aclrtFree(queryDeviceAddr);
     aclrtFree(keyDeviceAddr);
     aclrtFree(valueDeviceAddr);
-    aclrtFree(attenDeviceAddr);
+    aclrtFree(attenMaskDeviceAddr);
     aclrtFree(outDeviceAddr);
     if (workspaceSize > 0U) {
         aclrtFree(workspaceAddr);
