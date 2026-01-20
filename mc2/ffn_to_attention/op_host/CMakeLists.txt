@@ -11,7 +11,11 @@ if (BUILD_OPEN_PROJECT)  # custom
     target_sources(op_host_aclnnInner PRIVATE
         ffn_to_attention_def.cpp
     )
-    add_mc2_modules_sources(OPTYPE ffn_to_attention ffn_to_attention ACLNNTYPE aclnn aclnn_inner)
+    add_modules_sources(
+ 	         OP_API_INDEPENDENT ON 
+ 	         OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
+ 	         OP_MC2_ENABLE ON 
+ 	         OPTYPE ffn_to_attention ffn_to_attention ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(ffn_to_attention_depends mc2/common mc2/3rd PARENT_SCOPE)
