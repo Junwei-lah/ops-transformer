@@ -94,7 +94,7 @@ public:
         aclnnStatus aclRet = utTest(nullIdx);
         bool pass = false;
         if ((nullIdx == 0 || nullIdx == 10 || nullIdx == 8) && validIdx == 0) {
-            pass = (ACLNN_ERR_INNER_NULLPTR == aclRet || ACLNN_SUCCESS);
+            pass = (ACLNN_SUCCESS == aclRet);
         } else {
             pass = (ACLNN_ERR_PARAM_INVALID == aclRet);
         }
