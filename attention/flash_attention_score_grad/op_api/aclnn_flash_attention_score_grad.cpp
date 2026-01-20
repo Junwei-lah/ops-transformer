@@ -1843,6 +1843,13 @@ static aclnnStatus FlashAttentionScoreGradV5GetWorkspace(
     // 检查除sink外tensor维度是否大于2且sink维度为1
     auto ret = InvalidTensorDimCheck(query, queryRope, key, keyRope, value, dy, attentionInOptional, dqOut, dqRopeOut, dkOut, dkRopeOut, dvOut, sinkInOptional, dsinkOut);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    if (sinkInOptional != nullptr) {
+        auto queryDtype = query->GetDataType();
+        if (queryDtype == ge::DataType::DT_FLOAT) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "query input and output of FAG with sinkInOptional do not support tensor with datatype Float32.");
+            return ACLNN_ERR_PARAM_INVALID;
+        }
+    }
     // 获取基本参数
     FagInShapeInfo fagShape;
     ret = GetInputShapeInfo(query, key, value, headNum, inputLayout, fagShape, actualSeqQLenOptional, 
