@@ -102,9 +102,12 @@ else ()
     ${TOP_DIR}/ops-base/pkg_inc/aicpu_common/context/common
     ${TOP_DIR}/ops-base/pkg_inc/aicpu_common/context/utils
     ${TOP_DIR}/ops-base/pkg_inc/aicpu_common/context/cpu_proto
+    ${TOP_DIR}/air/inc/graph_metadef/external
+    ${TOP_DIR}/air/inc/graph_metadef
     ${TOP_DIR}/metadef/inc/external
     ${TOP_DIR}/metadef/inc
     ${TOP_DIR}/abl/slog/inc/toolchain
+    ${TOP_DIR}/air/inc/graph_metadef/external/base
     ${TOP_DIR}/metadef/inc/external/base
     ${TOP_DIR}/abl/slog/inc
   )
