@@ -479,9 +479,17 @@ public:
     uint32_t get_isBSNDOut() const { return this->isBSNDOut; }
     void set_isBSNDOut(uint32_t isBSNDOutParam) { this->isBSNDOut = isBSNDOutParam; }
 
-    uint32_t tSize = 0;
-    uint32_t get_tSize() const { return this->tSize; }
-    void set_tSize(uint32_t tSizeParam) { this->tSize = tSizeParam; }
+    uint32_t isTNDOut = 0;
+    uint32_t get_isTNDOut() const { return this->isTNDOut; }
+    void set_isTNDOut(uint32_t isTNDOutParam) { this->isTNDOut = isTNDOutParam; }
+
+    int64_t t1Size = 0;
+    int64_t get_t1Size() const { return this->t1Size; }
+    void set_t1Size(int64_t t1SizeParam) { this->t1Size = t1SizeParam; }
+
+    int64_t t2Size = 0;
+    int64_t get_t2Size() const { return this->t2Size; }
+    void set_t2Size(int64_t t2SizeParam) { this->t2Size = t2SizeParam; }
 
     uint32_t isIFA = 0;
     uint32_t get_isIFA() const { return this->isIFA; }

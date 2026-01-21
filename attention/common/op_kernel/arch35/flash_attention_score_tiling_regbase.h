@@ -61,7 +61,8 @@ public:
 class InputParamsRegbase {
 public:
     int64_t bSize;
-    uint32_t tSize;
+    int64_t t1Size;
+    int64_t t2Size;
     int64_t n2Size;
     int64_t gSize;
     int64_t s1Size;
@@ -112,6 +113,7 @@ public:
     uint8_t isKvContinuous;
     uint8_t fromFused;
     uint8_t isBSNDOut;
+    uint8_t isTNDOut;
     uint8_t isGqa;
     uint8_t isSoftMaxLseEnable;
     uint8_t isActualSharedPrefixLenNull;
@@ -137,8 +139,10 @@ public:
 
     int64_t get_bSize() const {return bSize;}
     void set_bSize(int64_t bSizeParam) {this->bSize = bSizeParam;}
-    int64_t get_tSize() const {return tSize;}
-    void set_tSize(int64_t tSizeParam) {this->tSize = tSizeParam;}
+    int64_t get_t1Size() const {return t1Size;}
+    void set_t1Size(int64_t t1SizeParam) {this->t1Size = t1SizeParam;}
+    int64_t get_t2Size() const {return t2Size;}
+    void set_t2Size(int64_t t2SizeParam) {this->t2Size = t2SizeParam;}
     int64_t get_n2Size() const {return n2Size;}
     void set_n2Size(int64_t n2SizeParam) {this->n2Size = n2SizeParam;}
     int64_t get_gSize() const {return gSize;}
@@ -235,6 +239,8 @@ public:
     void set_fromFused(uint8_t fromFusedParam) {this->fromFused = fromFusedParam;}
     uint8_t get_isBSNDOut() const {return isBSNDOut;}
     void set_isBSNDOut(uint8_t isBSNDOutParam) {this->isBSNDOut = isBSNDOutParam;}
+    uint8_t get_isTNDOut() const {return isTNDOut;}
+    void set_isTNDOut(uint8_t isTNDOutParam) {this->isTNDOut = isTNDOutParam;}
     uint8_t get_isGqa() const {return isGqa;}
     void set_isGqa(uint8_t isGqaParam) {this->isGqa = isGqaParam;}
     uint8_t get_isSoftMaxLseEnable() const {return isSoftMaxLseEnable;}

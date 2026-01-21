@@ -433,15 +433,15 @@ __aicore__ inline void LoopSOuterOffsetInit(RunParamStr<isInfer>& runParam, cons
                     runParam.attentionOutOffset = attentionOutSeqOffset + runParam.n2oIdx * constInfo.gDv * actualSeqLen +	
                         runParam.sOuterOffset * constInfo.dSizeV;
             } else {
-                if (constInfo.isBSNDOut == 1 || layout == LayOutTypeEnum::LAYOUT_BSH || layout == LayOutTypeEnum::LAYOUT_TND) {
+                if (constInfo.isBSNDOut == 1 || constInfo.isTNDOut == 1 || layout == LayOutTypeEnum::LAYOUT_BSH || layout == LayOutTypeEnum::LAYOUT_TND) {
                     runParam.attentionOutOffset = attentionOutSeqOffset + runParam.queryLeftPaddingSize * constInfo.n2GDv +
                         runParam.sOuterOffset * constInfo.n2GDv + runParam.n2oIdx * constInfo.gDv +
                         runParam.goIdx * constInfo.dSizeV;
                 } else if constexpr (layout == LayOutTypeEnum::LAYOUT_NTD) {
                     attentionOutSeqOffset = seqOffset * constInfo.dSizeV;
                     runParam.attentionOutOffset = attentionOutSeqOffset + runParam.queryLeftPaddingSize * constInfo.dSizeV + // b
-                        runParam.n2oIdx * constInfo.tSize * constInfo.gDv + // n
-                        runParam.goIdx * constInfo.tSize * constInfo.dSizeV + // g
+                        runParam.n2oIdx * constInfo.t1Size * constInfo.gDv + // n
+                        runParam.goIdx * constInfo.t1Size * constInfo.dSizeV + // g
                         runParam.sOuterOffset * constInfo.dSizeV; // s1
                 } else {
                     runParam.attentionOutOffset = attentionOutSeqOffset + runParam.n2oIdx * constInfo.gS1Dv +

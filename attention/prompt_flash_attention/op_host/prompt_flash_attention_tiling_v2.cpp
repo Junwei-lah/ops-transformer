@@ -345,7 +345,7 @@ bool PromptFlashAttentionTilingV2::SetInputLayout(const char* layout) {
         inputLayout = InputLayout::BSH;
     } else if (layoutStr == "TND") {
         inputLayout = InputLayout::TND;
-    } else if (layoutStr == "NTD") {
+    } else if (layoutStr == "NTD" || layoutStr == "NTD_TND") {
         inputLayout = InputLayout::NTD;
     } else if (layoutStr == "BSND") {
         inputLayout = InputLayout::BSND;
@@ -607,6 +607,14 @@ bool PromptFlashAttentionTilingV2::CheckQueryOutParamsConsistency(const ContextP
                 tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
                 outDim = outShape->GetStorageShape().GetDim(i + 1);
             } else if (i == 2) { // 2 for current queryDimNum; Q:N, Output:S
+                tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
+                outDim = outShape->GetStorageShape().GetDim(i - 1);
+            }
+        } else if (layoutStr == "NTD_TND") {
+            if (i == 0) { // query:N, output:S
+                tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
+                outDim = outShape->GetStorageShape().GetDim(i + 1);
+            } else if (i == 1) { // 1 for current queryDimNum; Q:S, Output:N
                 tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
                 outDim = outShape->GetStorageShape().GetDim(i - 1);
             }
@@ -908,6 +916,8 @@ bool PromptFlashAttentionTilingV2::CheckPerblockQuantParams(const ContextParamsF
     const size_t dequeryDim = dequantScaleQueryShape->GetStorageShape().GetDimNum();
     const size_t dekeyDim = keyAntiquantScaleShape->GetStorageShape().GetDimNum();
     const size_t devalueDim = valueAntiquantScaleshape->GetStorageShape().GetDimNum();
+    constexpr uint32_t fp8QBlockSize = 128U; // 128 is SOuterSize
+    constexpr uint32_t fp8KVBlockSize = 256U; // 256 is SInnerSize
     // When PA and tensorlist are enable, they may affect the shape parsing of query, key and value,
     OP_CHECK_IF(enablePA, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
         "PA is not supported in per-block quant scenario!"),
@@ -926,9 +936,9 @@ bool PromptFlashAttentionTilingV2::CheckPerblockQuantParams(const ContextParamsF
             "now dequantScaleQuery's type is %s, KeyAntiquantScale's type is %s, valueAntiquantScale's type is %s.",
             GetPfaDataTypeStr(dequantScaleQueryType).c_str(), GetPfaDataTypeStr(KeyAntiquantScaleType).c_str(), GetPfaDataTypeStr(valueAntiquantScaleType).c_str()),
         return false);
-    OP_CHECK_IF((inputLayout == InputLayout::TND || inputLayout == InputLayout::NTD),
+    OP_CHECK_IF((inputLayout == InputLayout::TND),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "In per-block quant scenario, the layout TND/NTD is not supported."),
+            "In per-block quant scenario, the layout TND is not supported."),
         return false);
     OP_CHECK_IF((queryShapeInfo.d > 128) || (keyShapeInfo.d > 128) || (valueShapeInfo.d > 128), // 128 is the limit for d.
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
@@ -940,42 +950,78 @@ bool PromptFlashAttentionTilingV2::CheckPerblockQuantParams(const ContextParamsF
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "dequantScaleQuery, keyAntiquantScale or valueAntiquantScale is nullptr in per-block quant scenario."),
         return false); 
-    OP_CHECK_IF((dequeryDim != 4) || (dekeyDim != 4) || (devalueDim != 4),   // 4 is the number of dimensions of the dequant scale.
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "dequantscale's dim must be 4 in per-block quant scenario," 
-            "now dequantScaleQuery's dim is %zu, keyAntiquantScale's dim is %zu, valueAntiquantScale's dim is %zu.",
-            dequeryDim, dekeyDim, devalueDim),
-        return false);
-    OP_CHECK_IF((dequantScaleQueryShape->GetStorageShape().GetDim(0) != queryShapeInfo.b) ||
-                (dequantScaleQueryShape->GetStorageShape().GetDim(1) != queryShapeInfo.n) ||
-                (dequantScaleQueryShape->GetStorageShape().GetDim(2) != CeilDivision(queryShapeInfo.s, 128U)) ||   // 2 is the dim of dequantscale along s1, 128 is SOuterSize.
-                (dequantScaleQueryShape->GetStorageShape().GetDim(3) != 1U),  // 3 is the dim of dequantscale along d.
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "dequantScaleQueryShape must be [%u, %u, %u, %u] in per-block quant scenario, now is  [%u, %u, %u, %u].",
-            queryShapeInfo.b, queryShapeInfo.n, CeilDivision(queryShapeInfo.s, 128U), 1,
-            dequantScaleQueryShape->GetStorageShape().GetDim(0), dequantScaleQueryShape->GetStorageShape().GetDim(1),
-            dequantScaleQueryShape->GetStorageShape().GetDim(2), dequantScaleQueryShape->GetStorageShape().GetDim(3)),
-        return false); 
-    OP_CHECK_IF((keyAntiquantScaleShape->GetStorageShape().GetDim(0) != keyShapeInfo.b) ||
-                (keyAntiquantScaleShape->GetStorageShape().GetDim(1) != keyShapeInfo.n) ||
-                (keyAntiquantScaleShape->GetStorageShape().GetDim(2) != CeilDivision(keyShapeInfo.s, 256U)) || //  2 is the dim of dequantscale along s2, 256 is SInnerSize.
-                (keyAntiquantScaleShape->GetStorageShape().GetDim(3) != 1U), // 3 is the dim of dequantscale along d.
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "keyAntiquantScaleShape must be [%u, %u, %u, %u] in per-block quant scenario, now is [%u, %u, %u, %u].",
-            keyShapeInfo.b, keyShapeInfo.n, CeilDivision(keyShapeInfo.s, 256U), 1,
-            keyAntiquantScaleShape->GetStorageShape().GetDim(0), keyAntiquantScaleShape->GetStorageShape().GetDim(1),
-            keyAntiquantScaleShape->GetStorageShape().GetDim(2), keyAntiquantScaleShape->GetStorageShape().GetDim(3)),
-        return false);
-    OP_CHECK_IF((valueAntiquantScaleshape->GetStorageShape().GetDim(0) != valueShapeInfo.b) ||
-                (valueAntiquantScaleshape->GetStorageShape().GetDim(1) != valueShapeInfo.n) ||
-                (valueAntiquantScaleshape->GetStorageShape().GetDim(2) != CeilDivision(valueShapeInfo.s, 256U)) || // 2 is the dim of dequantscale along s2, 256 is SInnerSize.
-                (valueAntiquantScaleshape->GetStorageShape().GetDim(3) != 1U), // 3 is the dim of dequantscale along d.
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "valueAntiquantScaleshape must be [%u, %u, %u, %u] in per-block quant scenario, now is [%u, %u, %u, %u].",
-            valueShapeInfo.b, valueShapeInfo.n, CeilDivision(valueShapeInfo.s, 256U), 1,
-            valueAntiquantScaleshape->GetStorageShape().GetDim(0), valueAntiquantScaleshape->GetStorageShape().GetDim(1),
-            valueAntiquantScaleshape->GetStorageShape().GetDim(2), valueAntiquantScaleshape->GetStorageShape().GetDim(3)),
-        return false); 
+    if (inputLayout == InputLayout::NTD) {
+        OP_CHECK_IF((dequeryDim != 3) || (dekeyDim != 3) || (devalueDim != 3),   // 3 is the number of dimensions of the dequant scale.
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "When layout is NTD, dequantscale's dim must be 3 in per-block quant scenario," 
+                "now dequantScaleQuery's dim is %zu, keyAntiquantScale's dim is %zu, valueAntiquantScale's dim is %zu.",
+                dequeryDim, dekeyDim, devalueDim),
+            return false);
+        OP_CHECK_IF((dequantScaleQueryShape->GetStorageShape().GetDim(0) != queryShapeInfo.n) ||
+                    (dequantScaleQueryShape->GetStorageShape().GetDim(1) != queryShapeInfo.t / fp8QBlockSize + queryShapeInfo.b) ||
+                    (dequantScaleQueryShape->GetStorageShape().GetDim(2) != CeilDivision(queryShapeInfo.d, fp8KVBlockSize)),
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "When layout is NTD, dequantScaleQueryShape must be [%u, %u, %u] in per-block quant scenario, now is  [%u, %u, %u].",
+                queryShapeInfo.n, queryShapeInfo.t / fp8QBlockSize + queryShapeInfo.b, CeilDivision(queryShapeInfo.d, fp8KVBlockSize),
+                dequantScaleQueryShape->GetStorageShape().GetDim(0), dequantScaleQueryShape->GetStorageShape().GetDim(1),
+                dequantScaleQueryShape->GetStorageShape().GetDim(2)),
+            return false); 
+        OP_CHECK_IF((keyAntiquantScaleShape->GetStorageShape().GetDim(0) != keyShapeInfo.n) ||
+                    (keyAntiquantScaleShape->GetStorageShape().GetDim(1) != keyShapeInfo.t / fp8KVBlockSize + keyShapeInfo.b) ||
+                    (keyAntiquantScaleShape->GetStorageShape().GetDim(2) != CeilDivision(keyShapeInfo.d, fp8KVBlockSize)),
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "When layout is NTD, keyAntiquantScaleShape must be [%u, %u, %u] in per-block quant scenario, now is [%u, %u, %u].",
+                keyShapeInfo.n, keyShapeInfo.t / fp8KVBlockSize + keyShapeInfo.b, CeilDivision(keyShapeInfo.d, fp8KVBlockSize),
+                keyAntiquantScaleShape->GetStorageShape().GetDim(0), keyAntiquantScaleShape->GetStorageShape().GetDim(1),
+                keyAntiquantScaleShape->GetStorageShape().GetDim(2)),
+            return false);
+        OP_CHECK_IF((valueAntiquantScaleshape->GetStorageShape().GetDim(0) != valueShapeInfo.n) ||
+                    (valueAntiquantScaleshape->GetStorageShape().GetDim(1) != valueShapeInfo.t / fp8KVBlockSize + valueShapeInfo.b) ||
+                    (valueAntiquantScaleshape->GetStorageShape().GetDim(2) != CeilDivision(valueShapeInfo.d, fp8KVBlockSize)),
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "When layout is NTD, valueAntiquantScaleshape must be [%u, %u, %u] in per-block quant scenario, now is [%u, %u, %u].",
+                valueShapeInfo.n, valueShapeInfo.t / fp8KVBlockSize + valueShapeInfo.b, CeilDivision(valueShapeInfo.d, fp8KVBlockSize),
+                valueAntiquantScaleshape->GetStorageShape().GetDim(0), valueAntiquantScaleshape->GetStorageShape().GetDim(1),
+                valueAntiquantScaleshape->GetStorageShape().GetDim(2)),
+            return false);
+    } else {
+        OP_CHECK_IF((dequeryDim != 4) || (dekeyDim != 4) || (devalueDim != 4),   // 4 is the number of dimensions of the dequant scale.
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "dequantscale's dim must be 4 in per-block quant scenario," 
+                "now dequantScaleQuery's dim is %zu, keyAntiquantScale's dim is %zu, valueAntiquantScale's dim is %zu.",
+                dequeryDim, dekeyDim, devalueDim),
+            return false);
+        OP_CHECK_IF((dequantScaleQueryShape->GetStorageShape().GetDim(0) != queryShapeInfo.b) ||
+                    (dequantScaleQueryShape->GetStorageShape().GetDim(1) != queryShapeInfo.n) ||
+                    (dequantScaleQueryShape->GetStorageShape().GetDim(2) != CeilDivision(queryShapeInfo.s, 128U)) ||   // 2 is the dim of dequantscale along s1, 128 is SOuterSize.
+                    (dequantScaleQueryShape->GetStorageShape().GetDim(3) != 1U),  // 3 is the dim of dequantscale along d.
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "dequantScaleQueryShape must be [%u, %u, %u, %u] in per-block quant scenario, now is  [%u, %u, %u, %u].",
+                queryShapeInfo.b, queryShapeInfo.n, CeilDivision(queryShapeInfo.s, 128U), 1,
+                dequantScaleQueryShape->GetStorageShape().GetDim(0), dequantScaleQueryShape->GetStorageShape().GetDim(1),
+                dequantScaleQueryShape->GetStorageShape().GetDim(2), dequantScaleQueryShape->GetStorageShape().GetDim(3)),
+            return false); 
+        OP_CHECK_IF((keyAntiquantScaleShape->GetStorageShape().GetDim(0) != keyShapeInfo.b) ||
+                    (keyAntiquantScaleShape->GetStorageShape().GetDim(1) != keyShapeInfo.n) ||
+                    (keyAntiquantScaleShape->GetStorageShape().GetDim(2) != CeilDivision(keyShapeInfo.s, 256U)) || //  2 is the dim of dequantscale along s2, 256 is SInnerSize.
+                    (keyAntiquantScaleShape->GetStorageShape().GetDim(3) != 1U), // 3 is the dim of dequantscale along d.
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "keyAntiquantScaleShape must be [%u, %u, %u, %u] in per-block quant scenario, now is [%u, %u, %u, %u].",
+                keyShapeInfo.b, keyShapeInfo.n, CeilDivision(keyShapeInfo.s, 256U), 1,
+                keyAntiquantScaleShape->GetStorageShape().GetDim(0), keyAntiquantScaleShape->GetStorageShape().GetDim(1),
+                keyAntiquantScaleShape->GetStorageShape().GetDim(2), keyAntiquantScaleShape->GetStorageShape().GetDim(3)),
+            return false);
+        OP_CHECK_IF((valueAntiquantScaleshape->GetStorageShape().GetDim(0) != valueShapeInfo.b) ||
+                    (valueAntiquantScaleshape->GetStorageShape().GetDim(1) != valueShapeInfo.n) ||
+                    (valueAntiquantScaleshape->GetStorageShape().GetDim(2) != CeilDivision(valueShapeInfo.s, 256U)) || // 2 is the dim of dequantscale along s2, 256 is SInnerSize.
+                    (valueAntiquantScaleshape->GetStorageShape().GetDim(3) != 1U), // 3 is the dim of dequantscale along d.
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+                "valueAntiquantScaleshape must be [%u, %u, %u, %u] in per-block quant scenario, now is [%u, %u, %u, %u].",
+                valueShapeInfo.b, valueShapeInfo.n, CeilDivision(valueShapeInfo.s, 256U), 1,
+                valueAntiquantScaleshape->GetStorageShape().GetDim(0), valueAntiquantScaleshape->GetStorageShape().GetDim(1),
+                valueAntiquantScaleshape->GetStorageShape().GetDim(2), valueAntiquantScaleshape->GetStorageShape().GetDim(3)),
+            return false); 
+    }
     return true; 
 }
 
@@ -1588,7 +1634,6 @@ bool PromptFlashAttentionTilingV2::CheckIO(ContextParamsForPFATiling& contextKey
     OP_CHECK_IF((!CheckQueryOutParamsConsistency(contextKeyParams, queryShape, outShape)),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "Query and output consistency check failed."),
         return false);
-
     return true;
 }
 
@@ -2064,8 +2109,7 @@ bool PromptFlashAttentionTilingV2::CheckActSeqLen(ContextParamsForPFATiling& con
                 enablePFAMerge = false;
             }
         }
-
-        tSize = actSeqLen->GetData<int64_t>()[actSeqLengthSize - 1];
+        t1Size = actSeqLen->GetData<int64_t>()[actSeqLengthSize - 1];
     }
 
     if (enableActSeqLenKV) { // check the length of actual_seq_lengthsKV,whether is 1 or batch size
@@ -2101,6 +2145,7 @@ bool PromptFlashAttentionTilingV2::CheckActSeqLen(ContextParamsForPFATiling& con
                     return false);
             }
         }
+        t2Size = actSeqLenKV->GetData<int64_t>()[actSeqLengthKVSize - 1];
     }
     return true;
 }
@@ -2676,10 +2721,10 @@ bool PromptFlashAttentionTilingV2::CheckPerblockCrossover(ContextParamsForPFATil
     if (!enablePerblockQuant) {
         return true;
     }
-    OP_CHECK_IF(enableActSeqLen, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+    OP_CHECK_IF(enableActSeqLen && (inputLayout == InputLayout::TND), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "ActSeqLen is not supported in per-block quant scenario!"),
             return false);
-    OP_CHECK_IF(enableActSeqLenKV, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+    OP_CHECK_IF(enableActSeqLenKV && (inputLayout == InputLayout::TND), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "ActSeqLenKV is not supported in per-block quant scenario!"),
             return false);
     OP_CHECK_IF((innerPrecise == 2) || (innerPrecise == 3),
@@ -2736,6 +2781,7 @@ void PromptFlashAttentionTilingV2::SetTilingDataAttribute(ContextParamsForPFATil
 
     tilingData.promptAttentionBaseParams.set_fromFused((contextKeyParams.fromFused == FROM_FUSED_FLAG) ? 1 : 0);
     tilingData.promptAttentionBaseParams.set_isBSNDOut(contextKeyParams.isBSNDOut);
+    tilingData.promptAttentionBaseParams.set_isTNDOut(contextKeyParams.isTNDOut);
     tilingData.promptAttentionBaseParams.set_isSoftMaxLseEnable(contextKeyParams.isSoftMaxLseEnable);
 
     uint32_t originHeadSize = enableIFAMLA ? tilingData.promptAttentionBaseParams.get_headSize() :
@@ -2838,8 +2884,8 @@ void PromptFlashAttentionTilingV2::SetTilingData(ContextParamsForPFATiling& cont
     tilingData.promptAttentionBaseParams.set_seqSize(queryShapeInfo.s);
     tilingData.promptAttentionBaseParams.set_headNumSize(queryShapeInfo.n);
     tilingData.promptAttentionBaseParams.set_batchSize(queryShapeInfo.b);
-    tilingData.promptAttentionBaseParams.set_tSize(tSize);
-
+    tilingData.promptAttentionBaseParams.set_t1Size(t1Size);
+    tilingData.promptAttentionBaseParams.set_t2Size(t2Size);
     SetTilingDataAttribute(contextKeyParams, tilingData);
 }
 
@@ -4385,7 +4431,8 @@ void PromptFlashAttentionTilingV2::PFATilingDataconvert(PromptFlashAttentionTili
     SetLayoutType();
     auto &inputParams = faTilingAdapter.inputParamsRegbase;
     inputParams.set_bSize(tilingData.promptAttentionBaseParams.get_batchSize());
-    inputParams.set_tSize(tilingData.promptAttentionBaseParams.get_tSize());
+    inputParams.set_t1Size(tilingData.promptAttentionBaseParams.get_t1Size());
+    inputParams.set_t2Size(tilingData.promptAttentionBaseParams.get_t2Size());
     // 将GS1合轴与不合轴场景下，有不同含义的n2Size、gSize与s1Size参数，转化为各自实际的值
     if (enableIFAMLA || enableIFA || enablePFAMerge) {
         inputParams.set_n2Size(tilingData.promptAttentionBaseParams.get_headNumSize());
@@ -4450,6 +4497,7 @@ void PromptFlashAttentionTilingV2::PFATilingDataconvert(PromptFlashAttentionTili
     inputParams.set_isKvContinuous(tilingData.promptAttentionBaseParams.get_isKvContinuous());
     inputParams.set_fromFused(tilingData.promptAttentionBaseParams.get_fromFused());
     inputParams.set_isBSNDOut(tilingData.promptAttentionBaseParams.get_isBSNDOut());
+    inputParams.set_isTNDOut(tilingData.promptAttentionBaseParams.get_isTNDOut());
     inputParams.set_isGqa((tilingData.promptAttentionBaseParams.get_isIFA() && inputLayout != InputLayout::NTD) || enablePFAMerge);
     inputParams.set_isSoftMaxLseEnable(tilingData.promptAttentionBaseParams.get_isSoftMaxLseEnable());
     inputParams.set_isActualSharedPrefixLenNull(tilingData.promptAttentionBaseParams.get_isActualSharedPrefixLenNull());

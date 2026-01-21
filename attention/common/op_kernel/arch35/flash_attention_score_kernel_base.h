@@ -350,7 +350,8 @@ __aicore__ inline void FlashAttentionScoreKernelBase<ChildClass, CubeBlockType, 
     // 计算轴的乘积
 
     constInfo.bSize = sharedParams.bSize;
-    constInfo.tSize = sharedParams.tSize;
+    constInfo.t1Size = sharedParams.t1Size;
+    constInfo.t2Size = sharedParams.t2Size;
     constInfo.n2Size = sharedParams.n2Size;
     constInfo.s1Size = sharedParams.s1Size;
     constInfo.s2Size = sharedParams.s2Size;
@@ -599,7 +600,7 @@ __aicore__ inline void FlashAttentionScoreKernelBase<ChildClass, CubeBlockType, 
         runInfo.multiCoreIdxMod2 = multiCoreInnerIdx & 1;
         runInfo.multiCoreIdxMod3 = multiCoreInnerIdx % 3;
     }
-    if constexpr (layout == LayOutTypeEnum::LAYOUT_TND) {
+    if constexpr (layout == LayOutTypeEnum::LAYOUT_TND || layout == LayOutTypeEnum::LAYOUT_NTD) {
         runInfo.boIdx = runParam.boIdx;
         runInfo.s1SizeAcc = s1SizeAcc;
         runInfo.s2SizeAcc = s2SizeAcc;

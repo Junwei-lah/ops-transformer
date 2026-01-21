@@ -315,7 +315,8 @@ protected:
     bool enablePertensorQuant = false;
     bool enablePerblockQuant = false;
     uint32_t gSize = 1;
-    uint32_t tSize = 0;
+    int64_t t1Size = 0;
+    int64_t t2Size = 0;
     InputLayout inputLayout = InputLayout::BSH;
     ge::DataType inputType{ge::DT_FLOAT16};
     ge::DataType outputType{ge::DT_FLOAT16};

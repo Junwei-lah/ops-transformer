@@ -72,6 +72,7 @@ FlashAttentionScoreKernelInferMlaFullquant<CubeBlockType, VecBlockType>::InitUni
     }
 
     this->constInfo.isBSNDOut = this->sharedParams.isBSNDOut;
+    this->constInfo.isTNDOut = this->sharedParams.isTNDOut;
     if (this->constInfo.isBSNDOut == 1) {
         this->constInfo.attentionOutStride =
             (this->constInfo.n2GDv - this->constInfo.dSizeV) * sizeof(OUTPUT_T);
