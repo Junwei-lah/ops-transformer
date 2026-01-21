@@ -122,6 +122,33 @@ public:
     uint32_t get_remain() const { return remain; }
     void set_remain(uint32_t value) { this->remain = value; }
 
+    void reset()
+    {
+        set_batchSize(0);
+        set_headNumSize(0);
+        set_seqSizeQ(0);
+        set_seqSizeK(0);
+        set_seqSizeV(0);
+        set_seqInnerSize(0);
+        set_headSize(0);
+        set_keepProb(0);
+        set_scaleValue(0);
+        set_preTockens(0);
+        set_nextTockens(0);
+        set_attenMaskSOuter(0);
+        set_seqBaseSize(0);
+        set_seqBaseRange(0);
+        set_seqBasePadValue(0);
+        set_seqSizeAlign(0);
+        set_transType(0);
+        set_pseShapeType(0);
+        set_seqInnerSizeAlign(0);
+        set_attenMaskTypeIdx(0);
+        set_attenBatchSize(0);
+        set_attenHeadNum(0);
+        set_isSD9k(0);
+    }
+
 };
 
 class AttentionScoreCoreParams {
@@ -239,6 +266,38 @@ public:
 
     uint32_t get_bnRangeTail() const { return bnRangeTail; }
     void set_bnRangeTail(uint32_t value) { this->bnRangeTail = value; }
+
+    void reset()
+    {
+        set_coreNum(0);
+        set_loopBatchNum(0);
+        set_loopHeadNum(0);
+        set_loopBatchNumTail(0);
+        set_loopHeadNumTail(0);
+        set_b1(0);
+        set_n1(0);
+        set_s1(0);
+        set_singleCoreBatchSize(0);
+        set_singleCoreBatchSizeTail(0);
+        set_singleCoreSeqSize(0);
+        set_singleCoreHeadNumSize(0);
+        set_singleCoreHeadNumSizeTail(0);
+        set_singleCoreSeqSizeTail(0);
+        set_singleCoreHeadSize(0);
+        for (int i = 0; i < 48; ++i) {
+            seqList[i] = 0;
+        }
+        for (int i = 0; i < 48; ++i) {
+            eachCoreSeqSize[i] = 0;
+        }
+        set_formerNum(0);
+        set_tailNum(0);
+        set_formerHeadNum(0);
+        set_tailHeadNum(0);
+        set_singleCoreDataSize(0);
+        set_bnRange(0);
+        set_bnRangeTail(0);
+    }
 };
 
 class AttentionScoreSingleCoreParams {
@@ -357,6 +416,33 @@ public:
     uint32_t get_tailCoreSingleProcessSInnerSizeTail() const { return tailCoreSingleProcessSInnerSizeTail; }
     void set_tailCoreSingleProcessSInnerSizeTail(uint32_t value) {
         this->tailCoreSingleProcessSInnerSizeTail = value;
+    }
+
+    void reset()
+    {
+        set_eachCoreBatchNum(0);
+        for (int i = 0; i < 48; ++i) {
+            sOuterLoopTimesList[i] = 0;
+        }
+        set_sOuterLoopTimes(0);
+        set_sInnerLoopTimes(0);
+        set_headRange(0);
+        set_singleProcessBatchSize(0);
+        set_singleProcessHeadNumSize(0);
+        set_singleProcessSOuterSize(0);
+        set_singleProcessSOuterSizeTail(0);
+        set_singleProcessSInnerSize(0);
+        set_singleProcessSInnerSizeTail(0);
+        set_singleProcessHeadSize(0);
+        set_tailCoreSingleProcessSOuterSize(0);
+        set_tailCoreSingleProcessSOuterSizeTail(0);
+        set_lastCoreSingleProcessSOuterSize(0);
+        set_lastCoreSingleProcessSOuterSizeTail(0);
+        set_tailCoreSOuterLoopTimes(0);
+        set_lastCoreSOuterLoopTimes(0);
+        set_tailCoreSingleProcessSInnerSize(0);
+        set_tailCoreSInnerLoopTimes(0);
+        set_tailCoreSingleProcessSInnerSizeTail(0);
     }
 };
 
@@ -525,6 +611,48 @@ public:
 
     uint32_t get_dropOutTmpBuffer() const { return dropOutTmpBuffer; }
     void set_dropOutTmpBuffer(uint32_t value) { this->dropOutTmpBuffer = value; }
+
+    void reset()
+    {
+        set_mmResUbSize(0);
+        set_paddingMaskUbSize(0);
+        set_attenMaskUbSize(0);
+        set_pseUbSize(0);
+        set_maskSize(0);
+        set_softmaxMaxSize(0);
+        set_softmaxSumSize(0);
+        set_softmaxExpSize(0);
+        set_spmTmpSize(0);
+        set_scmTmpSize(0);
+        set_apiTmpUbSize(0);
+        set_apiTmpUbSizeTail(0);
+        set_mmResInUbSize(0);
+        set_mmResInUbSizeTail(0);
+        set_bmm2ResUbSize(0);
+        set_tmpMMResBmm2PreUbSize(0);
+        set_tmpSoftmaxBmm2UbSize(0);
+        set_mmResUbSizeTailLoop(0);
+        set_attenMaskUbSizeTailLoop(0);
+        set_maskSizeTailLoop(0);
+        set_tailCoreMMResUbSize(0);
+        set_tailCorePaddingMaskUbSize(0);
+        set_tailCoreAttenMaskUbSize(0);
+        set_tailCorePseUbSize(0);
+        set_tailCoreMaskSize(0);
+        set_tailCoreSoftmaxMaxSize(0);
+        set_tailCoreSoftmaxSumSize(0);
+        set_tailCoreSoftmaxExpSize(0);
+        set_tailCoreSpmTmpSize(0);
+        set_tailCoreScmTmpSize(0);
+        set_tailCoreBmm2ResUbSize(0);
+        set_tailCoreTmpMMResBmm2PreUbSize(0);
+        set_tailCoreTmpSoftmaxBmm2UbSize(0);
+        set_tailCoreMMResUbSizeTailLoop(0);
+        set_tailCoreAttenMaskUbSizeTailLoop(0);
+        set_tailCoreMaskSizeTailLoop(0);
+        set_softmaxTmpBuffer(0);
+        set_dropOutTmpBuffer(0);
+    }
 };
 
 class AttentionScoreOffestStrideParams {
@@ -542,6 +670,12 @@ public:
 
     uint32_t get_matmulHead() const { return matmulHead; }
     void set_matmulHead(uint32_t value) { this->matmulHead = value; }
+
+    void reset()
+    {
+        set_typeByteNum(0);
+        set_matmulHead(0);
+    }
 };
 
 class FlashAttentionScoreEmptyInputTilingData {
@@ -601,6 +735,22 @@ public:
 
     uint64_t get_attentionOutLastCoreIndex() const { return attentionOutLastCoreIndex; }
     void set_attentionOutLastCoreIndex(uint64_t value) { this->attentionOutLastCoreIndex = value; }
+
+    void reset()
+    {
+        set_coreNum(0);
+        set_attentionOutFormerNum(0);
+        set_attentionOutTailNum(0);
+        set_softmaxMaxFormerNum(0);
+        set_softmaxMaxTailNum(0);
+        set_reserved(0);
+        set_attentionOutSingleCoreDataSize(0);
+        set_attentionOutTailCoreDataSize(0);
+        set_softmaxMaxSingleCoreDataSize(0);
+        set_softmaxMaxTailCoreDataSize(0);
+        set_attentionOutLastCoreDataSize(0);
+        set_attentionOutLastCoreIndex(0);
+    }
 };
 
 class InputParams {
@@ -1392,6 +1542,18 @@ public:
     CopyTransposeTiling transposeTilingData;
     CopyTransposeTiling transposeTilingDataTailCore;
     FlashAttentionScoreEmptyInputTilingData emptyInputTilingData;
+
+    void reset()
+    {
+        baseParams.reset();
+        attentionScoreCoreParams.reset();
+        attentionScoreSingleCoreParams.reset();
+        attentionScoreSingleCoreTensorSize.reset();
+        attentionScoreOffestStrideParams.reset();
+        transposeTilingData.reset();
+        transposeTilingDataTailCore.reset();
+        emptyInputTilingData.reset();
+    }
 };
 
 class FlashAttentionScoreGeneralTilingData {

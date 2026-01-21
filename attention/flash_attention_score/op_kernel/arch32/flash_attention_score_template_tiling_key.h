@@ -1153,6 +1153,6 @@ ASCENDC_TPL_SEL(
         ASCENDC_TPL_UINT_SEL(S1TemplateType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(S2TemplateType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(DTemplateType, ASCENDC_TPL_UI_LIST, 0),
-        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreGeneralTilingData)
+        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreTilingData)
     ),
 );

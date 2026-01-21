@@ -71,23 +71,6 @@ static uint32_t Ceil(uint32_t num1, uint32_t num2)
     return (num1 + num2 - 1U) / num2;
 }
 
-class FlashAttentionScoreEmptyInputTiling {
-public:
-    FlashAttentionScoreTilingData tilingData;
-
-    void FlashAttentionScoreSetEmptyInputTilingData(gert::TilingContext *context,
-                                                    FlashAttentionScoreTilingData &faTilingData);
-};
-
-
-void FlashAttentionScoreEmptyInputTiling::FlashAttentionScoreSetEmptyInputTilingData(
-    gert::TilingContext *context, [[maybe_unused]] FlashAttentionScoreTilingData &faTilingData)
-{
-    OP_CHECK_IF(context->GetRawTilingData() == nullptr,
-        OP_LOGE(context, "FlashAttentionScoreSetEmptyInputTilingData occurs nullptr!"),
-        return);
-}
-
 static ge::graphStatus CheckParams(const gert::TilingContext *context)
 {
     if (context->GetAttrs() != nullptr && context->GetInputShape(QUERY_INPUT_INDEX) != nullptr &&
@@ -326,8 +309,8 @@ static bool IsEmptyInput(gert::TilingContext *context)
         |                                   |                             |       |
         |--------n*(blocks/coreNum+1)-------|-----m*(blocks/coreNum)------|<32Byte|
         */
-        FlashAttentionScoreEmptyInputTiling emptyInputTiling;
-        FlashAttentionScoreEmptyInputTilingData* emptyInputTilingData = context->GetTilingData<FlashAttentionScoreEmptyInputTilingData>();
+        FlashAttentionScoreTilingData* emptyInputTiling = context->GetTilingData<FlashAttentionScoreTilingData>();
+        emptyInputTiling->reset();
         auto compileInfoPtr = reinterpret_cast<const FlashAttentionScoreCompileInfo *>(context->GetCompileInfo());
         OP_CHECK_IF(compileInfoPtr == nullptr, OP_LOGE(context, "compileInfoPtr is null"),
                    return false);
@@ -335,18 +318,17 @@ static bool IsEmptyInput(gert::TilingContext *context)
         if (!GetEmptyArgs(emptyArgs, context, compileInfoPtr->aivNum, attentionOutShapeSize, softmaxSumShapeSize)){
             return false;
         }
-        emptyInputTilingData->set_coreNum(emptyArgs.coreNum);
-        emptyInputTilingData->set_attentionOutFormerNum(emptyArgs.attentionOutFormerNum);
-        emptyInputTilingData->set_attentionOutTailNum(emptyArgs.attentionOutTailNum);
-        emptyInputTilingData->set_softmaxMaxFormerNum(emptyArgs.softmaxMaxFormerNum);
-        emptyInputTilingData->set_softmaxMaxTailNum(emptyArgs.softmaxMaxTailNum);
-        emptyInputTilingData->set_attentionOutSingleCoreDataSize(emptyArgs.attentionOutSingleCoreDataSize);
-        emptyInputTilingData->set_attentionOutTailCoreDataSize(emptyArgs.attentionOutTailCoreDataSize);
-        emptyInputTilingData->set_softmaxMaxSingleCoreDataSize(emptyArgs.softmaxMaxSingleCoreDataSize);
-        emptyInputTilingData->set_softmaxMaxTailCoreDataSize(emptyArgs.softmaxMaxTailCoreDataSize);
-        emptyInputTilingData->set_attentionOutLastCoreDataSize(emptyArgs.attentionOutLastCoreDataSize);
-        emptyInputTilingData->set_attentionOutLastCoreIndex(emptyArgs.attentionOutLastCoreIndex);
-        emptyInputTiling.FlashAttentionScoreSetEmptyInputTilingData(context, emptyInputTiling.tilingData);
+        emptyInputTiling->emptyInputTilingData.set_coreNum(emptyArgs.coreNum);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutFormerNum(emptyArgs.attentionOutFormerNum);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutTailNum(emptyArgs.attentionOutTailNum);
+        emptyInputTiling->emptyInputTilingData.set_softmaxMaxFormerNum(emptyArgs.softmaxMaxFormerNum);
+        emptyInputTiling->emptyInputTilingData.set_softmaxMaxTailNum(emptyArgs.softmaxMaxTailNum);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutSingleCoreDataSize(emptyArgs.attentionOutSingleCoreDataSize);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutTailCoreDataSize(emptyArgs.attentionOutTailCoreDataSize);
+        emptyInputTiling->emptyInputTilingData.set_softmaxMaxSingleCoreDataSize(emptyArgs.softmaxMaxSingleCoreDataSize);
+        emptyInputTiling->emptyInputTilingData.set_softmaxMaxTailCoreDataSize(emptyArgs.softmaxMaxTailCoreDataSize);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutLastCoreDataSize(emptyArgs.attentionOutLastCoreDataSize);
+        emptyInputTiling->emptyInputTilingData.set_attentionOutLastCoreIndex(emptyArgs.attentionOutLastCoreIndex);
         context->SetTilingKey(FA_EMPTY_TILING_KEY);
         auto platformInfoPtr = context->GetPlatformInfo();
         OP_CHECK_IF(platformInfoPtr == nullptr, OP_LOGE(context, "platformInfoPtr is null"), return false);
