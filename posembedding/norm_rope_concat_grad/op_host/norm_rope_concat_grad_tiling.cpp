@@ -412,6 +412,9 @@ ge::graphStatus NormRopeConcatGradTiling::DoTiling(gert::TilingContext *ctx)
     }
     ctx->SetTilingKey(tilingKey_);
     ctx->SetBlockDim(blockDim_);
+    if (tilingKey_ >= BATCH_MODE_MIN_KEY){
+        ctx->SetScheduleMode(1);
+    }
 
     return ge::GRAPH_SUCCESS;
 }

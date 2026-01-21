@@ -64,8 +64,13 @@ private:
                                  const LocalTensor<float> &buf, uint32_t heads);
     template <NormType normType>
     __aicore__ inline void DoLayerNorm(const LocalTensor<float> &x, uint32_t heads);
+
+    template <NormType normType>
+    __aicore__ inline void DoRMSNorm(const LocalTensor<float> &x, uint32_t heads);
     
     __aicore__ inline void DoMulAdd(const LocalTensor<float> &x, uint32_t heads);
+
+    __aicore__ inline void DoMul(const LocalTensor<float> &x, uint32_t heads);
 
 private:
     TQue<QuePosition::VECIN, DOUBLE_BUFFER> inQue_;
@@ -114,6 +119,22 @@ __aicore__ inline void NormOperationForward<isTraining>::DoMulAdd(const LocalTen
 }
 
 template <bool isTraining>
+__aicore__ inline void NormOperationForward<isTraining>::DoMul(const LocalTensor<float> &x, uint32_t heads)
+{
+    if (isAligned64_) {
+        for (uint32_t i = 0; i < rptTimes_; ++i) {
+            Mul(x[i * B32_DATA_NUM_PER_REPEAT], x[i * B32_DATA_NUM_PER_REPEAT], weight_[i * B32_DATA_NUM_PER_REPEAT], 
+                B32_DATA_NUM_PER_REPEAT, heads, {1, 1, 1, static_cast<uint8_t>(this->normDim_ / 8),
+                static_cast<uint8_t>(this->normDim_ / 8), 0});
+        }
+    } else {
+        for (uint32_t i = 0; i < heads; ++i) {
+            Mul(x[i * this->alignedNormDim_], x[i * this->alignedNormDim_], weight_, this->alignedNormDim_);
+        }
+    }
+}
+
+template <bool isTraining>
 template <NormType normType>
 __aicore__ inline void NormOperationForward<isTraining>::Prepare(GM_ADDR x, GM_ADDR weight, GM_ADDR bias,
                                                                            GM_ADDR mean, GM_ADDR rstd)
@@ -137,6 +158,19 @@ __aicore__ inline void NormOperationForward<isTraining>::Prepare(GM_ADDR x, GM_A
             Adds(weight_, deQue.ReinterpretCast<float>(), 0.f, 2 * this->alignedNormDim_);
         } else { // cast to float
             Cast(weight_, deQue, RoundMode::CAST_NONE, 2 * this->alignedNormDim_);
+        }
+        normQue_.FreeTensor(deQue);
+    }
+    
+    if constexpr (normType == NormType::RMS_NORM_AFFINE) {
+        LocalTensor<DTYPE_QUERY> norm = normQue_.AllocTensor<DTYPE_QUERY>();
+        DataCopy(norm, this->weightGm_, this->alignedNormDim_);
+        normQue_.EnQue(norm);
+        LocalTensor<DTYPE_QUERY> deQue = normQue_.DeQue<DTYPE_QUERY>();
+        if constexpr (sizeof(DTYPE_QUERY) == sizeof(float)) {
+            Adds(weight_, deQue.ReinterpretCast<float>(), 0.f, this->alignedNormDim_);
+        } else { // cast to float
+            Cast(weight_, deQue, RoundMode::CAST_NONE, this->alignedNormDim_);
         }
         normQue_.FreeTensor(deQue);
     }
@@ -222,6 +256,45 @@ __aicore__ inline void NormOperationForward<isTraining>::DoLayerNorm(const Local
 
 template <bool isTraining>
 template <NormType normType>
+__aicore__ inline void NormOperationForward<isTraining>::DoRMSNorm(const LocalTensor<float> &x, uint32_t heads)
+{
+    uint32_t size = heads * this->alignedNormDim_;
+    LocalTensor<float> reducedX = buf_.Get<float>();
+    LocalTensor<float> tmp0 = reducedX[this->alignedNormNum_];
+    LocalTensor<float> tmp1 = x[this->normNum_ * this->alignedNormDim_];
+
+    // x^2
+    Mul(tmp0, x, x, size);
+    PipeBarrier<PIPE_V>();
+    // sum(x^2)
+    DoSum(reducedX, tmp0, tmp1, heads);
+    PipeBarrier<PIPE_V>();
+    // div n
+    Muls(reducedX, reducedX, this->scale_, this->alignedNormNum_);
+    PipeBarrier<PIPE_V>();
+    // + eps_
+    Adds(reducedX, reducedX, this->eps_, this->alignedNormNum_);
+    PipeBarrier<PIPE_V>();
+    // sqrt
+    Sqrt(reducedX, reducedX, this->alignedNormNum_);
+    PipeBarrier<PIPE_V>();
+    // broadcast
+    uint32_t brcdShape[2] = {heads, this->alignedNormDim_};
+    uint32_t srcShape[2] = {heads, 1};
+    LocalTensor<uint8_t> shareBuf = tmp1.ReinterpretCast<uint8_t>();
+    BroadCast<float, 2, 1>(tmp0, reducedX, brcdShape, srcShape, shareBuf);
+    PipeBarrier<PIPE_V>();
+    // x / rms
+    Div(x, x, tmp0, size);
+    PipeBarrier<PIPE_V>();
+    if constexpr (normType == NormType::RMS_NORM_AFFINE) {
+        DoMul(x, heads);
+    }
+    PipeBarrier<PIPE_V>();
+}
+
+template <bool isTraining>
+template <NormType normType>
 __aicore__ inline void NormOperationForward<isTraining>::Compute(const LocalTensor<float> &x, uint32_t heads)
 {
     LocalTensor<DTYPE_QUERY> input = inQue_.DeQue<DTYPE_QUERY>();
@@ -237,6 +310,10 @@ __aicore__ inline void NormOperationForward<isTraining>::Compute(const LocalTens
 
     if constexpr (IsLayerNorm(normType)) {
         DoLayerNorm<normType>(x, heads);
+    }
+
+    if constexpr (IsRMSNorm(normType)) {
+        DoRMSNorm<normType>(x, heads);
     }
 }
 

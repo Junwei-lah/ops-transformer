@@ -36,10 +36,10 @@ enum class NormType : uint8_t {
     NONE = 0,
     LAYER_NORM,
     LAYER_NORM_AFFINE,
-    LAYER_NORM_ACROSS_HEADS,
-    LAYER_NORM_AFFINE_ACROSS_HEADS,
     RMS_NORM,
     RMS_NORM_AFFINE,
+    LAYER_NORM_ACROSS_HEADS,
+    LAYER_NORM_AFFINE_ACROSS_HEADS,
     RMS_NORM_ACROSS_HEADS,
     RMS_NORM_AFFINE_ACROSS_HEADS,
     L2_NORM,
@@ -49,6 +49,11 @@ __aicore__ inline constexpr bool IsLayerNorm(NormType normType)
 {
     return (normType == NormType::LAYER_NORM || normType == NormType::LAYER_NORM_AFFINE ||
             normType == NormType::LAYER_NORM_ACROSS_HEADS || normType == NormType::LAYER_NORM_AFFINE_ACROSS_HEADS);
+}
+
+__aicore__ inline constexpr bool IsRMSNorm(NormType normType)
+{
+    return (normType == NormType::RMS_NORM || normType == NormType::RMS_NORM_AFFINE);
 }
 
 // read_store

@@ -44,10 +44,10 @@ enum class NormType : int64_t {
     NONE = 0,
     LAYER_NORM,
     LAYER_NORM_AFFINE,
-    LAYER_NORM_ACROSS_HEADS,
-    LAYER_NORM_AFFINE_ACROSS_HEADS,
     RMS_NORM,
     RMS_NORM_AFFINE,
+    LAYER_NORM_ACROSS_HEADS,
+    LAYER_NORM_AFFINE_ACROSS_HEADS,
     RMS_NORM_ACROSS_HEADS,
     RMS_NORM_AFFINE_ACROSS_HEADS,
     L2_NORM,
@@ -55,7 +55,8 @@ enum class NormType : int64_t {
 
 inline bool IsNormTypeValid(int64_t normType)
 {
-    return normType >= static_cast<int64_t>(NormType::NONE) && normType <= static_cast<int64_t>(NormType::L2_NORM);
+    return normType >= static_cast<int64_t>(NormType::NONE) &&
+        normType <= static_cast<int64_t>(NormType::RMS_NORM_AFFINE);
 }
 
 // read_store

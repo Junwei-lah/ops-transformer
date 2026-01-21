@@ -103,6 +103,12 @@ ge::graphStatus NormRopeConcatTiling::CheckInput()
     OP_CHECK_IF(context_.eps == nullptr, OP_LOGE(context_.opName, "eps is nullptr"), return ge::GRAPH_FAILED);
     eps_ = *(context_.eps);
     scale_ = 1 / float(headDim_);
+    int64_t normType = *context_.normType;
+    OP_CHECK_IF(!IsNormTypeValid(normType), OP_LOGE(context_.opName, "normType is out of range"),
+                return ge::GRAPH_FAILED);
+    int64_t normAddedType = *context_.normAddedType;
+    OP_CHECK_IF(!IsNormTypeValid(normAddedType), OP_LOGE(context_.opName, "normAddedType is out of range"),
+                return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

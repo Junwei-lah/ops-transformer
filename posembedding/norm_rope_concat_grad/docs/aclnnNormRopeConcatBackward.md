@@ -3,8 +3,12 @@
 ## 产品支持情况
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
+|<term>昇腾910_95 AI处理器</term>|      √     |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      √     |
-|<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      √     |
+|<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>|      √     |
+|<term>Atlas 200I/500 A2 推理产品</term>|      ×     |
+|<term>Atlas 推理系列产品</term>|      ×     |
+|<term>Atlas 训练系列产品</term>|      ×     |
 
 ## 功能说明
 
@@ -16,13 +20,11 @@
 -   计算公式：
 
     - **LayerNorm反向推导：**
-
     $$
         \frac{\partial L}{\partial x} = \text{rstd} \cdot \Bigg( \frac{\partial L}{\partial y} - \text{Mean}\left( \frac{\partial L}{\partial y} \right) - \hat{x} \cdot \text{Mean}\left( \frac{\partial L}{\partial y} \odot \hat{x} \right) \Bigg)  \quad \quad \quad \quad \quad \quad \quad \text{[Mean over headDim dimension]}
     $$
 
     - **LayerNorm（带仿射变换参数）反向推导：**
-
     $$
         \left\{
         \begin{aligned}
@@ -34,19 +36,16 @@
     $$
 
     - **其中（μ为均值，σ^2为方差）:**
-
     $$
       \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}}, \quad \quad \frac{\partial L}{\partial \hat{x}} = \frac{\partial L}{\partial y} \odot \gamma, \quad \quad \text{rstd} = \frac{1}{\sqrt{\sigma^2 + \epsilon}}
     $$
 
     - **Rope-Interleave反向推导：**
-
     $$
         \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \text{cos} + Interleave({\frac{\partial L}{\partial y} \cdot \text{sin}}) \odot  \text{negMask}
     $$
 
     - **Rope-Half反向推导：**
-
     $$
         \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \text{cos} + Half({\frac{\partial L}{\partial y} \cdot \text{sin}}) \odot  \text{negMask}
     $$
@@ -57,359 +56,507 @@
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnNormRopeConcatBackwardGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnNormRopeConcatBackward”接口执行计算。
 
-* `aclnnStatus aclnnNormRopeConcatBackwardGetWorkspaceSize(const aclTensor *gradQueryOutput, const aclTensor *gradKeyOutput, const aclTensor *gradValueOutput, const aclTensor *query, const aclTensor *key, const aclTensor *encoderQuery, const aclTensor *encoderKey, const aclTensor *normQueryWeight, const aclTensor *normQueryMean, const aclTensor *normQueryRstd, const aclTensor *normKeyWeight, const aclTensor *normKeyMean, const aclTensor *normKeyRstd, const aclTensor *normAddedQueryWeight, const aclTensor *normAddedQueryMean, const aclTensor *normAddedQueryRstd, const aclTensor *normAddedKeyWeight, const aclTensor *normAddedKeyMean, const aclTensor *normAddedKeyRstd, const aclTensor *ropeSin, const aclTensor *ropeCos, int64_t normType, int64_t normAddedType, int64_t ropeType, int64_t concatOrder, const aclTensor *gradQuery, const aclTensor *gradKey, const aclTensor *gradValue, const aclTensor *gradEncoderQuery, const aclTensor *gradEncoderKey, const aclTensor *gradEncoderValue, const aclTensor *gradNormQueryWeight, const aclTensor *gradNormQueryBias, const aclTensor *gradNormKeyWeight, const aclTensor *gradNormKeyBias, const aclTensor *gradNormAddedQueryWeight, const aclTensor *gradNormAddedQueryBias, const aclTensor *gradNormAddedKeyWeight, const aclTensor *gradNormAddedKeyBias, uint64_t *workspaceSize, aclOpExecutor **executor)`
-* `aclnnStatus aclnnNormRopeConcatBackward(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnNormRopeConcatBackwardGetWorkspaceSize(
+    const aclTensor *gradQueryOutput, 
+    const aclTensor *gradKeyOutput, 
+    const aclTensor *gradValueOutput, 
+    const aclTensor *query, 
+    const aclTensor *key, 
+    const aclTensor *encoderQuery, 
+    const aclTensor *encoderKey, 
+    const aclTensor *normQueryWeight, 
+    const aclTensor *normQueryMean, 
+    const aclTensor *normQueryRstd, 
+    const aclTensor *normKeyWeight, 
+    const aclTensor *normKeyMean, 
+    const aclTensor *normKeyRstd, 
+    const aclTensor *normAddedQueryWeight, 
+    const aclTensor *normAddedQueryMean, 
+    const aclTensor *normAddedQueryRstd, 
+    const aclTensor *normAddedKeyWeight, 
+    const aclTensor *normAddedKeyMean, 
+    const aclTensor *normAddedKeyRstd, 
+    const aclTensor *ropeSin, 
+    const aclTensor *ropeCos, 
+    int64_t          normType, 
+    int64_t          normAddedType, 
+    int64_t          ropeType, 
+    int64_t          concatOrder, 
+    const aclTensor *gradQuery, 
+    const aclTensor *gradKey, 
+    const aclTensor *gradValue, 
+    const aclTensor *gradEncoderQuery, 
+    const aclTensor *gradEncoderKey, 
+    const aclTensor *gradEncoderValue, 
+    const aclTensor *gradNormQueryWeight, 
+    const aclTensor *gradNormQueryBias, 
+    const aclTensor *gradNormKeyWeight, 
+    const aclTensor *gradNormKeyBias, 
+    const aclTensor *gradNormAddedQueryWeight, 
+    const aclTensor *gradNormAddedQueryBias, 
+    const aclTensor *gradNormAddedKeyWeight, 
+    const aclTensor *gradNormAddedKeyBias, 
+    uint64_t        *workspaceSize, 
+    aclOpExecutor   **executor)
+```
+```cpp
+aclnnStatus aclnnNormRopeConcatBackward(
+    void          *workspace, 
+    uint64_t       workspaceSize, 
+    aclOpExecutor *executor, 
+    aclrtStream    stream)
+```
 
-### aclnnNormRopeConcatBackwardGetWorkspaceSize
 
-- **参数说明：**
-<table style="undefined;table-layout: fixed; width: 1250px"><colgroup>
-  <col style="width: 150px">
-  <col style="width: 150px">
-  <col style="width: 500px">
-  <col style="width: 250px">
-  <col style="width: 150px">
-  <col style="width: 400px">
-  </colgroup>
-  <thead>
-    <tr>
-      <th>参数名</th>
-      <th>输入/输出/属性</th>
-      <th>描述</th>
-      <th>数据类型</th>
-      <th>数据格式</th>
-      <th>shape大小</th>
-    </tr></thead>
-  <tbody>
-    <tr>
-      <td>gradQueryOutput</td>
-      <td>输入</td>
-      <td>网络层对query和encoderQuery正向输出结果的反向梯度值，对应公式中的y，encoderQuery参数为nullptr时seqEncoderQuery值为0，headDim长度大小需在[1~1024]间且为偶数。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, headNum, seqQuery+seqEncoderQuery, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradKeyOutput</td>
-      <td>输入</td>
-      <td>网络层对key和encoderKey正向输出结果的反向梯度值，对应公式中的y，encoderKey参数为nullptr时seqEncoderKey值为0，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, headNum, seqKey+seqEncoderKey, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradValueOutput</td>
-      <td>输入</td>
-      <td>网络层对value和encoderValue正向输出结果的反向梯度值，对应公式中的y，encoderValue参数为nullptr时seqEncoderValue值为0，seqValue长度大小与seqKey一致，seqEncoderValue长度大小与seqEncoderKey一致，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, headNum, seqValue+seqEncoderValue, headDim]</td>
-    </tr>
-    <tr>
-      <td>query</td>
-      <td>输入</td>
-      <td>正向输入的query（多模态中图片Query），对应公式中的x，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqQuery, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>key</td>
-      <td>输入</td>
-      <td>正向输入的key（多模态中图片Key），对应公式中的x，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqKey, headNum,headDim]</td>
-    </tr>
-    <tr>
-      <td>encoderQuery</td>
-      <td>可选输入</td>
-      <td>正向输入的encoderQuery（多模态中文本Query），对应公式中的x，当文本Query参与训练时进行传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderQuery, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>encoderKey</td>
-      <td>可选输入</td>
-      <td>正向输入的encoderKey（多模态中文本Key），对应公式中的x，当文本Key参与训练时进行传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderKey, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>normQueryWeight</td>
-      <td>可选输入</td>
-      <td>正向query进行归一化操作的权重值，对应公式中的γ，当图片Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>normQueryMean</td>
-      <td>可选输入</td>
-      <td>正向query进行归一化操作时输出的均值，对应公式中的μ，当图片Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqQuery, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normQueryRstd</td>
-      <td>可选输入</td>
-      <td>正向query进行归一化操作时输出的方差相关项，对应公式中的rstd，当图片Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqQuery, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normKeyWeight</td>
-      <td>可选输入</td>
-      <td>正向key进行归一化操作的权重值，对应公式中的γ，当图片Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>normKeyMean</td>
-      <td>可选输入</td>
-      <td>正向key进行归一化操作时输出的均值，对应公式中的μ，当图片Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqKey, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normKeyRstd</td>
-      <td>可选输入</td>
-      <td>正向key进行归一化操作时输出的方差相关项rstd，对应公式中的rstd，当图片Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqKey, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normAddQueryWeight</td>
-      <td>可选输入</td>
-      <td>正向encoderQuery进行归一化操作的权重值，对应公式中的γ，当文本Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>normAddQueryMean</td>
-      <td>可选输入</td>
-      <td>正向encoderQuery进行归一化操作时输出的均值，对应公式中的μ，当文本Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderQuery, headNum, 1]</td>
-    </tr>
-        <tr>
-      <td>normAddQueryRstd</td>
-      <td>可选输入</td>
-      <td>正向encoderQuery进行归一化操作时输出的方差相关项，对应公式中的rstd，当文本Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderQuery, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normAddKeyWeight</td>
-      <td>可选输入</td>
-      <td>正向encoderKey进行归一化操作的权重值，对应公式中的γ，当文本Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>normAddKeyMean</td>
-      <td>可选输入</td>
-      <td>正向encoderKey进行归一化操作时输出的均值，对应公式中的μ，当文本Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderKey, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>normAddKeyRstd</td>
-      <td>可选输入</td>
-      <td>正向encoderKey进行归一化操作时输出的方差相关项，对应公式中的rstd，当文本Query、Key进行归一化操作时传入。</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderKey, headNum, 1]</td>
-    </tr>
-    <tr>
-      <td>ropeSin</td>
-      <td>可选输入</td>
-      <td>公式中正向输入进行旋转位置编码操作的sin值，当图片或文本Query、Key进行旋转位置编码操作时传入，seqRope长度大小需在[1~min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)]之间，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[seqRope, headDim]</td>
-    </tr>
-    <tr>
-      <td>ropeCos</td>
-      <td>可选输入</td>
-      <td>公式中正向输入进行旋转位置编码操作的cos值，当图片或文本Query、Key进行旋转位置编码操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[seqRope, headDim]</td>
-    </tr>
-    <tr>
-      <td>normType</td>
-      <td>可选属性</td>
-      <td>指定query、key归一化操作类型，0：不进行归一化操作，1：层归一化操作，2：带仿射变换参数层归一化操作，用户不特意指定时建议传入为0。</td>
-      <td>INT64</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>normAddedType</td>
-      <td>可选属性</td>
-      <td>指定encoderQuery、encoderKey归一化操作类型，0：不进行归一化操作，1：层归一化操作，2：带仿射变换参数层归一化操作，用户不特意指定时建议传入为0。</td>
-      <td>INT64</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>ropeType</td>
-      <td>可选属性</td>
-      <td>指定query与encoderQuery、key与encoderKey进行Concat后的旋转位置编码操作类型，0：不进行旋转位置编码操作，1：Interleave类型旋转位置编码，2：Half类型旋转位置编码，用户不特意指定时建议传入为0。</td>
-      <td>INT64</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>concatOrder</td>
-      <td>可选属性</td>
-      <td>指定query与encoderQuery、key与encoderKey、value与encoderValue的Concat操作叠加顺序，以query为例，0：[query, encoderQuery]，1：[encoderQuery, query]，用户不特意指定时建议传入为0。</td>
-      <td>INT64</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>gradKey</td>
-      <td>输出</td>
-      <td>公式中网络层对正向输入key的反向梯度值，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqKey, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradValue</td>
-      <td>输出</td>
-      <td>公式中网络层对正向输入value的反向梯度值，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqValue, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradEncoderQuery</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderQuery的反向梯度值，当文本Query参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderQuery, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradEncoderKey</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderKey的反向梯度值，当文本Key参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderKey, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradEncoderValue</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderValue的反向梯度值，当文本Value参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[batch, seqEncoderValue, headNum, headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormQueryWeight</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入query进行归一化操作的γ权重反向梯度值，当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormQueryBias</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入query进行归一化操作的β偏移反向梯度值，当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormKeyWeight</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入key进行归一化操作的γ权重反向梯度值，当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormKeyBias</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入key进行归一化操作的β偏移反向梯度值，当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormAddedQueryWeight</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderQuery进行归一化操作的γ权重反向梯度值，当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormAddedQueryBias</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderQuery进行归一化操作的β偏移反向梯度值，当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormAddedKeyWeight</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderKey进行归一化操作的γ权重反向梯度值，当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>gradNormAddedKeyBias</td>
-      <td>可选输出</td>
-      <td>公式中网络层对正向输入encoderKey进行归一化操作的β偏移反向梯度值，当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
-      <td>FLOAT32、FLOAT16、BFLOAT16</td>
-      <td>ND</td>
-      <td>[headDim]</td>
-    </tr>
-    <tr>
-      <td>workspaceSize</td>
-      <td>输出</td>
-      <td>返回需要在Device侧申请的workspace大小。</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>executor</td>
-      <td>输出</td>
-      <td>返回op执行器，包含了算子计算流程。</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-  </tbody></table>
+## aclnnNormRopeConcatBackwardGetWorkspaceSize
 
-- **返回值：**
+- **参数说明**
+
+  <table style="undefined;table-layout: fixed; width: 1488px"><colgroup>
+    <col style="width: 210px">
+    <col style="width: 121px">
+    <col style="width: 253px">
+    <col style="width: 262px">
+    <col style="width: 213px">
+    <col style="width: 115px">
+    <col style="width: 169px">
+    <col style="width: 145px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度(shape)</th>
+        <th>非连续Tensor</th>
+      </tr></thead>
+    <tbody>
+      <tr>
+          <td>gradQueryOutput</td>
+          <td>输入</td>
+          <td>网络层对query和encoderQuery正向输出结果的反向梯度值，对应公式中的y。</td>
+          <td>encoderQuery参数为nullptr时seqEncoderQuery值为0，headDim长度大小需在[1~1024]间且为偶数。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, headNum, seqQuery+seqEncoderQuery, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradKeyOutput</td>
+          <td>输入</td>
+          <td>网络层对key和encoderKey正向输出结果的反向梯度值，对应公式中的y。</td>
+          <td>encoderKey参数为nullptr时seqEncoderKey值为0，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, headNum, seqKey+seqEncoderKey, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradValueOutput</td>
+          <td>输入</td>
+          <td>网络层对value和encoderValue正向输出结果的反向梯度值，对应公式中的y。</td>
+          <td>encoderValue参数为nullptr时seqEncoderValue值为0，seqValue长度大小与seqKey一致，seqEncoderValue长度大小与seqEncoderKey一致，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, headNum, seqValue+seqEncoderValue, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>query</td>
+          <td>输入</td>
+          <td>正向输入的query（多模态中图片Query），对应公式中的x。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqQuery, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>key</td>
+          <td>输入</td>
+          <td>正向输入的key（多模态中图片Key），对应公式中的x。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqKey, headNum,headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>encoderQuery</td>
+          <td>可选输入</td>
+          <td>正向输入的encoderQuery（多模态中文本Query），对应公式中的x。</td>
+          <td>当文本Query参与训练时进行传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderQuery, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>encoderKey</td>
+          <td>可选输入</td>
+          <td>正向输入的encoderKey（多模态中文本Key），对应公式中的x。</td>
+          <td>当文本Key参与训练时进行传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderKey, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normQueryWeight</td>
+          <td>可选输入</td>
+          <td>正向query进行归一化操作的权重值，对应公式中的γ。</td>
+          <td>当图片Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normQueryMean</td>
+          <td>可选输入</td>
+          <td>正向query进行归一化操作时输出的均值，对应公式中的μ。</td>
+          <td>当图片Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqQuery, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normQueryRstd</td>
+          <td>可选输入</td>
+          <td>正向query进行归一化操作时输出的方差相关项，对应公式中的rstd。</td>
+          <td>当图片Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqQuery, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normKeyWeight</td>
+          <td>可选输入</td>
+          <td>正向key进行归一化操作的权重值，对应公式中的γ，当图片Query、Key进行带仿射LayerNorm归一化操作时传入。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normKeyMean</td>
+          <td>可选输入</td>
+          <td>正向key进行归一化操作时输出的均值，对应公式中的μ。</td>
+          <td>当图片Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqKey, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normKeyRstd</td>
+          <td>可选输入</td>
+          <td>正向key进行归一化操作时输出的方差相关项rstd，对应公式中的rstd。</td>
+          <td>当图片Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqKey, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddQueryWeight</td>
+          <td>可选输入</td>
+          <td>正向encoderQuery进行归一化操作的权重值，对应公式中的γ。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddQueryMean</td>
+          <td>可选输入</td>
+          <td>正向encoderQuery进行归一化操作时输出的均值，对应公式中的μ。</td>
+          <td>当文本Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderQuery, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddQueryRstd</td>
+          <td>可选输入</td>
+          <td>正向encoderQuery进行归一化操作时输出的方差相关项，对应公式中的rstd。</td>
+          <td>当文本Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderQuery, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddKeyWeight</td>
+          <td>可选输入</td>
+          <td>正向encoderKey进行归一化操作的权重值，对应公式中的γ。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddKeyMean</td>
+          <td>可选输入</td>
+          <td>正向encoderKey进行归一化操作时输出的均值，对应公式中的μ。</td>
+          <td>当文本Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderKey, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normAddKeyRstd</td>
+          <td>可选输入</td>
+          <td>正向encoderKey进行归一化操作时输出的方差相关项，对应公式中的rstd。</td>
+          <td>当文本Query、Key进行归一化操作时传入。</td>
+          <td>FLOAT32</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderKey, headNum, 1]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>ropeSin</td>
+          <td>可选输入</td>
+          <td>公式中正向输入进行旋转位置编码操作的sin值。</td>
+          <td>当图片或文本Query、Key进行旋转位置编码操作时传入，seqRope长度大小需在[1~min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)]之间，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[seqRope, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>ropeCos</td>
+          <td>可选输入</td>
+          <td>公式中正向输入进行旋转位置编码操作的cos值。</td>
+          <td>当图片或文本Query、Key进行旋转位置编码操作时传入，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[seqRope, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>normType</td>
+          <td>可选输入</td>
+          <td>指定query、key归一化操作类型。</td>
+          <td>0：不进行归一化操作，1：层归一化操作，2：带仿射变换参数层归一化操作，用户不特意指定时建议传入为0。</td>
+          <td>INT64</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>normAddedType</td>
+          <td>可选输入</td>
+          <td>指定encoderQuery、encoderKey归一化操作类型。</td>
+          <td>0：不进行归一化操作，1：层归一化操作，2：带仿射变换参数层归一化操作，用户不特意指定时建议传入为0。</td>
+          <td>INT64</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>ropeType</td>
+          <td>可选输入</td>
+          <td>指定query与encoderQuery、key与encoderKey进行Concat后的旋转位置编码操作类型。</td>
+          <td>0：不进行旋转位置编码操作，1：Interleave类型旋转位置编码，2：Half类型旋转位置编码，用户不特意指定时建议传入为0。</td>
+          <td>INT64</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>concatOrder</td>
+          <td>可选输入</td>
+          <td>指定query与encoderQuery、key与encoderKey、value与encoderValue的Concat操作叠加顺序。</td>
+          <td>以query为例，0：[query, encoderQuery]，1：[encoderQuery, query]，用户不特意指定时建议传入为0。</td>
+          <td>INT64</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>gradQuery</td>
+          <td>输出</td>
+          <td>公式中网络层对正向输入query的反向梯度值。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqQuery, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradKey</td>
+          <td>输出</td>
+          <td>公式中网络层对正向输入key的反向梯度值。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqKey, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradValue</td>
+          <td>输出</td>
+          <td>公式中网络层对正向输入value的反向梯度值。</td>
+          <td>数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqValue, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradEncoderQuery</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderQuery的反向梯度值。</td>
+          <td>当文本Query参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderQuery, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradEncoderKey</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderKey的反向梯度值。</td>
+          <td>当文本Key参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderKey, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradEncoderValue</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderValue的反向梯度值。</td>
+          <td>当文本Value参与训练时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[batch, seqEncoderValue, headNum, headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormQueryWeight</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入query进行归一化操作的γ权重反向梯度值。</td>
+          <td>当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormQueryBias</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入query进行归一化操作的β偏移反向梯度值。</td>
+          <td>当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormKeyWeight</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入key进行归一化操作的γ权重反向梯度值。</td>
+          <td>当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormKeyBias</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入key进行归一化操作的β偏移反向梯度值。</td>
+          <td>当图片Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormAddedQueryWeight</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderQuery进行归一化操作的γ权重反向梯度值。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormAddedQueryBias</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderQuery进行归一化操作的β偏移反向梯度值。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormAddedKeyWeight</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderKey进行归一化操作的γ权重反向梯度值。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>gradNormAddedKeyBias</td>
+          <td>可选输出</td>
+          <td>公式中网络层对正向输入encoderKey进行归一化操作的β偏移反向梯度值。</td>
+          <td>当文本Query、Key进行带仿射LayerNorm归一化操作时输出，数据类型与参数gradQueryOutput保持一致。</td>
+          <td>FLOAT32、FLOAT16、BFLOAT16</td>
+          <td>ND</td>
+          <td>[headDim]</td>
+          <td>x</td>
+      </tr>
+      <tr>
+          <td>workspaceSize</td>
+          <td>输出</td>
+          <td>返回需要在Device侧申请的workspace大小。</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+      <tr>
+          <td>executor</td>
+          <td>输出</td>
+          <td>返回op执行器，包含了算子计算流程。</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+      </tr>
+    </tbody>
+  </table>
+
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-  <table style="undefined;table-layout: fixed;width: 1155px"><colgroup>
-  <col style="width: 319px">
-  <col style="width: 144px">
-  <col style="width: 671px">
+
+  第一段接口完成入参校验，出现以下场景时报错：
+  <table style="undefined;table-layout: fixed;width: 1202px"><colgroup>
+  <col style="width: 262px">
+  <col style="width: 121px">
+  <col style="width: 819px">
   </colgroup>
   <thead>
     <tr>
@@ -432,13 +579,13 @@
   </tbody>
   </table>
 
-### aclnnNormRopeConcatBackward
+## aclnnNormRopeConcatBackward
 
-- **参数说明：**
-  <table style="undefined;table-layout: fixed; width: 598px"><colgroup>
-  <col style="width: 144px">
-  <col style="width: 125px">
-  <col style="width: 700px">
+- **参数说明**
+  <table style="undefined;table-layout: fixed; width: 1202px"><colgroup>
+  <col style="width: 262px">
+  <col style="width: 121px">
+  <col style="width: 819px">
   </colgroup>
   <thead>
     <tr>
@@ -470,7 +617,7 @@
   </tbody>
   </table>
 
--   **返回值：**
+-   **返回值**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 

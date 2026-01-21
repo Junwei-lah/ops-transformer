@@ -35,6 +35,7 @@ constexpr size_t AVGHEAD_MAX_NUM = 4096;
 constexpr size_t MIN_SHARE_BUFFER = 256;
 constexpr size_t RES_UB_BUFFER = 1024;
 constexpr size_t MAX_AFFINE_BLOCK_NUM = 40;
+constexpr int64_t BATCH_MODE_MIN_KEY = 100000;
 
 enum class NormType : int64_t {
     NONE = 0,
@@ -51,7 +52,7 @@ enum class NormType : int64_t {
 
 inline bool IsNormTypeValid(int64_t normType)
 {
-    return normType >= static_cast<int64_t>(NormType::NONE) && normType <= static_cast<int64_t>(NormType::L2_NORM);
+    return normType >= static_cast<int64_t>(NormType::NONE) && normType <= static_cast<int64_t>(NormType::LAYER_NORM_AFFINE);
 }
 
 // read_store

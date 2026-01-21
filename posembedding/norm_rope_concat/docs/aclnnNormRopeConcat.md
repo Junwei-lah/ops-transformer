@@ -6,36 +6,59 @@
 
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
+|<term>昇腾910_95 AI处理器</term>|      √     |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      √     |
-|<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      √     |
+|<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>|      √     |
+|<term>Atlas 200I/500 A2 推理产品</term>|      ×     |
+|<term>Atlas 推理系列产品</term>|      ×     |
+|<term>Atlas 训练系列产品</term>|      ×     |
 
 产品形态详细说明请参见[昇腾产品形态说明](https://www.hiascend.com/document/redirect/CannCommunityProductForm)
 
 ## 功能说明
 
-- 算子功能:（多模态）transfomer注意力机制中，针对query、key和Value实现归一化（Norm）、旋转位置编码（Rope）、特征拼接（Concat）：
+- 接口功能:（多模态）transfomer注意力机制中，针对query、key和Value实现归一化（Norm）、旋转位置编码（Rope）、特征拼接（Concat）：
 
-    -   归一化（Norm）当前支持层归一化（LayerNorm）和带仿射变换参数层归一化（AFFINE LayerNorm）类型。
+    -   归一化（Norm）当前支持层归一化（LayerNorm）、带仿射变换参数层归一化（AFFINE LayerNorm）、均方根归一化（RmsNorm）和带仿射变换参数均方根归一化（AFFINE RmsNorm）类型。
     -   旋转位置编码（Rope）支持Interleave和Half类型。
     -   特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
 
 -   计算公式（以Query（视频）和EncoderQuery（文本）为例）：
-
-	$$
-    hiddenState_q = \text{LayerNorm}(query, normQueryWeight, normQueryBias, eps) \\
-    hiddenState_{eq} = \text{LayerNorm}(encoderQuery, normEncoderQueryWeight, normEncoderQueryBias, eps) \\
+	  $$
+    hiddenState_q = \text{Norm}(query, normQueryWeight, normQueryBias, eps) \\
+    hiddenState_{eq} = \text{Norm}(encoderQuery, normEncoderQueryWeight, normEncoderQueryBias, eps) \\
     concatedHiddenState = \text{Concat}(hiddenState_q, hiddenState_{eq}) \\
     transposedHiddenState = \text{Transpose}(concatedHiddenState, (0, 2, 1, 3)) \\
     hiddenState = \text{RoPE}(concatedHiddenState, ropeSin, ropeCos)
     $$
-
 - 说明：
     1. 输入输出布局如下：输入`query`的shape为`(B, S, N, D)`，输出`hiddenState`的shape为`(B, N, S, D)`，其中
     B为batch，S为sequenceLen，N为headNum，D为headDim。
-    2. LayerNorm有三种模式(`normType`)：`NONE(0), LAYER_NORM(1), LAYER_NORM_AFFINE(2)`，其中：当`normType = NONE`时：$$ hiddenState_q = query $$当`normType = LAYER_NORM`时$$queryMean_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}query_{b,s,n} \\
-    queryVar_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}(query-queryMean_{b,s,n})^2 \\
-    queryRstd_{b,s,n}=  \frac{1}{\sqrt{queryVar_{b,s,n}+\epsilon}} \\
-    hiddenState_q = (query-queryMean)*queryRstd$$当`normType =LAYER_NORM_AFFINE`时，在上面的基础上$$hiddenState_q = normQueryWeight*hiddenState_q + normQueryBias$$
+    2. Norm有五种模式(`normType`)：`NONE(0), LAYER_NORM(1), LAYER_NORM_AFFINE(2)，RMS_NORM(3)，RMS_NORM_AFFINE(4)`，其中：
+        当`normType = NONE`时：
+        $$
+        hiddenState_q = query
+        $$
+        当`normType = LAYER_NORM`时
+        $$
+        queryMean_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}query_{b,s,n} \\
+        queryVar_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}(query-queryMean_{b,s,n})^2 \\
+        queryRstd_{b,s,n}=  \frac{1}{\sqrt{queryVar_{b,s,n}+\epsilon}} \\
+        hiddenState_q = (query-queryMean)*queryRstd$$
+        当`normType = LAYER_NORM_AFFINE`时，在上面的基础上
+        $$
+        hiddenState_q = normQueryWeight*hiddenState_q + normQueryBias
+        $$
+        当`normType = RMS_NORM`时：
+        $$
+        queryMs = \frac{1}{D}\sum_{i=0}^{D}(query_{b,s,n})^2 \\
+        queryRms = \frac{1}{\sqrt{queryMs+\epsilon}} \\
+        hiddenState_q = query * queryRms
+        $$
+        当`normType = RMS_NORM_AFFINE`时，在上面的基础上
+        $$
+        hiddenState_q = normQueryWeight*hiddenState_q
+        $$
     3. Concat指在sequence维度上进行拼接，拼接有顺序区别(`concatOrder`)，当`concatOrder=0`时，$hiddenState_q$在$hiddenState_{eq}$前，当`concatOrder=1`时，$hiddenState_q$在$hiddenState_{eq}$后。
     4. RoPE有三种模式(`ropeType`):`NONE(0), INTERLEAVE(1), HALF(2)`，其中当`ropeType=NONE`时直接输出不做变换，其余情况参考如下:
         ```python
@@ -62,289 +85,442 @@
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnNormRopeConcatGetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnNormRopeConcat”接口执行计算。
 
 ```cpp
-aclnnStatus aclnnNormRopeConcatGetWorkspaceSize(const aclTensor *query, const aclTensor *key, const aclTensor *value, const aclTensor *encoderQuery, const aclTensor *encoderKey, const aclTensor *encoderValue, const aclTensor *normQueryWeight, const aclTensor *normQueryBias, const aclTensor *normKeyWeight, const aclTensor *normKeyBias, const aclTensor *normAddedQueryWeight, const aclTensor *normAddedQueryBias, const aclTensor *normAddedKeyWeight, const aclTensor *normAddedKeyBias, const aclTensor *ropeSin, const aclTensor *ropeCos, int64_t normType, int64_t normAddedType, int64_t ropeType, int64_t concatOrder, double eps, bool isTraining, const aclTensor *queryOutput, const aclTensor *keyOutput, const aclTensor *valueOutput, const aclTensor *normQueryMean, const aclTensor *normQueryRstd, const aclTensor *normKeyMean, const aclTensor *normKeyRstd, const aclTensor *normAddedQueryMean, const aclTensor *normAddedQueryRstd, const aclTensor *normAddedKeyMean, const aclTensor *normAddedKeyRstd, uint64_t *workspaceSize, aclOpExecutor **executor)
+aclnnStatus aclnnNormRopeConcatGetWorkspaceSize(
+  const aclTensor *query,
+  const aclTensor *key,
+  const aclTensor *value,
+  const aclTensor *encoderQuery,
+  const aclTensor *encoderKey,
+  const aclTensor *encoderValue,
+  const aclTensor *normQueryWeight,
+  const aclTensor *normQueryBias,
+  const aclTensor *normKeyWeight,
+  const aclTensor *normKeyBias,
+  const aclTensor *normAddedQueryWeight,
+  const aclTensor *normAddedQueryBias,
+  const aclTensor *normAddedKeyWeight,
+  const aclTensor *normAddedKeyBias,
+  const aclTensor *ropeSin,
+  const aclTensor *ropeCos,
+  int64_t         normType,
+  int64_t         normAddedType,
+  int64_t         ropeType,
+  int64_t         concatOrder,
+  double          eps,
+  bool            isTraining,
+  const aclTensor *queryOutput,
+  const aclTensor *keyOutput,
+  const aclTensor *valueOutput,
+  const aclTensor *normQueryMean,
+  const aclTensor *normQueryRstd,
+  const aclTensor *normKeyMean,
+  const aclTensor *normKeyRstd,
+  const aclTensor *normAddedQueryMean,
+  const aclTensor *normAddedQueryRstd,
+  const aclTensor *normAddedKeyMean,
+  const aclTensor *normAddedKeyRstd,
+  uint64_t *workspaceSize,
+  aclOpExecutor **executor)
 ```
 ```cpp
-aclnnStatus aclnnNormRopeConcat(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
+aclnnStatus aclnnNormRopeConcat(
+  void *workspace,
+  uint64_t workspaceSize,
+  aclOpExecutor *executor,
+  aclrtStream stream)
 ```
 
-### aclnnNormRopeConcatGetWorkspaceSize
+## aclnnNormRopeConcatGetWorkspaceSize
+- **参数说明**
+  <table style="undefined;table-layout: fixed; width: 1452px"><colgroup>
+    <col style="width: 174px">
+    <col style="width: 121px">
+    <col style="width: 253px">
+    <col style="width: 262px">
+    <col style="width: 213px">
+    <col style="width: 115px">
+    <col style="width: 169px">
+    <col style="width: 145px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度(shape)</th>
+        <th>非连续Tensor</th>
+      </tr></thead>
+    <tbody>
+      <tr>
+        <td>query</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Query。</td>
+        <td>数据类型与key、value一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>key</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Key。</td>
+        <td>数据类型与query、value一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>value</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Value。</td>
+        <td>数据类型与query、key一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>encoderQuery</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Query，来自EncoderHiddenState。</td>
+        <td>数据类型与key、value一致或为空指针。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>encoderKey</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Key，来自EncoderHiddenState。</td>
+        <td>数据类型与query、value一致或为空指针。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>encoderValue</td>
+        <td>输入</td>
+        <td>表示注意力机制中的Value，来自EncoderHiddenState。</td>
+        <td>数据类型与query、key一致或为空指针。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BSND]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normQueryWeight</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在Query上。</td>
+        <td>可选，normType=2或4时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normQueryBias</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在Query上。</td>
+        <td>可选，normType=2时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normKeyWeight</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在Key上。</td>
+        <td>可选，normType=2或4时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normKeyBias</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在Key上。</td>
+        <td>可选，normType=2需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normAddedQueryWeight</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在encoderQuery上。</td>
+        <td>可选，normAddedType=2或4时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normAddedQueryBias</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在encoderQuery上。</td>
+        <td>可选，normAddedType=2时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normAddedKeyWeight</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在encoderKey上。</td>
+        <td>可选，normAddedType=2或4时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normAddedKeyBias</td>
+        <td>输入</td>
+        <td>表示LayerNorm的仿射变换参数，作用在encoderKey上。</td>
+        <td>可选，normAddedType=2时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[D]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>ropeSin</td>
+        <td>输入</td>
+        <td>表示RoPE的正弦编码。</td>
+        <td>ropeType!=0时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[SD]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>ropeCos</td>
+        <td>输入</td>
+        <td>表示RoPE的余弦编码。</td>
+        <td>ropeType!=0时需要提供。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[SD]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normType</td>
+        <td>属性</td>
+        <td>表示作用在q，k上的正则化类型，0: 不做正则化，1: LayerNorm, 2: LayerNormAffine, 3: RmsNorm, 4: RmsNormAffine。</td>
+        <td>无。</td>
+        <td>int64</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>normAddedType</td>
+        <td>属性</td>
+        <td>表示作用在encoderQuery，encoderKey上的正则化类型，0: 不做正则化，1: LayerNorm, 2: LayerNormAffine, 3: RmsNorm, 4: RmsNormAffine。</td>
+        <td>无。</td>
+        <td>int64</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>ropeType</td>
+        <td>属性</td>
+        <td>表示RoPE的模式,int64类型，0: 不做RoPE，1: Interleave, 2: Half。</td>
+        <td>无。</td>
+        <td>int64</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>concatOrder</td>
+        <td>属性</td>
+        <td>表示拼接的顺序,int64类型，0: query在前，1: query在后。</td>
+        <td>无。</td>
+        <td>int64</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>eps</td>
+        <td>属性</td>
+        <td>表示正则化中的epsilon值。</td>
+        <td>无。</td>
+        <td>float32</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>isTraining</td>
+        <td>属性</td>
+        <td>表示是否为训练阶段，决定是否输出反向使用的值。</td>
+        <td>无。</td>
+        <td>bool</td>
+        <td>标量</td>
+        <td>标量</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>queryOutput</td>
+        <td>输出</td>
+        <td>表示注意力机制中的query输出。</td>
+        <td>数据类型与query一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BNSD]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>keyOutput</td>
+        <td>输出</td>
+        <td>表示注意力机制中的key输出。</td>
+        <td>数据类型与key一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BNSD]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>valueOutput</td>
+        <td>输出</td>
+        <td>表示注意力机制中的value输出。</td>
+        <td>数据类型与value一致。</td>
+        <td>FLOAT16、BFLOAT16、FLOAT</td>
+        <td>ND</td>
+        <td>[BNSD]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normQueryMean</td>
+        <td>输出</td>
+        <td>LayerNorm中的query均值输出，用于反向。</td>
+        <td>normType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normQueryRstd</td>
+        <td>输出</td>
+        <td>LayerNorm中的query标准差输出，用于反向。</td>
+        <td>normType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normKeyMean</td>
+        <td>输出</td>
+        <td>LayerNorm中的key均值输出，用于反向。</td>
+        <td>normType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normKeyRstd</td>
+        <td>输出</td>
+        <td>LayerNorm中的key标准差输出，用于反向。</td>
+        <td>normType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normEncoderQueryMean</td>
+        <td>输出</td>
+        <td>LayerNorm中的encoderQuery均值输出，用于反向。</td>
+        <td>normAddedType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normEncoderQueryRstd</td>
+        <td>输出</td>
+        <td>LayerNorm中的encoderQuery标准差输出，用于反向。</td>
+        <td>normAddedType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normEncoderKeyMean</td>
+        <td>输出</td>
+        <td>LayerNorm中的encoderKey均值输出，用于反向。</td>
+        <td>normAddedType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+      <tr>
+        <td>normEncoderKeyRstd</td>
+        <td>输出</td>
+        <td>LayerNorm中的encoderKey标准差输出，用于反向。</td>
+        <td>normAddedType!=0且isTraining=true时有效。</td>
+        <td>FLOAT</td>
+        <td>ND</td>
+        <td>[BS]</td>
+        <td>√</td>
+      </tr>
+    </tbody></table>
 
-<table style="undefined;table-layout: fixed; width: 1576px"><colgroup>
-  <col style="width: 170px">
-  <col style="width: 170px">
-  <col style="width: 312px">
-  <col style="width: 213px">
-  <col style="width: 100px">
-  </colgroup>
-  <thead>
-    <tr>
-      <th>参数名</th>
-      <th>输入/输出/属性</th>
-      <th>描述</th>
-      <th>数据类型</th>
-      <th>数据格式</th>
-    </tr></thead>
-  <tbody>
-    <tr>
-      <td>query</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Query</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>key</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Key</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>value</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Value</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>encoderQuery</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Query，来自EncoderHiddenState，可以为空指针</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>encoderKey</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Key，来自EncoderHiddenState，可以为空指针</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>encoderValue</td>
-      <td>输入</td>
-      <td>表示注意力机制中的Value，来自EncoderHiddenState，可以为空指针</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normQueryWeight</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在Query上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normQueryBias</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在Query上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normKeyWeight</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在Key上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normKeyBias</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在Key上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normAddedQueryWeight</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在encoderQuery上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normAddedQueryBias</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在encoderQuery上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normAddedKeyWeight</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在encoderKey上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normAddedKeyBias</td>
-      <td>输入</td>
-      <td>表示LayerNorm的仿射变换参数，作用在encoderKey上</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td> 
-    </tr>
-    <tr>
-      <td>ropeSin</td>
-      <td>输入</td>
-      <td>表示RoPE的正弦编码</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>ropeCos</td>
-      <td>输入</td>
-      <td>表示RoPE的余弦编码</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normType</td>
-      <td>属性</td>
-      <td>表示作用在q，k上的正则化类型，0: 不做正则化，1: LayerNorm, 2: LayerNormAffine</td>
-      <td>int64</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normAddedType</td>
-      <td>属性</td>
-      <td>表示作用在encoderQuery，encoderKey上的正则化类型，0: 不做正则化，1: LayerNorm, 2: LayerNormAffine</td>
-      <td>int64</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>ropeType</td>
-      <td>属性</td>
-      <td>表示RoPE的模式,int64类型，0: 不做RoPE，1: Interleave, 2: Half</td>
-      <td>int64</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>concatOrder</td>
-      <td>属性</td>
-      <td>表示拼接的顺序,int64类型，0: query在前，1: query在后</td>
-      <td>int64</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>eps</td>
-      <td>属性</td>
-      <td>表示正则化中的epsilon值</td>
-      <td>float32</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>isTraining</td>
-      <td>属性</td>
-      <td>表示是否为训练阶段，决定是否输出反向使用的值</td>
-      <td>bool</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>queryOutput</td>
-      <td>输出</td>
-      <td>表示注意力机制中的query输出</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>keyOutput</td>
-      <td>输出</td>
-      <td>表示注意力机制中的key输出</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>valueOutput</td>
-      <td>输出</td>
-      <td>表示注意力机制中的value输出</td>
-      <td>FLOAT16、BFLOAT16、FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normQueryMean</td>
-      <td>输出</td>
-      <td>LayerNorm中的query均值输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normQueryRstd</td>
-      <td>输出</td>
-      <td>LayerNorm中的query标准差输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normKeyMean</td>
-      <td>输出</td>
-      <td>LayerNorm中的key均值输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normKeyRstd</td>
-      <td>输出</td>
-      <td>LayerNorm中的key标准差输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normEncoderQueryMean</td>
-      <td>输出</td>
-      <td>LayerNorm中的encoderQuery均值输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normEncoderQueryRstd</td>
-      <td>输出</td>
-      <td>LayerNorm中的encoderQuery标准差输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normEncoderKeyMean</td>
-      <td>输出</td>
-      <td>LayerNorm中的encoderKey均值输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-    <tr>
-      <td>normEncoderKeyRstd</td>
-      <td>输出</td>
-      <td>LayerNorm中的encoderKey标准差输出，用于反向</td>
-      <td>FLOAT</td>
-      <td>ND</td>
-    </tr>
-  </tbody></table>
-
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-  <table>
-  <tr>
-  <td align="center">返回值</td>
-  <td align="center">错误码</td>
-  <td align="center">描述</td>
-  </tr>
-  <tr>
-  <td align="left">ACLNN_ERR_PARAM_NULLPTR</td>
-  <td align="left">161001</td>
-  <td align="left">传入的query、key或value是空指针。</td>
-  </tr>
+  第一段接口完成入参校验，出现以下场景时报错：
+  <table style="undefined;table-layout: fixed;width: 1149px"><colgroup>
+  <col style="width: 281px">
+  <col style="width: 119px">
+  <col style="width: 749px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回码</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>传入的query、key或value是空指针。</td>
+    </tr>
+  </tbody>
   </table>
 
 ## aclnnNormRopeConcat
 
-- **参数说明：**
+- **参数说明**
 
-  <table style="undifined;table-layout: fixed; width: 1557px">
+  <table style="undifined;table-layout: fixed; width: 1149px">
   <colgroup>
-    <col style="width: 100px">
-    <col style="width: 100px">
-    <col style="width: 600px">
+    <col style="width: 281px">
+    <col style="width: 119px">
+    <col style="width: 749px">
   </colgroup>
   <tr>
     <th align="center">参数名</th>
@@ -375,14 +551,14 @@ aclnnStatus aclnnNormRopeConcat(void *workspace, uint64_t workspaceSize, aclOpEx
   </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 - 确定性计算：
   - aclnnNormRopeConcat默认确定性实现。
-
+- query、key、value、encoderQuery、encoderKey、encoderValue数据类型需一致。
 - headDim长度在[1~1024]间，且为偶数。
 - seqRope长度大小在[1~Min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)]之间。
 
