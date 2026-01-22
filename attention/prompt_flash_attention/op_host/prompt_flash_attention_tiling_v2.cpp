@@ -1590,8 +1590,10 @@ bool PromptFlashAttentionTilingV2::CheckIO(ContextParamsForPFATiling& contextKey
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "Get and check query shape failed."),
         return false);
     if (queryShapeInfo.s == 1) {
-        enableIFAMask = true;
-        if (!enableAlibiPse && !enablePerblockQuant) {
+        if (inputLayout != InputLayout::NTD) {
+ 	  	    enableIFAMask = true;
+ 	  	}
+        if (!enableAlibiPse && !enablePerblockQuant && inputLayout != InputLayout::NTD) {
             enableIFA = true;
         }
     }
@@ -4517,7 +4519,7 @@ void PromptFlashAttentionTilingV2::PFATilingDataconvert(PromptFlashAttentionTili
     inputParams.set_fromFused(tilingData.promptAttentionBaseParams.get_fromFused());
     inputParams.set_isBSNDOut(tilingData.promptAttentionBaseParams.get_isBSNDOut());
     inputParams.set_isTNDOut(tilingData.promptAttentionBaseParams.get_isTNDOut());
-    inputParams.set_isGqa((tilingData.promptAttentionBaseParams.get_isIFA() && inputLayout != InputLayout::NTD) || enablePFAMerge);
+    inputParams.set_isGqa(tilingData.promptAttentionBaseParams.get_isIFA() || enablePFAMerge);
     inputParams.set_isSoftMaxLseEnable(tilingData.promptAttentionBaseParams.get_isSoftMaxLseEnable());
     inputParams.set_isActualSharedPrefixLenNull(tilingData.promptAttentionBaseParams.get_isActualSharedPrefixLenNull());
     inputParams.set_isQHasLeftPadding(tilingData.promptAttentionBaseParams.get_isQHasLeftPadding());
