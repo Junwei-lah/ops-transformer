@@ -999,11 +999,7 @@ struct PFAType {
     static constexpr bool isHasPse = (Pse == PFAPse::ENABLE_PSE);
     static constexpr uint32_t sOuter = SOUTER;
 
-#if (defined __DAV_310R6__)
-    static constexpr uint32_t vsOuter = SOUTER;  // ASCEND910_55版本使用vector分核,故此处vector视角的sOuter与cube视角的sOuter一致
-#else
     static constexpr uint32_t vsOuter = SOUTER / 2;  // vector视角的sOuter
-#endif
 
     static constexpr uint32_t sInner = SINNER;
     static constexpr uint32_t qkDSize = QKDSIZE;

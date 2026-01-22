@@ -1958,8 +1958,7 @@ FIA_EXTERN_C ge::graphStatus DoOpTilingFusedInferAttentionScore(gert::TilingCont
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "platformInfoPtr is null"),
         return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    auto socShortName = ascendcPlatform.GetSocVersion();
-    if ((socShortName == platform_ascendc::SocVersion::ASCEND910_95) || (socShortName == platform_ascendc::SocVersion::ASCEND910_55)) {
+    if ((ascendcPlatform.GetCurNpuArch() == NpuArch::DAV_3510)) {
         return TilingFusedInferAttentionScoreV2(context);
     } else {
         return TilingFusedInferAttentionScore(context);

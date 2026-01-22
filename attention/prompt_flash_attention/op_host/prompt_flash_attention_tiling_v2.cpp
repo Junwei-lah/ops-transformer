@@ -2825,8 +2825,7 @@ void PromptFlashAttentionTilingV2::GetEnableDN(ContextParamsForPFATiling& contex
     constexpr uint32_t dLimitDN = 128;
     constexpr uint32_t vecCoreNum = 2;
     constexpr uint32_t sOuterLimitDN = 64;
-    enableDN = ((ascendPlatformInfo.socVersion != platform_ascendc::SocVersion::ASCEND910_55) &&
-        !enableMask && !enablePseShift && !enableAlibiPse && !enablePA && !enablePFAMLA && !enablePFARope && 
+    enableDN = (!enableMask && !enablePseShift && !enableAlibiPse && !enablePA && !enablePFAMLA && !enablePFARope && 
         (queryShapeInfo.d <= dLimitDN) && (valueShapeInfo.d <= dLimitDN) &&
         !isKVHasPrefix && (contextKeyParams.inputDataType == ge::DT_FLOAT16 || contextKeyParams.inputDataType == ge::DT_BF16 || enablePerblockQuant) &&
         (tilingData.promptAttentionSingleCoreParams.get_singleProcessSOuterSize() * vecCoreNum > sOuterLimitDN));
@@ -2932,9 +2931,6 @@ void PromptFlashAttentionTilingV2::InferTilingMod(const ContextParamsForPFATilin
 
 void PromptFlashAttentionTilingV2::InferSplitCoreMode() {
     splitCoreMode = SplitCoreMode::SPLIT_NBS_CUBE;
-    if (ascendPlatformInfo.socVersion == platform_ascendc::SocVersion::ASCEND910_55) {
-        splitCoreMode = SplitCoreMode::SPLIT_NBS_VECTOR;
-    }
 }
 
 void PromptFlashAttentionTilingV2::InferConstantization() {
@@ -4244,7 +4240,7 @@ ge::graphStatus PromptFlashAttentionTilingV2::ComputeTilingData(ContextParamsFor
     std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV,
     PromptFlashAttentionTilingData& tilingData) {
     // Compute tiling data.
-    if (splitCoreMode == SplitCoreMode::SPLIT_NBS_CUBE || (splitCoreMode == SplitCoreMode::SPLIT_NBS_VECTOR && ascendPlatformInfo.socVersion == platform_ascendc::SocVersion::ASCEND910_55)) {
+    if (splitCoreMode == SplitCoreMode::SPLIT_NBS_CUBE) {
         bool isAttenMaskUsed = (contextKeyParams.attentionMaskShape != nullptr);
         PromptFlashAttentionSplitNBSeq(tilingData, actualSeqLengths, actualSeqLengthsKV, isAttenMaskUsed);
     }
@@ -4734,6 +4730,6 @@ ge::graphStatus PromptFlashAttentionTilingV2::DoOpTiling()
     return ret;
 }
 
-REGISTER_TILING_TEMPLATE_FIA(PromptFlashAttention, PromptFlashAttentionTilingV2, std::vector<int32_t>({(int32_t)platform_ascendc::SocVersion::ASCEND910_95}), 90);
+REGISTER_TILING_TEMPLATE_FIA(PromptFlashAttention, PromptFlashAttentionTilingV2, std::vector<int32_t>({(int32_t)NpuArch::DAV_3510}), 90);
 } // namespace v2
 } // namespace optiling

@@ -329,7 +329,7 @@ private:
     ge::graphStatus CalcWorkSpace();
     ge::graphStatus GenTilingKey() const;
 
-    platform_ascendc::SocVersion GetSocVersionShortName() const;
+    NpuArch GetCurNpuArch() const;
 
     MlaPrologBaseShapeInfo baseShapeInfo_;
     MlaPrologScenarioInfo scenarioInfo_;

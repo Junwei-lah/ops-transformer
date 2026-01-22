@@ -598,5 +598,5 @@ ge::graphStatus FiaTilingNonQuantMla::DoOpTiling()
 // 2. 十位表示gqa、mla、泛化，即: x0x-mla, x1x-gpa, x2x-泛化
 // 3. 个位代表特化模板到泛化模板的优先级排序
 REGISTER_TILING_TEMPLATE_FIA(FusedInferAttentionScore, FiaTilingNonQuantMla,
-    std::vector<int32_t>({static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND910B)}), 9);
+    std::vector<int32_t>({static_cast<int32_t>(NpuArch::DAV_2201)}), 9);
 } // namespace optiling

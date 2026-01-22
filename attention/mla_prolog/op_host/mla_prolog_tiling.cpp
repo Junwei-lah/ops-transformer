@@ -59,11 +59,11 @@ inline auto Align(T num, T rnd) -> T
     return (((rnd) == 0) ? 0 : (((num) + (rnd) - 1) / (rnd) * (rnd)));
 }
 
-platform_ascendc::SocVersion MlaPrologTiling::GetSocVersionShortName() const
+NpuArch MlaPrologTiling::GetCurNpuArch() const
 {
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->platformInfo);
-    auto socShortName = ascendcPlatform.GetSocVersion();
-    return socShortName;
+    NpuArch npuArch = ascendcPlatform.GetCurNpuArch();
+    return npuArch;
 }
 
 ge::graphStatus MlaPrologTiling::GetNpuInfo()
@@ -150,7 +150,7 @@ QUANT_MODE MlaPrologTiling::GetQuantizationModeV3Mxfp8() const
 QUANT_MODE MlaPrologTiling::GetQuantizationMode() const
 {
     if (std::strncmp(context_->opType, V3_OP_NAME, OP_NAME_LEN) == 0) {
-        if (GetSocVersionShortName() == platform_ascendc::SocVersion::ASCEND910_95){
+        if (GetCurNpuArch() == NpuArch::DAV_3510){
             return GetQuantizationModeV3Mxfp8();
         } else {
             return GetQuantizationModeV3();

@@ -138,7 +138,7 @@ public:
     ge::graphStatus CheckScenarParam();
     ge::graphStatus CheckAttrs() const;
 
-    platform_ascendc::SocVersion GetSocVersionShortName() const;
+    NpuArch GetCurNpuArch() const;
 
 private:
     bool CheckAttrsNotNull() const;

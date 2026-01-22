@@ -230,7 +230,7 @@ ge::graphStatus IFATilingArch38::DoSubOpTiling(IncreFlashAttentionContext &ifaCo
     return ret;
 }
 
-REGISTER_TILING_TEMPLATE_FIA(IncreFlashAttention, IFATilingArch38, std::vector<int32_t>({(int32_t)platform_ascendc::SocVersion::MC62CM12A}), 92);
+REGISTER_TILING_TEMPLATE_FIA(IncreFlashAttention, IFATilingArch38, std::vector<int32_t>({(int32_t)NpuArch::DAV_5102}), 92);
 
 } // namespace arch38
 } // namespace optiling

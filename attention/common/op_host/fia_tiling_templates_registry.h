@@ -94,7 +94,7 @@ public:
 
     ge::graphStatus DoTilingImpl(gert::TilingContext *context, TilingInfo *tilingInfo)
     {
-        int32_t soc_version = static_cast<int32_t>(platform_ascendc::SocVersion::RESERVED_VERSION);
+        int32_t npuArch = static_cast<int32_t>(NpuArch::DAV_RESV);
         const char *op_type = context->GetNodeType();
         fe::PlatFormInfos *platformInfoPtr = context->GetPlatformInfo();
         if (platformInfoPtr == nullptr) {
@@ -102,13 +102,13 @@ public:
             return ge::GRAPH_FAILED;
         }
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-        soc_version = static_cast<int32_t>(ascendcPlatform.GetSocVersion());
-        OP_LOGI(context, "soc version is %d", soc_version);
-        if (soc_version == static_cast<int32_t>(platform_ascendc::SocVersion::RESERVED_VERSION)) {
-            OPS_REPORT_VECTOR_INNER_ERR(op_type, "Do op tiling failed, cannot find soc version.");
+        npuArch = static_cast<int32_t>(ascendcPlatform.GetCurNpuArch());
+        OP_LOGI(context, "NpuArch is %d", npuArch);
+        if (npuArch == static_cast<int32_t>(NpuArch::DAV_RESV)) {
+            OPS_REPORT_VECTOR_INNER_ERR(op_type, "Do op tiling failed, cannot find npuArch.");
             return ge::GRAPH_FAILED;
         }
-        auto tilingTemplateRegistryMap = GetTilingTemplates(op_type, soc_version);
+        auto tilingTemplateRegistryMap = GetTilingTemplates(op_type, npuArch);
         OP_LOGI(context, "op_type: %s", op_type);
         for (auto it = tilingTemplateRegistryMap.begin(); it != tilingTemplateRegistryMap.end(); ++it) {
             auto tilingTemplate = it->second(context);

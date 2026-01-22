@@ -217,23 +217,17 @@ ge::graphStatus IFATilingV2::GetNpuInfo() {
 
   aicNum_ = ascendcPlatform.GetCoreNumAic();
   aivNum_ = ascendcPlatform.GetCoreNumAiv();
-  if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_55) {
-    socVersion_ = IfaSocVersion::SOC_ASCEND_910_55;
-    coreNum_ = NUM24;  // default aiv num
-    aivNum_ = NUM24;
-    aicNum_ = NUM24;
-    OP_LOGD(ifaContext_->opName, "Platform is 910_55. Num of core obtained is %d.", coreNum_);
+  
+  socVersion_ = IfaSocVersion::SOC_ASCEND_950;
+  coreNum_ = ascendcPlatform.GetCoreNumAiv();  // default aiv num
+  if (NUM2 * aicNum_ <= aivNum_) {
+    aivNum_ = NUM2 * aicNum_;
   } else {
-    socVersion_ = IfaSocVersion::SOC_ASCEND_910_95;
-    coreNum_ = ascendcPlatform.GetCoreNumAiv();  // default aiv num
-    if (NUM2 * aicNum_ <= aivNum_) {
-      aivNum_ = NUM2 * aicNum_;
-    } else {
-      aivNum_ = aivNum_ / NUM2 * NUM2;
-      aicNum_ = aivNum_ / NUM2;
-    }
-    OP_LOGD(ifaContext_->opName, "Platform is 910_95. Num of core obtained is %d.", coreNum_);
+    aivNum_ = aivNum_ / NUM2 * NUM2;
+    aicNum_ = aivNum_ / NUM2;
   }
+  OP_LOGD(ifaContext_->opName, "Platform is Ascend 950. Num of core obtained is %d.", coreNum_);
+  
   OP_CHECK_IF(aicNum_ == 0 || aivNum_ == 0, OPS_REPORT_VECTOR_INNER_ERR(ifaContext_->opName, "Num of core obtained is 0."),
              return GRAPH_FAILED);
 
@@ -539,7 +533,7 @@ ge::graphStatus IFATilingV2::ProcessBaseTensors() {
                    (inputKvType_ == ge::DT_INT4) || (inputKvType_ == ge::DT_HIFLOAT8) ||
                    (inputKvType_ == ge::DT_FLOAT8_E4M3FN) ||
                    (inputKvType_ == ge::DT_FLOAT4_E2M1));
-  if (socVersion_ == IfaSocVersion::SOC_ASCEND_910_95 && antiQuantFlag_ && sOfQuery_ > 1) {
+  if (socVersion_ == IfaSocVersion::SOC_ASCEND_950 && antiQuantFlag_ && sOfQuery_ > 1) {
     isPFAFlag_ = true;
   }
   OP_CHECK_IF(sOfQuery_ != NUM1 && !isPFAFlag_,
@@ -576,9 +570,6 @@ ge::graphStatus IFATilingV2::ProcessBaseTensors() {
 }
 
 bool IFATilingV2::EnableC1V1() const {
-  if (socVersion_ == IfaSocVersion::SOC_ASCEND_910_55) {
-    return true;
-  }
   if (splitKVFlagLocal_) {
     return false;
   }
@@ -2523,7 +2514,7 @@ ge::graphStatus IFATilingV2::CheckAntiQuantParam(const int64_t antiquantMode, co
                                                const gert::CompileTimeTensorDesc * antiquantScaleDesc, const gert::CompileTimeTensorDesc * antiquantOffsetDesc) {
   // 3:per-token+pergroup
   OP_CHECK_IF(((antiquantMode != PER_CHANNEL_MODE) && (antiquantMode != PER_TOKEN_MODE) &&
-             (socVersion_ == IfaSocVersion::SOC_ASCEND_910_95 && antiquantMode != PER_TENSOR_HEAD_MODE &&
+             (socVersion_ == IfaSocVersion::SOC_ASCEND_950 && antiquantMode != PER_TENSOR_HEAD_MODE &&
               antiquantMode != PER_TOKEN_HEAD_MODE && antiquantMode != PER_TOKEN_PA_MODE &&
               antiquantMode != PER_TOKEN_HEAD_PA_MODE && antiquantMode != PER_TOKEN_GROUP_MODE)),
              OP_LOGE(ifaContext_->opName, "AntiquantMode value:%ld is invalid, it should be 0, 1, 2, 3, 4, 5 or 6.", antiquantMode),
@@ -3357,7 +3348,7 @@ ge::graphStatus IFATilingV2::CalcInnerSize(uint32_t seqSize) {
    *            (2) 伪量化：vector比较重，尽量较少vector的循环次数,
    *                          因此，cube发小块，期望vector尽量被cube的mte2掩盖。sInnerSize=1024
    */
-  if (socVersion_ == IfaSocVersion::SOC_ASCEND_910_95 || socVersion_ == IfaSocVersion::SOC_ASCEND_910_55) {
+  if (socVersion_ == IfaSocVersion::SOC_ASCEND_950) {
     SetfaRunBaseSize();
     sInnerSize2_ = sInnerSize_;
   } else {
@@ -3483,7 +3474,7 @@ ge::graphStatus IFATilingV2::CalcWorkSpace() {
     workspaceSize_ += (tilingData_->splitKVParams.get_accumOutSize() +
                        tilingData_->splitKVParams.get_logSumExpSize() * 2) * blockTypeSize_;  // 2 : sMax 和 sSum
   }
-  if (socVersion_ == IfaSocVersion::SOC_ASCEND_910_95 ||socVersion_ == IfaSocVersion::SOC_ASCEND_910_55) {
+  if (socVersion_ == IfaSocVersion::SOC_ASCEND_950) {
     workspaceSize_ += NUM100 * NUM1024 * NUM1024; // 100*1024*1024: extra workspace for dump in david
   }
   if (pageAttentionFlag_) {
@@ -3853,7 +3844,7 @@ ge::graphStatus IFATilingV2::GenTilingKey() {
     }
     UpdatePerfMode();
     uint64_t baseOffset = IFA_TILINGKEYOFFSET;
-    if (socVersion_ != IfaSocVersion::SOC_ASCEND_910_95 && socVersion_ != IfaSocVersion::SOC_ASCEND_910_55) {
+    if (socVersion_ != IfaSocVersion::SOC_ASCEND_950) {
         baseOffset += (static_cast<uint64_t>(perfMode_)) * IFA_PERF_MODE_TILINGKEYOFFSET;
     }
     UpdateTilingKeyLayoutType();
@@ -4338,6 +4329,6 @@ ge::graphStatus IFATilingV2::DoSubOpTiling(IncreFlashAttentionContext& ifaContex
   return ge::GRAPH_FAILED;
 }
 
-REGISTER_TILING_TEMPLATE_FIA(IncreFlashAttention, IFATilingV2, std::vector<int32_t>({(int32_t)platform_ascendc::SocVersion::ASCEND910_95}), 90);
+REGISTER_TILING_TEMPLATE_FIA(IncreFlashAttention, IFATilingV2, std::vector<int32_t>({(int32_t)NpuArch::DAV_3510}), 90);
 
 } // namespace optiling

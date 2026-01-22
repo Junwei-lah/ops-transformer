@@ -119,8 +119,7 @@ enum class IfaPerfMode : uint32_t {
 enum class IfaSocVersion : uint32_t {
     SOC_ASCEND_910B = 0,
     SOC_ASCEND_310P = 1,
-    SOC_ASCEND_910_95 = 2,
-    SOC_ASCEND_910_55 = 3,
+    SOC_ASCEND_950 = 2,
 };
 
 

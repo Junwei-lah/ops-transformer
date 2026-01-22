@@ -203,10 +203,10 @@ ge::graphStatus FiaInfoParser::GetNpuInfo()
         OPS_REPORT_VECTOR_INNER_ERR(opName_, "num of core obtained is 0."), return GRAPH_FAILED);
 
     socVersion_ = ascendcPlatform.GetSocVersion();
+    NpuArch npuArch = ascendcPlatform.GetCurNpuArch();
     if ((socVersion_ != platform_ascendc::SocVersion::ASCEND310P) &&
         (socVersion_ != platform_ascendc::SocVersion::ASCEND910B) &&
-        (socVersion_ != platform_ascendc::SocVersion::ASCEND910_95) &&
-        (socVersion_ != platform_ascendc::SocVersion::ASCEND910_55)) {
+        (npuArch != NpuArch::DAV_3510)) {
         OPS_REPORT_VECTOR_INNER_ERR(opName_, "SOC Version[%d] is not support.", static_cast<int32_t>(socVersion_));
         return GRAPH_FAILED;
     }

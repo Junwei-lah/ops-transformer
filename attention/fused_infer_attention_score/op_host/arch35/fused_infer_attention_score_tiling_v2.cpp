@@ -873,20 +873,10 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
         ((context_->GetOptionalInputShape(QUERY_ROPE_INDEX) == nullptr) && (context_->GetOptionalInputShape(KEY_ROPE_INDEX) == nullptr)))) {
         auto platformInfoPtr = context_->GetPlatformInfo();
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-        if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_55) {
-            auto kDTypeLocal = context_->GetInputDesc(KEY_INDEX)->GetDataType();
-            if (kDTypeLocal == ge::DT_INT8 || kDTypeLocal == ge::DT_INT4 || kDTypeLocal == ge::DT_HIFLOAT8 ||
-                kDTypeLocal == ge::DT_FLOAT8_E4M3FN || kDTypeLocal == ge::DT_FLOAT4_E2M1) {
-                usingIFA = true;
-            } else {
-                usingIFA = false;
-            }
+        if (qDType == kDType) {
+            usingIFA = false;
         } else {
-            if (qDType == kDType) {
-                usingIFA = false;
-            } else {
-                usingIFA = true;
-            }
+            usingIFA = true;
         }
     }
 
@@ -1008,7 +998,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 }
             }
         }
-        if (tempCompileInfoPtr.socShortName != platform_ascendc::SocVersion::ASCEND910_95 && tempCompileInfoPtr.socShortName != platform_ascendc::SocVersion::ASCEND910_55) {
+        if (ascendcPlatform.GetCurNpuArch() != NpuArch::DAV_3510) {
             OP_CHECK_IF((((contextParamsForPFATiling.inputDataType == ge::DT_INT8) || (contextParamsForPFATiling.kDataType == ge::DT_INT8) ||
                 (contextParamsForPFATiling.outputDataType == ge::DT_INT8)) && (queryD % D_ALIGN_32 != 0)),
                 OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), "D(%u) of query should be 32 elements aligned when int8 is involved!", queryD),
