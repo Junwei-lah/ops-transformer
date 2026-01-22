@@ -60,7 +60,7 @@ ge::graphStatus DecodeUpdateTiling(gert::TilingContext *context) {
            return ge::GRAPH_FAILED);
     auto compileInfo = reinterpret_cast<const DecodeUpdateCompileInfo*>(context->GetCompileInfo());
     if (compileInfo->is_ascendc) {
-        return Ops::Transformer::OpTiling::TilingRegistryNew::GetInstance().DoTilingImpl(context);
+        return Ops::Transformer::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context);
     }
     auto nodeName = context->GetNodeName();
     OP_LOGD(nodeName, "Tiling initing");

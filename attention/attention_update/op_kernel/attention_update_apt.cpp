@@ -9,48 +9,34 @@
  */
 
 /*!
-* \file attention_update_apt.cpp
-* \brief
-*/
-#include "arch35/attention_update_regbase.h"
+ * \file attention_update_apt.cpp
+ * \brief
+ */
+#include "arch35/attention_update_with_lse_regbase.h"
+#include "arch35/attention_update_without_lse_regbase.h"
 
-#define TILING_KEY_GO_FP32_WITHOUT_MAX_OUT 20010
-#define TILING_KEY_GO_FP32_WITH_MAX_OUT 20011
-#define TILING_KEY_GO_FP16_WITHOUT_MAX_OUT 20020
-#define TILING_KEY_GO_FP16_WITH_MAX_OUT 20021
-#define TILING_KEY_GO_BF16_WITHOUT_MAX_OUT 20030
-#define TILING_KEY_GO_BF16_WITH_MAX_OUT 20031
+#define TILING_KEY_EMPTY 10000
+#define TILING_KEY_UPDATE_TYPE_ZERO 20000
+#define TILING_KEY_UPDATE_TYPE_ONE 20001
 
-using namespace AscendC;
 using namespace AttentionUpdateOpt;
 
-extern "C" __global__ __aicore__ void attention_update(GM_ADDR lse, GM_ADDR go, GM_ADDR out, GM_ADDR outLseMax, GM_ADDR workSpace, GM_ADDR tiling) {
-   TPipe pipe;
-   GET_TILING_DATA_WITH_STRUCT(AttentionUpdateTilingData, tilingData, tiling);
-   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
-   if (TILING_KEY_IS(TILING_KEY_GO_FP32_WITHOUT_MAX_OUT)) {
-       AttentionUpdate<float, float, false> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   } else if (TILING_KEY_IS(TILING_KEY_GO_FP32_WITH_MAX_OUT)) {
-       AttentionUpdate<float, float, true> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   } else if (TILING_KEY_IS(TILING_KEY_GO_FP16_WITHOUT_MAX_OUT)) {
-       AttentionUpdate<float, half, false> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   } else if (TILING_KEY_IS(TILING_KEY_GO_FP16_WITH_MAX_OUT)) {
-       AttentionUpdate<float, half, true> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   }else if (TILING_KEY_IS(TILING_KEY_GO_BF16_WITHOUT_MAX_OUT)) {
-       AttentionUpdate<float, bfloat16_t, false> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   } else if (TILING_KEY_IS(TILING_KEY_GO_BF16_WITH_MAX_OUT)) {
-       AttentionUpdate<float, bfloat16_t, true> op(&pipe, &tilingData);
-       op.Init(lse, go, out, outLseMax, workSpace);
-       op.Process();
-   }
+extern "C" __global__ __aicore__ void attention_update(GM_ADDR lse, GM_ADDR go, GM_ADDR out, GM_ADDR outLseMax,
+                                                       GM_ADDR workSpace, GM_ADDR tiling)
+{
+    TPipe pipe;
+    GET_TILING_DATA_WITH_STRUCT(AttentionUpdateTilingData, tilingData, tiling);
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+
+    if (TILING_KEY_IS(TILING_KEY_EMPTY)) {
+        return;
+    } else if (TILING_KEY_IS(TILING_KEY_UPDATE_TYPE_ZERO)) {
+        AttentionUpdateWithoutLse<DTYPE_GO> op(&pipe, &tilingData);
+        op.Init(lse, go, out, outLseMax, workSpace);
+        op.Process();
+    } else if (TILING_KEY_IS(TILING_KEY_UPDATE_TYPE_ONE)) {
+        AttentionUpdateWithLse<DTYPE_GO> op(&pipe, &tilingData);
+        op.Init(lse, go, out, outLseMax, workSpace);
+        op.Process();
+    }
 }

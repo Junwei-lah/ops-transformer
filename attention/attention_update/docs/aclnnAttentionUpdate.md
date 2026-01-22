@@ -336,7 +336,7 @@ void Finalize(int32_t deviceId, aclrtStream stream)
   aclFinalize();
 }
 
-int aclnnAttentionUpdateTest(int32_t deviceId, aclrtStream& stream) {
+aclnnStatus aclnnAttentionUpdateTest(int32_t deviceId, aclrtStream& stream) {
   auto ret = Init(deviceId, &stream);
   CHECK_FREE_RET(ret == ACL_SUCCESS, LOG_PRINT("Init acl failed. ERROR: %d\n", ret); return ret);
 

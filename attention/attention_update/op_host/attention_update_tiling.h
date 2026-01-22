@@ -14,50 +14,41 @@
  */
 #ifndef ASCEND_OPS_ATTENTION_UPDATE_TILING_H
 #define ASCEND_OPS_ATTENTION_UPDATE_TILING_H
-#include <cstdint>
-#include <vector>
-#include "register/op_def_registry.h"
-#include "tiling/tiling_api.h"
-#include "tiling_base/tiling_base.h"
+#include "log/log.h"
+#include "platform/platform_info.h"
+#include "register/op_impl_registry.h"
+#include "tiling_base/tiling_templates_registry.h"
+#include "util/math_util.h"
+#include "util/platform_util.h"
+#include "util/shape_util.h"
+#include "decode_update_tiling.h"
 
 namespace optiling {
 BEGIN_TILING_DATA_DEF(AttentionUpdateTilingData)
-    TILING_DATA_FIELD_DEF(uint64_t, updateType);    // 可选参数，控制lse_m的输出，为0不输出lse_m，为1输出lse_m
-    TILING_DATA_FIELD_DEF(uint64_t, bshSize);       // lse的数据个数，即bsh大小
-    TILING_DATA_FIELD_DEF(uint64_t, goSize);        // go的数据个数，即bsh*hDim大小
-    TILING_DATA_FIELD_DEF(uint64_t, sp);            // lse和go的tensor个数
-    TILING_DATA_FIELD_DEF(uint64_t, hDim);          // go的尾轴d的大小
+TILING_DATA_FIELD_DEF(uint64_t, sp);          // lse和go的tensor个数
+TILING_DATA_FIELD_DEF(uint64_t, d);           // go的尾轴d的大小
+TILING_DATA_FIELD_DEF(uint64_t, usedCoreNum); // 使用核数
 
-    TILING_DATA_FIELD_DEF(uint64_t, usedCoreNum);   // 使用核数
-    TILING_DATA_FIELD_DEF(uint64_t, formerBlockNum);// 正常核数
-    TILING_DATA_FIELD_DEF(uint64_t, tailBlockNum);  // 尾核数
+TILING_DATA_FIELD_DEF(uint64_t, perCoreCount);  // 整核处理的bsh数
+TILING_DATA_FIELD_DEF(uint64_t, lastCoreCount); // 尾核处理的bsh数
+TILING_DATA_FIELD_DEF(uint64_t, perCoreLoops);  // 整核的loop数
+TILING_DATA_FIELD_DEF(uint64_t, lastCoreLoops); // 尾核的loop数
 
-    TILING_DATA_FIELD_DEF(uint64_t, formerLength);  // 正常核切分长度
-    TILING_DATA_FIELD_DEF(uint64_t, tailLength);    // 尾核切分长度
-
-    TILING_DATA_FIELD_DEF(uint64_t, innerFormerBlockNum);   // 内循环正常循环次数
-    TILING_DATA_FIELD_DEF(uint64_t, innerTailBlockNum);     // 内循环尾循环次数(1)
-    TILING_DATA_FIELD_DEF(uint64_t, innerFormerLength);     // 内循环正常循环切分大小
-    TILING_DATA_FIELD_DEF(uint64_t, innerTailLength);       // 内循环尾循环切分大小
-
-    TILING_DATA_FIELD_DEF(uint64_t, tailInnerFormerBlockNum);   // 尾核的内循环正常循环次数
-    TILING_DATA_FIELD_DEF(uint64_t, tailInnerTailBlockNum);     // 尾核的内循环尾循环次数(1)
-    TILING_DATA_FIELD_DEF(uint64_t, tailInnerFormerLength);     // 尾核的内循环正常循环切分大小
-    TILING_DATA_FIELD_DEF(uint64_t, tailInnerTailLength);       // 尾核的内循环尾循环切分大小
+TILING_DATA_FIELD_DEF(uint64_t, perCorePerLoopCount);   // 核内一次最多可以处理的bsh数
+TILING_DATA_FIELD_DEF(uint64_t, perCoreLastLoopCount);  // 整核内最后一次处理的bsh数
+TILING_DATA_FIELD_DEF(uint64_t, lastCoreLastLoopCount); // 尾核内最后一次处理的bsh数
+TILING_DATA_FIELD_DEF(uint64_t, bshInLoop);             // 计算阶段内层循环一次最多可以处理的bsh数
 
 END_TILING_DATA_DEF;
 
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20010, AttentionUpdateTilingData)
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20011, AttentionUpdateTilingData)
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20020, AttentionUpdateTilingData)
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20021, AttentionUpdateTilingData)
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20030, AttentionUpdateTilingData)
-REGISTER_TILING_DATA_CLASS(AttentionUpdate_20031, AttentionUpdateTilingData)
+REGISTER_TILING_DATA_CLASS(AttentionUpdate_20000, AttentionUpdateTilingData)
+REGISTER_TILING_DATA_CLASS(AttentionUpdate_20001, AttentionUpdateTilingData)
 
 
 class AttentionUpdateTiling : public Ops::Transformer::OpTiling::TilingBaseClass {
 public:
-    explicit AttentionUpdateTiling(gert::TilingContext *context) : TilingBaseClass(context){
+    explicit AttentionUpdateTiling(gert::TilingContext *context) : TilingBaseClass(context)
+    {
     }
 
 protected:
@@ -74,50 +65,44 @@ protected:
     ge::graphStatus CheckInputParams();
     ge::graphStatus CheckInputDim();
     ge::graphStatus CheckInputDtype();
+    ge::graphStatus CheckOutputParams();
 
 private:
-    // 硬件信息 
+    // 硬件信息
     uint64_t ubSize_ = 0;
     uint64_t totalCoreNum_ = 0;
     uint64_t workspaceSize_ = 0;
+    uint64_t ubBlockSize_ = 0;
 
     // 输入参数信息
     uint64_t sp_ = 0;
     uint64_t d_ = 0;
     uint64_t updateType_ = 0;
     uint64_t bshSize_ = 0;
-    uint64_t goSize_ = 0;
+    uint64_t goDtypeSize_ = 0;
 
     // 分核信息，核个数
-    uint64_t needCoreNum_ = 0;
     uint64_t usedCoreNum_ = 0;
-    uint64_t formerBlockNum_ = 0;
-    uint64_t tailBlockNum_ = 0;
 
     // 分核信息，核长度
-    uint64_t totalLength_ = 0;
-    uint64_t formerLength_ = 0;
-    uint64_t tailLength_ = 0;
+    uint64_t perCoreCount_ = 0;
+    uint64_t lastCoreCount_ = 0;
 
     // 内循环信息
-    uint64_t innerFormerBlockNum_ = 0;
-    uint64_t innerTailBlockNum_ = 0;
-    uint64_t innerFormerLength_ = 0;
-    uint64_t innerTailLength_ = 0;
-
-    // 尾核的内循环信息
-    uint64_t tailInnerFormerBlockNum_ = 0;
-    uint64_t tailInnerTailBlockNum_ = 0;
-    uint64_t tailInnerFormerLength_ = 0;
-    uint64_t tailInnerTailLength_ = 0;
+    uint64_t perCoreLoops_ = 0;
+    uint64_t lastCoreLoops_ = 0;
+    uint64_t perCorePerLoopCount_ = 0;
+    uint64_t perCoreLastLoopCount_ = 0;
+    uint64_t lastCorePerLoopCount_ = 0;
+    uint64_t lastCoreLastLoopCount_ = 0;
+    uint64_t bshInLoop_ = 0;
 
     gert::Shape goShape_;
     gert::Shape lseShape_;
     ge::DataType goType_;
     ge::DataType lseType_;
     AttentionUpdateTilingData tilingData_;
-
 };
 
-}
-#endif  // ASCEND_OPS_ATTENTION_UPDATE_TILING_H
+} // namespace optiling
+#endif // ASCEND_OPS_ATTENTION_UPDATE_TILING_H
