@@ -10,6 +10,8 @@
 
 #include "platform.h"
 #include <iostream>
+#include <cstdint>
+#include <string>
 
 namespace op {
 
