@@ -610,7 +610,12 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
             <td>inputLayout</td>
             <td>可选输入</td>
             <td>用于标识输入query、key、value的数据排布格式，当该字段包含“_”时，表示“输入layout_输出layput”</td>
-            <td>支持配置的inputLayout包括BSH、BSND、TND、BNSD、NTD、BSH_BNSD、BSND_BNSD、BNSD_BSND、NTD_TND、BSH_NBSD、BSND_NBSD、BNSD_NBSD</td>
+            <td>
+            <ul>
+                <li>支持配置的inputLayout包括BSH、BSND、TND、BNSD、NTD、BSH_BNSD、BSND_BNSD、BNSD_BSND、NTD_TND、BSH_NBSD、BSND_NBSD、BNSD_NBSD</li>
+                <li>inputLayout=BSH_BNSD、BSND_BNSD仅支持Q_D=K_D=V_D都等于64或128，或Q_D=K_D等于192，V_D等于128<br></li>
+            </ul>
+            </td>
             <td>CHAR</td>
             <td>-</td>
             <td>-</td>
@@ -1488,7 +1493,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
         <tr>
             <td>GQA/MHA/MQA场景（当queryRope和keyRope为空时）</td>
             <td>Q_D、K_D、V_D</td>
-            <td>TND场景，要求Q_D、K_D、V_D等于128，或者Q_D、K_D等于192，V_D等于128/192；<br>NTD场景，不支持V_D等于192；<br>NTD_TND场景，要求Q_D、K_D等于128/192，V_D等于128。<br>GQA和PA场景不支持V_D等于192。</td>
+            <td>Q_D、K_D、V_D都等于64<br>或Q_D、K_D、V_D都等于128<br>或Q_D和K_D等于192时，V_D等于128</td>
         </tr>
         <tr>
             <td colspan="3">不支持左padding、tensorlist、pse、prefix、伪量化、全量化、后量化。</td>
