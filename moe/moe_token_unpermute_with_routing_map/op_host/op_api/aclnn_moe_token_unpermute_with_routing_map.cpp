@@ -19,7 +19,7 @@
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/reshape.h"
 #include "aclnn_kernels/transpose.h"
-#include "aclnn_kernels/reshape.h"
+#include "aclnn_kernels/cast.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "level0/sort.h"
 #include "level0/zero_op.h"
@@ -122,9 +122,13 @@ static inline bool CheckDtypeValid(const aclTensor* permuteTokens,
     OP_CHECK_DTYPE_NOT_SUPPORT(permuteTokens, dtype_list, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(sortedIndices, indice_dtype_list, return false);
     
-    // 检查输入和输出的数据类型是否一致
     if (probsOptional != nullptr) {
         OP_CHECK_DTYPE_NOT_SUPPORT(probsOptional, dtype_list, return false);
+        //混精仅支持permuteTokens为bf16时probs为fp32
+        if (probsOptional->GetDataType() != op::DataType::DT_FLOAT || permuteTokens->GetDataType() != op::DataType::DT_BF16) {
+            OP_CHECK_DTYPE_NOT_MATCH(permuteTokens, probsOptional->GetDataType(), return false);
+        }
+        // 检查输入和输出的数据类型是否一致
         if (permuteProbs != nullptr) {
             OP_CHECK_DTYPE_NOT_MATCH(permuteProbs, probsOptional->GetDataType(), return false);
         }
@@ -213,11 +217,18 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGetWorkspaceSize(const aclTensor
     auto ret = CheckParams(permutedTokens, sortedIndices, probsOptional, 
                            restoreShapeOptional, unpermutedTokens, outIndex, permuteTokenId, permuteProbs);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
-
     // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
+    //判断是否为混合精度，作为计算中是否进行精度转换的依据
+    bool isMixed = false;
+    if(probsOptional != nullptr) {
+        if(permutedTokens->GetDataType() == op::DataType::DT_BF16 &&
+            probsOptional->GetDataType() == op::DataType::DT_FLOAT) {
+                isMixed = true;
+            }
+    }
     // 空Tensor处理
     if (permutedTokens->IsEmpty() || sortedIndices->IsEmpty() ) {
         *workspaceSize = uniqueExecutor->GetWorkspaceSize();
@@ -267,13 +278,18 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGetWorkspaceSize(const aclTensor
         const aclTensor* indexAddRes = nullptr;
         constexpr bool descending = false;
         constexpr bool stable = true;
-
         auto unpermutedTokensContiguous = l0op::Contiguous(unpermutedTokens, uniqueExecutor.get());
         CHECK_RET(unpermutedTokensContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
         const aclTensor* unpermutedTokensOut = nullptr;
         unpermutedTokensOut = l0op::ZerosLike(unpermutedTokensContiguous, uniqueExecutor.get());
         CHECK_RET(unpermutedTokensOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+        //混精场景下将unpermutedTokensOut提升精度再计算
+        if (isMixed) {
+            unpermutedTokensOut = l0op::Cast(unpermutedTokensOut, op::DataType::DT_FLOAT, uniqueExecutor.get());
+            CHECK_RET(unpermutedTokensOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
 
         const aclTensor* indicesViewFloat =
             uniqueExecutor.get()->CreateView(sortedIndicesContiguous, sortedIndicesContiguous->GetViewShape(), 0);
@@ -326,6 +342,12 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGetWorkspaceSize(const aclTensor
         //输出1
         auto sortValuesViewCopyResult = l0op::ViewCopy(sortValuesI32, permuteTokenId, uniqueExecutor.get());
         CHECK_RET(sortValuesViewCopyResult != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        
+        //混精场景下在ViewCopy之前，将高精度（FP32）的累加结果转换回目标输出精度
+        if (isMixed) {
+            indexAddRes = l0op::Cast(indexAddRes, op::DataType::DT_BF16, uniqueExecutor.get());
+            CHECK_RET(indexAddRes != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        }
         //输出0
         auto unpermutedTokensResult = l0op::ViewCopy(indexAddRes, unpermutedTokens, uniqueExecutor.get());
         CHECK_RET(unpermutedTokensResult != nullptr, ACLNN_ERR_INNER_NULLPTR);

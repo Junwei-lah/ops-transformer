@@ -410,12 +410,12 @@ static inline void Tiling4MaskedSelect(MoeTokenUnpermuteWithRoutingMapTilingData
     0表示probs为None，1表示prob非None。
  */
 
-static inline void SetTilingKey(const gert::TilingContext* context, MoeTokenUnpermuteWithRoutingMapParam& param) {
+static inline void SetTilingKey(gert::TilingContext* context, MoeTokenUnpermuteWithRoutingMapParam& param) {
   if (param.input.haveProbs) {
     // 存在probs
     param.core.tilingKey += TILINGKEY_PROBS;
+    context->SetScheduleMode(1);
   }
-  (void)context;
 }
 
 static inline void SetTilingData(gert::TilingContext* context, MoeTokenUnpermuteWithRoutingMapParam& param) {
