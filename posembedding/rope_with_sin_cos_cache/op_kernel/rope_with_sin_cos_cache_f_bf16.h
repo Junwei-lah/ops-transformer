@@ -32,6 +32,10 @@ public:
     __aicore__ inline void Process();
     __aicore__ inline void Compute(uint64_t index, uint64_t loopN);
     __aicore__ inline void ComputeAlongHeads(uint64_t indexToken, uint64_t indexHeads);
+    __aicore__ inline void GetCosSinCache(LocalTensor<T> inQueueCosSinCacheBeforeCastLocal,
+                                          LocalTensor<T> copyBuf0Local, LocalTensor<float> inCosSin,
+                                          LocalTensor<float> CosSin, uint64_t offsetPos, uint64_t cosSinOffset, uint64_t localStartAddr,
+                                          uint32_t (&rcShape_)[2], uint32_t (&dstShape_)[2]);
 
 protected:
     static constexpr uint64_t BLOCK_SIZE = 32;
@@ -150,6 +154,55 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::Init(
 }
 
 template <typename T>
+__aicore__ inline void
+RopeWithSinCosCacheFP16<T>::GetCosSinCache(LocalTensor<T> inQueueCosSinCacheBeforeCastLocal,
+                                           LocalTensor<T> copyBuf0Local, LocalTensor<float> inCosSin,
+                                           LocalTensor<float> cosSin, uint64_t offsetPos, uint64_t cosSinOffset,
+                                           uint64_t localStartAddr, uint32_t (&srcShape_)[2], uint32_t (&dstShape_)[2])
+{
+    if (this->mrope_section0 > 0) {
+        // dataCopy和Copy的组合方式解决起始地址对齐和搬运单元对齐的问题
+        uint64_t pos0 = position_id_GM.GetValue(offsetPos);
+        uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
+        uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
+
+        uint8_t padding2 = ((this->mrope_section0 + this->mrope_section1) * sizeof(T) % BLOCK_SIZE) / sizeof(T);
+        DataCopyPad(inQueueCosSinCacheBeforeCastLocal[this->mrope_section0 +
+                                                      static_cast<uint16_t>(this->mrope_section1) - padding2],
+                    cos_sin_cache_GM[pos2 * this->rotary_dim +
+                                     static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) + cosSinOffset],
+                    {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, padding2, 0, 0});
+        PipeBarrier<PIPE_ALL>();
+
+        uint8_t padding1 = (this->mrope_section0 * sizeof(T) % BLOCK_SIZE) / sizeof(T);
+        DataCopyPad(
+            copyBuf0Local,
+            cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0) + cosSinOffset],
+            {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {true, padding1, 0, 0});
+        PipeBarrier<PIPE_ALL>();
+        Copy(inQueueCosSinCacheBeforeCastLocal[this->mrope_section0 - padding1], copyBuf0Local,
+             this->mrope_section1 + padding1, 1, {1, 1, 0, 0});
+        PipeBarrier<PIPE_ALL>();
+        DataCopyPad(copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim + cosSinOffset],
+                    {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
+        PipeBarrier<PIPE_ALL>();
+        Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, this->mrope_section0, 1, {1, 1, 0, 0});
+    } else {
+        uint64_t pos = position_id_GM.GetValue(offsetPos);
+        PipeBarrier<PIPE_ALL>();
+        DataCopy(inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim + cosSinOffset],
+                 {1, calBlockLenFP16, 0, 0});
+        PipeBarrier<PIPE_ALL>();
+    }
+    Cast(inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
+         static_cast<uint16_t>(this->rotary_dim));
+    PipeBarrier<PIPE_ALL>();
+    DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
+    PipeBarrier<PIPE_ALL>();
+    Broadcast<float, 2, 0, false>(cosSin[localStartAddr], inCosSin, dstShape_, srcShape_);
+}
+
+template <typename T>
 __aicore__ inline void RopeWithSinCosCacheFP16<T>::Compute(uint64_t index, uint64_t loopN)
 {
     q_size = this->num_q_heads * this->head_size;
@@ -231,48 +284,10 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::Compute(uint64_t index, uint6
     Broadcast<float, 2, 0, false>(negOne[this->rotary_dim], negOne, dstShape_4Negone_, srcShape_);
     PipeBarrier<PIPE_ALL>();
     uint64_t localStartAddr = 0;
+    uint64_t cosSinOffset = 0;
     for (uint32_t i = 0; i < loopN; ++i) {
         uint64_t offsetPos = this->num_tokens_each_loop_current_core * index + i;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim],
-                {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf1Local, cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0)],
-                {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf2Local,
-                cos_sin_cache_GM
-                    [pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1)],
-                {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(
-                inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim],
-                {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin[localStartAddr], inCosSin, dstShape_, srcShape_);
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         localStartAddr += this->num_q_heads * this->rotary_dim;
     }
     PipeBarrier<PIPE_ALL>();
@@ -281,56 +296,11 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::Compute(uint64_t index, uint6
     Mul(reverseQ, negOne, reverseQ, loopN * this->num_q_heads * this->rotary_dim);
     PipeBarrier<PIPE_ALL>();
     localStartAddr = 0;
+    cosSinOffset = this->rotary_dim / 2;
     for (uint32_t i = 0; i < loopN; ++i) {
         uint64_t offsetPos = this->num_tokens_each_loop_current_core * index + i;
-
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim + this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf1Local,
-                cos_sin_cache_GM
-                    [pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0) + this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf2Local,
-                cos_sin_cache_GM
-                    [pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) +
-                     this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(
-                inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim + this->rotary_dim / 2],
-                {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin[localStartAddr], inCosSin, dstShape_, srcShape_);
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         localStartAddr += this->num_q_heads * this->rotary_dim;
-        PipeBarrier<PIPE_ALL>();
     }
     PipeBarrier<PIPE_ALL>();
     Mul(reverseQ, cosSin, reverseQ, loopN * this->num_q_heads * this->rotary_dim);
@@ -431,48 +401,10 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::Compute(uint64_t index, uint6
     PipeBarrier<PIPE_ALL>();
 
     localStartAddr = 0;
+    cosSinOffset = 0;
     for (uint32_t i = 0; i < loopN; ++i) {
         uint64_t offsetPos = this->num_tokens_each_loop_current_core * index + i;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim],
-                {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf1Local, cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0)],
-                {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf2Local,
-                cos_sin_cache_GM
-                    [pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1)],
-                {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(
-                inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim],
-                {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin[localStartAddr], inCosSin, dstShape_, srcShape_);
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         localStartAddr += this->num_kv_heads * this->rotary_dim;
     }
 
@@ -482,53 +414,10 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::Compute(uint64_t index, uint6
     Mul(reverseQ, negOne, reverseQ, loopN * this->num_kv_heads * this->rotary_dim);
     PipeBarrier<PIPE_ALL>();
     localStartAddr = 0;
+    cosSinOffset = this->rotary_dim / 2;
     for (uint32_t i = 0; i < loopN; ++i) {
         uint64_t offsetPos = this->num_tokens_each_loop_current_core * index + i;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim + this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf1Local,
-                cos_sin_cache_GM
-                    [pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0) + this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf2Local,
-                cos_sin_cache_GM
-                    [pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) +
-                     this->rotary_dim / 2],
-                {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(
-                inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim + this->rotary_dim / 2],
-                {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin[localStartAddr], inCosSin, dstShape_, srcShape_);
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         localStartAddr += this->num_kv_heads * this->rotary_dim;
         PipeBarrier<PIPE_ALL>();
     }
@@ -668,94 +557,18 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::ComputeAlongHeads(uint64_t in
         PipeBarrier<PIPE_ALL>();
 
         uint64_t offsetPos = indexToken;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim],
-                {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf1Local, cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0)],
-                {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(
-                copyBuf2Local,
-                cos_sin_cache_GM
-                    [pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1)],
-                {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(
-                inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim],
-                {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin, inCosSin, dstShape_, srcShape_);
-        PipeBarrier<PIPE_ALL>();
-
+        uint64_t cosSinOffset = 0;
+        uint64_t localStartAddr = 0;
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         Mul(inLocal, cosSin, inLocal, loopNQhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
         Mul(reverseQ, negOne, reverseQ, loopNQhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
 
         offsetPos = indexToken;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim + this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf1Local,
-                        cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0) +
-                                         this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf2Local,
-                        cos_sin_cache_GM[pos2 * this->rotary_dim +
-                                         static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) +
-                                         this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim + this->rotary_dim / 2],
-                     {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(
-            inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-            static_cast<uint16_t>(this->rotary_dim));
-            PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin, inCosSin, dstShape_, srcShape_);
+        cosSinOffset = this->rotary_dim / 2;
+        localStartAddr = 0;
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         PipeBarrier<PIPE_ALL>();
         Mul(reverseQ, cosSin, reverseQ, loopNQhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
@@ -839,90 +652,18 @@ __aicore__ inline void RopeWithSinCosCacheFP16<T>::ComputeAlongHeads(uint64_t in
         PipeBarrier<PIPE_ALL>();
 
         uint64_t offsetPos = indexToken;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim],
-                        {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf1Local,
-                        cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0)],
-                        {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf2Local,
-                        cos_sin_cache_GM[pos2 * this->rotary_dim +
-                                         static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1)],
-                        {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim],
-                     {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-             static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin, inCosSin, dstShape_, srcShape_);
-        PipeBarrier<PIPE_ALL>();
-
+        uint64_t cosSinOffset = 0;
+        uint64_t localStartAddr = 0;
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         Mul(inLocal, cosSin, inLocal, loopNKhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
         Mul(reverseQ, negOne, reverseQ, loopNKhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
 
         offsetPos = indexToken;
-        if (this->mrope_section0 > 0) {
-            uint64_t pos0 = position_id_GM.GetValue(offsetPos);
-            uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
-            uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
-
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf0Local, cos_sin_cache_GM[pos0 * this->rotary_dim + this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section0 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf1Local,
-                        cos_sin_cache_GM[pos1 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0) +
-                                         this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section1 * sizeof(T)), 0, 0}, {false, 0, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            DataCopyPad(copyBuf2Local,
-                        cos_sin_cache_GM[pos2 * this->rotary_dim +
-                                         static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) +
-                                         this->rotary_dim / 2],
-                        {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, 8, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[32], copyBuf2Local, 32, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal[16], copyBuf1Local, 24, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-            Copy(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, 16, 1, {1, 1, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        } else {
-            uint64_t pos = position_id_GM.GetValue(offsetPos);
-            PipeBarrier<PIPE_ALL>();
-            DataCopy(inQueueCosSinCacheBeforeCastLocal, cos_sin_cache_GM[pos * this->rotary_dim + this->rotary_dim / 2],
-                     {1, calBlockLenFP16, 0, 0});
-            PipeBarrier<PIPE_ALL>();
-        }
-        Cast(inCosSin, inQueueCosSinCacheBeforeCastLocal, AscendC::RoundMode::CAST_NONE,
-             static_cast<uint16_t>(this->rotary_dim));
-        PipeBarrier<PIPE_ALL>();
-        DataCopy(inCosSin[this->rotary_dim / 2], inCosSin, {1, calBlockLen, 0, 0});
-        PipeBarrier<PIPE_ALL>();
-        Broadcast<float, 2, 0, false>(cosSin, inCosSin, dstShape_, srcShape_);
-        PipeBarrier<PIPE_ALL>();
+        cosSinOffset = this->rotary_dim / 2;
+        localStartAddr = 0;
+        GetCosSinCache(inQueueCosSinCacheBeforeCastLocal, copyBuf0Local, inCosSin, cosSin, offsetPos, cosSinOffset, localStartAddr, srcShape_, dstShape_);
         Mul(reverseQ, cosSin, reverseQ, loopNKhead * this->rotary_dim);
         PipeBarrier<PIPE_ALL>();
         Add(inLocal, reverseQ, inLocal, loopNKhead * this->rotary_dim);
