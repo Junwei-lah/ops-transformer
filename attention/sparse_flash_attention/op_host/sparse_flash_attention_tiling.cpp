@@ -509,10 +509,6 @@ ge::graphStatus SFATilingCheck::GetExpectedShape(gert::Shape &shapeExpected,
         OP_LOGE(opName_, "layout %s is unsupported", SFALayoutToSerialString(layout).c_str());
         return ge::GRAPH_FAILED;
     }
-    if(shapeExpected.GetDim(0) == 0){
-        OP_LOGE(opName_, "expected shape is %s, the first dim should not be 0.", GetShapeStr(shapeExpected).c_str());
-        return ge::GRAPH_PARAM_INVALID;
-    }
     return ge::GRAPH_SUCCESS;
 }
 
