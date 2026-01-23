@@ -413,6 +413,7 @@ __aicore__ inline void FAKernelNoquantMla<CubeBlockType, VecBlockType>::ComputeC
 
     // service vector2
     constInfo.isBSNDOut = inputParamsRegbase.isBSNDOut;
+    constInfo.isTNDOut = inputParamsRegbase.isTNDOut;
     if (constInfo.isBSNDOut == 1) {
         constInfo.attentionOutStride = 
             (constInfo.n2Size * constInfo.gSize - 1) * constInfo.dSizeV * sizeof(OUTPUT_T);

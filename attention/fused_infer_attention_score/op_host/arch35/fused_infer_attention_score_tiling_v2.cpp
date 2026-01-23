@@ -967,7 +967,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                             tempLse->GetStorageShape().GetDim(QUERY_DIM_0), tempLse->GetStorageShape().GetDim(QUERY_DIM_1), // 0: the first dimension 1: the second dimension
                             tempLse->GetStorageShape().GetDim(QUERY_DIM_2), t, tempN), // 2: the third dimension
                         return ge::GRAPH_FAILED);
-                } else if (inputLayoutStr == "NTD") {
+                } else if (inputLayoutStr == "NTD" || inputLayoutStr == "NTD_TND") {
                     OP_CHECK_IF(((tempLse->GetStorageShape().GetDimNum() != QUERY_DIM_3)), // 3：lse shape NT1
                         OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), "Layout is NTD SoftmaxLse shape dim should be 3, but got %zu!",
                             tempLse->GetStorageShape().GetDimNum()),
