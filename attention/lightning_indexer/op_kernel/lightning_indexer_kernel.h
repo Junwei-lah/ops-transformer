@@ -310,7 +310,7 @@ __aicore__ void inline LIPreload<LIT>::SplitCore(uint32_t curCoreIdx, uint32_t &
                 findLastCoreEnd = false;
             }
             s2Loop = constInfo.isSparseCountOver2K ? (actS2Size > 0 ? 1 : 0) : s2BaseNum;
-            for (uint32_t s2Idx = 0; s2Idx < s2BaseNum;) {
+            for (uint32_t s2Idx = 0; s2Idx < s2Loop;) {
                 if (findLastCoreEnd) {
                     info.bN2Start = bN2Idx;
                     info.gS1Start = gS1Idx;
