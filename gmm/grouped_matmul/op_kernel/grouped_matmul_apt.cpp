@@ -30,7 +30,7 @@ using GMMQuantTilingData = GroupedMatmulTilingData::GMMQuantTilingData;
 #include "arch35/quant_adaptive_sliding_window_templates/gqmm_mix_online_dynamic.h"
 #endif
 #if defined(V310_GMM_QUANT_PERTILE)
-#include "arch35/quant_adaptive_sliding_window_templates/gqmm_act_pertile_kernel.h"
+#include "arch35/quant_adaptive_sliding_window_templates/gqmm_cgmct_pertile_kernel.h"
 #endif
 #elif defined(V310_GMM_ANTI_QUANT)
 #include "arch35/weight_quant_basic_block/basic_block_config.h"
@@ -186,7 +186,7 @@ using biasType = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, DTYPE_BIAS>;
     do {                                                                                                               \
         GET_TILING_DATA_MEMBER(GMMQuantTilingData, gmmQuantParams, gmmQuantParams_, tiling);                           \
         GET_TILING_DATA_MEMBER(GMMQuantTilingData, mmTilingData, mmTilingData_, tiling);                               \
-        GmmActPerTileKernel<DTYPE_X, DTYPE_WEIGHT, DTYPE_BIAS, DTYPE_SCALE, float, DTYPE_Y, xLayout, wLayout, yLayout, \
+        GmmCgmctPerTileKernel<DTYPE_X, DTYPE_WEIGHT, DTYPE_BIAS, DTYPE_SCALE, float, DTYPE_Y, xLayout, wLayout, yLayout, \
                             DTYPE_L0C_LOCAL>(x, weight, bias, scale, groupList, perTokenScale, y, user1,               \
                                              &gmmQuantParams_, &mmTilingData_, &tPipe);                                \
     } while (0)
@@ -252,16 +252,16 @@ REGISTER_TILING_DEFAULT(GMMQuantTilingData);
 #if defined(V310_GMM_QUANT_PERTILE)
     if constexpr (QUANT_B_TRANS == GMM_NO_TRANS && QUANT_A_TRANS == GMM_NO_TRANS
         && KERNEL_TYPE == GMM_PERGROUP_PERBLOCK) {
-        GMM_QUANT_GB_IMPL_CLASS(Act::Gemm::layout::RowMajor, Act::Gemm::layout::RowMajor,
-                                Act::Gemm::layout::RowMajorAlign);
+        GMM_QUANT_GB_IMPL_CLASS(Cgmct::Gemm::layout::RowMajor, Cgmct::Gemm::layout::RowMajor,
+                                Cgmct::Gemm::layout::RowMajorAlign);
     } else if constexpr (QUANT_B_TRANS == GMM_TRANS && QUANT_A_TRANS == GMM_NO_TRANS
         && KERNEL_TYPE == GMM_PERGROUP_PERBLOCK) {
-        GMM_QUANT_GB_IMPL_CLASS(Act::Gemm::layout::RowMajor, Act::Gemm::layout::ColumnMajor,
-                                Act::Gemm::layout::RowMajorAlign);
+        GMM_QUANT_GB_IMPL_CLASS(Cgmct::Gemm::layout::RowMajor, Cgmct::Gemm::layout::ColumnMajor,
+                                Cgmct::Gemm::layout::RowMajorAlign);
     } else if constexpr (QUANT_B_TRANS == GMM_NO_TRANS && QUANT_A_TRANS == GMM_TRANS
         && KERNEL_TYPE == GMM_PERGROUP_PERBLOCK) {
-        GMM_QUANT_GB_IMPL_CLASS(Act::Gemm::layout::ColumnMajor, Act::Gemm::layout::RowMajor,
-                                Act::Gemm::layout::RowMajorAlign);
+        GMM_QUANT_GB_IMPL_CLASS(Cgmct::Gemm::layout::ColumnMajor, Cgmct::Gemm::layout::RowMajor,
+                                Cgmct::Gemm::layout::RowMajorAlign);
     }
 #endif
 #elif defined(V310_GMM_ANTI_QUANT)

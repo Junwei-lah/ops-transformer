@@ -15,7 +15,7 @@
 
 #ifndef BLOCK_EPILOGUE_FINALIZE_ROUTING_H
 #define BLOCK_EPILOGUE_FINALIZE_ROUTING_H
-#if defined(__DAV_C310__)
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3101)
 #include "kernel_basic_intf.h"
 #include "../utils/common_utils.h"
 #include "../utils/device_utils.h"
@@ -23,7 +23,7 @@
 #include "../utils/tensor_utils.h"
 #include "../tile/tile_copy_policy.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 namespace {
@@ -75,13 +75,6 @@ public:
     __aicore__ inline void operator()(const BlockShape& blockShape, const BlockCoord& blockCoord);
     __aicore__ inline void UpdateNextProblem(const ProblemShape& problemShape);
     __aicore__ inline void UpdateGlobalAddr(const BlockCoord &baseOffset);
-    // static init
-    __host_aicore__ static Params InitParams(Arguments const& args)
-    {
-        Params params = {args.yGMAddr, args.x2ScaleGmAddr, args.x1ScaleGmAddr, args.biasGmAddr,
-            args.logitGmAddr, args.rowIndexGmAddr, args.baseM, args.baseN};
-        return params;
-    }
 
 private:
     __aicore__ inline void CopyInLogit(uint32_t curBaseM, uint64_t offsetM, LocalTensor<float> logitUb);
@@ -260,6 +253,6 @@ BlockEpilogueFinalizeRouting<GMM_BLOCK_EPILOGUE_FINALIZE_ROUTING_FUNC_LOCAL_PARA
 }
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif
 #endif

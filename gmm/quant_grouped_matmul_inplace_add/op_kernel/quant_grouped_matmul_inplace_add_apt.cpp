@@ -42,14 +42,14 @@ __global__ __aicore__ void quant_grouped_matmul_inplace_add(GM_ADDR x1, GM_ADDR 
 #if defined(V310_QGMM_QUANT_MX)       // mxfpx
     if constexpr (QUANT_B_TRANS == QGMM_INPLACE_ADD_NO_TRANS && QUANT_A_TRANS == QGMM_INPLACE_ADD_TRANS
         && KERNEL_TYPE == QGMM_INPLACE_ADD_DEQUANT_FIXP) { // transX = true, transW = false
-        QGmmInplaceAddAswt<Act::Gemm::layout::ColumnMajor, Act::Gemm::layout::RowMajor>(x1, x2, scale2, groupList,
+        QGmmInplaceAddAswt<Cgmct::Gemm::layout::ColumnMajor, Cgmct::Gemm::layout::RowMajor>(x1, x2, scale2, groupList,
                                                                                         scale1, y, tiling);
     }
 #endif
 #if defined(V310_QGMM_QUANT_MIX)
     if constexpr (QUANT_B_TRANS == QGMM_INPLACE_ADD_NO_TRANS && QUANT_A_TRANS == QGMM_INPLACE_ADD_TRANS
         && KERNEL_TYPE == QGMM_INPLACE_ADD_DEQUANT_VECTOR) { // transX = true, transW = false
-        QGmmInplaceAddMixAswt<Act::Gemm::layout::ColumnMajor, Act::Gemm::layout::RowMajor>(x1, x2, scale2, groupList,
+        QGmmInplaceAddMixAswt<Cgmct::Gemm::layout::ColumnMajor, Cgmct::Gemm::layout::RowMajor>(x1, x2, scale2, groupList,
                                                                                            scale1, y, tiling);
     }
 #endif

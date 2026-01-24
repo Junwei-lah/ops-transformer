@@ -16,14 +16,14 @@
 #ifndef QGMM_INPLACE_ADD_CUBE_ON_THE_FLY_H
 #define QGMM_INPLACE_ADD_CUBE_ON_THE_FLY_H
 
-#include "../../../common/groupedmatmul_act/kernel/kernel_qgmm_inplace_add.h"
-#include "../../../common/groupedmatmul_act/block/block_quant_matmul_builder.h"
-#include "../../../common/groupedmatmul_act/block/block_scheduler_gmm_aswt_with_tail_split.h"
+#include "cgmct/kernel/kernel_qgmm_inplace_add.h"
+#include "cgmct/block/block_quant_matmul_builder.h"
+#include "cgmct/block/block_scheduler_gmm_aswt_with_tail_split.h"
 #include "qgmm_inplace_add_utils.h"
 #include "quant_grouped_matmul_inplace_add_tiling_data.h"
 
-using namespace Act::Gemm;
-using namespace Act::Gemm::Kernel;
+using namespace Cgmct::Gemm;
+using namespace Cgmct::Gemm::Kernel;
 
 template <typename layoutA, typename layoutB>
 __aicore__ inline void QGmmInplaceAddAswt(GM_ADDR x1, GM_ADDR x2, GM_ADDR scale2, GM_ADDR groupList, GM_ADDR scale1,

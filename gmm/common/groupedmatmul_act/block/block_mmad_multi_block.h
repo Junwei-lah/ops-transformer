@@ -26,7 +26,7 @@
 #include "../policy/dispatch_policy.h"
 #include "../tile/tile_copy.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 /**
@@ -243,5 +243,5 @@ private:
 };
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

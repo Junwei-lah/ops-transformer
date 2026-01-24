@@ -14,7 +14,7 @@
  */
 #ifndef UTILS_GROUPED_MATMUL_CONSTANT_H
 #define UTILS_GROUPED_MATMUL_CONSTANT_H
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace GroupedMatmul {
 constexpr uint32_t GMM_BUFFER_NUM = 2;
@@ -49,5 +49,5 @@ enum class QuantMode : uint32_t {
 };
 } // namespace GroupedMatmul
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

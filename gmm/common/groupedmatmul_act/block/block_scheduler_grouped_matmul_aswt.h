@@ -19,7 +19,7 @@
 #include "./block_scheduler_policy.h"
 #include "../utils/status_utils.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 
@@ -78,8 +78,8 @@ public:
         : m_(m), n_(n), k_(k), baseM_(baseM), baseN_(baseN), baseK_(baseK), blockNum_(blockNum), blockIdx_(blockIdx),
           mTailCnt_(mTailCnt), nTailCnt_(nTailCnt), tailSplit_(tailSplit)
     {
-        mTileNum_ = Act::Gemm::CeilDiv(m_, baseM_);
-        nTileNum_ = Act::Gemm::CeilDiv(n_, baseN_);
+        mTileNum_ = Cgmct::Gemm::CeilDiv(m_, baseM_);
+        nTileNum_ = Cgmct::Gemm::CeilDiv(n_, baseN_);
         perCoreBlockNum_ = GetPerBlockNum(blockNum_, mTileNum_, nTileNum_, b_);
         totalTileNum_ = mTileNum_ * nTileNum_;
         if ((mTailCnt_ > 1 || nTailCnt_ > 1) && tailSplit) {
@@ -132,13 +132,13 @@ public:
         if (cureBlock / blockNum_ != (perCoreBlockNum_ - 1) || tailCnt_ == 1) {
             return {blockShapeM, blockShapeN, mSplitAddrOffset, nSplitAddrOffset};
         }
-        int64_t singleCoreMSplit = Act::Gemm::CeilDiv(blockShapeM, static_cast<int64_t>(mTailCnt_));
-        int64_t singleCoreNSplit = Act::Gemm::CeilDiv(blockShapeN, static_cast<int64_t>(nTailCnt_));
+        int64_t singleCoreMSplit = Cgmct::Gemm::CeilDiv(blockShapeM, static_cast<int64_t>(mTailCnt_));
+        int64_t singleCoreNSplit = Cgmct::Gemm::CeilDiv(blockShapeN, static_cast<int64_t>(nTailCnt_));
         if (weightNzFlag) {
-            singleCoreNSplit = Act::Gemm::CeilAlign(singleCoreNSplit, c0);
+            singleCoreNSplit = Cgmct::Gemm::CeilAlign(singleCoreNSplit, c0);
         }
-        mTailCnt_ = Act::Gemm::CeilDiv(blockShapeM, singleCoreMSplit);
-        nTailCnt_ = Act::Gemm::CeilDiv(blockShapeN, singleCoreNSplit);
+        mTailCnt_ = Cgmct::Gemm::CeilDiv(blockShapeM, singleCoreMSplit);
+        nTailCnt_ = Cgmct::Gemm::CeilDiv(blockShapeN, singleCoreNSplit);
         int64_t mSplitIdx = (blockIdx_ % tailCnt_) % mTailCnt_;
         int64_t nSplitIdx = (blockIdx_ % tailCnt_) / mTailCnt_;
         mSplitAddrOffset = mSplitIdx * singleCoreMSplit;
@@ -161,22 +161,13 @@ public:
         return DoGetBlockNum(l1M, l1N, shape);
     }
 
-    __host_aicore__ static size_t GetWorkspaceSize(ProblemShape shape)
-    {
-        return 0;
-    }
-
-    __host_aicore__ static Status CanImplement(ProblemShape shape)
-    {
-        return Status::success;
-    }
 };
 template <class ProblemShape_, class L1TileShape_, class L0TileShape_, bool TransA_, bool TransB_>
-struct BlockSchedulerSelector<ProblemShape_, L1TileShape_, L0TileShape_, Act::Gemm::GroupedMatmulAswtScheduler, TransA_,
+struct BlockSchedulerSelector<ProblemShape_, L1TileShape_, L0TileShape_, Cgmct::Gemm::GroupedMatmulAswtScheduler, TransA_,
                               TransB_> {
     using SchedulerOp = BlockSchedulerGroupedMatmulAswt<ProblemShape_, L1TileShape_, L0TileShape_>;
 };
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

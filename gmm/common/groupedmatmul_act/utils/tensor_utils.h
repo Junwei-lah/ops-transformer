@@ -56,7 +56,7 @@ struct tensor_trait<LocalTensor<Tp>> {
 };
 } // namespace AscendC
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 
 template <class Layout_, class AGlobalTensor_, class ATensorTrait_, class AType_>
@@ -208,9 +208,9 @@ template <class MatmulType>
 __aicore__ inline constexpr bool IsNDOrAlign()
 {
     if constexpr(!AscendC::is_tensorTrait_v<MatmulType>) {
-        if constexpr(Act::Gemm::IsMatmulLayoutTypeV<MatmulType>) {
-            return (Act::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::ND ||
-            Act::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::ND_ALIGN);
+        if constexpr(Cgmct::Gemm::IsMatmulLayoutTypeV<MatmulType>) {
+            return (Cgmct::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::ND ||
+            Cgmct::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::ND_ALIGN);
         } else {
             return (MatmulType::format == CubeFormat::ND || MatmulType::format == CubeFormat::ND_ALIGN);
         }
@@ -243,8 +243,8 @@ template <class MatmulType>
 __aicore__ inline constexpr bool IsNz()
 {
     if constexpr(!AscendC::is_tensorTrait_v<MatmulType>) {
-        if constexpr(Act::Gemm::IsMatmulLayoutTypeV<MatmulType>) {
-            return (Act::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::NZ);
+        if constexpr(Cgmct::Gemm::IsMatmulLayoutTypeV<MatmulType>) {
+            return (Cgmct::Gemm::ToMatmulTypeT<MatmulType>::format == CubeFormat::NZ);
         } else {
             return (MatmulType::format == CubeFormat::NZ);
         }
@@ -314,5 +314,5 @@ __aicore__ inline constexpr bool PosIsL0C()
 }
 
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

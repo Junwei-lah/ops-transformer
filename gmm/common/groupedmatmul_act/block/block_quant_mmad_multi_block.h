@@ -26,7 +26,7 @@
 #include "../policy/dispatch_policy.h"
 #include "../tile/tile_copy.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 template <class L1TileShape_, class L0TileShape_, class AType_, class BType_, class CType_, class BiasType_,
@@ -144,5 +144,5 @@ private:
 };
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

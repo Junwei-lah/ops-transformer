@@ -15,7 +15,7 @@
 
 #ifndef EPILOGUE_BLOCK_EPILOGUE_DEQUANT_H
 #define EPILOGUE_BLOCK_EPILOGUE_DEQUANT_H
-#if defined(__DAV_C310__)
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3101)
 #include "kernel_basic_intf.h"
 #include "../utils/common_utils.h"
 #include "../utils/device_utils.h"
@@ -23,7 +23,7 @@
 #include "../utils/tensor_utils.h"
 #include "../tile/tile_copy_policy.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 
@@ -123,25 +123,6 @@ public:
     __aicore__ inline auto GetL0c2UbTensor();
     __aicore__ inline void SetOutL2CacheHint();
     __aicore__ inline void operator()(BlockShape& blockShape, BlockCoord& blockCoord);
-    // static init
-    __host_aicore__ static Params InitParams(Arguments const& args)
-    {
-        Params params = {args.yGmAddr, args.x2ScaleGmAddr, args.x1ScaleGmAddr, args.biasGmAddr, args.dequantTiling};
-        return params;
-    }
-
-    __host_aicore__ static size_t GetWorkspaceSize(int64_t blockNum, int64_t l1M, int64_t l1N)
-    {
-        return 0;
-    }
-
-    __host_aicore__ static Status CanImplement(Arguments const& args)
-    {
-        if (l0M * l0N * sizeof(DataTypeIn_) > TOTAL_UB_SIZE) {
-            return Status::l1L0ErrorExceedsLimit;
-        }
-        return Status::success;
-    }
 
 private:
     __aicore__ inline void UpdateTensorListGlobalBuffer(Params const& params);
@@ -688,6 +669,6 @@ BlockEpilogueDequant<QMM_BLOCK_EPILOGUE_DEQUANT_FUNC_LOCAL_PARAMS>::operator()(B
 }
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif // EPILOGUE_BLOCK_EPILOGUE_DEQUANT_H
 #endif

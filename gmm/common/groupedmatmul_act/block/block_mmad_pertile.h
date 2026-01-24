@@ -26,7 +26,7 @@
 #include "../tile/tile_copy.h"
 #include "block_mmad_pertile_param.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 
@@ -46,7 +46,7 @@ struct PerBlockMmParam {
     GMMPerTile<>, AType_, LayoutA_, BType_, LayoutB_, CType_, LayoutC_, BiasType_, LayoutBias_, L1TileShape_,          \
         L0TileShape_, TileCopyParam_
 
-using namespace Act::Gemm::GroupedMatmul;
+using namespace Cgmct::Gemm::GroupedMatmul;
 
 template <class BlockMatmulPolicy_, class AType_, class LayoutA_, class BType_, class LayoutB_, class CType_,
           class LayoutC_, class BiasType_, class LayoutBias_, class L1TileShape_, class L0TileShape_,
@@ -444,7 +444,7 @@ __aicore__ inline BlockMmadGmm<QGMM_BLOCK_MMAD_FUNC_LOCAL_PARAMS>::~BlockMmadGmm
         AscendC::WaitFlag<AscendC::HardEvent::FIX_M>(1);
     }
 }
-}  // namespace Block
+} // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

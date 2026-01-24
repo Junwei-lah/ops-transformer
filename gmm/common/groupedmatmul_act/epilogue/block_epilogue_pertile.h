@@ -21,17 +21,17 @@
 #include "../utils/layout_utils.h"
 #include "../utils/tensor_utils.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 #define QGMM_BLOCK_EPILOGUE_CLASS_LOCAL_PARAMS                                                                         \
     template <typename L0TileShape_, typename DataTypeOut_, typename DataTypeIn_, typename DataTypeBias_,              \
-              typename DataTypeX2Scale_, typename LayoutX1Scale_, typename DataTypeX1Scale_, typename LayoutX2Scale_>
+              typename DataTypeX1Scale_, typename DataTypeX2Scale_, typename LayoutX1Scale_, typename LayoutX2Scale_>
 #define QGMM_BLOCK_EPILOGUE_FUNC_LOCAL_PARAMS                                                                          \
-    L0TileShape_, DataTypeOut_, DataTypeIn_, DataTypeBias_, DataTypeX2Scale_, LayoutX1Scale_, DataTypeX1Scale_,        \
+    L0TileShape_, DataTypeOut_, DataTypeIn_, DataTypeBias_, DataTypeX1Scale_, DataTypeX2Scale_, LayoutX1Scale_,        \
         LayoutX2Scale_
 
-using namespace Act::Gemm::GroupedMatmul;
+using namespace Cgmct::Gemm::GroupedMatmul;
 
 struct PerBlockUBParam {
     bool CopyOutWithSplitN = false;
@@ -241,9 +241,9 @@ BlockEpiloguePerTile<QGMM_BLOCK_EPILOGUE_FUNC_LOCAL_PARAMS>::UpdateParamsForNext
 {
     problemShape_ = problemShape;
 
-    scaleM_ = Act::Gemm::CeilDiv(Get<MNK_M>(problemShape_), params_->groupSizeM);
-    scaleN_ = Act::Gemm::CeilDiv(Get<MNK_N>(problemShape_), params_->groupSizeN);
-    scaleK_ = Act::Gemm::CeilDiv(Get<MNK_K>(problemShape_), params_->groupSizeK);
+    scaleM_ = Cgmct::Gemm::CeilDiv(Get<MNK_M>(problemShape_), params_->groupSizeM);
+    scaleN_ = Cgmct::Gemm::CeilDiv(Get<MNK_N>(problemShape_), params_->groupSizeN);
+    scaleK_ = Cgmct::Gemm::CeilDiv(Get<MNK_K>(problemShape_), params_->groupSizeK);
 }
 
 QGMM_BLOCK_EPILOGUE_CLASS_LOCAL_PARAMS
@@ -749,5 +749,5 @@ BlockEpiloguePerTile<QGMM_BLOCK_EPILOGUE_FUNC_LOCAL_PARAMS>::CastAndCopyOut(cons
 }
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif // EPILOGUE_BLOCK_EPILOGUE_PERTILE_H

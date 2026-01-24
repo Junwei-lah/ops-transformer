@@ -20,7 +20,7 @@
 #include "../utils/integral_constant.h"
 #include "../utils/tuple_utils.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 /**
@@ -363,5 +363,5 @@ __aicore__ inline constexpr MatmulBiasParams GetBiasParams(bool enableSetBias)
 }
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

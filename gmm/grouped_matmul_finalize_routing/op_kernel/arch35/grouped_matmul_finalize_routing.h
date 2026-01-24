@@ -16,13 +16,13 @@
 #ifndef GROUPED_MATMUL_FINALIZE_ROUTING_H
 #define GROUPED_MATMUL_FINALIZE_ROUTING_H
 
-#include "../../../common/groupedmatmul_act/kernel/kernel_gmm_finalize_routing.h"
-#include "../../../common/groupedmatmul_act/block/block_mx_mm_aic_to_aiv_builder.h"
-#include "../../../common/groupedmatmul_act/block/block_scheduler_gmm_aswt_with_tail_split.h"
+#include "cgmct/kernel/kernel_gmm_finalize_routing.h"
+#include "cgmct/block/block_mx_mm_aic_to_aiv_builder.h"
+#include "cgmct/block/block_scheduler_gmm_aswt_with_tail_split.h"
 #include "grouped_matmul_finalize_routing_tiling_data.h"
 
-using namespace Act::Gemm;
-using namespace Act::Gemm::Kernel;
+using namespace Cgmct::Gemm;
+using namespace Cgmct::Gemm::Kernel;
 
 template <typename layoutA, typename layoutB>
 __aicore__ inline void grouped_matmul_finalize_routing(GM_ADDR x, GM_ADDR w, GM_ADDR w_scale, GM_ADDR bias,
@@ -36,8 +36,8 @@ __aicore__ inline void grouped_matmul_finalize_routing(GM_ADDR x, GM_ADDR w, GM_
     auto gmmFinalizeRoutingQuantParams_ = tilingData.gmmFinalizeRoutingDataParams;
     auto matmulTiling_ = tilingData.matmulTiling;
 
-    using L1TileShape = AscendC::Shape<Act::Gemm::_0, Act::Gemm::_0, Act::Gemm::_0>;
-    using L0TileShape = AscendC::Shape<Act::Gemm::_0, Act::Gemm::_0, Act::Gemm::_0>;
+    using L1TileShape = AscendC::Shape<Cgmct::Gemm::_0, Cgmct::Gemm::_0, Cgmct::Gemm::_0>;
+    using L0TileShape = AscendC::Shape<Cgmct::Gemm::_0, Cgmct::Gemm::_0, Cgmct::Gemm::_0>;
 
     using AType = DTYPE_X;
     using BType = DTYPE_W;
@@ -49,22 +49,22 @@ __aicore__ inline void grouped_matmul_finalize_routing(GM_ADDR x, GM_ADDR w, GM_
     using BiasType = bfloat16_t; 
 
 
-    using ProblemShape = Act::Gemm::MatmulShape;
+    using ProblemShape = Cgmct::Gemm::MatmulShape;
 
-    using BlockScheduler = Act::Gemm::GroupedMatmulAswtWithTailSplitScheduler;
+    using BlockScheduler = Cgmct::Gemm::GroupedMatmulAswtWithTailSplitScheduler;
 
-    using BlockMmadPolicy = Act::Gemm::GMMPerTile<>;
+    using BlockMmadPolicy = Cgmct::Gemm::GMMPerTile<>;
 
     using BlockMmadBuilder =
         Block::BlockMxMmAicToAivBuilder<AType, LayoutA, BType, LayoutB, BiasType, CType, LayoutC, L1TileShape,
                                         L0TileShape, BlockScheduler, QuantMatmulWithTileMultiBlock<>,
                                         Tile::TileCopy<Arch::Ascend910_95, Tile::CopyInAndCopyOutSplitMWithParams>>;
 
-    using BlockPrologue = Act::Gemm::Block::BlockPrologueFinalizeRouting<CType, BiasType>;
+    using BlockPrologue = Cgmct::Gemm::Block::BlockPrologueFinalizeRouting<CType, BiasType>;
 
-    using BlockEpilogue = Act::Gemm::Block::BlockEpilogueFinalizeRouting<CType>;
+    using BlockEpilogue = Cgmct::Gemm::Block::BlockEpilogueFinalizeRouting<CType>;
 
-    using GmmKernel = Act::Gemm::Kernel::KernelGmmFinalizeRouting<ProblemShape, BlockMmadBuilder, BlockPrologue,
+    using GmmKernel = Cgmct::Gemm::Kernel::KernelGmmFinalizeRouting<ProblemShape, BlockMmadBuilder, BlockPrologue,
                                                                   BlockEpilogue, BlockScheduler>;
     using Params = typename GmmKernel::Params;
     using GMMTiling = typename GmmKernel::GMMTiling;

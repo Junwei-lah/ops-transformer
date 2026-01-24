@@ -34,7 +34,7 @@
 #include "../block/block_scheduler_utils.h"
 #include "../block/block_scheduler_gmm_aswt_with_tail_split.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Kernel {
 
@@ -319,54 +319,6 @@ public:
         }
     }
 
-    __host_aicore__ static Status CheckShape(const ProblemShape& shape)
-    {
-        int64_t m = shape.m;
-        int64_t n = shape.n;
-        int64_t k = shape.k;
-        // Check m, n, k overlimit data type
-        if (m > INT32_MAX || n > INT32_MAX || k > INT32_MAX) {
-            return Status::mnkErrorExceedsLimit;
-        }
-        return Status::success;
-    }
-
-    __host_aicore__ static Status CanImplement(const Arguments& args)
-    {
-        // Check shape in kernel
-        CHECK_AND_RETURN(CheckShape(args.problemShape));
-        // Check mmad args
-        CHECK_AND_RETURN(BlockMmadBuilder::CanImplement(args.mmadArgs));
-        // Check args for block scheduler
-        CHECK_AND_RETURN(BlockSchedulerOp::CanImplement(args.problemShape));
-        return Status::success;
-    }
-
-    __host_aicore__ static size_t GetWorkspaceSize(ProblemShape shape, int64_t blockNum)
-    {
-        return 0;
-    }
-
-    __host_aicore__ static Params InitParams(const Arguments& args, GM_ADDR workspace)
-    {
-        BlockMmadParams mmadParams = BlockMmadBuilder::InitParams(args.mmadArgs);
-        // mmad params with epiligue takes workspaceGm as output
-        if constexpr (!AscendC::Std::is_same_v<BlockEpilogue, Block::BlockEpilogueEmpty>) {
-            mmadParams.cGmAddr = workspace;
-        }
-        // epilogue params takes workspaceGm as input
-        BlockPrologueParams prologueParams = BlockPrologue::InitParams(args.prologueArgs, workspace);
-        // epilogue params takes workspaceGm as input
-        BlockEpilogueParams epilogueParams = BlockEpilogue::InitParams(args.epilogueArgs, workspace);
-        Params params = {args.problemShape, mmadParams, prologueParams, epilogueParams, args.gmmArgs};
-        return params;
-    }
-
-    __host_aicore__ static int64_t GetBlockNum(ProblemShape shape)
-    {
-        return BlockSchedulerOp::GetBlockNum(shape);
-    }
-
     __aicore__ inline void operator()(const Params& params)
     {
         if ASCEND_IS_AIV
@@ -406,5 +358,5 @@ public:
 };
 } // namespace Kernel
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

@@ -19,7 +19,7 @@
 #include "./block_scheduler_policy.h"
 #include "../utils/status_utils.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 constexpr int64_t INNER_AXIS_MIN_SPLIT_VAL = 128; // ND2NZ cacheline 128
@@ -188,23 +188,14 @@ public:
         return DoGetBlockNum(l1M, l1N, shape);
     }
 
-    __host_aicore__ static size_t GetWorkspaceSize(ProblemShape shape)
-    {
-        return 0;
-    }
-
-    __host_aicore__ static Status CanImplement(ProblemShape shape)
-    {
-        return Status::success;
-    }
 };
 
 template <class ProblemShape_, class L1TileShape_, class L0TileShape_, bool TransA_, bool TransB_>
 struct BlockSchedulerSelector<ProblemShape_, L1TileShape_, L0TileShape_,
-                              Act::Gemm::GroupedMatmulAswtWithTailSplitScheduler, TransA_, TransB_> {
+                              Cgmct::Gemm::GroupedMatmulAswtWithTailSplitScheduler, TransA_, TransB_> {
     using SchedulerOp = BlockSchedulerGmmAswtWithTailSplit<ProblemShape_, L1TileShape_, L0TileShape_, TransA_, TransB_>;
 };
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

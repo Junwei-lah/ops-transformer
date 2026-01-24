@@ -18,7 +18,7 @@
 #include "../utils/integral_constant.h"
 #include "../utils/arch.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 /* block schedule policies */
 struct KernelNaivePipeline {};     // Basic pipelining without caching or optimization
@@ -89,7 +89,6 @@ struct MatmulNaivePipelineWithLayout {
     constexpr static int l0CStages = 1;
     constexpr static bool enalbeL0CUnitFlag = false;
 };
-
 
 /**
  * @struct MatmulWithScale

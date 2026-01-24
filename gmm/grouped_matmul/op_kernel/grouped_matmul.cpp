@@ -37,7 +37,6 @@
 #endif
 #endif
 
-
 using namespace AscendC;
 using namespace matmul;
 using namespace GROUPED_MATMUL;

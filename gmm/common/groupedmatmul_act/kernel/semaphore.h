@@ -24,7 +24,7 @@
 #include "../utils/tuple_utils.h"
 #include "../epilogue/block_epilogue_empty.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Kernel {
 constexpr uint16_t C2V_PING_FLAG = 0x4;
@@ -112,5 +112,5 @@ __aicore__ inline void SendEvent(int64_t curBlockIdx, int64_t tileNum, int64_t b
 }
 } // namespace Kernel
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 #endif

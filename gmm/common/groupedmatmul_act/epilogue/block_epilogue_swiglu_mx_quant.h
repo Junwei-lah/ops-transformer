@@ -15,7 +15,7 @@
 
 #ifndef EPILOGUE_BLOCK_EPILOGUE_SWIGLU_MX_QUANT_H
 #define EPILOGUE_BLOCK_EPILOGUE_SWIGLU_MX_QUANT_H
-#if defined(__DAV_C310__)
+#if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3101)
 #include "kernel_basic_intf.h"
 #include "../utils/common_utils.h"
 #include "../utils/device_utils.h"
@@ -23,7 +23,7 @@
 #include "../utils/tensor_utils.h"
 #include "../tile/tile_copy_policy.h"
 
-namespace Act {
+namespace Cgmct {
 namespace Gemm {
 namespace Block {
 
@@ -134,13 +134,6 @@ public:
     __aicore__ inline void operator()(const BlockShape &blockShape, const BlockCoord &blockCoord);
     __aicore__ inline void UpdateGlobalAddr(const BlockCoord &baseOffset);
     __aicore__ inline void UpdateNextProblem(const ProblemShape &problemShape);
-    // static init
-    __host_aicore__ static Params InitParams(Arguments const &args)
-    {
-        Params params = {args.yGmAddr,    args.yScaleGmAddr, args.x2ScaleGmAddr, args.x1ScaleGmAddr,
-                         args.biasGmAddr, args.baseM,        args.baseN};
-        return params;
-    }
 
 private:
     __aicore__ inline void VFDoSwigluForMX(uint16_t mSize);
@@ -682,7 +675,7 @@ BlockEpilogueSwigluQuant<QMM_BLOCK_EPILOGUE_DEQUANT_FUNC_LOCAL_PARAMS>::operator
 }
 } // namespace Block
 } // namespace Gemm
-} // namespace Act
+} // namespace Cgmct
 
 #endif // EPILOGUE_BLOCK_EPILOGUE_SWIGLU_QUANT_H
 #endif
