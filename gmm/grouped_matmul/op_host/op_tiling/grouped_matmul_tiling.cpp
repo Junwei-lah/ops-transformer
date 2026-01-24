@@ -2034,7 +2034,7 @@ ASCENDC_EXTERN_C ge::graphStatus TilingGMM(gert::TilingContext* context) {
                      OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "SetTiling failed."), return ge::GRAPH_FAILED);
           return ge::GRAPH_SUCCESS;
       }
-      bool isUnQuant = (xDType == ge::DT_FLOAT16 || xDType == ge::DT_BF16) && (xDType == weightDtype);
+      bool isUnQuant = (xDType == ge::DT_FLOAT16 || xDType == ge::DT_BF16 || xDType == ge::DT_FLOAT) && (xDType == weightDtype);
       if (isUnQuant) {
         GroupedNoQuantMatmulTiling groupedNoQuantMatmulTiling;
         OP_CHECK_IF(!groupedNoQuantMatmulTiling.SetTiling(context),

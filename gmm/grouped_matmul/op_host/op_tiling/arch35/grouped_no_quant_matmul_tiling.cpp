@@ -281,6 +281,8 @@ bool GroupedNoQuantMatmulTiling::CalMatMulTiling(const gert::TilingContext *cont
         OP_LOGE(context->GetNodeName(), "gmm no quant groupNum_ cannot be 0");
         return false;
     }
+    OP_CHECK_IF(!CalBaseMMTiling(context, compileInfoPtr),
+                OP_LOGE(context->GetNodeName(), "Unable to calculate BaseMMTiling"), return false);
     if (groupNum_ == 1U) {
         FormulateBasicBlock(compileInfoPtr, usedCoreNum_);
         CalcTailBasicBlock(compileInfoPtr);
@@ -288,7 +290,7 @@ bool GroupedNoQuantMatmulTiling::CalMatMulTiling(const gert::TilingContext *cont
         return true;
     }
     if (groupType_ == SPLIT_M || groupType_ == NO_SPLIT) {
-        return CalBaseMMTiling(context, compileInfoPtr);
+        return true;
     } else if (groupType_ == SPLIT_K) {
         uint32_t remainCoreNum = std::max(1U, compileInfoPtr->aicNum / groupNum_);
         FormulateBasicBlock(compileInfoPtr, remainCoreNum);
