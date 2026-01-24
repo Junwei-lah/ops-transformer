@@ -1033,19 +1033,19 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2GetWorkspaceSize(const ac
         return ACLNN_ERR_INNER_NULLPTR;
     }
 
+    auto storageShape = x2->GetStorageShape();
     if (tmpWeight->GetDataType() == DataType::DT_INT32) {
         auto viewShapeDim = viewShape.GetDimNum();
-        auto storageShape = x2->GetStorageShape();
         auto storageShapeDim = storageShape.GetDimNum();
         tmpWeight->SetStorageFormat(op::Format::FORMAT_FRACTAL_NZ);
         viewShape[viewShapeDim - 1] *= PER_INT4_IN_U32;
         storageShape[storageShapeDim - 1] = NZ_STORAGE_LAST_DIM * PER_INT4_IN_U8;
         tmpWeight->SetViewShape(viewShape);
-        tmpWeight->SetStorageShape(storageShape);
         tmpWeight->SetDataType(DataType::DT_INT4);
     }
+    tmpWeight->SetStorageShape(storageShape);
 
-    if (x2->GetDataType() == DataType::DT_INT4 && pertokenScaleOptional == nullptr) {
+    if (tmpWeight->GetDataType() == DataType::DT_INT4 && pertokenScaleOptional == nullptr) {
         OP_LOGE(ACLNN_ERR_PARAM_NULLPTR,
                 "GroupedMatmulFinalizeRoutingWeightNz does not support nullptr for pertokenScale.");
         return ACLNN_ERR_PARAM_NULLPTR;
