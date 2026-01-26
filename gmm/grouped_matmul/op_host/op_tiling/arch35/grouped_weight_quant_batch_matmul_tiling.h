@@ -156,6 +156,7 @@ enum class Mte2Configuration : uint8_t {
     MTE2_INNER_SIZE_256_BUF_NUM_4 = 3,
     MTE2_INNER_SIZE_512_BUF_NUM_DEFAULT = 4,  // w8 w4在非性能场景下复用一组设置
     MTE2_INNER_SIZE_384_BUF_NUM_3 = 5,
+    MTE2_INNER_SIZE_DYNAMIC_BUF_NUM_4 = 15, // MXA8W4 NZ场景，K轴长度动态调整
 };
 
 class TilingKeyConfigure {

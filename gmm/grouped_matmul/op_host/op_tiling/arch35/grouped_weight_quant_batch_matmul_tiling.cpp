@@ -607,7 +607,7 @@ bool GroupedWeightQuantBatchMatmulTiling::CalcResplitTiling(const gert::TilingCo
     if (nSize_ % (coreNum_ * static_cast<uint64_t>(BASIC_BLOCK_BASE_N)) == 0UL) {
         resplitParam_.mainBlockSize = BASIC_BLOCK_BASE_N;
         resplitParam_.mainBlockCount = nSize_ / (coreNum_ * static_cast<uint64_t>(BASIC_BLOCK_BASE_N));
-    } else if (nSize_ >= coreNum_ * static_cast<uint64_t>(BASIC_BLOCK_BASE_N_MIN)) {
+    } else if (nSize_ > coreNum_ * static_cast<uint64_t>(BASIC_BLOCK_BASE_N_MIN)) {
         // 该场景下可以保证分满核且尾块在128~256之间
         CalcFullBlockDimResplitTiling(c0Size);
     } else {
@@ -736,6 +736,9 @@ void GroupedWeightQuantBatchMatmulTiling::SetTilingKey(gert::TilingContext *cont
         if (groupSize_ == 192u) {
             tilingKeyConfig_.templateCustom = static_cast<uint8_t>(Mte2Configuration::MTE2_INNER_SIZE_384_BUF_NUM_3);
         }
+    } else if (xDType_ == ge::DT_FLOAT8_E4M3FN && weightDtype_ == ge::DT_FLOAT4_E2M1 &&
+               antiquantScaleDtype_ == ge::DT_FLOAT8_E8M0) {
+        tilingKeyConfig_.templateCustom = static_cast<uint8_t>(Mte2Configuration::MTE2_INNER_SIZE_DYNAMIC_BUF_NUM_4);
     }
     tilingKeyConfig_.apiConstexpr = 0U;
     context->SetTilingKey(tilingKeyConfig_.GenTilingKey());
@@ -1069,7 +1072,19 @@ void GroupedWeightQuantBatchMatmulTiling::CalcFullBlockDimResplitTiling(uint64_t
 void GroupedWeightQuantBatchMatmulTiling::CalcNoFullBlockDimResplitTiling(uint64_t c0Size)
 {
     resplitParam_.mainBlockSize = BASIC_BLOCK_BASE_N;
+    // 该场景无法维持主块分核，默认写0
     resplitParam_.mainBlockCount = 0UL;
+
+    uint64_t mainBlkCount = GroupedMatmul::CeilDiv(nSize_, BASIC_BLOCK_BASE_N);
+    if (groupNum_ * mainBlkCount >= coreNum_) {
+        // 按照BASIC_BLOCK_BASE_N分核，但是可以在group方向凑多个基本块，则按照mainBlkCount做均匀分核
+        resplitParam_.firstTailBlockSize = GroupedMatmul::CeilAlign(GroupedMatmul::CeilDiv(nSize_, mainBlkCount), c0Size);
+        resplitParam_.firstTailBlockCount = mainBlkCount;
+        resplitParam_.secondTailBlockSize = 0;
+        resplitParam_.secondTailBlockCount = 0;
+        return;
+    }
+
     uint64_t taskNum = std::max(1UL, nSize_ / BASIC_BLOCK_BASE_N_MIN);  // 实际任务数，必然小于核数
     cubeBlockDimN_ = static_cast<uint8_t>(taskNum);
     if (weightNzFlag_ && c0Size != 0UL && taskNum != 0UL) {
@@ -1089,25 +1104,6 @@ void GroupedWeightQuantBatchMatmulTiling::CalcNoFullBlockDimResplitTiling(uint64
 
 bool GroupedWeightQuantBatchMatmulTiling::CheckResplitTilingResult(const gert::TilingContext *context) const
 {
-    OP_CHECK_IF(nSize_ != static_cast<uint64_t>(resplitParam_.mainBlockCount) * coreNum_ * resplitParam_.mainBlockSize +
-                              resplitParam_.firstTailBlockCount * resplitParam_.firstTailBlockSize +
-                              resplitParam_.secondTailBlockCount * resplitParam_.secondTailBlockSize,
-                OP_LOGE(context->GetNodeName(),
-                        "Invalid resplit tiling result, expect nSize[%lu] == mainBlockCount[%lu] x coreNum[%u] x "
-                        "mainBlockSize[%u] + firstTailBlockCount[%hu] x firstTailBlockSize[%hu] + "
-                        "secondTailBlockCount[%hu] x secondTailBlockSize[%hu]",
-                        nSize_, resplitParam_.mainBlockCount, coreNum_, resplitParam_.mainBlockSize,
-                        resplitParam_.firstTailBlockCount, resplitParam_.firstTailBlockSize,
-                        resplitParam_.secondTailBlockCount, resplitParam_.secondTailBlockSize),
-                return false);
-    OP_CHECK_IF(
-        nSize_ >= static_cast<uint64_t>(coreNum_) * BASIC_BLOCK_BASE_N_MIN &&
-            (resplitParam_.firstTailBlockCount + resplitParam_.secondTailBlockCount) % coreNum_ > 0,
-        OP_LOGE(context->GetNodeName(),
-                                    "Invalid resplit tiling result, expect core num [%u] is divisible by "
-                                    "(firstTailBlockCount[%hu] + secondTailBlockCount[%hu])",
-                                    coreNum_, resplitParam_.firstTailBlockCount, resplitParam_.secondTailBlockCount),
-        return false);
     OP_CHECK_IF(
         nSize_ >= static_cast<int64_t>(BASIC_BLOCK_BASE_N_MIN) && resplitParam_.firstTailBlockCount > 0 &&
             (resplitParam_.firstTailBlockSize < BASIC_BLOCK_BASE_N_MIN ||

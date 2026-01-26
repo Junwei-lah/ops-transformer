@@ -66,6 +66,7 @@ struct MxA8W4NzParams {
     uint64_t loopKDstStride;
     uint64_t innerDstStride;
     uint64_t biasLoopNum;
+    uint64_t nRealSizeAlign;
     __ubuf__ wType *weightLowBitPhyAddr;
     __ubuf__ xType *weightHighBitPhyAddr;
     __ubuf__ biasType *biasInUbAddr;
@@ -356,8 +357,7 @@ __simd_callee__ inline void MxA8W4BiasCompute(MxA8W4NzParams<xType, wType, biasT
     }
 }
 
-template <typename xType, typename wType, typename biasType, uint64_t ubMte2InnerSize, bool calcMxBias,
-          bool isBiasSingleVector>
+template <typename xType, typename wType, typename biasType, bool calcMxBias, bool isBiasSingleVector>
 __simd_vf__ inline void AntiQuantMxA8W4NzNkVf(MxA8W4NzParams<xType, wType, biasType> mxA8W4NzParams)
 {
     MxA8W4BiasCompute<xType, wType, biasType, calcMxBias, isBiasSingleVector>(mxA8W4NzParams);
@@ -376,7 +376,7 @@ __simd_vf__ inline void AntiQuantMxA8W4NzNkVf(MxA8W4NzParams<xType, wType, biasT
             // Vd 0 1 0 1 2 3 2 3 4 5 4 5 6 7 6 7
             // 4bit物理地址位移 = 逻辑索引 >> 1
             MicroAPI::AddrReg aregWeightB8In = MicroAPI::CreateAddrReg<uint8_t>(
-                loopKIdx, (C0_SIZE_B8 * ubMte2InnerSize) >> 1, innerLoopIdx, VECTOR_REG_WIDTH >> 1);
+                loopKIdx, (C0_SIZE_B8 * mxA8W4NzParams.nRealSizeAlign) >> 1, innerLoopIdx, VECTOR_REG_WIDTH >> 1);
             MicroAPI::LoadAlign<uint8_t, MicroAPI::LoadDist::DIST_US_B8>(
                 (MicroAPI::RegTensor<uint8_t> &)wLoad, (__ubuf__ uint8_t *&)mxA8W4NzParams.weightLowBitPhyAddr,
                 aregWeightB8In);

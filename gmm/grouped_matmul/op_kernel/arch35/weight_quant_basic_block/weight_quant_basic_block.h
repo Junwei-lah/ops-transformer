@@ -109,7 +109,12 @@ __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::Init(bool hasBias, uint64_t ant
     TBuf<TPosition::TSCM> l1Tbuf;
     hasBias_ = hasBias;
     biasL1DbOffset_ = 0;
-    uint64_t weightL1Space = matmulTiling->baseN * matmulTiling->stepKb * matmulTiling->baseK;  // weight单块大小
+    uint64_t weightL1Space;
+    if constexpr (IsMxA8W4<xType, wqmmConfig.antiQuantType>()) {
+        weightL1Space = 256 * 256; // weight单块大小的标准shape是256*256
+    } else {
+        weightL1Space = matmulTiling->baseN * matmulTiling->stepKb * matmulTiling->baseK;  // weight单块大小
+    }
     if constexpr (IsSameType<yType, int8_t>::value) {
         tPipe->InitBuffer(l1Tbuf, L1_SIZE_WITH_QUANTSCALE_BYTE);  // 除去quantScale, 共使用504KB
         weightL1DbOffset_ = L1_SIZE_WITH_QUANTSCALE * GetKBUnit<half>() - weightL1Space;
@@ -159,9 +164,6 @@ __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::ComputeBasicBlockAivNdNkNzKn(co
     ubConsumeConfig.nWeightLowBitUbOffset = 0;
     l1ConsumeConfig.l1RealExternalLen = offsetParam.nL1Size;
 
-#if defined(__DAV_310R6__)
-    uint64_t curVecCoreMte2RealN = offsetParam.nL1Size;
-#else
     // 初值为一半的nl1
     uint64_t curVecCoreMte2RealN = offsetParam.nL1Size >> 1;
     if constexpr (wqmmConfig.weightFormat == CubeFormat::NZ) {
@@ -169,7 +171,7 @@ __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::ComputeBasicBlockAivNdNkNzKn(co
                                   ? CeilAlign(curVecCoreMte2RealN, static_cast<uint64_t>(BLOCK_CUBE))
                                   : offsetParam.nL1Size;
     }
-#endif
+
     // 实际值需要根据vec核来确定
     ubConsumeConfig.l1RequireVfComputeRealN =
         GetSubBlockIdx() == 0 ? curVecCoreMte2RealN : offsetParam.nL1Size - curVecCoreMte2RealN;
@@ -244,14 +246,8 @@ __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::mxBiasSetParamAndGmtoUb(const B
 GMM_WQ_BASIC_BLOCK_TEMPLATE_PARAM
 __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::ComputeBasicBlockAivNdKnNzNk(const BasicBlockOffsetParam &offsetParam)
 {
-// nd-kn场景下，搬运消费比为1:1
-#if defined(__DAV_310R6__)
-    // 此时c:v为1：1, cube所需数据由一个v提供
-    uint64_t kMte2BaseSize = offsetParam.kbL1Size;
-#else
-    // 此时c:v为1：2, cube所需数据由两个v提供
+    // c:v为1：2, cube所需数据由两个v提供
     uint64_t kMte2BaseSize = offsetParam.kbL1Size >> 1;
-#endif
 
     UbConsumeConfig ubConsumeConfig;
     L1ConsumeConfig l1ConsumeConfig;
@@ -286,10 +282,9 @@ __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::ComputeBasicBlockAivNdKnNzNk(co
             WaitAicToAiv();
         }
         ubConsumeConfig.l1RequireVfComputeRealK = mte2RealK;
-        if (ubConsumeConfig.calcMxBias) {
-            const LocalTensor<biasType> &curBiasTensor = biasL1_[(cvLoopIdx_ & 1) * biasL1DbOffset_];
-            vectorCompute_.WeightAntiQuantCompute(ubConsumeConfig, weightL1_[(cvLoopIdx_ & 1) * weightL1DbOffset_],
-                                                  l1ConsumeConfig, &curBiasTensor);
+        if constexpr (wqmmConfig.weightFormat == CubeFormat::NZ) {
+            vectorCompute_.WeightAntiQuantComputeNzNk(ubConsumeConfig, weightL1_[(cvLoopIdx_ & 1) * weightL1DbOffset_],
+                                       l1ConsumeConfig, biasL1_[(cvLoopIdx_ & 1) * biasL1DbOffset_]);
         } else {
             vectorCompute_.WeightAntiQuantCompute(ubConsumeConfig, weightL1_[(cvLoopIdx_ & 1) * weightL1DbOffset_],
                                                   l1ConsumeConfig, nullptr);

@@ -82,8 +82,7 @@ private:
     TEventID eventIdsMToMte1_[L0_BUF_NUM];
     TEventID eventIdsMte1ToM_[L0_BUF_NUM];
 
-    uint64_t l0LooIdx_ = 0;
-    uint64_t l0KSize_;
+    uint64_t l0LoopIdx_ = 0;
     uint64_t scaleAFactor_ = 1;
     uint64_t scaleBFactor_ = 1;
     bool isBias_;
@@ -110,7 +109,6 @@ __aicore__ inline void WQBMM_BASIC_API_V1_CLASS::Init(const TCubeTiling *__restr
     l0b_ = l0bTbuf.Get<L0DataType>();
     l0c_ = l0cTbuf.Get<float>();
 
-    l0KSize_ = matmulTiling->baseK;
     scaleAFactor_ = 1; // matmulTiling_->mxTypePara & 0xff;
     scaleBFactor_ = 1; // (matmulTiling_->mxTypePara >> 8) & 0xff;
 
@@ -133,12 +131,13 @@ __aicore__ inline void WQBMM_BASIC_API_V1_CLASS::Iterate(bool isLastGmK, bool is
                                                          const LocalTensor<biasType> &biasL1,
                                                          const BasicApiParamsV1 &basicApiParams)
 {
+    uint64_t l0KSize = (basicApiParams.l0MSize <= 128 && basicApiParams.l0NSize <= 128) ? 256 : 128;
     bool needPipeM =
         basicApiParams.l0MSize * basicApiParams.l0NSize < 2560; // baseM/16 * baseN/16 < 10，需要插入同步保证精度
-    for (uint64_t l1KOffset = 0; l1KOffset < basicApiParams.l1KSize; l1KOffset += l0KSize_) {
-        bool isLastL1K = l1KOffset + l0KSize_ >= basicApiParams.l1KSize;
-        uint64_t realL0k = isLastL1K ? basicApiParams.l1KSize - l1KOffset : l0KSize_;
-        uint64_t loopId = l0LooIdx_ % L0_BUF_NUM;
+    for (uint64_t l1KOffset = 0; l1KOffset < basicApiParams.l1KSize; l1KOffset += l0KSize) {
+        bool isLastL1K = l1KOffset + l0KSize >= basicApiParams.l1KSize;
+        uint64_t realL0k = isLastL1K ? basicApiParams.l1KSize - l1KOffset : l0KSize;
+        uint64_t loopId = l0LoopIdx_ % L0_BUF_NUM; // 等价于 l0LoopIdx_ % L0_BUF_NUM，减少scalar
         WaitFlag<HardEvent::M_MTE1>(eventIdsMToMte1_[loopId]);
         LoadAL1ToL0A(realL0k, loopId, l1KOffset, basicApiParams.l0MSize, basicApiParams.l1KSize, aL1, aMxScaleL1);
         LoadBL1ToL0B(realL0k, loopId, l1KOffset, basicApiParams.l0NSize, basicApiParams.l1KSize, bL1, bMxScaleL1);
@@ -150,7 +149,7 @@ __aicore__ inline void WQBMM_BASIC_API_V1_CLASS::Iterate(bool isLastGmK, bool is
             PipeBarrier<PIPE_M>();
         }
         SetFlag<HardEvent::M_MTE1>(eventIdsMToMte1_[loopId]);
-        l0LooIdx_++;
+        l0LoopIdx_++;
     }
 }
 

@@ -223,6 +223,15 @@ __aicore__ inline void GMM_WQ_RESPLIT_CONTROLLER_CLASS::SplitNByMultiCore(
                 ? gmmBaseTiling_->nSize - offsetParam[ctrlParam.processId].nOffset
                 : basicBlockSize;
         offsetParam[ctrlParam.processId].yGmAddr = reinterpret_cast<GM_ADDR>(yGm_);
+        if constexpr (IsMxA8W4<xType, wqmmConfig.antiQuantType>()) {
+            // MxA8W4场景，切换低阶api，支持kernel内动态调整k轴切分
+            offsetParam[ctrlParam.processId].kbL1Size =
+                (offsetParam[ctrlParam.processId].mL1Size <= 256 && offsetParam[ctrlParam.processId].nL1Size <= 128)
+                    ? 512
+                    : 256;
+            offsetParam[ctrlParam.processId].kaL1Size =
+                offsetParam[ctrlParam.processId].kbL1Size;  // 当前实现a矩阵切分保持b矩阵一致
+        }
         basicBlock_.ComputeBasicBlock(offsetParam[ctrlParam.processId], offsetParam[GetSwitchedProcessId(ctrlParam)]);
         ctrlParam.processId = GetSwitchedProcessId(ctrlParam);
     }
@@ -266,7 +275,14 @@ __aicore__ inline void GMM_WQ_RESPLIT_CONTROLLER_CLASS::PrefetchA(uint64_t mSize
     if ASCEND_IS_AIV {
         return;
     }
-
+    if constexpr (IsMxA8W4<xType, wqmmConfig.antiQuantType>()) {
+        // mxA8W4场景，Dn2nz严重阻塞流水，在weight较小的时候不启用prefetch策略
+        if (gmmBaseTiling_->mainBlockCount == 0 &&
+            gmmBaseTiling_->firstTailBlockCount + gmmBaseTiling_->secondTailBlockCount <
+                gmmBaseTiling_->cubeBlockDimN) {
+            return;
+        }
+    }
     uint64_t aSize = mSize * kSize * sizeof(xType);
 
     /*
