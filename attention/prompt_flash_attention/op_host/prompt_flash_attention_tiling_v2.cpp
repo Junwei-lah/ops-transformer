@@ -2560,10 +2560,6 @@ bool PromptFlashAttentionTilingV2::CheckNTDLayoutCrossover(ContextParamsForPFATi
         OP_CHECK_IF(enablePerblockQuant || enablePertensorQuant,
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In prefill MLA scenario, when layout is NTD, full quant is not supported!"),
             return false);
-        
-        OP_CHECK_IF(enablePostQuant,
-            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In prefill MLA scenario, When layout is NTD, post quant is not supported!"),
-            return false);
     }
 
     OP_CHECK_IF(enableLeftPadding,
