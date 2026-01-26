@@ -475,6 +475,12 @@ mc2_infer@ops-transformer:
                 - ops/ops-transformer/mc2/matmul_all_reduce/op_kernel/
                 - ops/ops-transformer/mc2/matmul_all_reduce/CMakeLists.txt
                 - ops/ops-transformer/mc2/matmul_all_reduce/README.md
+                - ops/ops-transformer/mc2/matmul_allto_all/op_host/
+                - ops/ops-transformer/mc2/matmul_allto_all/op_api/
+                - ops/ops-transformer/mc2/matmul_allto_all/op_graph/
+                - ops/ops-transformer/mc2/matmul_allto_all/op_kernel/
+                - ops/ops-transformer/mc2/matmul_allto_all/CMakeLists.txt
+                - ops/ops-transformer/mc2/matmul_allto_all/README.md
                 - ops/ops-transformer/mc2/3rd/common/
                 - ops/ops-transformer/mc2/3rd/ops_legacy/
                 - ops/ops-transformer/mc2/3rd/CMakeLists.txt
@@ -493,6 +499,8 @@ mc2_infer@ops-transformer:
                 - ops/ops-transformer/mc2/matmul_all_reduce/tests/
                 - ops/ops-transformer/mc2/matmul_all_reduce/examples/
                 - ops/ops-transformer/mc2/matmul_all_reduce/docs/
+                - ops/ops-transformer/mc2/matmul_allto_all/examples/
+                - ops/ops-transformer/mc2/matmul_allto_all/docs/
             non_delivery: null  
             open_source:
                 - ops/ops-transformer/mc2/3rd/weight_quant_batch_matmul_v2/ 

@@ -93,7 +93,7 @@ aclnnStatus aclnnMatmulAlltoAll(
     <tr>
     <td>biasOptional</td>
     <td>可选输入</td>
-    <td>阵乘运算后累加的偏置，对应公式中的bias。</td>
+    <td>矩阵乘运算后累加的偏置，对应公式中的bias。</td>
     <td></td>
     <td>FLOAT16、FLOAT32</td>
     <td>ND</td>
@@ -254,7 +254,7 @@ aclnnStatus aclnnMatmulAlltoAll(
 * 右矩阵和输出矩阵的H2必须整除NPU卡数
 * 不支持空tensor
 * x1、x2计算输入的数据类型要和output计算输出的数据类型一致，传入的x1、x2或者output不为空指针。
-  - <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>：output计算输出的数据类型为FLOAT16时，biasOptional计算输入的数据类型支持FLOAT16；output计算输出的数据类型为BFLOAT16时，biasOptional计算输入的数据类型支持FLOAT32。
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：output计算输出的数据类型为FLOAT16时，biasOptional计算输入的数据类型支持FLOAT16；output计算输出的数据类型为BFLOAT16时，biasOptional计算输入的数据类型支持FLOAT32。
 * H1范围仅支持[1, 65535]
 * ranSize仅支持2,4,8
 * x1、x2、output的数据类型必须一致
@@ -267,7 +267,7 @@ aclnnStatus aclnnMatmulAlltoAll(
 
 说明：本示例代码调用了部分HCCL集合通信库接口：HcclGetCommName、HcclCommInitAll、HcclCommDestroy, 请参考[ <<HCCL API (C)>>](https://hiascend.com/document/redirect/CannCommunityHcclCppApi)。
 
-- <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>：
+- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     ```Cpp
     #include <thread>
     #include <iostream>
