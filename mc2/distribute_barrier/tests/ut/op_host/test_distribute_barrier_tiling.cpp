@@ -9,10 +9,30 @@
  */
 
 #include <iostream>
+#include <unordered_set>
 #include <gtest/gtest.h>
-#include "mc2_tiling_case_executor.h"
+#include "tiling_context_faker.h"
+#include "tiling_case_executor.h"
+#include "kernel_tiling/kernel_tiling.h"
 
 using namespace std;
+
+constexpr uint64_t mc2TilingDataReservedLen = sizeof(Mc2InitTiling) + sizeof(Mc2CcTiling);
+
+template <typename T>
+static string to_string(void* buf, size_t size, unordered_set<size_t> mask={})
+{
+    string result;
+    const T* data = reinterpret_cast<const T*>(buf);
+    size_t len = size / sizeof(T);
+    for (size_t i = 0; i < len; i++) {
+        result += mask.find(i) == mask.end() ? std::to_string(data[i]) : "*";
+        result += " ";
+    }
+    return result;
+}
+
+const unordered_set<size_t> barrier_tiling_data_mask = {4};
 
 class DistributeBarrierTiling : public testing::Test {
 protected:
@@ -36,13 +56,14 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling)
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(16)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    uint64_t expectTilingKey = 10000UL;
-    std::string expectTilingData = "16 20 196352 0 0 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    uint64_t mc2TilingDataReservedLen = 72;
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey, 
-                       expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
+    std::string expectTilingData = "16 0 20 0 * 0 0 0 0 0 ";
+    //barrier算子没有tilingkey，需要单独搭建与其他mc2算子不同的测试
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
+                                                barrier_tiling_data_mask);
+    EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
 TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_1)
@@ -56,8 +77,8 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_1)
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(1)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
+    TilingInfo tilingInfo;
+    ASSERT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
 
 TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_385)
@@ -71,8 +92,8 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_385)
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(385)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
+    TilingInfo tilingInfo;
+    ASSERT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
 
 TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out) 
@@ -90,13 +111,13 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out)
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(16)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    uint64_t expectTilingKey = 10000UL;
-    std::string expectTilingData = "16 20 196352 0 1 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    uint64_t mc2TilingDataReservedLen = 72;
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey, 
-                       expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
+    std::string expectTilingData = "16 0 20 0 * 0 0 0 1 0 ";
+        TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
+                                                barrier_tiling_data_mask);
+    EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
 TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_elastic_info) 
@@ -114,13 +135,13 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_elastic_info)
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(16)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    uint64_t expectTilingKey = 10000UL;
-    std::string expectTilingData = "16 20 196352 0 256 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    uint64_t mc2TilingDataReservedLen = 72;
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey, 
-                       expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
+    std::string expectTilingData = "16 0 20 0 * 0 0 0 256 0 ";
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
+                                                barrier_tiling_data_mask);
+    EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
 TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out_elastic_info) 
@@ -138,11 +159,11 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out_elastic_
         {{"group", Ops::Transformer::AnyValue::CreateFrom<std::string>("group")},
          {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(16)}},
         &compileInfo, "Ascend910_93", coreNum, ubSize);
-    uint64_t expectTilingKey = 10000UL;
-    std::string expectTilingData = "16 20 196352 0 257 ";
-    std::vector<size_t> expectWorkspaces = {16777216};
-    uint64_t mc2TilingDataReservedLen = 72;
-    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey, 
-                       expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
+    std::string expectTilingData = "16 0 20 0 * 0 0 0 257 0 ";
+    TilingInfo tilingInfo;
+    ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
+    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
+                                                barrier_tiling_data_mask);
+    EXPECT_EQ(expectTilingData, tilingDataResult);
 }

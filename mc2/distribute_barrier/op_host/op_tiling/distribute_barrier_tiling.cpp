@@ -208,12 +208,7 @@ ge::graphStatus DistributeBarrierTilingFunc(gert::TilingContext *context) {
   // Set HcommCfg
   OP_TILING_CHECK(SetHcommCfg(context, tilingData, group) != ge::GRAPH_SUCCESS,
       OP_LOGE(nodeName, "Tiling SetHcommCfg failed."), return ge::GRAPH_FAILED);
-
-  // Set TilingKey
-  uint64_t tilingKey = INIT_TILINGKEY;
-  OPS_LOG_D(A_INNER_DEBUG_BARRIER, "cur case tilingKey is %lu", tilingKey);
-  context->SetTilingKey(tilingKey);
-
+  
   // Set blockDim
   uint32_t blockDim = 1U;
   auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());

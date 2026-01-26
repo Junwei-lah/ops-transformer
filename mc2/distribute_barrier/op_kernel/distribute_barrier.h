@@ -16,7 +16,7 @@
 #define DISTRIBUTE_BARRIER_H
 
 #include "distribute_barrier_tiling.h"
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
 #include "kernel_tiling/kernel_tiling.h"
 
 #if __has_include("../common/inc/kernel/moe_distribute_base.h")
@@ -129,7 +129,7 @@ __aicore__ inline void DistributeBarrier<TemplateMC2TypeFunc>::TimeOutTest()
       if (duration >= timeOut_) {
         // 超时后做dfx，通过assert做aicore退出处理
         PipeBarrier<PIPE_ALL>();
-        trap();
+        assert(duration < timeOut_);
         PipeBarrier<PIPE_ALL>();
       }
     }

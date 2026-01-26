@@ -12,7 +12,7 @@
 #define DISTRIBUTE_BARRIER_TILING_DEF_H
 
 #include "kernel_tiling/kernel_tiling.h"
-#include "../../../../common/inc/hccl_stub.h"
+#include "../../../../../tests/ut/framework_normal/common/hccl_stub.h"
 #include "../../../op_kernel/distribute_barrier_tiling.h"
 
 inline void InitDistributeBarrierTilingData(uint8_t* tiling, DistributeBarrierTilingData* const_data)

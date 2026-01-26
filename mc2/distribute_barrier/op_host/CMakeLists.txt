@@ -13,14 +13,14 @@ if (BUILD_OPEN_PROJECT)  # custom
         distribute_barrier_def.cpp
     )
     add_modules_sources(
- 	         OP_API_INDEPENDENT ON 
- 	         OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
- 	         OP_MC2_ENABLE ON 
- 	         OPTYPE distribute_barrier distribute_barrier ACLNNTYPE aclnn aclnn_inner)
+        OP_API_INDEPENDENT ON 
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
+        OP_MC2_ENABLE ON 
+        OPTYPE distribute_barrier distribute_barrier ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(distribute_barrier_depends mc2/common mc2/3rd PARENT_SCOPE)
-
+    
     # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
     if("${CONDITION_UNIT}" STREQUAL "ascend910_93")
