@@ -3098,7 +3098,7 @@ void FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetParseS1S2OuterInfo(int64_t
             fBaseParams.isInvalidCol = true;
         }
         // check invalid row or col block for BN2
-        for (size_t j = 0; j < invalidS1Array.size(); j++) {
+        for (int64_t j = 0; j < static_cast<int64_t>(invalidS1Array.size()); j++) {
             if (j >= parseInfo[i][BEGIN_IDX] && j < parseInfo[i][END_IDX]) {
                 invalidS1Array[j] = true;
             }
