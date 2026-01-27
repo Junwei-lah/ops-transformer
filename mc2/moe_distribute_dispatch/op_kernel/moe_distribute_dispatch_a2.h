@@ -688,12 +688,20 @@ __aicore__ inline void MoeDistributeDispatchA2<TemplateMC2TypeA2Func>::WaitDispa
     DataCopyPadExtParams<int32_t> padParams{false, 0, 0, 0};
     auto dataFlagLocal =
         LocalTensor<int32_t>{TPosition::LCM, statusTensor_.GetSize() * sizeof(int32_t), BITS32_PER_BLOCK};
+    auto isVisited =
+        LocalTensor<bool>{TPosition::LCM, statusTensor_.GetSize() * sizeof(int32_t) + dataFlagLocal.GetSize() * sizeof(int32_t), RoundUp(worldTaskInfo_.taskNum, UB_ALIGN)};
+    auto &&isVisitedU32 = isVisited.template ReinterpretCast<uint32_t>();
+    Duplicate<uint32_t>(isVisitedU32, uint32_t(0), isVisitedU32.GetSize());
+    SyncFunc<AscendC::HardEvent::V_S>();
     SyncFunc<AscendC::HardEvent::S_MTE2>();
 
     uint32_t recvFlagNum = 0;
     int64_t startTime = GetCurrentTimestampUs();
     while (recvFlagNum < worldTaskInfo_.taskNum) {
         for (uint32_t rankId = worldTaskInfo_.startTaskId; rankId < worldTaskInfo_.endTaskId; rankId++) {
+            if (isVisited(rankId - worldTaskInfo_.startTaskId)) {
+                continue;
+            }
             DataCopy(statusTensor_[rankId * statusEntryCount_], windowInstatusTensor_[rankId * dataSizePerRank_ / sizeof(int32_t)], statusEntryCount_);
             SyncFunc<AscendC::HardEvent::MTE2_S>();
             int32_t statusFlag = statusTensor_(rankId * statusEntryCount_ + statusEntryCount_ - 1);
@@ -711,10 +719,9 @@ __aicore__ inline void MoeDistributeDispatchA2<TemplateMC2TypeA2Func>::WaitDispa
             if (dataFlag != FLAG_VALUE) {
                 continue;
             }
+            isVisited(rankId - worldTaskInfo_.startTaskId) = true;
             recvFlagNum++;
             windowInstatusTensor_(dataFlagOffset) = 0;
-            // 重要：要下DCCI保证清零写进去，避免下一次判断时又判断生效，重复累计recvFlagNum
-            DataCacheCleanAndInvalid<int32_t, AscendC::CacheLine::SINGLE_CACHE_LINE, AscendC::DcciDst::CACHELINE_OUT>(windowInstatusTensor_[dataFlagOffset]);
             if (unlikely(needPerformanceInfo_)) {
                 auto srcRankId = rankId;
                 RecordRankCommDuration(performanceInfoI32Tensor_, srcRankId, startTime);
