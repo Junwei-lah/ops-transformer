@@ -1147,7 +1147,9 @@ FAGBlockCube<TEMPLATE_ARGS>::IterateMmDsQNormal(typename DqkvResPos<T, IS_WRITE_
             fixpipeParams.params.srcNdStride = 0;
             fixpipeParams.params.dstNdStride = 0;
             constexpr static FixpipeConfig DK_FIXPIPE_CONFIG = {CO2Layout::ROW_MAJOR, IS_WRITE_UB};
-            Fixpipe<T, CALC_TYPE, DK_FIXPIPE_CONFIG>(outTensor[gmNOffset], dkL0CBuffer.GetTensor<CALC_TYPE>(), fixpipeParams);
+            if (isFixpOut) {
+                Fixpipe<T, CALC_TYPE, DK_FIXPIPE_CONFIG>(outTensor[gmNOffset], dkL0CBuffer.GetTensor<CALC_TYPE>(), fixpipeParams);
+            }
         } else {
             // fixp2gm
             if (isFixpOut) {
@@ -1357,7 +1359,10 @@ FAGBlockCube<TEMPLATE_ARGS>::IterateMmPDyNormal(typename DqkvResPos<T, IS_WRITE_
             }
         } else {
             // todo: 待确认dv是否有直接输出到UB的情况，如无可以删除此分支
-            Fixpipe<T, CALC_TYPE, DV_FIXPIPE_CONFIG>(outTensor, dvL0CBuffer.GetTensor<CALC_TYPE>(), fixpipeParams);
+            if (isFixpOut) {
+                fixpipeParams.nSize = (realN + 7) >> 3 << 3;
+                Fixpipe<T, CALC_TYPE, DV_FIXPIPE_CONFIG>(outTensor[gmNOffset], dvL0CBuffer.GetTensor<CALC_TYPE>(), fixpipeParams);
+            }
         }
         dvL0CBuffer.Set<HardEvent::FIX_M>();
     }

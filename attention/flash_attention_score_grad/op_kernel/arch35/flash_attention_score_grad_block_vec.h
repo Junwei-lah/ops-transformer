@@ -631,7 +631,8 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DqkvMulsAndCastFromUB(FagCons
                                                                          LocalTensor<CALC_TYPE> &inputTensor,
                                                                          TQue<QuePosition::VECOUT, 1> &outQue)
 {
-    if (constInfo.commonConstInfo.s1Size == 1 && vSubBlockIdx == 1) {
+    if ((MM_IDX == DQ_IDX && runInfo.commonRunInfo.halfS1RealSize == 0) ||
+        (MM_IDX != DQ_IDX && runInfo.halfS2RealSize == 0)) {
         return;
     } 
     uint64_t dSize = (MM_IDX == DV_IDX) ? constInfo.commonConstInfo.dSizeV : constInfo.commonConstInfo.dSize;
