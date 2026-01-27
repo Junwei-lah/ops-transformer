@@ -113,12 +113,6 @@ macro(add_modules_sources)
     endif()
   endif()
 
-  file(GLOB AICPU_SRCS ${SOURCE_DIR}/*_aicpu*.cpp)
-  if(AICPU_SRCS)
-    add_aicpu_kernel_modules()
-    target_sources(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_SRCS})
-  endif()
-
   if (MODULE_OPTYPE)
     list(LENGTH MODULE_OPTYPE OpTypeLen)
     list(LENGTH MODULE_ACLNNTYPE AclnnTypeLen)
@@ -646,3 +640,57 @@ macro(add_onnx_plugin_sources)
     message(WARNING "No onnx plugin source files found in ${SOURCE_DIR}")
   endif()
 endmacro()
+
+# useage: add_aicpu_kernel_modules()
+# 添加aicpu kernel object
+function(add_aicpu_kernel_modules)
+  message(STATUS "add_aicpu_kernel_modules")
+  if(NOT TARGET ${OPHOST_NAME}_aicpu_obj)
+    add_library(${OPHOST_NAME}_aicpu_obj OBJECT)
+    target_include_directories(${OPHOST_NAME}_aicpu_obj PRIVATE ${AICPU_INCLUDE})
+    target_compile_definitions(
+            ${OPHOST_NAME}_aicpu_obj PRIVATE _FORTIFY_SOURCE=2 google=ascend_private
+            $<$<BOOL:${ENABLE_TEST}>:ASCEND_AICPU_UT>
+    )
+    target_compile_options(
+            ${OPHOST_NAME}_aicpu_obj PRIVATE $<$<NOT:$<BOOL:${ENABLE_TEST}>>:-DDISABLE_COMPILE_V1> -Dgoogle=ascend_private
+            -fvisibility=hidden ${AICPU_DEFINITIONS}
+    )
+    target_link_libraries(
+            ${OPHOST_NAME}_aicpu_obj
+            PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
+            $<BUILD_INTERFACE:dlog_headers>
+    )
+  endif()
+endfunction()
+
+# useage: add_aicpu_cust_kernel_modules(target_name)
+# 添加aicpu cust kernel object target
+function(add_aicpu_cust_kernel_modules target_name)
+  message(STATUS "add_aicpu_cust_kernel_modules for ${target_name}")
+  if(NOT TARGET ${target_name})
+    add_library(${target_name} OBJECT)
+    target_include_directories(${target_name} PRIVATE ${AICPU_INCLUDE})
+    target_compile_definitions(
+            ${target_name} PRIVATE
+            _FORTIFY_SOURCE=2 _GLIBCXX_USE_CXX11_ABI=1
+            google=ascend_private
+            $<$<BOOL:${ENABLE_TEST}>:ASCEND_AICPU_UT>
+    )
+    target_compile_options(
+            ${target_name} PRIVATE
+            $<$<NOT:$<BOOL:${ENABLE_TEST}>>:-DDISABLE_COMPILE_V1> -Dgoogle=ascend_private
+            -fvisibility=hidden ${AICPU_DEFINITIONS}
+    )
+    target_link_libraries(
+            ${target_name}
+            PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
+            $<BUILD_INTERFACE:dlog_headers>
+            -Wl,--no-whole-archive
+            Eigen3::EigenTransformer
+    )
+    if (NOT ${target_name} IN_LIST AICPU_CUST_OBJ_TARGETS)
+      set(AICPU_CUST_OBJ_TARGETS ${AICPU_CUST_OBJ_TARGETS} ${target_name} CACHE INTERNAL "All aicpu cust obj targets")
+    endif()
+  endif()
+endfunction()

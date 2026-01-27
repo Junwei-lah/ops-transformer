@@ -212,7 +212,7 @@ function(add_aicpu_cust_kernel_modules target_name)
       PRIVATE $<BUILD_INTERFACE:$<IF:$<BOOL:${ENABLE_TEST}>,intf_llt_pub_asan_cxx17,intf_pub_cxx17>>
               $<BUILD_INTERFACE:dlog_headers>
               -Wl,--no-whole-archive
-              Eigen3::EigenCv
+              Eigen3::EigenTransformer
       )
     if (NOT ${target_name} IN_LIST AICPU_CUST_OBJ_TARGETS)
       set(AICPU_CUST_OBJ_TARGETS ${AICPU_CUST_OBJ_TARGETS} ${target_name} CACHE INTERNAL "All aicpu cust obj targets")
