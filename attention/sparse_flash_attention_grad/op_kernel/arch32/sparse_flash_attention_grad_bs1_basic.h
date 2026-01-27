@@ -16,9 +16,9 @@
 #pragma once
 #include "lib/matmul_intf.h"
 #include "kernel_operator.h"
-#include "../basic_modules/cube_op.h"
-#include "../basic_modules/vec_op.h"
-#include "../basic_modules/common_header.h"
+#include "../../basic_modules/cube_op.h"
+#include "../../basic_modules/vec_op.h"
+#include "../../basic_modules/common_header.h"
 #include "sparse_flash_attention_grad_post.h"
 
 namespace SFAG_BASIC {

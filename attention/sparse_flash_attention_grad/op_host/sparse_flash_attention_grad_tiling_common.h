@@ -55,7 +55,6 @@ enum class InputIndex : uint32_t {
     SOFTMAX_SUM,
     ACTUAL_SEQ_Q_LEN,
     ACTUAL_SEQ_KV_LEN,
-    // ATTEN_MASK,
     Q_ROPE,
     K_ROPE
 };

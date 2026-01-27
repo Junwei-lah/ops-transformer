@@ -12,15 +12,49 @@
  * \file sparse_flash_attention_grad.cpp
  * \brief
  */
-#include "sparse_flash_attention_grad_bs1_basic.h"
-#include "sparse_flash_attention_grad_post.h"
-#include "kernel_operator.h"
-using namespace AscendC;
 
+#if __CCE_AICORE__ == 310
+#include "arch35/sparse_flash_attention_grad_template_tiling_key.h"
+#include "arch35/sparse_flash_attention_grad_tiling_data_regbase.h"
+#include "arch35/sparse_flash_attention_grad_entry_regbase.h"
+#else
+#include "arch32/sparse_flash_attention_grad_bs1_basic.h"
+#include "arch32/sparse_flash_attention_grad_post.h"
+#endif
+
+#include "kernel_operator.h"
+
+using namespace AscendC;
 constexpr static uint32_t ND = 0;
 constexpr static uint32_t NZ = 1;
 constexpr static uint32_t TND = 3;
 
+#if __CCE_AICORE__ == 310
+
+template <uint8_t inputDType, bool isTnd, uint16_t gTemplateType, uint16_t s2TemplateType, uint16_t dTemplateType, bool isRope, bool deterministic>
+__global__ __aicore__ void
+sparse_flash_attention_grad(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value,
+                            __gm__ uint8_t *sparse_indices, __gm__ uint8_t *d_out, __gm__ uint8_t *out, 
+                            __gm__ uint8_t *softmax_max, __gm__ uint8_t *softmax_sum, 
+                            __gm__ uint8_t *actual_seq_qlen, __gm__ uint8_t *actual_seq_kvlen,
+                            __gm__ uint8_t *query_rope, __gm__ uint8_t *key_rope,
+                            __gm__ uint8_t *dq, __gm__ uint8_t *dk, __gm__ uint8_t *dv,
+                            __gm__ uint8_t *dq_rope, __gm__ uint8_t *dk_rope,
+                            __gm__ uint8_t *workspace, __gm__ uint8_t *tiling_data)
+{
+    REGISTER_TILING_DEFAULT(optiling::sfag::SparseFlashAttentionGradTilingDataRegbase);
+    RegbaseSFAG<inputDType, isTnd, gTemplateType, s2TemplateType, dTemplateType, isRope, deterministic>(query, key, value,
+                                sparse_indices, d_out, out, 
+                                softmax_max, softmax_sum, 
+                                actual_seq_qlen, actual_seq_kvlen,
+                                query_rope, key_rope,
+                                dq, dk, dv,
+                                dq_rope, dk_rope,
+                                workspace, tiling_data);
+}
+
+
+#else
 #define INVOKE_SELECTED_ATTENTION_BASIC_IMPL(INPUT_TYPE, ATTEN_ENABLE, HAS_ROPE, IS_BSND)                               \
     do {                                                                                                                \
         __gm__ uint8_t *user = GetUserWorkspace(workspace);                                                             \
@@ -101,5 +135,6 @@ sparse_flash_attention_grad(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ u
         return;
     }
 #endif
-}
 
+}
+#endif

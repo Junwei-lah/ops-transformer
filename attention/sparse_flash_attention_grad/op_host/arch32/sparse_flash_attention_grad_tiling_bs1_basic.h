@@ -9,16 +9,16 @@
  */
 
 /*!
- * \file sparse_flash_attention_grad_bs1_basic.h
+ * \file sparse_flash_attention_grad_tiling_bs1_basic.h
  * \brief
  */
 
 #pragma once
 
-#include "sparse_flash_attention_grad_tiling_common.h"
+#include "../sparse_flash_attention_grad_tiling_common.h"
+#include "../sparse_flash_attention_grad_tiling.h"
 #include "tiling_base/tiling_base.h"
 #include "tiling_base/tiling_type.h"
-#include "sparse_flash_attention_grad_tiling.h"
 
 namespace optiling {
 namespace sfag {

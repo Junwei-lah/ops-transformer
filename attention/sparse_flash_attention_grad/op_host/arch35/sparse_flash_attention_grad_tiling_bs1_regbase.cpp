@@ -9,12 +9,13 @@
  */
 
 /*!
- * \file sparse_flash_attention_grad_bs1_basic.cpp
+ * \file sparse_flash_attention_grad_tiling_bs1_regbase.cpp
  * \brief
  */
 
-#include "sparse_flash_attention_grad_tiling_bs1_basic.h"
+#include "sparse_flash_attention_grad_tiling_bs1_regbase.h"
 #include "tiling_base/tiling_templates_registry.h"
+#include "tiling_base/tiling_type.h"
 
 namespace optiling {
 namespace sfag {
@@ -26,7 +27,7 @@ constexpr uint32_t BASE_LEN_256 = 256;
 constexpr int64_t GM_ALIGN = 512;
 constexpr uint32_t PING_PONG_BUFFER = 2;
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::GetShapeAttrsInfo()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetShapeAttrsInfo()
 {
     /*
     Get all shape info and attr
@@ -42,14 +43,14 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetShapeAttrsInfo()
         return status;
     }
 
-    OP_LOGI(context_, "SparseFlashAttentionGrad with shape b[%ld] n2[%ld] g[%ld] s1[%ld] s2[%ld] d[%ld] d2[%ld]!",
-              tilingData.opInfo.get_B(), tilingData.opInfo.get_N2(), tilingData.opInfo.get_G(),
-              tilingData.opInfo.get_S1(), tilingData.opInfo.get_S2(), tilingData.opInfo.get_D(),
-              tilingData.opInfo.get_D2());
+    OP_LOGI(context_, "SparseFlashAttentionGrad with shape b[%ld] n2[%ld] g[%ld] s1[%ld] s2[%ld] d[%ld] d1[%ld]!",
+              baseParams_->get_b(), baseParams_->get_n2(), baseParams_->get_g(),
+              baseParams_->get_s1(), baseParams_->get_s2(), baseParams_->get_d(),
+              baseParams_->get_d1());
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::GetPlatformInfo()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetPlatformInfo()
 {
     auto platformInfoPtr = context_->GetPlatformInfo();
     uint64_t l2CacheSize;
@@ -64,8 +65,7 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetPlatformInfo()
         aicoreParams_.l0aSize = compileInfoPtr->l0aSize;
         aicoreParams_.l0bSize = compileInfoPtr->l0bSize;
         aicoreParams_.l0cSize = compileInfoPtr->l0cSize;
-        l2CacheSize =
-            compileInfoPtr->l2CacheSize;
+        l2CacheSize = compileInfoPtr->l2CacheSize;
     } else {
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
         aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
@@ -90,30 +90,21 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetPlatformInfo()
 }
 
 
-bool SparseFlashAttentionGradBasicTiling::IsCapable()
+bool SparseFlashAttentionGradBs1Regbase::IsCapable()
 {
     OP_LOGI(context_, "SparseFlashAttentionGrad basic template hit.");
     return true;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::DoOpTiling()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoOpTiling()
 {
     OP_LOGI(context_, "SparseFlashAttentionGrad DoTiling start");
 
     // Init
-    tmpData.singleM = tilingData.opInfo.get_G();
-    tmpData.singleN = 512;
+    tmpData.singleM = 128; // G方向上的固定切分大小
+    tmpData.singleN = 128; // s2方向上的固定切分大小
 
-    // setTilingData
-    tilingData.splitCoreParams.set_singleM(tmpData.singleM);
-    tilingData.splitCoreParams.set_singleN(tmpData.singleN);
-
-    auto status = DoSftTiling();
-    if (status != ge::GRAPH_SUCCESS) {
-        return status;
-    }
-
-    status = DoBlockTiling();
+    auto status = DoBlockTiling();
     if (status != ge::GRAPH_SUCCESS) {
         return status;
     }
@@ -126,27 +117,16 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::DoOpTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::DoLibApiTiling()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoLibApiTiling()
 {
-    // calc for simpleSoftMax which dstShape is as same as srcShape
-    auto simpleSoftMaxShape = ge::Shape({tmpData.singleM, tmpData.singleN});
-    auto helpLenA = tmpData.singleM * tmpData.singleN * tmpData.dataTypeSize; // UB内数据类型
-    AscendC::SoftMaxTilingFunc(simpleSoftMaxShape, sizeof(float), helpLenA, tilingData.softmaxTilingData);
-
-    // calc for softmaxGrad
-    auto softmaxGradShape = ge::Shape({tmpData.singleM, BLOCK / tmpData.dataTypeSize});
-    auto helpLenB = 2 * tmpData.singleM * tmpData.singleN * tmpData.dataTypeSize; // UB内数据类型 64KB
-    AscendC::SoftMaxGradTilingFunc(softmaxGradShape, tmpData.dataTypeSize, helpLenB, tilingData.softmaxGradTilingData,
-                                   true);
-
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::GetWorkspaceSize()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetWorkspaceSize()
 {
-    int64_t currentUseCoreNum = tilingData.opInfo.get_usedCoreNum();
+    int64_t coreNum = aicoreParams_.aicNum;
     int64_t launchBlockDims = aicoreParams_.blockDim;
-    int64_t inputDtypeSize = tmpData.queryType == ge::DT_FLOAT ? B32 : B16;
+    int64_t inputDtypeSize = B16;
     int64_t selectedS2 = tmpData.singleN;
 
     // Tiling传递的内存大小、起始地址，统一为字节数，单位为B
@@ -157,85 +137,60 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetWorkspaceSize()
                return ge::GRAPH_FAILED);
     context_->SetBlockDim(blockdim);
 
+    // 使用SyncAll，需要设置为batch mode模式，所有核同时启动，否则在多流方式下执行可能会卡死
+    context_->SetScheduleMode(1);
+
     // 系统预留
     int64_t sysLen = WORKSPACE_BASE_CAL;
-    int64_t mm12WorkspaceLen = tmpData.singleM * tmpData.singleN * B32;
-    mm12WorkspaceLen = AlignData(mm12WorkspaceLen, GM_ALIGN) * PING_PONG_BUFFER;
-
-    int64_t dqWorkspaceLen = tilingData.opInfo.get_dqWorkspaceLen();
-    int64_t dkWorkspaceLen = tilingData.opInfo.get_dkWorkspaceLen();
-    int64_t dvWorkspaceLen = tilingData.opInfo.get_dvWorkspaceLen();
 
     // Gather/Scatter
-    int64_t selectedKWorkspaceLen = selectedS2 * (tmpData.d + tmpData.ropeDim) * inputDtypeSize;
-    int64_t selectedVWorkspaceLen = selectedS2 * tmpData.d2 * inputDtypeSize;
+    int64_t selectedKWorkspaceLen = 128 * tmpData.d * B16;
     
-    selectedKWorkspaceLen = AlignData(selectedKWorkspaceLen, GM_ALIGN);
-    selectedVWorkspaceLen = AlignData(selectedVWorkspaceLen, GM_ALIGN);
+    selectedKWorkspaceLen = AlignData(selectedKWorkspaceLen, GM_ALIGN) * 3;
+    // selectedKWorkspaceLen = AlignData(selectedKWorkspaceLen, GM_ALIGN) * PING_PONG_BUFFER;
 
-    selectedKWorkspaceLen *= 4;
-    selectedVWorkspaceLen *= PING_PONG_BUFFER;
+    int64_t mm4WorkspaceLen = tmpData.selected_block_count * tmpData.d * B32;
+    int64_t mm5WorkspaceLen = tmpData.selected_block_count * tmpData.d1 * B32;
+    mm4WorkspaceLen = AlignData(mm4WorkspaceLen, GM_ALIGN) * PING_PONG_BUFFER;
+    mm5WorkspaceLen = AlignData(mm5WorkspaceLen, GM_ALIGN) * PING_PONG_BUFFER;
+
+    int64_t dqWorkspaceLen = tmpData.dqWorkspaceLen;
+    int64_t dkWorkspaceLen = tmpData.dkWorkspaceLen;
+    int64_t dvWorkspaceLen = tmpData.dvWorkspaceLen;
 
     size_t *workspaces = context_->GetWorkspaceSizes(1);
     workspaces[0] = sysLen;
-    workspaces[0] += (selectedKWorkspaceLen + selectedVWorkspaceLen) * currentUseCoreNum;
-    workspaces[0] += mm12WorkspaceLen * 2 * currentUseCoreNum;
+    workspaces[0] += selectedKWorkspaceLen * coreNum;
+    workspaces[0] += (mm4WorkspaceLen + mm5WorkspaceLen) * coreNum;
     workspaces[0] += dqWorkspaceLen + dkWorkspaceLen + dvWorkspaceLen;
 
-    int64_t dAlign = (tilingData.opInfo.get_D() + tilingData.opInfo.get_ropeD() + 15) / 16 * 16;
-    int64_t d2Align = (tilingData.opInfo.get_D2() + 15) / 16 * 16;
-    // 每个s1做完，做scatter add累加，workspace开DB
-    workspaces[0] += 24 * PING_PONG_BUFFER * tmpData.selected_block_count * tmpData.selected_block_size * (dAlign + d2Align) * B32;
-
-    tilingData.opInfo.set_mm12WorkspaceLen(mm12WorkspaceLen);
-    tilingData.opInfo.set_selectedKWorkspaceLen(selectedKWorkspaceLen);
-    tilingData.opInfo.set_selectedVWorkspaceLen(selectedVWorkspaceLen);
-
-    int64_t workspaceOffsets = (selectedKWorkspaceLen + selectedVWorkspaceLen) * currentUseCoreNum;
-    workspaceOffsets += mm12WorkspaceLen * 2 * currentUseCoreNum;
-    tilingData.postTilingData.set_dqWorkSpaceOffset(workspaceOffsets);
-    workspaceOffsets = workspaceOffsets + tilingData.opInfo.get_dqWorkspaceLen();
-    tilingData.postTilingData.set_dkWorkSpaceOffset(workspaceOffsets);
-    workspaceOffsets = workspaceOffsets + tilingData.opInfo.get_dkWorkspaceLen();
-    tilingData.postTilingData.set_dvWorkSpaceOffset(workspaceOffsets);
+    baseParams_->set_selectedKWorkSpaceOffset(0);
+    int64_t workspaceOffsets = selectedKWorkspaceLen * coreNum;
+    baseParams_->set_mm4ResWorkSpaceOffset(workspaceOffsets);
+    workspaceOffsets += mm4WorkspaceLen * coreNum;
+    baseParams_->set_mm5ResWorkSpaceOffset(workspaceOffsets);
+    workspaceOffsets += mm5WorkspaceLen * coreNum;
+    postTilingData_->set_dqWorkSpaceOffset(workspaceOffsets);
+    workspaceOffsets = workspaceOffsets + dqWorkspaceLen;
+    postTilingData_->set_dkWorkSpaceOffset(workspaceOffsets);
+    workspaceOffsets = workspaceOffsets + dkWorkspaceLen;
+    postTilingData_->set_dvWorkSpaceOffset(workspaceOffsets);
 
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::PostTiling()
+uint64_t SparseFlashAttentionGradBs1Regbase::GetTilingKey() const
 {
-    // 判断如果GetDataSize > GetCapacity的异常情况,其中确定性计算下终止流程，非确定性计算流入下一个模板判断
-    OP_CHECK_IF((tilingData.GetDataSize() > context_->GetRawTilingData()->GetCapacity()) &&
-                   (context_->GetDeterministic() == 1),
-               OP_LOGE(context_, "The size of TilingDataSize[%zu] is larger than the size of MaxDataCapacity[%zu].",
-                         tilingData.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
-               return ge::GRAPH_FAILED);
-    OP_CHECK_IF((tilingData.GetDataSize() > context_->GetRawTilingData()->GetCapacity()) &&
-                   (context_->GetDeterministic() != 1),
-               OP_LOGE(context_, "The size of TilingDataSize[%zu] is larger than the size of MaxDataCapacity[%zu].",
-                         tilingData.GetDataSize(), context_->GetRawTilingData()->GetCapacity()),
-               return ge::GRAPH_FAILED);
+    int64_t inputDtypeSize = tmpData.queryType == ge::DT_FLOAT16 ? 0 : 1;
+    int64_t isTnd = tmpData.layout == static_cast<uint32_t>(InputLayout::TND) ? 1 : 0;
+    uint64_t tilingKey = 0;
 
-    tilingData.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());
-    context_->GetRawTilingData()->SetDataSize(tilingData.GetDataSize());
-
-    return ge::GRAPH_SUCCESS;
-}
-
-uint64_t SparseFlashAttentionGradBasicTiling::GetTilingKey() const
-{
-    uint64_t tilingKey = 10;
-    if (tmpData.attenEnable) {
-        tilingKey += 1;
-    }
-    tilingKey *= 10;
-    if (tmpData.ropeDim != 0) {
-        tilingKey += 1;
-    }
-    tilingKey *= 10;
-    if (tmpData.layout == static_cast<uint32_t>(InputLayout::BSND)) {
-        tilingKey += 1;
-    }
+    OP_LOGI(context_,
+              "SparseFlashAttentionGrad get tilingkey, InputDType[%ld], IsTnd[%ld], GTemplateNum[%ld], S2TemplateNum[%ld], DTemplateNum[%ld], IsRope[%d], Deterministic[%d]",
+              inputDtypeSize, isTnd, tmpData.singleM, tmpData.singleN, tmpData.d, static_cast<uint8_t>(tmpData.ropeEnable), static_cast<uint8_t>(tmpData.deterministic));
+    // tmpData.singleM 为G方向上固定切分大小 tmpData.singleN为S2方向上固定切分大小 
+    tilingKey = GET_TPL_TILING_KEY(static_cast<uint8_t>(inputDtypeSize), static_cast<uint8_t>(isTnd), static_cast<uint16_t>(tmpData.singleM), 
+        static_cast<uint16_t>(tmpData.singleN), static_cast<uint16_t>(tmpData.d), static_cast<uint8_t>(tmpData.ropeEnable), static_cast<uint8_t>(tmpData.deterministic));
 
     OP_LOGI(context_,
               "SparseFlashAttentionGrad DoTiling success, tilingkey is"
@@ -244,8 +199,7 @@ uint64_t SparseFlashAttentionGradBasicTiling::GetTilingKey() const
     return tilingKey;
 }
 
-
-ge::graphStatus SparseFlashAttentionGradBasicTiling::DoBlockTiling()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoBlockTiling()
 {
     /*
      * 分核策略
@@ -256,59 +210,49 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::DoBlockTiling()
     int64_t formerCoreProcessNNums = CeilCommon(nNums, aicNum);
     int64_t remainCoreNum = formerCoreProcessNNums * aicNum - nNums;
 
-    tilingData.opInfo.set_usedCoreNum(usedCoreNum);
-    tilingData.opInfo.set_formerCoreNum(aicNum - remainCoreNum);
-    tilingData.opInfo.set_formerCoreProcessNNum(formerCoreProcessNNums);
-    tilingData.opInfo.set_remainCoreProcessNNum(static_cast<uint32_t>(formerCoreProcessNNums - 1));
-    tilingData.opInfo.set_castUsedCoreNum(aicoreParams_.blockDim);
+    // 使用总核数
+    baseParams_->set_usedCoreNum(usedCoreNum);
+    baseParams_->set_formerCoreNum(aicNum - remainCoreNum);
+    baseParams_->set_formerCoreProcessNNum(formerCoreProcessNNums);
+    baseParams_->set_remainCoreProcessNNum(formerCoreProcessNNums - 1);
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::DoSftTiling()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::PostTiling()
 {
-    /*
-     * softmax tiling切分策略
-     */
-    constexpr int32_t maxProcessDataSize = 8 * 1024;
-
-    uint32_t sftBaseN = tmpData.singleN;
-    uint32_t sftBaseM = 16;
-
-    tilingData.splitCoreParams.set_sftBaseM(sftBaseM);
-    tilingData.splitCoreParams.set_sftBaseN(sftBaseN);
-
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::DoCastTiling()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoCastTiling()
 {
-    int64_t dAlign = (tilingData.opInfo.get_D() + tilingData.opInfo.get_ropeD() + 15) / 16 * 16;
-    int64_t d2Align = (tilingData.opInfo.get_D2() + 15) / 16 * 16;
+    int64_t dAlign = (baseParams_->get_d() + 15) / 16 * 16;
+    int64_t d1Align = (baseParams_->get_d1() + 15) / 16 * 16;
     // query
-    int64_t allNumQuery = tilingData.opInfo.get_B() * tilingData.opInfo.get_N2() * tilingData.opInfo.get_G() *
-                          tilingData.opInfo.get_S1() * dAlign;
+    int64_t allNumQuery = baseParams_->get_b() * baseParams_->get_n2() * baseParams_->get_g() *
+                          baseParams_->get_s1() * dAlign;
     // TND时候要按照真实的query的num数计算
-    if (tilingData.opInfo.get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
-        allNumQuery = tmpData.t1 * tilingData.opInfo.get_N2() * tilingData.opInfo.get_G() * dAlign;
+    if (baseParams_->get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
+        allNumQuery = tmpData.t1 * baseParams_->get_n2() * baseParams_->get_g() * dAlign;
     }
 
     // key
-    int64_t allNumKey = tilingData.opInfo.get_B() * tilingData.opInfo.get_N2() * tilingData.opInfo.get_S2() * dAlign;
+    int64_t allNumKey = baseParams_->get_b() * baseParams_->get_n2() * baseParams_->get_s2() * dAlign;
     // TND时候要按照真实的key的num数计算
-    if (tilingData.opInfo.get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
-        allNumKey = tmpData.t2 * tilingData.opInfo.get_N2() * 1 * dAlign;
+    if (baseParams_->get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
+        allNumKey = tmpData.t2 * baseParams_->get_n2() * 1 * dAlign;
     }
 
     // Value
-    int64_t allNumValue = tilingData.opInfo.get_B() * tilingData.opInfo.get_N2() * tilingData.opInfo.get_S2() * d2Align;
+    int64_t allNumValue = baseParams_->get_b() * baseParams_->get_n2() * baseParams_->get_s2() * d1Align;
     // TND时候要按照真实的value的num数计算
-    if (tilingData.opInfo.get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
-        allNumValue = tmpData.t2 * tilingData.opInfo.get_N2() * 1 * tilingData.opInfo.get_D2();
+    if (baseParams_->get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
+        allNumValue = tmpData.t2 * baseParams_->get_n2() * 1 * baseParams_->get_d1();
     }
 
-    uint32_t typeSize = tmpData.queryType == ge::DT_FLOAT ? B32 : B16;
-    uint32_t usedCoreNum = tilingData.opInfo.get_castUsedCoreNum();
-    constexpr uint32_t postNzCoexNode = 10;
+    uint32_t typeSize = B16;
+    uint32_t usedCoreNum = aicoreParams_.blockDim;
+    uint32_t coreNum = aicoreParams_.aicNum;
+    constexpr uint32_t postNzCoexNode = 12;
     constexpr uint32_t blockSize = 32;
     constexpr uint32_t postNzReservedN = 1;
 
@@ -316,16 +260,42 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::DoCastTiling()
     uint32_t qPostBaseNum = 0;
     int64_t nzReservedSize = 0;
     int64_t curPostCoexNode = postNzCoexNode;
-    nzReservedSize = dAlign / 16 * blockSize * postNzReservedN;                      // 16为一个单元长度
     postUbBaseSize = (aicoreParams_.ubSize - 2 * nzReservedSize) / curPostCoexNode / // 开DB预留2份nzReservedSize
                      BASE_LEN_256 * BASE_LEN_256;
-    qPostBaseNum = postUbBaseSize / typeSize / dAlign * (tilingData.opInfo.get_D() + tilingData.opInfo.get_ropeD());
+    OP_LOGI(context_, "DoCastTiling postUbBaseSize: %ld.", postUbBaseSize);
+    qPostBaseNum = postUbBaseSize / typeSize / dAlign * (baseParams_->get_d());
+    OP_LOGI(context_, "DoCastTiling qPostBaseNum: %ld.", qPostBaseNum);
 
     OP_CHECK_IF(qPostBaseNum == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "qPostBaseNum is 0."), return ge::GRAPH_FAILED);
     OP_CHECK_IF(usedCoreNum == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "castUsedCoreNum is 0."),
                return ge::GRAPH_FAILED);
-    int64_t qPostBlockTotal = allNumQuery / dAlign * (tilingData.opInfo.get_D() + tilingData.opInfo.get_ropeD());
-    int64_t qSizeAlign = (qPostBlockTotal + BASE_LEN_256 - 1) / GM_ALIGN * GM_ALIGN * typeSize;
+    
+    int64_t qPreBlockFactor = (allNumQuery + usedCoreNum - 1) / usedCoreNum;
+    int64_t qPreBlockTotal = (allNumQuery + qPreBlockFactor - 1) / qPreBlockFactor;
+    int64_t qPreBlockTailTmp = allNumQuery % qPreBlockFactor;
+    int64_t qPreBlockTail = qPreBlockTailTmp == 0 ? qPreBlockFactor : qPreBlockTailTmp;
+
+    int64_t kPreBlockFactor = (allNumKey + usedCoreNum - 1) / usedCoreNum;;
+    int64_t kPreBlockTotal = (allNumKey + kPreBlockFactor - 1) / kPreBlockFactor;
+    int64_t kPreBlockTailTmp = allNumKey % kPreBlockFactor;
+    int64_t kPreBlockTail = kPreBlockTailTmp == 0 ? kPreBlockFactor : kPreBlockTailTmp;
+
+    int64_t vPreBlockFactor = (allNumValue + usedCoreNum - 1) / usedCoreNum;
+    int64_t vPreBlockTotal = (allNumValue + vPreBlockFactor - 1) / vPreBlockFactor;
+    int64_t vPreBlockTailTmp = allNumValue % vPreBlockFactor;
+    int64_t vPreBlockTail = vPreBlockTailTmp == 0 ? vPreBlockFactor : vPreBlockTailTmp;
+
+    preTilingData_->set_qPreBlockFactor(qPreBlockFactor);
+    preTilingData_->set_qPreBlockTotal(qPreBlockTotal);
+    preTilingData_->set_qPreBlockTail(qPreBlockTail);
+    preTilingData_->set_kPreBlockFactor(kPreBlockFactor);
+    preTilingData_->set_kPreBlockTotal(kPreBlockTotal);
+    preTilingData_->set_kPreBlockTail(kPreBlockTail);
+    preTilingData_->set_vPreBlockFactor(vPreBlockFactor);
+    preTilingData_->set_vPreBlockTotal(vPreBlockTotal);
+    preTilingData_->set_vPreBlockTail(vPreBlockTail);
+
+    int64_t qPostBlockTotal = allNumQuery / dAlign * (baseParams_->get_d());
     int64_t qPostTailNumTmp = qPostBlockTotal % qPostBaseNum;
     int64_t qPostTailNum = qPostTailNumTmp == 0 ? qPostBaseNum : qPostTailNumTmp;
     int64_t qPostBlockOuterTotal = (qPostBlockTotal + qPostBaseNum - 1) / qPostBaseNum;
@@ -333,61 +303,45 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::DoCastTiling()
 
     int64_t kPostBaseNum = qPostBaseNum;
     OP_CHECK_IF(kPostBaseNum == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "kPostBaseNum is 0."), return ge::GRAPH_FAILED);
-    int64_t kPostBlockTotal = allNumKey / dAlign * (tilingData.opInfo.get_D() + tilingData.opInfo.get_ropeD());
-    int64_t kSizeAlign = (kPostBlockTotal + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN * typeSize;
+    int64_t kPostBlockTotal = allNumKey / dAlign * (baseParams_->get_d());
     int64_t kPostTailNumTmp = kPostBlockTotal % kPostBaseNum;
     int64_t kPostTailNum = kPostTailNumTmp == 0 ? kPostBaseNum : kPostTailNumTmp;
     int64_t kPostBlockOuterTotal = (kPostBlockTotal + kPostBaseNum - 1) / kPostBaseNum;
     int64_t kPostBlockFactor = (kPostBlockOuterTotal + usedCoreNum - 1) / usedCoreNum;
 
-    int64_t vPostBaseNum = postUbBaseSize / typeSize / d2Align * tilingData.opInfo.get_D2();
+    int64_t vPostBaseNum = postUbBaseSize / typeSize / d1Align * baseParams_->get_d1();
     OP_CHECK_IF(vPostBaseNum == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "vPostBaseNum is 0."), return ge::GRAPH_FAILED);
-    int64_t vPostBlockTotal = allNumValue / d2Align * tilingData.opInfo.get_D2();
-    int64_t vSizeAlign = (vPostBlockTotal + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN * typeSize;
+    int64_t vPostBlockTotal = allNumValue / d1Align * baseParams_->get_d1();
     int64_t vPostTailNumTmp = vPostBlockTotal % vPostBaseNum;
     int64_t vPostTailNum = vPostTailNumTmp == 0 ? vPostBaseNum : vPostTailNumTmp;
     int64_t vPostBlockOuterTotal = (vPostBlockTotal + vPostBaseNum - 1) / vPostBaseNum;
     int64_t vPostBlockFactor = (vPostBlockOuterTotal + usedCoreNum - 1) / usedCoreNum;
 
-    tilingData.postTilingData.set_coreNum(usedCoreNum);
-    tilingData.postTilingData.set_scaleValue(tilingData.opInfo.get_scaleValue());
-    tilingData.postTilingData.set_postUbBaseSize(postUbBaseSize);
-    tilingData.postTilingData.set_nzReservedSize(nzReservedSize);
+    postTilingData_->set_postUbBaseSize(postUbBaseSize);
 
-    tilingData.postTilingData.set_qPostBlockFactor(qPostBlockFactor);
-    tilingData.postTilingData.set_qPostBlockTotal(qPostBlockTotal);
-    tilingData.postTilingData.set_qPostBaseNum(qPostBaseNum);
-    tilingData.postTilingData.set_qPostTailNum(qPostTailNum);
-    tilingData.postTilingData.set_qSizeAlign(qSizeAlign);
+    postTilingData_->set_qPostBlockFactor(qPostBlockFactor);
+    postTilingData_->set_qPostBlockTotal(qPostBlockTotal);
+    postTilingData_->set_qPostBaseNum(qPostBaseNum);
+    postTilingData_->set_qPostTailNum(qPostTailNum);
 
-    tilingData.postTilingData.set_kPostBlockFactor(kPostBlockFactor);
-    tilingData.postTilingData.set_kPostBlockTotal(kPostBlockTotal);
-    tilingData.postTilingData.set_kPostBaseNum(kPostBaseNum);
-    tilingData.postTilingData.set_kPostTailNum(kPostTailNum);
-    tilingData.postTilingData.set_kSizeAlign(kSizeAlign);
+    postTilingData_->set_kPostBlockFactor(kPostBlockFactor);
+    postTilingData_->set_kPostBlockTotal(kPostBlockTotal);
+    postTilingData_->set_kPostBaseNum(kPostBaseNum);
+    postTilingData_->set_kPostTailNum(kPostTailNum);
 
-    tilingData.postTilingData.set_vPostBlockFactor(vPostBlockFactor);
-    tilingData.postTilingData.set_vPostBlockTotal(vPostBlockTotal);
-    tilingData.postTilingData.set_vPostBaseNum(vPostBaseNum);
-    tilingData.postTilingData.set_vPostTailNum(vPostTailNum);
-    tilingData.postTilingData.set_vSizeAlign(vSizeAlign);
+    postTilingData_->set_vPostBlockFactor(vPostBlockFactor);
+    postTilingData_->set_vPostBlockTotal(vPostBlockTotal);
+    postTilingData_->set_vPostBaseNum(vPostBaseNum);
+    postTilingData_->set_vPostTailNum(vPostTailNum);
 
-    tilingData.opInfo.set_dqWorkspaceLen((allNumQuery * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN);
-    tilingData.opInfo.set_dkWorkspaceLen((allNumKey * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN);
-    tilingData.opInfo.set_dvWorkspaceLen((allNumValue * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN);
-
-    tilingData.postTilingData.set_b(tilingData.opInfo.get_B());
-    tilingData.postTilingData.set_n2(tilingData.opInfo.get_N2());
-    tilingData.postTilingData.set_g(tilingData.opInfo.get_G());
-    tilingData.postTilingData.set_s1(tilingData.opInfo.get_S1());
-    tilingData.postTilingData.set_s2(tilingData.opInfo.get_S2());
-    tilingData.postTilingData.set_d(tilingData.opInfo.get_D());
-    tilingData.postTilingData.set_d2(tilingData.opInfo.get_D2());
+    tmpData.dqWorkspaceLen = (allNumQuery * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN;
+    tmpData.dkWorkspaceLen = (allNumKey * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN;
+    tmpData.dvWorkspaceLen = (allNumValue * B32 + GM_ALIGN - 1) / GM_ALIGN * GM_ALIGN;
 
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
+ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetBaseShapeInfo()
 {
     OP_CHECK_IF(((context_->GetInputShape(static_cast<size_t>(InputIndex::QUERY)) == nullptr) ||
                 (context_->GetInputShape(static_cast<size_t>(InputIndex::KEY)) == nullptr) ||
@@ -395,8 +349,8 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
                OPS_REPORT_VECTOR_INNER_ERR(opName, "InputShape of query, key or value is nullptr."),
                return ge::GRAPH_FAILED);
     // input
-    // TND: query [t1, n1, d]   k [t2, n2, d]  v [t2, n2, d2]   dy/attentionIn [t1, n1, d2]
-    // BSND: query [b, s1, n1, d]   k [b, s2, n2, d]  v [b, s2, n2, d2]   dy/attentionIn [b, s1, n1, d2]
+    // TND: query [t1, n1, d]   k [t2, n2, d]  v [t2, n2, d1]   dy/attentionIn [t1, n1, d1]
+    // BSND: query [b, s1, n1, d]   k [b, s2, n2, d]  v [b, s2, n2, d1]   dy/attentionIn [b, s1, n1, d1]
     const gert::Shape &queryShape = context_->GetInputShape(static_cast<size_t>(InputIndex::QUERY))->GetStorageShape();
     const gert::Shape &keyShape = context_->GetInputShape(static_cast<size_t>(InputIndex::KEY))->GetStorageShape();
     const gert::Shape &valueShape = context_->GetInputShape(static_cast<size_t>(InputIndex::VALUE))->GetStorageShape();
@@ -411,10 +365,15 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
     // attrs
     const char *inputLayout = context_->GetAttrs()->GetAttrPointer<char>(static_cast<size_t>(AttrIndex::INPUT_LAYOUT));
     auto selected_block_count = indicesShape.GetDim(dimSize - 1);
-
+    if (selected_block_count % 1024 != 0 || selected_block_count < 1024 || selected_block_count > 8192) {
+        OP_LOGE(context_, "SparseFlashAttentionGrad only support selected_block_count [1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192] now, but got selected_block_count=%ld.", selected_block_count);
+        return ge::GRAPH_FAILED;
+    }
     auto selected_block_size =
         *context_->GetAttrs()->GetAttrPointer<int>(static_cast<size_t>(AttrIndex::SELECTED_BLOCK_SIZE));
     auto sparse_mode = *context_->GetAttrs()->GetAttrPointer<int>(static_cast<size_t>(AttrIndex::SPARSE_MODE));
+    tmpData.deterministic = *context_->GetAttrs()->GetAttrPointer<int>(static_cast<size_t>(AttrIndex::DETERMINISTIC));
+    
     if (sparse_mode == 0) {
         tmpData.attenEnable = false;
     } else if (sparse_mode == 3) {
@@ -486,45 +445,44 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
         OP_LOGE(context_, "g (N1 / N2) should be larger than 0, but got g=%ld.", tmpData.g);
         return ge::GRAPH_FAILED;
     }
-
+   
     int64_t n1 = tmpData.n2 * tmpData.g;
     if (tmpData.n2 != 1 || n1 > 128 || (n1 & (n1 - 1)) != 0) {
         OP_LOGE(context_, "SparseFlashAttentionGrad only support n2=1 and n1=1/2/4/8/16/32/64/128, but got n2=%ld n1=%ld.", tmpData.n2, n1);
         return ge::GRAPH_FAILED;
     }
 
-    tilingData.opInfo.set_B(tmpData.b);
-    tilingData.opInfo.set_G(tmpData.g);
-    OP_CHECK_IF(tilingData.opInfo.get_G() == 0, OP_LOGE(context_, "g is 0"), return ge::GRAPH_FAILED);
-    tilingData.opInfo.set_N2(tmpData.n2);
-    tilingData.opInfo.set_S1(tmpData.s1);
-    tilingData.opInfo.set_S2(tmpData.s2);
-    tilingData.opInfo.set_D(dimDq);
-    tilingData.opInfo.set_D2(dimDv);
-    tilingData.opInfo.set_ropeD(tmpData.ropeDim);
-    tilingData.opInfo.set_layout(tmpData.layout);
-    tilingData.opInfo.set_scaleValue(
+    baseParams_->set_b(tmpData.b);
+    baseParams_->set_g(tmpData.g);
+    OP_CHECK_IF(baseParams_->get_g() == 0, OP_LOGE(context_, "g is 0"), return ge::GRAPH_FAILED);
+    baseParams_->set_n2(tmpData.n2);
+    baseParams_->set_s1(tmpData.s1);
+    baseParams_->set_s2(tmpData.s2);
+    // d=576 dq+drope /  d1=512 dq
+    baseParams_->set_d(dimDq + tmpData.ropeDim);
+    baseParams_->set_d1(dimDq);
+    baseParams_->set_selectedBlockCount(selected_block_count);
+    baseParams_->set_layout(tmpData.layout);
+    baseParams_->set_sparseMode(sparse_mode);
+    baseParams_->set_scaleValue(
         *context_->GetAttrs()->GetAttrPointer<float>(static_cast<size_t>(AttrIndex::SCALE_VALUE)));
-    tilingData.opInfo.set_selectedBlockCount(selected_block_count);
-    tilingData.opInfo.set_selectedBlockSize(selected_block_size);
 
-    tmpData.d = tilingData.opInfo.get_D();
-    tmpData.d2 = tilingData.opInfo.get_D2();
+    tmpData.d = baseParams_->get_d();
+    tmpData.d1 = baseParams_->get_d1();
     tmpData.dataTypeSize = B32;
     tmpData.queryType =
         static_cast<uint32_t>(context_->GetInputDesc(static_cast<size_t>(InputIndex::QUERY))->GetDataType());
     tmpData.selected_block_count = selected_block_count;
     tmpData.selected_block_size = selected_block_size;
-
+    
     auto ret = CheckDtypeValid(context_);
-
     if (ret != ge::GRAPH_SUCCESS) {
         OP_LOGE(context_, "SparseFlashAttentionGrad the dtype of input is invalid.");
         return ge::GRAPH_FAILED;
     }
 
     if (tmpData.layout == static_cast<uint32_t>(InputLayout::TND)) {
-        ret = CheckTndShapeValid(context_, tmpData.t1, tmpData.n2 * tmpData.g, tmpData.d, tmpData.d2, tmpData.n2);
+        ret = CheckTndShapeValid(context_, tmpData.t1, tmpData.n2 * tmpData.g, tmpData.d, tmpData.d1, tmpData.n2);
     }
 
     if (ret != ge::GRAPH_SUCCESS) {
@@ -535,9 +493,7 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
     return ge::GRAPH_SUCCESS;
 }
 
-
-REGISTER_OPS_TILING_TEMPLATE(SparseFlashAttentionGrad, SparseFlashAttentionGradBasicTiling, 1);
+REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(SparseFlashAttentionGrad, SparseFlashAttentionGradBs1Regbase, (int32_t)platform_ascendc::SocVersion::ASCEND910_95, 1);
 
 } // namespace sfag
 } // namespace optiling
-

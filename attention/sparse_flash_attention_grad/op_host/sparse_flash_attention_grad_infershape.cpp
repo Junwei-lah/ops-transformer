@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file sparse_flash_attention_grad_proto.cpp
+ * \file sparse_flash_attention_grad_infershape.cpp
  * \brief
  */
 

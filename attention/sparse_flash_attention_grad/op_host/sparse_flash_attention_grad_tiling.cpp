@@ -17,6 +17,8 @@
 #include <register/op_impl_registry.h>
 #include "tiling_base/data_copy_transpose_tiling.h"
 #include "tiling_base/tiling_templates_registry.h"
+#include "../op_kernel/arch35/sparse_flash_attention_grad_tiling_data_regbase.h"
+#include "../op_kernel/arch35/sparse_flash_attention_grad_template_tiling_key.h"
 
 using namespace ge;
 using namespace AscendC;
@@ -26,7 +28,7 @@ namespace sfag {
 
 ASCENDC_EXTERN_C ge::graphStatus TilingSparseFlashAttentionGrad(gert::TilingContext *context)
 {
-    return Ops::Transformer::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context);
+    return Ops::Transformer::OpTiling::TilingRegistryNew::GetInstance().DoTilingImpl(context);
 }
 
 ASCENDC_EXTERN_C ge::graphStatus TilingPrepareForSparseFlashAttentionGrad(gert::TilingParseContext *context)
