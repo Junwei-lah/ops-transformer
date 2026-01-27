@@ -25,7 +25,6 @@ using namespace Ops::Transformer::OpTiling;
 using namespace GroupedMatmulSwigluQuantParamsV2;
 using namespace optiling::GmmConstant;
 namespace optiling{
-
 void GroupedMatmulSwigluQuantDavidV2Tiling::Reset()
 {
     tilingData_.SetDataPtr(context_->GetRawTilingData()->GetData());
@@ -33,7 +32,7 @@ void GroupedMatmulSwigluQuantDavidV2Tiling::Reset()
 }
 
 bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrs()
-{
+{   
     auto attrs = context_->GetAttrs();
     if (attrs != nullptr) {
         const int64_t *groupListTypePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_GROUP_LIST_TYPE); // 通路保证非负数
@@ -46,6 +45,40 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrs()
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(context_->GetNodeName(), "attrs is nullptr."), return false);
     const bool *transposeWeightPtr = attrs->GetAttrPointer<bool>(ATTR_INDEX_TRANS_W);
     inputParams_.transB = transposeWeightPtr != nullptr ? *transposeWeightPtr : false;
+
+    const int64_t *dequantModePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_DEQUANT_MODE);
+    OP_CHECK_IF(dequantModePtr == nullptr, OP_LOGE(context_->GetNodeName(), "The dequantModePtr is nullptr."),
+                return false);
+    OP_CHECK_IF(*dequantModePtr != MXQuantMode,
+                OP_LOGE(context_->GetNodeName(),
+                        "In mx quant mode, dequantMode should be 2, but actual value is %ld.",
+                        *dequantModePtr),
+                return false);
+    const int64_t *quantModePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_QUANT_MODE);
+    OP_CHECK_IF(quantModePtr == nullptr, OP_LOGE(context_->GetNodeName(), "The quantModePtr is nullptr."),
+                return false);
+    OP_CHECK_IF(*quantModePtr != MXQuantMode,
+                OP_LOGE(context_->GetNodeName(),
+                        "In mx quant mode, quantMode should be 2, but actual value is %ld.", *quantModePtr),
+                return false);
+    const int64_t *dequantDtypePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_DEQUANT_DTYPE);
+    OP_CHECK_IF(dequantDtypePtr == nullptr, OP_LOGE(context_->GetNodeName(), "The dequantDtypePtr is nullptr."),
+                return false);
+    ge::DataType dequantDtype = static_cast<ge::DataType>(*dequantDtypePtr);
+    OP_CHECK_IF(dequantDtype != ge::DT_FLOAT,
+                OP_LOGE(context_->GetNodeName(), "In mx quant mode, dequantDtype should be DT_FLOAT, but"
+                        " actual value is %s.", ge::TypeUtils::DataTypeToSerialString(dequantDtype).c_str()),
+                return false);
+    const int64_t *quantDtypePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_QUANT_DTYPE);
+    OP_CHECK_IF(quantDtypePtr == nullptr, OP_LOGE(context_->GetNodeName(), "The quantDtypePtr is nullptr."),
+                return false);
+    ge::DataType quantDtype = static_cast<ge::DataType>(*quantDtypePtr);
+    OP_CHECK_IF(std::find(quantDtypeSupportList.begin(), quantDtypeSupportList.end(), quantDtype) ==
+                    quantDtypeSupportList.end(),
+                OP_LOGE(inputParams_.opName, "In mx quant mode, quantDtype should be in {FLOAT8_E4M3,"
+                        " FLOAT8_E5M2, FLOAT4_E2M1, FLOAT4_E1M2}, but actual value is %s.",
+                        ge::TypeUtils::DataTypeToSerialString(quantDtype).c_str()),
+                return false);
     // gmm quant tiling need groupType to calculate L1 tiling
  	inputParams_.groupType = SPLIT_M;
     return true;
@@ -74,15 +107,15 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeDtype()
     return CheckDtype();
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4(ge::DataType dtype) {
+bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4(ge::DataType dtype) const{
     return dtype == ge::DT_FLOAT4_E1M2 || dtype == ge::DT_FLOAT4_E2M1;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp8(ge::DataType dtype) {
+bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp8(ge::DataType dtype) const{
     return dtype == ge::DT_FLOAT8_E4M3FN || dtype == ge::DT_FLOAT8_E5M2;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4Input() {
+bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4Input() const{
     return IsFp4(inputParams_.aDtype) && IsFp4(inputParams_.bDtype);
 }
 
@@ -92,6 +125,18 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp8Input() {
 
 bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDtype()
 {
+    // 校验x和weight数据类型一致性：不能一个是fp4，一个是fp8
+ 	bool xIsFp4 = IsFp4(inputParams_.aDtype);
+ 	bool xIsFp8 = IsFp8(inputParams_.aDtype);
+ 	bool weightIsFp4 = IsFp4(inputParams_.bDtype);
+ 	bool weightIsFp8 = IsFp8(inputParams_.bDtype);
+ 	     
+ 	OP_CHECK_IF((xIsFp4 && weightIsFp8) || (xIsFp8 && weightIsFp4),
+ 	            OP_LOGE(inputParams_.opName,
+ 	                    "The dtype of x and weight should both be FLOAT8 or FLOAT4, but x dtype is %s, weight dtype is %s.",
+ 	                    ge::TypeUtils::DataTypeToSerialString(inputParams_.aDtype).c_str(),
+ 	                    ge::TypeUtils::DataTypeToSerialString(inputParams_.bDtype).c_str()),
+ 	            return false);
     OP_CHECK_IF(!(IsFp4Input() || IsFp8Input()),
                 OP_LOGE(inputParams_.opName,
                         "Only FLOAT8 or FLOAT4 inputs are supported, but x dtype is %s, weight dtype is %s.",
@@ -131,6 +176,37 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::SetQuantModeForGMMSwigluQuant()
     return false;
 }
 
+bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDims() const
+{
+    auto aInnerSize = inputParams_.transA ? inputParams_.mSize : inputParams_.kSize;
+    auto bInnerSize = inputParams_.transB ? inputParams_.kSize : inputParams_.nSize;
+    OP_CHECK_IF(
+        IsFp4Input() && (aInnerSize % B4_DATACOPY_MIN_NUM != 0 || bInnerSize % B4_DATACOPY_MIN_NUM != 0),
+        OP_LOGE(inputParams_.opName, "When inputs are FLOAT4, x and weight inner axis element number should be even."),
+        return false);
+    
+    // MXFP4场景不支持K=2
+    OP_CHECK_IF(IsFp4Input() && inputParams_.kSize == MXFP4_K_MIN_VALUE,
+                OP_LOGE(inputParams_.opName,
+                        "When the dtypes of x and weight are DT_FLOAT4_E1M2 or DT_FLOAT4_E2M1,"
+                        " the K value should be greater than 2, but actual value is %lu.",
+                        inputParams_.kSize),
+                return false);
+    // MXFP4场景下，当输出类型为FP4时，N需要满足为大于等于4的偶数
+    if (IsFp4Input() && IsFp4(inputParams_.outDataDtype)) {
+            OP_CHECK_IF(inputParams_.nSize < MXFP4_N_MIN_VALUE || inputParams_.nSize % EVEN_FACTOR != 0,
+                        OP_LOGE(inputParams_.opName,
+                                "When inputs and output are FLOAT4, N value should be even and greater or equal to 4, "
+                                "but actual N is %lu.",
+                                inputParams_.nSize),
+                        return false);
+    }
+    // MX量化场景下，N为128对齐
+    OP_CHECK_IF(inputParams_.nSize % GmmConstant::BASIC_BLOCK_SIZE_128 != 0,
+                OP_LOGE(inputParams_.opName, "Weight n axis element number should be an integer multiple of 128."),
+                return false);
+    return true;
+}
 bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputs()
 {
     auto xStorageShape = context_->GetInputShape(X_INDEX);
@@ -138,11 +214,11 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputs()
     const gert::Shape &xShape = xStorageShape->GetOriginShape();
     auto wStorageShape = context_->GetDynamicInputShape(WEIGHT_INDEX, 0);
     OP_CHECK_IF(wStorageShape == nullptr, OP_LOGE(context_->GetNodeName(), "wStorageShape is nullptr."), return false);
-    const gert::Shape &wShape = wStorageShape->GetOriginShape();
+    const gert::Shape &wShape = wStorageShape->GetStorageShape();
     auto scaleStorageShape = context_->GetDynamicInputShape(SCALE_INDEX, 0);
     OP_CHECK_IF(scaleStorageShape == nullptr,
                 OP_LOGE(context_->GetNodeName(), "scaleStorageShape is nullptr."), return false);
-    const gert::Shape &wScaleShape = scaleStorageShape->GetOriginShape();
+    const gert::Shape &wScaleShape = scaleStorageShape->GetStorageShape();
     auto scaleDimNum = wScaleShape.GetDimNum();
     OP_CHECK_IF(
         scaleDimNum != MX_WEIGHT_SCALE_DIM,
@@ -160,18 +236,14 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputs()
     OP_CHECK_IF(!SetGroupNum(GROUPLIST_INDEX), OP_LOGE(inputParams_.opName, "SetGroupNum failed."),
                return false);
     OP_CHECK_IF(!SetMKN(xShape, wShape), OP_LOGE(inputParams_.opName, "SetMKN failed."), return false);
-    auto aInnerSize = inputParams_.transA ? inputParams_.mSize : inputParams_.kSize;
-    auto bInnerSize = inputParams_.transB ? inputParams_.kSize : inputParams_.nSize;
-    OP_CHECK_IF(
-        IsFp4Input() && (aInnerSize % B4_DATACOPY_MIN_NUM != 0 || bInnerSize % B4_DATACOPY_MIN_NUM != 0),
-        OP_LOGE(inputParams_.opName, "When inputs are FLOAT4, x and weight inner axis element number shoud be even."),
-        return false);
-    OP_CHECK_IF(inputParams_.nSize % GmmConstant::BASIC_BLOCK_SIZE_128 != 0,
-                OP_LOGE(inputParams_.opName, "Weight n axis element number shoud be an integer multiple of 128."),
-                return false);
-
+    OP_CHECK_IF(!CheckDims(), OP_LOGE(inputParams_.opName, "SetQuantModeForGMMSwigluQuant failed."), return false);
     OP_CHECK_IF(!SetQuantModeForGMMSwigluQuant(),
                OP_LOGE(inputParams_.opName, "SetQuantModeForGMMSwigluQuant failed."), return false);
+
+    if (inputParams_.bQuantMode == optiling::QuantMode::MX_PERGROUP_MODE) {
+        OP_CHECK_IF(!CheckQuantParamsForMXTypeM(xScaleShape, wScaleShape),
+                    OP_LOGE(inputParams_.opName, "CheckShapeForMxQuant failed."), return false);
+    }
     return true;
 }
 
@@ -182,9 +254,9 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoOpTiling()
     auto attrs = context_->GetAttrs();
     if (attrs != nullptr) {
         const int64_t *dequantDtypeTypePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_DEQUANT_DTYPE);
-        uint64_t dequantDtype = dequantDtypeTypePtr != nullptr ? static_cast<uint64_t>(*dequantDtypeTypePtr) : 0;
+        int64_t dequantDtype = dequantDtypeTypePtr != nullptr ? static_cast<int64_t>(*dequantDtypeTypePtr) : 0L;
         const int64_t *quantDtypeTypePtr = attrs->GetAttrPointer<int64_t>(ATTR_INDEX_QUANT_DTYPE);
-        uint64_t quantDtype = quantDtypeTypePtr != nullptr ? static_cast<uint64_t>(*quantDtypeTypePtr) : 0;
+        int64_t quantDtype = quantDtypeTypePtr != nullptr ? static_cast<int64_t>(*quantDtypeTypePtr) : 0L;
         tilingData_.gmmSwigluQuantParams.set_quantDtype(static_cast<uint8_t>(quantDtype));
     }
     PrintQuantParams();

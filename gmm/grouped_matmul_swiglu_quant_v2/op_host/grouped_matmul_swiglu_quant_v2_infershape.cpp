@@ -16,10 +16,12 @@
 #include "log/log.h"
 #include "platform/platform_info.h"
 #include "util/math_util.h"
+#include "graph/utils/type_utils.h"
 
 using namespace ge;
 namespace ops {
 const int64_t X_INDEX = 0;
+const int64_t WEIGHT_INDEX = 3;
 const int64_t WEIGHTSCALE_INDEX = 4;
 const int64_t M_DIM_INDEX = 0;
 const int64_t DIM_LEN = 2;
@@ -30,6 +32,14 @@ constexpr size_t GMMSQ_INDEX_ATTR_QUANT_DTYPE = 3UL;
 constexpr size_t GMMSQ_INDEX_ATTR_QUANT_MODE = 2UL;
 constexpr size_t QUANT_MODE_TYPE = 2;
 constexpr int64_t DYNAMIC_GRAPH_FIRST_INFERSHAPE_DIM_VALUE = -1;
+
+static std::set<std::string> GmmDavidSupportSoc = {"Ascend910_95"};
+static const std::unordered_set<ge::DataType> DavidSupportedInputDtypes = {ge::DataType::DT_FLOAT8_E5M2, ge::DataType::DT_FLOAT8_E4M3FN,
+                                                          ge::DataType::DT_FLOAT4_E1M2, ge::DataType::DT_FLOAT4_E2M1};
+bool  isSupportedInputDtypeForDavid(ge::DataType dtype)
+{
+    return DavidSupportedInputDtypes.find(dtype) != DavidSupportedInputDtypes.end();
+}
 
 static ge::graphStatus InferShape4GroupedMatmulSwigluQuantV2(gert::InferShapeContext *context)
 {
@@ -81,18 +91,42 @@ static ge::graphStatus InferShape4GroupedMatmulSwigluQuantV2(gert::InferShapeCon
 
 static graphStatus InferDataType4GroupedMatmulSwigluQuantV2(gert::InferDataTypeContext *context)
 {
+    OP_CHECK_NULL_WITH_CONTEXT(context, context);
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
     const int64_t* outDtype = attrs->GetInt(GMMSQ_INDEX_ATTR_QUANT_DTYPE);
     OP_CHECK_NULL_WITH_CONTEXT(context, outDtype);
     const int64_t* quantMode = attrs->GetInt(GMMSQ_INDEX_ATTR_QUANT_MODE);
     OP_CHECK_NULL_WITH_CONTEXT(context, quantMode);
-    context->SetOutputDataType(0, static_cast<ge::DataType>(*outDtype));  
+
+    fe::PlatformInfo platformInfo;
+    fe::OptionalInfo optionalInfo;
+    auto ret = fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platformInfo, optionalInfo);
+    if (ret == GRAPH_SUCCESS && GmmDavidSupportSoc.count(platformInfo.str_info.short_soc_version) > 0) {
+        auto xDtype = context->GetInputDataType(X_INDEX);
+        auto weightDtype = context->GetDynamicInputDataType(WEIGHT_INDEX, 0);
+        OP_CHECK_IF(!isSupportedInputDtypeForDavid(xDtype) || !isSupportedInputDtypeForDavid(weightDtype),
+                OP_LOGE(context->GetNodeName(), "Invalid Input on this platform, expected FLOAT8_E4M3,"
+                            "FLOAT8_E5M2, FLOAT4_E2M1, FLOAT4_E1M2, but actual value of x is %s, weight is %s.",
+                            ge::TypeUtils::DataTypeToSerialString(xDtype).c_str(),
+                            ge::TypeUtils::DataTypeToSerialString(weightDtype).c_str()), return GRAPH_FAILED);
+        
+        OP_CHECK_IF(*quantMode != QUANT_MODE_TYPE,
+                OP_LOGE(context->GetNodeName(), "On this platform, in mx quant mode, quantMode should be 2,"
+                            " but actual value is %ld.", *quantMode), return GRAPH_FAILED); 
+    }
+    auto weightScaleDtype = context->GetDynamicInputDataType(WEIGHTSCALE_INDEX, 0);
     if (*quantMode == QUANT_MODE_TYPE) {
-        context->SetOutputDataType(1, DataType::DT_FLOAT8_E8M0);
-    } else {
+        if (weightScaleDtype == ge::DataType::DT_FLOAT8_E8M0) {
+            context->SetOutputDataType(1, DataType::DT_FLOAT8_E8M0);
+        }  else {
+            OP_LOGE(context->GetNodeName(), "In mx quant mode, quantMode should be 2, but actual value is %ld.", *quantMode);
+            return GRAPH_FAILED;
+        }
+    } else if (*quantMode == 0) {
         context->SetOutputDataType(1, DataType::DT_FLOAT);
     }
+    context->SetOutputDataType(0, static_cast<ge::DataType>(*outDtype));
     return GRAPH_SUCCESS;
 }
 

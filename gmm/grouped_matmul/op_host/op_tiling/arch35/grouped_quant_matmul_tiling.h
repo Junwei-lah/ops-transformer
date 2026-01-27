@@ -176,6 +176,7 @@ protected:
     virtual bool AnalyzeInputs();
     virtual void PrintQuantParams();
     bool IsMicroScaling() const;
+    bool CheckQuantParamsForMXTypeM(const gert::Shape &xScaleShape, const gert::Shape &wScaleShape) const;
     GQmmBasicTiling basicTiling_;
     GQmmInputInfo inputParams_;
 
@@ -189,7 +190,6 @@ private:
                       const gert::Shape &wShape);
     void SetPerGroupQuantMode(const gert::Shape &xScaleShape, const gert::Shape &wScaleShape,
                               const gert::Shape &wShape);
-    bool CheckQuantParamsForMXTypeM(const gert::Shape &xScaleShape, const gert::Shape &wScaleShape) const;
     bool CheckQuantParamsForMXTypeK(const gert::Shape &xScaleShape, const gert::Shape &wScaleShape) const;
     bool CheckFp4Shape() const;
     bool CheckBiasDtype() const;
