@@ -778,10 +778,8 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
       - 支持TND、NTD_TND；
       - TND场景，数据类型仅支持FLOAT16、BFLOAT16；NTD_TND场景，数据类型仅支持BFLOAT16；
       - TND场景，当head配比为GQA/MQA时（即必须完整传入numHeads和numKeyValueHeads参数，且numHeads是numKeyValueHeads的整数倍，且二者不相等），有如下约束：
-        - 当数据类型为FLOAT16时，支持sparse=0且不传mask，或sparse=3且传入优化后的attentionMask；
-        - 当数据类型为BFLOAT16时，有如下约束：
-          - Q_D、K_D、V_D相等且小于等于256场景下，支持sparse=0且不传mask，或sparse=3，4且传入优化后的attentionMask，仅支持GQA和innerPrecise=0场景，要求  preTokens >= -actualSeqLengths、nextTokens >= -actualSeqLengthsKv、preTokens + nextTokens >= 0;
-          - Q_D、K_D等于192，V_D等于128/192场景下，支持sparse=0且不传mask，或sparse=3，4且传入优化后的attentionMask;
+        - 当数据类型为FLOAT16、BFLOAT16时，支持sparse=0且不传mask，或sparse=3且传入优化后的attentionMask：
+ 	           - Q_D、K_D、V_D相等且小于等于256或Q_D、K_D等于192，V_D等于128/192场景下，支持sparse=4且传入优化后的attentionMask，要求preTokens>=-actualSeqLengths、nextTokens>=-actualSeqLengthsKv、preTokens+nextTokens>=0;
         - 仅支持innerPrecise=0，即不带行无效的高精度模式；
         - 支持page attention，kv cache排布格式支持BnBsH（blocknum, blocksize, H），H不大于65535，blockSize仅支持128；
       - TND场景，当head配比为MHA时，有如下约束：

@@ -1487,7 +1487,8 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
         <tr>
             <td>GQA/MHA/MQA场景（当queryRope和keyRope为空时）</td>
             <td>Q_D、K_D、V_D</td>
-            <td>Q_D、K_D、V_D都等于64<br>或Q_D、K_D、V_D都等于128<br>或Q_D和K_D等于192时，V_D等于128</td>
+            <td>Q_D、K_D、V_D都等于64<br>或Q_D、K_D、V_D都等于128<br>或Q_D和K_D等于192时，V_D等于128<br>或TND，GQA/MQA，innerPrecise=0场景下，支持Q_D=K_D=V_D且小于等于256</td>
+ 	             <td>TND，GQA/MQA，innerPrecise=0场景下，支持sparse=4且传入优化后的attentionMask，要求preTokens>=-actualSeqLengths、nextTokens>=-actualSeqLengthsKv、preTokens+nextTokens>=0</td>
         </tr>
         <tr>
             <td colspan="3">不支持左padding、tensorlist、pse、prefix、伪量化、全量化、后量化。</td>

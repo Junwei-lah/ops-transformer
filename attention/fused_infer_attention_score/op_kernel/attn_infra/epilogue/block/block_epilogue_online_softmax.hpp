@@ -901,20 +901,13 @@ public:
 
         AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(pingpongFlag);
         CopyPUbToGm(gOutput, sUbOffset, rowNumCurLoop, columnNumRound, columnNumPad);
-        if constexpr (MASK_MODE != MaskMode::MASK_SWA) {
-            if constexpr (!doTriUMask) {
-                AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
-                if (isLastNoMaskStackTile && isLastRowLoop) {
-                    AscendC::WaitFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
-                    AscendC::SetFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
-                }
-            } else {
+        if constexpr (!doTriUMask) {
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
+            if (isLastNoMaskStackTile && isLastRowLoop) {
+                AscendC::WaitFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
                 AscendC::SetFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
             }
         } else {
-            if constexpr (!doTriUMask) {
-                AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
-            }
             AscendC::SetFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
         }
         UpdateGlobalRowSum(
@@ -1084,9 +1077,6 @@ public:
                 AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(pingpongFlag);
             }
             if (rowLoopIdx >= preLoad) {
-                if constexpr (MASK_MODE == MaskMode::MASK_SWA) {
-                    AscendC::WaitFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
-                }
                 uint32_t delayedRowLoopIdx = rowLoopIdx - preLoad;
                 uint32_t pingpongFlag = delayedRowLoopIdx % 2;
                 uint32_t rowOffsetCurLoop = delayedRowLoopIdx * rowNumTile;

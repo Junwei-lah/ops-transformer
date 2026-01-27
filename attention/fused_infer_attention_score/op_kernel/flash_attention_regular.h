@@ -300,7 +300,6 @@ namespace SplitFuse {
                 int32_t delEndRow = qSeqlen;
                 bool notPreMask = true;
                 bool notNextMask = true;
-                bool moveZero = false;
                 uint32_t kvSLoopNumTotal = 0;
                 if (maskType != 0U && sparseMode != 4U) {
                     int64_t diffS = kvSeqlen - qSeqlen;
@@ -459,7 +458,6 @@ namespace SplitFuse {
                                     isLastStackTile);
                             }
                         } else if constexpr (MASK_TYPE == FaiKernel::MaskType::MASK_SWA) {
-                            uint32_t triUp = (nextTokenStartLen > kvSeqlen || nextTokenStartLen < 0 ) ? kvSeqlen : nextTokenStartLen ;
                             bool doTriUPreMask = (sparseMode != 4 || notPreMask) ? false : 
                             (preTokenStartLen >= kvSStartIdx && preTokenStartLen < kvSEndIdx) ||
                             (preTokenEndLen > kvSStartIdx && preTokenEndLen <= kvSEndIdx) ||
@@ -493,7 +491,10 @@ namespace SplitFuse {
                                     nextTokenEndLen,
                                     isLastStackTile);
                             } else {
-                                uint32_t noMaskStackSeqNum = (triUp - startIdx * MAX_KV_STACK_LEN + 1) / MAX_KV_STACK_LEN;
+                                bool isLastNoMaskStackTile = (nextTokenStartLen > kvSeqlen) || (nextTokenStartLen < 0);
+                                uint32_t alignedKvSeqlenLimit = isLastNoMaskStackTile ? kvSeqlen : nextTokenStartLen;
+                                alignedKvSeqlenLimit = NpuArch::Detail::Alignment::RoundDown(alignedKvSeqlenLimit, MAX_KV_STACK_LEN);
+                                uint32_t noMaskStackSeqNum = (alignedKvSeqlenLimit - startIdx * MAX_KV_STACK_LEN) / MAX_KV_STACK_LEN;
                                 Arch::CrossCoreWaitFlag(qkReady);
                                 epilogueOnlineSoftmax(
                                     gP[gmOffsetP],
@@ -503,7 +504,7 @@ namespace SplitFuse {
                                     layOutS,
                                     actualBlockShapeQK,
                                     (stackSeqCount == 0),
-                                    (stackSeqCount == noMaskStackSeqNum - 1),
+                                    (isLastNoMaskStackTile ? (stackSeqCount == noMaskStackSeqNum) : (stackSeqCount == noMaskStackSeqNum - 1)),
                                     qSBlockSize,
                                     qNBlockSize,
                                     curStackTileMod,
