@@ -89,14 +89,14 @@ detect_os() {
 }
 
 install_gawk() {
-    echo -e "\n==== Checking Gawk ===="
+    echo -e "\n==== Checking gawk ===="
 
     if command -v gawk &> /dev/null; then
-        echo "Gawk has been installed"
+        echo "gawk has been installed"
         return
     fi
 
-    echo "Installing Gawk..."
+    echo "Installing gawk..."
     case "$OS" in
         debian)
             run_command sudo $PKG_MANAGER update
@@ -111,9 +111,9 @@ install_gawk() {
     esac
 
     if command -v gawk &> /dev/null; then
-        echo "Gawk installed successfully"
+        echo "gawk installed successfully"
     else
-        echo "Gawk installation failed"
+        echo "gawk installation failed"
         exit 1
     fi
 }
