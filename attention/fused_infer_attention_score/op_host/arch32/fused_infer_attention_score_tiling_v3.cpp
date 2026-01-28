@@ -813,6 +813,34 @@ bool GetValueD(gert::TilingContext *context, int64_t &valueD)
     return true;
 }
 
+bool GetQS(gert::TilingContext *context, int64_t &queryS) {
+    const std::string inputLayoutStr = std::string(context->GetAttrs()->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
+    auto qShape = context->GetInputShape(QUERY_INDEX);
+    if (qShape == nullptr) {
+        return false;
+    }
+    auto qStorageShape = qShape->GetStorageShape();
+
+    if (inputLayoutStr == "BNSD") {
+        if (qStorageShape.GetDimNum() != DIM_BNSD_OR_BSND) {
+            return false;
+        }
+        queryS = qStorageShape.GetDim(BNSD_S_IDX);
+    } else if (inputLayoutStr == "BSND") {
+        if (qStorageShape.GetDimNum() != DIM_BNSD_OR_BSND) {
+            return false;
+        }
+        queryS = qStorageShape.GetDim(BSND_S_IDX);
+    } else if (inputLayoutStr == "BSH") {
+        if (qStorageShape.GetDimNum() != DIM_BSH) {
+            return false;
+        }
+        queryS = qStorageShape.GetDim(BSH_S_IDX);
+    }
+
+    return true;
+}
+
 bool GetQkvD(gert::TilingContext *context, int64_t &queryD, int64_t &queryRopeD, int64_t &valueD)
 {
     auto qShape = context->GetInputShape(QUERY_INDEX);
@@ -1168,12 +1196,38 @@ bool RouteToFia(gert::TilingContext *context)
     // }
 
     if ((qDataType == ge::DT_FLOAT16 || qDataType == ge::DT_BF16) && (qDataType == kDataType)) {
+        auto attrs = context->GetAttrs();
+        int32_t headNum = *(attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX));
+        int32_t kvHeadNum = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
+        bool isMha = (kvHeadNum == 0) || (headNum == kvHeadNum);
+        bool isPageAttention = context->GetOptionalInputShape(BLOCK_TABLE_INDEX) != nullptr ? true : false;
+        bool isPrefix = (context->GetOptionalInputShape(KEY_SHARED_PREFIX_INDEX) != nullptr) ||
+                        (context->GetOptionalInputShape(VALUE_SHARED_PREFIX_INDEX) != nullptr) ? true : false;
+    
+        int64_t queryD = 0;
+        int64_t queryRopeD = 0;
+        int64_t valueD = 0;
+        int64_t queryS = 0;
+        if (!GetQkvD(context, queryD, queryRopeD, valueD)) {
+            return false;
+        }
+        if (!GetQS(context, queryS)) {
+            return false;
+        }
+    
+        const std::string inputLayoutStr = std::string(context->GetAttrs()->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
+        // 部分场景性能在重构前的模板性能更好，路由到老模板处理
+        if (queryD == valueD && queryRopeD == 0 && queryS == 1 &&
+            (inputLayoutStr == "BNSD" || inputLayoutStr == "BSND" || inputLayoutStr == "BSH") &&
+            ((queryD == 256U && !isPrefix) || (queryD == 80U && isPrefix)) &&
+            isMha && !isPageAttention) {
+            return false;
+        }
         if (!isRopeSplit) {
             if (CheckSpecConditions(context)) {
                 return false;
             }
         }
-        const std::string inputLayoutStr = std::string(context->GetAttrs()->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
         if (inputLayoutStr == "NSD") {
             return false;
         }
