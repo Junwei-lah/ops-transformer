@@ -289,7 +289,7 @@ aclnnStatus aclnnGroupedMatmulV4(
       <td>actType</td>
       <td>输入</td>
       <td>代表激活函数类型</td>
-      <td>枚举值1、2、3、4、5。综合约束请参见<a href="#约束说明">约束说明</td>
+      <td>枚举值0、1、2、3、4、5。综合约束请参见<a href="#约束说明">约束说明</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
