@@ -1108,14 +1108,14 @@ static void SetCommonTilingData(gert::TilingContext *context, uint64_t ubSize, u
     return;
 }
 
-static void GetChipDataFromPlatform(const gert::TilingContext *context, uint32_t &blockDim, uint64_t &ubSize,
+static void GetChipDataFromPlatform(const gert::TilingContext *context, uint32_t &numBlocks, uint64_t &ubSize,
                                     uint64_t &aicNum, uint64_t &aivNum)
 {
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     aicNum = ascendcPlatform.GetCoreNumAic();
     aivNum = ascendcPlatform.GetCoreNumAiv();
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    blockDim = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
+    numBlocks = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
     return;
 }
 
@@ -1260,12 +1260,12 @@ static void SetUbTilingDataInCommonTiling(const gert::TilingContext *context, ui
     return;
 }
 
-static ge::graphStatus SetContextData(gert::TilingContext *context, uint32_t blockDim,
+static ge::graphStatus SetContextData(gert::TilingContext *context, uint32_t numBlocks,
                                       AlltoAllAllGatherBatchMatMulTilingData *tilingData)
 {
     uint64_t tilingKey = UpdateTilingKey(tilingData, tilingData->commonTiling.y2Flag, tilingData->commonTiling.y3Flag);
     context->SetTilingKey(tilingKey);
-    context->SetBlockDim(blockDim);
+    context->SetBlockDim(numBlocks);
     context->GetRawTilingData()->SetDataSize(sizeof(AlltoAllAllGatherBatchMatMulTilingData));
     return ge::GRAPH_SUCCESS;
 }
@@ -1278,11 +1278,11 @@ ge::graphStatus AlltoAllAllGatherBatchMatMulTilingFunc(gert::TilingContext *cont
                     return ge::GRAPH_FAILED);
     AlltoAllAllGatherBatchMatMulTilingData *tilingData =
         context->GetTilingData<AlltoAllAllGatherBatchMatMulTilingData>();
-    uint32_t blockDim = 1U;
+    uint32_t numBlocks = 1U;
     uint64_t ubSize = 0U;
     uint64_t aicNum = 0U;
     uint64_t aivNum = 0U;
-    GetChipDataFromPlatform(context, blockDim, ubSize, aicNum, aivNum);
+    GetChipDataFromPlatform(context, numBlocks, ubSize, aicNum, aivNum);
 
     SetCommonTilingData(context, ubSize, aivNum, tilingData);
     OP_TILING_CHECK(SetBatchMatMulTilingData(context, aicNum, tilingData) != ge::GRAPH_SUCCESS,
@@ -1292,7 +1292,7 @@ ge::graphStatus AlltoAllAllGatherBatchMatMulTilingFunc(gert::TilingContext *cont
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "Set workspace Failed!"),
                     return ge::GRAPH_FAILED);
     SetUbTilingDataInCommonTiling(context, ubSize, tilingData);
-    OP_TILING_CHECK(SetContextData(context, blockDim, tilingData) != ge::GRAPH_SUCCESS,
+    OP_TILING_CHECK(SetContextData(context, numBlocks, tilingData) != ge::GRAPH_SUCCESS,
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "Set context data failed!"),
                     return ge::GRAPH_FAILED);
 

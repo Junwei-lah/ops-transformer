@@ -11,8 +11,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "base/registry/op_impl_space_registry_v2.h"
-#include "infer_shape_case_executor.h"
-#include "infer_shape_context_faker.h"
+#include "mc2_infer_shape_case_executor.h"
 #include "infer_datatype_context_faker.h"
 
 class BatchMatMulReduceScatterAlltoAllInfershape : public testing::Test {
@@ -60,9 +59,12 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_0) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expectOutputShape = {{E, C / tp, H}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 // infer shape without bias, success
@@ -99,9 +101,12 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_1) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expectOutputShape = {{E, C / tp, H}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
 // infer shape without bias, tp failed
@@ -138,8 +143,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_2) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape without bias, empty tensor, c = 0 failed
@@ -176,8 +184,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_3) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, ep failed
@@ -214,8 +225,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_4) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, group ep failed
@@ -252,8 +266,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_5) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, group tp failed
@@ -290,8 +307,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_6) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, dim num invalid
@@ -328,8 +348,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_7) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, x[2] != w[1] failed
@@ -366,8 +389,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_8) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, x[2] = w[1] = 0 failed
@@ -404,8 +430,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_9) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape without bias, y shard = 1 condition check failed
@@ -442,8 +471,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_10) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, yShard failed
@@ -480,8 +512,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_11) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape without bias, yShard = -1 failed
@@ -518,8 +553,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_12) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, bias dim failed
@@ -556,8 +594,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_13) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, bias[2] != w[M] failed
@@ -594,8 +635,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_14) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, bias[E] != w[E] failed
@@ -632,8 +676,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_15) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, E < 0 failed
@@ -670,8 +717,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_16) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, C < 0 failed
@@ -708,8 +758,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_17) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, H > 65535 failed
@@ -746,8 +799,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_18) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // infer shape with bias, M/tp > 65535 failed
@@ -784,8 +840,11 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_19) {
             {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(transW)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
 // fp16 infer dtype without bias, success

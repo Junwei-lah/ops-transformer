@@ -10,9 +10,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include "infer_shape_context_faker.h"
-#include "infer_shape_case_executor.h"
-#include "infer_shape_case_executor.h"
+#include "mc2_infer_shape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 class DistributeBarrierInfershape : public testing::Test
@@ -44,7 +42,10 @@ TEST_F(DistributeBarrierInfershape, infer_shape_0) {
             {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(288)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expectOutputShape = {{32, 7168}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }

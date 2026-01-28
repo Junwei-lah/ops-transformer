@@ -106,7 +106,7 @@ aclnnStatus aclnnMoeDistributeCombineBaseGetWorkspaceSize(
     aclTensor* xOut, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     const static bool is910B = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B;
-    const static bool is910_95 = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    const static bool is950 = GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510;
     auto retParam = CombineCheckParams(expandX, expertIds, assistInfoForCombine, epSendCounts, expertScales, groupEp,
         groupTp, xOut);
     CHECK_RET(retParam == ACLNN_SUCCESS, retParam);
@@ -115,7 +115,7 @@ aclnnStatus aclnnMoeDistributeCombineBaseGetWorkspaceSize(
     const char* groupTpCombineV2Temp = groupTp;
     if (is910B) {
         groupTpCombineV2Temp = "";
-    } else {
+    } else if (is950) {
         performanceInfoOptionalCombineV2Temp = nullptr;
     }
     aclnnStatus getWorkspaceSizesRes = aclnnInnerMoeDistributeCombineV2GetWorkspaceSize(
@@ -129,7 +129,7 @@ aclnnStatus aclnnMoeDistributeCombineBaseGetWorkspaceSize(
     if (NnopbaseSetHcclServerType) {
         if (is910B) {
             NnopbaseSetHcclServerType(*executor, NNOPBASE_HCCL_SERVER_TYPE_AICPU);
-        } else if (is910_95 && commAlg != nullptr && std::strcmp(commAlg, "ccu") == 0) {
+        } else if (is950 && commAlg != nullptr && std::strcmp(commAlg, "ccu") == 0) {
             NnopbaseSetHcclServerType(*executor, NNOPBASE_HCCL_SERVER_TYPE_CCU);
         } else {
             NnopbaseSetHcclServerType(*executor, NNOPBASE_HCCL_SERVER_TYPE_MTE);

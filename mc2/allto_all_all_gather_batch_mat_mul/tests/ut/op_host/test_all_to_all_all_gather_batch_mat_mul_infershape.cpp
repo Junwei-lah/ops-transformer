@@ -10,9 +10,8 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
-#include "infer_shape_context_faker.h"
+#include "mc2_infer_shape_case_executor.h"
 #include "infer_datatype_context_faker.h"
-#include "infer_shape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 namespace AlltoAllAllGatherBmmInfershapeUT{
@@ -69,9 +68,12 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_0) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expertOutputShape = {{4, 16, 512}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expertOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
 TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_0_shard_0) {
@@ -113,9 +115,12 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_0_shard_0) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expertOutputShape = {{4, 16, 512}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expertOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
 // infer shape without bias, success
@@ -158,9 +163,12 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_1) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expertOutputShape = {{4, 16, 512}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expertOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
 // infer shape with bias, tp failed
@@ -203,8 +211,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_2) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, group ep failed
@@ -247,8 +258,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_3) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, x shard -1 failed
@@ -291,8 +305,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_4) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, dim num failed
@@ -335,8 +352,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_5) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, common check failed
@@ -379,8 +399,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_6) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, x shard 1 check failed
@@ -423,8 +446,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_7) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, x shard 4 failed
@@ -467,8 +493,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_8) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, act type failed
@@ -511,9 +540,12 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_9) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expertOutputShape = {{4, 16, 512}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expertOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
 // infer shape with bias, group tp failed
@@ -556,9 +588,12 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_10) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expertOutputShape = {{4, 16, 512}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expertOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
 // infer shape with bias, ep failed
@@ -601,8 +636,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_11) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, bias dim num failed
@@ -645,8 +683,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_12) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, bias dim 1 value failed
@@ -689,8 +730,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_13) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, x[E] != -1, w[E] = -1 failed
@@ -733,8 +777,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_14) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape without bias, w[E] * ep != x[E] failed
@@ -777,8 +824,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_15) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape without bias, w[H] != x[H] failed
@@ -821,8 +871,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_16) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape without bias, y3Flag = true but actType = 0 failed
@@ -866,8 +919,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_17) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, E < 0 failed
@@ -910,8 +966,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_18) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // infer shape with bias, C < 0 failed
@@ -954,8 +1013,11 @@ TEST_F(AlltoAllAllGatherBmmInfershape, infer_shape_19) {
             {"output_y3_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(y3Flag)},
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_FAILED);
 }
 
 // fp16 infer dtype without bias

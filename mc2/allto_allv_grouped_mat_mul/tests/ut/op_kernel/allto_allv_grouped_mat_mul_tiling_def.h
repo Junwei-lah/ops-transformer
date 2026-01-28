@@ -14,11 +14,9 @@
 #include <cstdint>
 #include <cstring>
 
-#include "../../../../common/inc/hccl_stub.h"
+#include "../../../../../tests/ut/framework_normal/common/hccl_stub.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "../../../op_kernel/allto_allv_grouped_mat_mul_tiling.h"
-
-#define __aicore__
 
 inline void InitAlltoAllvGroupedMatMulTilingData(uint8_t* tiling, AlltoAllvGmmTilingData* const_data)
 {

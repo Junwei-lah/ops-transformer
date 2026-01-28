@@ -31,7 +31,11 @@ class l2_batch_matmul_reduce_scatter_all_to_all_test : public testing::Test {
     cout << "l2_batch_matmul_reduce_scatter_all_to_all_test SetUp" << endl;
   }
 
-  static void TearDownTestCase() { cout << "l2_batch_matmul_reduce_scatter_all_to_all_test TearDown" << endl; }
+  static void TearDownTestCase()
+  {
+    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+    cout << "l2_batch_matmul_reduce_scatter_all_to_all_test TearDown" << endl;
+  }
 };
 
 // E = 4, C = 2, H = 6, ep = 2, tp = 2, M = 4

@@ -13,18 +13,25 @@ if (BUILD_OPEN_PROJECT)  # custom
         allto_allv_grouped_mat_mul_def.cpp
     )
     add_modules_sources(
- 	         OP_API_INDEPENDENT ON 
- 	         OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
- 	         OP_MC2_ENABLE ON 
- 	         OPTYPE allto_allv_grouped_mat_mul allto_allv_grouped_mat_mul ACLNNTYPE aclnn aclnn_inner)
+        OP_API_INDEPENDENT ON 
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
+        OP_MC2_ENABLE ON 
+        OPTYPE allto_allv_grouped_mat_mul allto_allv_grouped_mat_mul ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(allto_allv_grouped_mat_mul_depends mc2/common mc2/3rd PARENT_SCOPE)
 
     # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
+    # -mllvm -cce-aicore-dcci-before-kernel-end=false：禁用在kernel函数结束前插入DCCI指令
     # -DAICORE_EXCEPTION_RESTART：启用AI Core在发生异常时的自动重启机制
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-    if("${CONDITION_UNIT}" STREQUAL "ascend910_93")
+    if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+        add_ops_compile_options(
+            OP_NAME AlltoAllvGroupedMatMul
+            OPTIONS --cce-auto-sync=off
+                    -mllvm -cce-aicore-dcci-before-kernel-end=false
+        )
+    elseif("${CONDITION_UNIT}" STREQUAL "ascend910_93")
         add_ops_compile_options(
             OP_NAME AlltoAllvGroupedMatMul
             OPTIONS --cce-auto-sync=off

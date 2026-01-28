@@ -35,10 +35,12 @@
 #include "register/op_def_registry.h"
 #include "platform/platform_infos_def.h"
 #include "../../../moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_tiling.h"
+#include "../../../moe_distribute_combine_add_rms_norm/op_kernel/moe_distribute_combine_add_rms_norm_tiling_key.h"
 #include "mc2_hcom_topo_info.h"
 
 using namespace AscendC;
 using namespace ge;
+using namespace Mc2Tiling;
 
 namespace {
     constexpr uint32_t EXPAND_X_INDEX = 0;
@@ -84,18 +86,12 @@ namespace {
     constexpr uint32_t ATTR_CONST_EXPERT_NUM_INDEX = 18;
 
     constexpr uint32_t INT8_COMM_QUANT = 2U;
-    constexpr uint64_t INIT_TILINGKEY = 10000;
-    constexpr uint64_t TILINGKEY_TP_WORLD_SIZE = 100;
     constexpr uint64_t TP_WORLD_SIZE_TWO = 2;
-    constexpr uint32_t TILINGKEY_INT8_COMM_QUANT = 20U;
 
     constexpr uint32_t THREE_DIMS = 3U;
     constexpr uint32_t TWO_DIMS = 2U;
     constexpr uint32_t ONE_DIM = 1U;
     constexpr uint32_t ASSIST_INFO_DIMS = 1U;
-    constexpr uint64_t TILING_KEY_BASE_A2 = 2000UL;
-    constexpr uint64_t TILING_KEY_LAYERED_COMM_A2 = 3000UL;
-    constexpr uint64_t TILING_KEY_INT8_COMM_QUANT_A2 = 100UL;
     constexpr uint32_t ARR_LENGTH = 128U;
     constexpr uint32_t OP_TYPE_ALL_TO_ALL = 8U; // numeric representation of AlltoAll
     constexpr uint32_t OP_TYPE_REDUCE_SCATTER = 7U; // numeric representation of AlltoAll
@@ -1052,6 +1048,7 @@ static bool CheckAttrs(const gert::TilingContext *context, MoeDistributeCombineV
     OP_TILING_CHECK((localMoeExpertNum > 1) && (tpWorldSize > 1),
         OP_LOGE(nodeName, "Cannot support multi-moeExpert %u in a rank when tpWorldSize = %u > 1",
         localMoeExpertNum, tpWorldSize), return false);
+    // 校验tp=2时是否没有动态缩容参数
     OP_TILING_CHECK((tpWorldSize > 1) && (tilingData.moeDistributeCombineV2Info.hasElasticInfo), OP_LOGE(nodeName, "Cannot support elasticInfo "
         "in a case when tpWorldSize = %u > 1", tpWorldSize), return false);
     tilingData.moeDistributeCombineV2Info.moeExpertPerRankNum = localMoeExpertNum;
@@ -1130,14 +1127,18 @@ static ge::graphStatus SetWorkspace(gert::TilingContext *context, const char *no
     return ge::GRAPH_SUCCESS;
 }
 
-static void CalTilingKey(uint64_t &tilingKey, const uint32_t tpWorldSize, uint32_t commQuantMode)
+static uint64_t CalTilingKey(const uint32_t tpWorldSize, uint32_t commQuantMode)
 {
-    if (tpWorldSize == TP_WORLD_SIZE_TWO) {
-        tilingKey += TILINGKEY_TP_WORLD_SIZE;
+    bool tilingKeyTpWorldSize = false;
+    uint32_t quantMode = TILINGKEY_NO_QUANT;
+    if (tpWorldSize == MAX_TP_WORLD_SIZE) {
+        tilingKeyTpWorldSize = true;
     }
     if (commQuantMode == INT8_COMM_QUANT) {
-        tilingKey += TILINGKEY_INT8_COMM_QUANT;
+        quantMode = TILINGKEY_INT8_QUANT;
     }
+    uint64_t tilingKey = GET_TPL_TILING_KEY(tilingKeyTpWorldSize, quantMode);
+    return tilingKey;
 }
 
 static ge::graphStatus SetHCommCfg(const gert::TilingContext *context, MoeDistributeCombineV2TilingData *tiling,
@@ -1295,22 +1296,21 @@ static ge::graphStatus MoeDistributeCombineAddRmsNormA3TilingFuncImpl(gert::Tili
 
     OP_TILING_CHECK(SetHCommCfg(context, tilingData, groupEp, groupTp, tpWorldSize) != ge::GRAPH_SUCCESS,
         OP_LOGE(nodeName, "SetHCommCfg failed."), return ge::GRAPH_FAILED);
-    uint64_t tilingKey = INIT_TILINGKEY;
-    CalTilingKey(tilingKey, tpWorldSize, commQuantMode);
+    uint64_t tilingKey = CalTilingKey(tpWorldSize, commQuantMode);
     OP_LOGD(nodeName, "tilingKey is %lu", tilingKey);
     context->SetTilingKey(tilingKey);
-    uint32_t blockDim = 1U;
+    uint32_t numBlocks = 1U;
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     uint64_t aivNum = ascendcPlatform.GetCoreNumAiv();
     uint64_t ubSize = 0UL;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    blockDim = ascendcPlatform.CalcTschBlockDim(aivNum, 0, aivNum);
-    context->SetBlockDim(blockDim);
+    numBlocks = ascendcPlatform.CalcTschBlockDim(aivNum, 0, aivNum);
+    context->SetBlockDim(numBlocks);
     tilingData->moeDistributeCombineV2Info.aivNum = aivNum;
     tilingData->moeDistributeCombineV2Info.totalUbSize = ubSize;
     context->SetScheduleMode(1); // 设置为batch mode模式，所有核同时启动
-    OP_LOGD(nodeName, "blockdim = %u, aivNum = %lu, ubsize = %lu", blockDim, aivNum, ubSize);
+    OP_LOGD(nodeName, "numBlocks = %u, aivNum = %lu, ubsize = %lu", numBlocks, aivNum, ubSize);
     PrintTilingDataInfo(nodeName, *tilingData);
     
     return ge::GRAPH_SUCCESS;

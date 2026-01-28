@@ -31,7 +31,11 @@ class l2_allto_allv_grouped_mat_mul_test : public testing::Test {
 	cout << "l2_allto_allv_grouped_mat_mul_test SetUp" << endl;
   }
 
-  static void TearDownTestCase() { cout << "l2_allto_allv_grouped_mat_mul_test TearDown" << endl; }
+  static void TearDownTestCase()
+  {
+    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+	cout << "l2_allto_allv_grouped_mat_mul_test TearDown" << endl;
+  }
 };
 
 TEST_F(l2_allto_allv_grouped_mat_mul_test, test) {

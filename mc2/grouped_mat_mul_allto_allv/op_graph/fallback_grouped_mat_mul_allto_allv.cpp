@@ -24,8 +24,7 @@ static ge::graphStatus CheckInputsAndAttrs(
     const gert::Tensor* gmmWeight,
     const char* group,
     const bool* transGmmWeight,
-    const int64_t* epWorldSize,
-    const bool* transMmWeight)
+    const int64_t* epWorldSize)
 {
     OPS_ERR_IF(gmmX == nullptr,
         OP_LOGE("GroupedMatMulAlltoAllvFallback", "gmmX is null"), return ge::GRAPH_FAILED);
@@ -37,8 +36,7 @@ static ge::graphStatus CheckInputsAndAttrs(
         OP_LOGE("GroupedMatMulAlltoAllvFallback", "epWorldSize is null"), return ge::GRAPH_FAILED);
     OPS_ERR_IF(transGmmWeight == nullptr,
         OP_LOGE("GroupedMatMulAlltoAllvFallback", "transGmmWeight is null"), return ge::GRAPH_FAILED);
-    OPS_ERR_IF(transMmWeight == nullptr,
-        OP_LOGE("GroupedMatMulAlltoAllvFallback", "transMmWeight is null"), return ge::GRAPH_FAILED);
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -104,16 +102,19 @@ static ge::graphStatus GroupedMatMulAlltoAllvExecuteFunc(gert::OpExecuteContext*
     const gert::RuntimeAttrs* attrs = host_api_ctx->GetAttrs();
     OPS_ERR_IF(attrs == nullptr, OP_LOGE("GroupedMatMulAlltoAllvFallback", "attrs is null"), return ge::GRAPH_FAILED);
     const char* group = attrs->GetStr(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_GROUP));
-    const int64_t* epWorldSize = attrs->GetInt(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_EP_WORLD_SIZE));
+    const int64_t* epWorldSize = attrs->
+        GetInt(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_EP_WORLD_SIZE));
     const gert::TypedContinuousVector<int64_t>* sendCounts = attrs->
         GetListInt(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_SEND_COUNTS));
     const gert::TypedContinuousVector<int64_t>* recvCounts = attrs->
         GetListInt(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_RECV_COUNTS));
-    const bool* transGmmWeight = attrs->GetBool(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_TRANS_GMM_WEIGHT));
-    const bool* transMmWeight = attrs->GetBool(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_TRANS_MM_WEIGHT));
+    const bool* transGmmWeight = attrs->
+        GetBool(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_TRANS_GMM_WEIGHT));
+    const bool* transMmWeight = attrs->
+        GetBool(static_cast<size_t>(ops::GroupedMatMulAlltoAllvAttrIdx::K_TRANS_MM_WEIGHT));
 
     // 输入参数和属性的校验
-    ge::graphStatus ret = CheckInputsAndAttrs(gmmX, gmmWeight, group, transGmmWeight, epWorldSize, transMmWeight);
+    ge::graphStatus ret = CheckInputsAndAttrs(gmmX, gmmWeight, group, transGmmWeight, epWorldSize);
     if (ret != ge::GRAPH_SUCCESS) {
         return ret;
     }
@@ -121,7 +122,8 @@ static ge::graphStatus GroupedMatMulAlltoAllvExecuteFunc(gert::OpExecuteContext*
     // 解析 sendCounts 和 recvCounts
     std::vector<int64_t> actRecvCountsSeqArray;
     std::vector<int64_t> actSendCountsSeqArray;
-    ret = ParseSendRecvCounts(sendCounts, recvCounts, actSendCountsSeqArray, actRecvCountsSeqArray);
+    ret = ParseSendRecvCounts(sendCounts, recvCounts,
+                              actSendCountsSeqArray, actRecvCountsSeqArray);
     if (ret != ge::GRAPH_SUCCESS) {
         return ret;
     }

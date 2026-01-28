@@ -21,6 +21,7 @@
 #include "tiling/mc2_tiling_common_var.h"
 #include "mc2_hcom_topo_info.h"
 #include "mc2_log.h"
+#include "tiling/mc2_calc_num_blocks.h"
 #include "graph/utils/type_utils.h"
 #include "register/op_def_registry.h"
 #include "tiling/hccl_formulaic_tiling.h"
@@ -121,6 +122,26 @@ static inline uint32_t SixteenAlign(uint32_t a, bool up = false)
         a += 15U; // 15: 16 bytes up-align
     }
     return a & ~15U; // ~15: 16 bytes down-align
+}
+
+static void PrintCommonTilingInfo(GmmAlltoAllvCommonTilingInfo &commonTilingInfo)
+{
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.A %lu.", commonTilingInfo.A);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.H %lu.", commonTilingInfo.H);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.sharedMatmulH %lu.", commonTilingInfo.sharedMatmulH);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.E_ep %lu.", commonTilingInfo.E_ep);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.N1 %lu.", commonTilingInfo.N1);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.Bs %lu.", commonTilingInfo.Bs);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.N2 %lu.", commonTilingInfo.N2);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.BsK %lu.", commonTilingInfo.BsK);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.epWorldSize %lu.", commonTilingInfo.epWorldSize);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.aivCoreNum %lu.", commonTilingInfo.aivCoreNum);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.aicCoreNum %lu.", commonTilingInfo.aicCoreNum);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.isGmmWeightTrans %d.", commonTilingInfo.isGmmWeightTrans);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.isMmWeightTrans %d.", commonTilingInfo.isMmWeightTrans);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.isOptionalMatmul %d.", commonTilingInfo.isOptionalMatmul);
+    OP_LOGD(C_INNER_DEBUG, " commonTilingInfo.isOptionalSendRecvCountTensors %d.",
+        commonTilingInfo.isOptionalSendRecvCountTensors);
 }
 
 static bool CheckDimNum(
@@ -389,7 +410,11 @@ static bool CheckEpWorldSizeConstraints(
     int64_t epWorldSize = static_cast<int64_t>(tilingData->commonTilingInfo.epWorldSize);
     auto platformInfo = context->GetPlatformInfo();
     platform_ascendc::PlatformAscendC ascendcPlatform(platformInfo);
-    epWorldSizeOptional = {8, 16, 32, 64, 128}; // A3限制epWorldSize为{8，16，32，64, 128}
+    if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95) {
+        epWorldSizeOptional = {2, 4, 8, 16, 32, 64}; //A5限制epWorldSize为{2，4，8，16，32，64}
+    } else {
+        epWorldSizeOptional = {8, 16, 32, 64, 128}; //A3限制epWorldSize为{8，16，32，64, 128}
+    }
     std::string epWorldSizeNum;
     for (size_t i = 0; i < epWorldSizeOptional.size(); i++) {
         epWorldSizeNum += (std::to_string(epWorldSizeOptional[i]) + " ");
@@ -896,9 +921,9 @@ static void UpdateTilingKey(uint64_t& tilingKey, const GroupedMatMulAlltoAllvTil
     return;
 }
 
+
 static ge::graphStatus GroupedMatMulAlltoAllvTilingFuncA3(gert::TilingContext* context)
 {
-    uint32_t blockDim = 1U;
     const char* nodeName = context->GetNodeName();
     GroupedMatMulAlltoAllvTilingData* tilingData = context->GetTilingData<GroupedMatMulAlltoAllvTilingData>();
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
@@ -914,15 +939,15 @@ static ge::graphStatus GroupedMatMulAlltoAllvTilingFuncA3(gert::TilingContext* c
 
     uint64_t aivNum = ascendcPlatform.GetCoreNumAiv();
     uint64_t aicNum = ascendcPlatform.GetCoreNumAic();
+    uint64_t numBlocks = mc2tiling::GetNumBlocks(aicNum, aivNum, C_INNER_DEBUG);
     uint64_t ubSize = 0LU;
     static const PlatFormMemSize PLATFORM_SIZE(ascendcPlatform);
-
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
-    blockDim = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
-    context->SetBlockDim(blockDim);
-    tilingData->commonTilingInfo.aivCoreNum = aivNum;
-    tilingData->commonTilingInfo.aicCoreNum = aicNum;
 
+    tilingData->commonTilingInfo.aicCoreNum = numBlocks;
+    tilingData->commonTilingInfo.aivCoreNum = numBlocks * NUM_TWO;    // aic:aiv按照1：2配比
+    context->SetBlockDim(static_cast<uint32_t>(numBlocks));           // 通算融合场景 AIC_NUM:AIV_NUM = 1:2 默认启动
+    
     // Set HCCL tiling
     OP_TILING_CHECK(SetHcclTiling(context, tilingData) != ge::GRAPH_SUCCESS,
         OP_LOGE(C_INNER_DEBUG, "SetHcclTiling Failed!"), return ge::GRAPH_FAILED);
@@ -946,6 +971,7 @@ static ge::graphStatus GroupedMatMulAlltoAllvTilingFuncA3(gert::TilingContext* c
     UpdateTilingKey(tilingKey, tilingData, context);
     OP_LOGD(nodeName, "Computed tilingKey is %lu", tilingKey);
     context->SetTilingKey(tilingKey);
+    PrintCommonTilingInfo(tilingData->commonTilingInfo);
     OP_LOGD("GroupedMatMulAlltoAllv", "tiling process finished successfully!!!");
 
     return ge::GRAPH_SUCCESS;

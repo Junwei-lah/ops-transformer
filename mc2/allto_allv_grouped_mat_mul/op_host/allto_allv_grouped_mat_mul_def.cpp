@@ -93,6 +93,7 @@ public:
             .ExtendCfgInfo("jitCompile.flag", "static_false")  // 动态shape,复用二进制,后续图支持后修改
             .ExtendCfgInfo("multiKernelSupportDynamicGraph.value", "multi_kernel");
         this->AICore().AddConfig("ascend910_93", aicore_config);
+        this->AICore().AddConfig("ascend910_95", aicore_config);
         this->MC2().HcclGroup({"group"});
     }
 };

@@ -15,7 +15,7 @@
 #include <cstdint>
 #include "gtest/gtest.h"
 #include "tikicpulib.h"
-#include "../../../../common/inc/hccl_stub.h"
+#include "../../../../../tests/ut/framework_normal/common/hccl_stub.h"
 #include "batch_mat_mul_reduce_scatter_allto_all_tiling_def.h"
 #include "../../../op_kernel/batch_mat_mul_reduce_scatter_allto_all.cpp"
 
@@ -33,7 +33,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t E = 8;
     size_t C = 2;
     size_t H = 8;
@@ -49,7 +49,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
 
     BatchMatMulReduceScatterAlltoAllTilingData *tiling_data =
         reinterpret_cast<BatchMatMulReduceScatterAlltoAllTilingData*>(tiling);
-    tiling_data->commonTiling.aivCoreNum = blockDim * 2;
+    tiling_data->commonTiling.aivCoreNum = numBlocks * 2;
     tiling_data->commonTiling.EOverEp = E / ep;
     tiling_data->commonTiling.C = C;
     tiling_data->commonTiling.H = H;
@@ -73,9 +73,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -88,7 +88,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t E = 8;
     size_t C = 2;
     size_t H = 8;
@@ -104,7 +104,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
 
     BatchMatMulReduceScatterAlltoAllTilingData *tiling_data =
         reinterpret_cast<BatchMatMulReduceScatterAlltoAllTilingData*>(tiling);
-    tiling_data->commonTiling.aivCoreNum = blockDim * 2;
+    tiling_data->commonTiling.aivCoreNum = numBlocks * 2;
     tiling_data->commonTiling.EOverEp = E / ep;
     tiling_data->commonTiling.C = C;
     tiling_data->commonTiling.H = H;
@@ -128,9 +128,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -144,7 +144,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'bfloat16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t E = 8;
     size_t C = 2;
     size_t H = 8;
@@ -160,7 +160,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
 
     BatchMatMulReduceScatterAlltoAllTilingData *tiling_data =
         reinterpret_cast<BatchMatMulReduceScatterAlltoAllTilingData*>(tiling);
-    tiling_data->commonTiling.aivCoreNum = blockDim * 2;
+    tiling_data->commonTiling.aivCoreNum = numBlocks * 2;
     tiling_data->commonTiling.EOverEp = E / ep;
     tiling_data->commonTiling.C = C;
     tiling_data->commonTiling.H = H;
@@ -184,9 +184,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -199,7 +199,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'bfloat16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t E = 8;
     size_t C = 2;
     size_t H = 8;
@@ -215,7 +215,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
 
     BatchMatMulReduceScatterAlltoAllTilingData *tiling_data =
         reinterpret_cast<BatchMatMulReduceScatterAlltoAllTilingData*>(tiling);
-    tiling_data->commonTiling.aivCoreNum = blockDim * 2;
+    tiling_data->commonTiling.aivCoreNum = numBlocks * 2;
     tiling_data->commonTiling.EOverEp = E / ep;
     tiling_data->commonTiling.C = C;
     tiling_data->commonTiling.H = H;
@@ -239,9 +239,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, blockDim, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);

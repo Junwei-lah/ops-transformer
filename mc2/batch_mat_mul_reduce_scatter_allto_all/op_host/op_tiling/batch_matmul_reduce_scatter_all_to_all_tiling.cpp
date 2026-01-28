@@ -704,7 +704,7 @@ struct TensorInfo {
     uint64_t aicCoreNum = 0;    // AIC 核心数
     uint64_t aivCoreNum = 0;    // AIV 核心数
     uint64_t ubSize = 0;        // UB 大小
-    uint32_t blockDim=1;
+    uint32_t numBlocks=1;
     bool isWeightTrans = false;
     // 存放 tiling 公式所需的结构体参数
     ReduceScatterAlltoAllMatmulInfo mmv3ArgsInfo;
@@ -719,7 +719,7 @@ static void GetPlatformInfo(
     tensorInfo.aicCoreNum = ascendcPlatform.GetCoreNumAic();
     tensorInfo.aivCoreNum = ascendcPlatform.GetCoreNumAiv();
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, tensorInfo.ubSize);
-    tensorInfo.blockDim = ascendcPlatform.CalcTschBlockDim(tensorInfo.aivCoreNum, tensorInfo.aicCoreNum, tensorInfo.aivCoreNum);
+    tensorInfo.numBlocks = ascendcPlatform.CalcTschBlockDim(tensorInfo.aivCoreNum, tensorInfo.aicCoreNum, tensorInfo.aivCoreNum);
 }
 
 // 子函数3: 获取关键参数并计算，填充tilingdata
@@ -879,7 +879,7 @@ static ge::graphStatus BatchMatMulReduceScatterAlltoAllTilingFunc(gert::TilingCo
     TensorInfo tensorInfo{};
     //子函数2 获取aiv,UB
     GetPlatformInfo(context,    tensorInfo);
-    context->SetBlockDim(tensorInfo.blockDim);
+    context->SetBlockDim(tensorInfo.numBlocks);
     //子函数3 获取参数，计算，填充tilingData
     //存放inputDatatype，biasDatatype
     auto* biasTensor = context->GetOptionalInputTensor(BIAS_INDEX);
@@ -903,7 +903,7 @@ static ge::graphStatus BatchMatMulReduceScatterAlltoAllTilingFunc(gert::TilingCo
     }
     uint64_t tilingKey = UpdateTilingKey(tilingData, tensorInfo.isLite);
     context->SetTilingKey(tilingKey);
-    context->SetBlockDim(tensorInfo.blockDim);
+    context->SetBlockDim(tensorInfo.numBlocks);
     context->GetRawTilingData()->SetDataSize(sizeof(BatchMatMulReduceScatterAlltoAllTilingData));
     SetHcclTiling(context, tilingData);
     PrintCommonTilingVariables(tilingData);

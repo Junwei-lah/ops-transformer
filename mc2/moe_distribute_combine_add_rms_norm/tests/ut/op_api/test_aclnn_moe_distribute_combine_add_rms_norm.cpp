@@ -32,6 +32,7 @@ protected:
 
     static void TearDownTestCase()
     {
+        op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
         cout << "l2_moe_distribute_combine_add_rms_norm_test TearDown" << endl;
     }
 };

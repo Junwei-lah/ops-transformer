@@ -9,9 +9,8 @@
  */
 #include <gtest/gtest.h>
 #include <iostream>
+#include "mc2_infer_shape_case_executor.h"
 #include "infer_datatype_context_faker.h"
-#include "infer_shape_context_faker.h"
-#include "infer_shape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
 namespace GroupedMatMulAlltoAllvUT {
@@ -197,9 +196,12 @@ TEST_P(GroupedMatMulAlltoAllvInfershape, infershape_test)
             {"trans_gmm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_params.trans_gmm_weight)},
             {"trans_mm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_params.trans_mm_weight)}
         });
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
  
     std::vector<std::vector<int64_t>> expectOutputShape = {{4096, 4096}};
-    ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape); 
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape); 
 }
 
 static TestParams test_paramss[] = {{"Test_sample", {}, {}, {}, {}, ge::GRAPH_SUCCESS},};

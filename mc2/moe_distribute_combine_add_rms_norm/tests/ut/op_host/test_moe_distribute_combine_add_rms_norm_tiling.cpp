@@ -132,7 +132,7 @@ TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
         Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
     }
     else {
-        uint64_t expectTilingKey = 10000UL;
+        uint64_t expectTilingKey = 0UL;
         Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
     }
 }

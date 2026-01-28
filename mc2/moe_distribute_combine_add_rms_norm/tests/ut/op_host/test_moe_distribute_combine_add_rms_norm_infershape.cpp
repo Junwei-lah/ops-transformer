@@ -10,9 +10,8 @@
 
  #include <gtest/gtest.h>
  #include <iostream>
- #include "infer_shape_context_faker.h"
+ #include "mc2_infer_shape_case_executor.h"
  #include "infer_datatype_context_faker.h"
- #include "infer_shape_case_executor.h"
  #include "base/registry/op_impl_space_registry_v2.h"
 
 namespace MoeDistributeCombineAddRmsNormNameSpace{
@@ -69,9 +68,12 @@ namespace MoeDistributeCombineAddRmsNormNameSpace{
             {"const_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}
         }
     );
+    Mc2Hcom::MockValues hcomTopologyMockValues {
+        {"rankNum", 8}
+    };
 
     std::vector<std::vector<int64_t>> expectOutputShape = {{192, 1, 7168}, {192, 1, 1}, {192, 1, 7168}};
-    ExecuteTestCase(infershapeContextPara, ge::SUCCESS, expectOutputShape);
+    Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::SUCCESS, expectOutputShape);
  }
  
  TEST_F(MoeDistributeCombineAddRmsNorm, infer_dtype_001)

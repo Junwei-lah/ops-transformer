@@ -26,7 +26,7 @@ extern "C" {
  * @param [in] xRef: 计算输入，占位未使用，Tensor，支持bfloat16, float16,
  * float32, bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64。
  * @param [in] timeOut: 计算输入，超时时间，Tensor，int32。
- * @param [in] elasticInfo: 计算输入，当前不支持。
+ * @param [in] elasticInfo: 计算输入，动态缩容表，Tensor，int32。
  * @param [in] group: 计算输入，str。通信域名称，专家并行的通信域。
  * @param [in] worldSize: 计算输入，int64_t。通信域size。
  * @param [out] workspaceSize: 出参，返回需要在npu device侧申请的workspace大小。

@@ -12,7 +12,7 @@
  * \file allto_all_all_gather_batch_mat_mul.cpp
  * \brief
  */
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
 #include "allto_all_all_gather_batch_mat_mul.h"
 #include "allto_all_all_gather_batch_mat_mul_shard_h.h"
 #include "allto_all_all_gather_batch_mat_mul_tiling_key.h"

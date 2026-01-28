@@ -45,7 +45,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -56,7 +56,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -100,7 +100,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -111,7 +111,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -155,7 +155,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -166,7 +166,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -210,7 +210,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -221,7 +221,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -265,7 +265,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -276,7 +276,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -320,7 +320,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -331,7 +331,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -375,7 +375,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -386,7 +386,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -430,7 +430,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -441,7 +441,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -485,7 +485,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -496,7 +496,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -540,7 +540,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -551,7 +551,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -595,7 +595,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -606,7 +606,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -650,7 +650,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -661,7 +661,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -705,7 +705,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -716,7 +716,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -760,7 +760,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -771,7 +771,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -815,7 +815,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -826,7 +826,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -870,7 +870,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -881,7 +881,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -926,7 +926,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -937,7 +937,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -981,7 +981,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -992,7 +992,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1036,7 +1036,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1047,7 +1047,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1091,7 +1091,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1102,7 +1102,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1146,7 +1146,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1157,7 +1157,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1201,7 +1201,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1212,7 +1212,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1256,7 +1256,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1267,7 +1267,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1311,7 +1311,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1322,7 +1322,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1366,7 +1366,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1377,7 +1377,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1421,7 +1421,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1432,7 +1432,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1476,7 +1476,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1487,7 +1487,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1531,7 +1531,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1542,7 +1542,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1586,7 +1586,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1597,7 +1597,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1641,7 +1641,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1652,7 +1652,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1696,7 +1696,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1707,7 +1707,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;
@@ -1751,7 +1751,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     size_t M = 128;
     size_t ep = 4;
     size_t tp = 4;
-    uint32_t blockDim = 20;
+    uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = (E * C * H + 2 * E * C * H * tp + (ep - 1) * C * M * tp * E / ep) * 2;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
@@ -1762,7 +1762,7 @@ TEST_F(allto_all_all_gather_batch_mat_mul_test, allto_all_all_gather_batch_mat_m
     AlltoAllAllGatherBatchMatMulTilingData *tiling_data = reinterpret_cast<AlltoAllAllGatherBatchMatMulTilingData*>(tiling);
     tiling_data->commonTiling.epGroupSize = 4;
     tiling_data->commonTiling.tpGroupSize = 4;
-    tiling_data->commonTiling.aivCoreNum = blockDim;
+    tiling_data->commonTiling.aivCoreNum = numBlocks;
     tiling_data->commonTiling.expert = E;
     tiling_data->commonTiling.COverTp = C;
     tiling_data->commonTiling.MOverTp = M;

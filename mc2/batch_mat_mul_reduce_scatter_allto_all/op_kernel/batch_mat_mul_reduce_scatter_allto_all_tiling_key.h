@@ -12,8 +12,8 @@
  * \file batch_mat_mul_reduce_scatter_allto_all_tiling_key.h
  * \brief
  */
-#ifndef MC2_BATCH_MAT_MUL_REDUCE_SCATTER_ALLTO_ALL_TILING_KEY_H
-#define MC2_BATCH_MAT_MUL_REDUCE_SCATTER_ALLTO_ALL_TILING_KEY_H
+#ifndef MC2_BATCH_MATMUL_REDUCE_SCATTER_ALL_TO_ALL_TILING_KET_H
+#define MC2_BATCH_MATMUL_REDUCE_SCATTER_ALL_TO_ALL_TILING_KET_H
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
@@ -58,4 +58,4 @@ ASCENDC_TPL_SEL(
     ),
 );
 
-#endif // MC2_BATCH_MAT_MUL_REDUCE_SCATTER_ALLTO_ALL_TILING_KEY_H
+#endif // MC2_BATCH_MATMUL_REDUCE_SCATTER_ALL_TO_ALL_TILING_KET_H

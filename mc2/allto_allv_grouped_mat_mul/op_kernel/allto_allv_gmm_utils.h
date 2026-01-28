@@ -16,7 +16,7 @@
 #define __ALLTO_ALLV_GMM_UTILS_H__
 
 #include "kernel_tiling/kernel_tiling.h"
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
 #include "lib/matmul_intf.h"
 
 namespace ALLTO_ALLV_GMM {

@@ -12,8 +12,8 @@
  * \file allto_all_all_gather_batch_mat_mul_tiling_key.h
  * \brief
  */
-#ifndef MC2_ALLTO_ALL_ALL_GATHER_BATCH_MAT_MUL_TILING_KEY_H
-#define MC2_ALLTO_ALL_ALL_GATHER_BATCH_MAT_MUL_TILING_KEY_H
+#ifndef MC2_ALLTOALL_ALLGATHER_BATCHMATMUL_TILING_KEY_H
+#define MC2_ALLTOALL_ALLGATHER_BATCHMATMUL_TILING_KEY_H
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
@@ -51,4 +51,4 @@ ASCENDC_TPL_SEL(
     )
 );
 
-#endif // MC2_ALLTO_ALL_ALL_GATHER_BATCH_MAT_MUL_TILING_KEY_H
+#endif // MC2_ALLTOALL_ALLGATHER_BATCHMATMUL_TILING_KEY_H

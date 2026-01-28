@@ -33,6 +33,7 @@ protected:
 
     static void TearDownTestCase()
     {
+        op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
         cout << "l2_grouped_mat_mul_allto_allv_test TearDown" << endl;
     }
 };
