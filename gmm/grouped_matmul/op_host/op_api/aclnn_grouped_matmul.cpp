@@ -1086,7 +1086,8 @@ static aclnnStatus CheckFunctionParams(const gmm::GroupedMatmulParams &gmmParams
     gmmParams, weightDtype, isNoActivation) == ACLNN_SUCCESS,
     ACLNN_ERR_PARAM_INVALID, "Check310PlatformForFunction failed.");
   if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
-    CHECK_COND(isNoActivation, ACLNN_ERR_PARAM_INVALID, "Activation is not supported on Ascend910_95 platforms.");
+    CHECK_COND(isNoActivation, ACLNN_ERR_PARAM_INVALID,
+               "ActiveType[%ld] is not supported on this platform.", gmmParams.activeType);
     if (IsQuant(gmmParams.xDtype, weightDtype)) {
       return gmm::AclnnGroupedMatmul91095Checker<aclTensorList>(gmmParams).CheckGroupedMatmul91095();
     } else if (IsWeightQuant(gmmParams.xDtype, weightDtype)) {
