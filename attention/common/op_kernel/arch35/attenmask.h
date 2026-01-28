@@ -179,7 +179,7 @@ __aicore__ inline int64_t ComputeOffsetForNoCompress(const RunInfo<isInfer> &run
         int64_t s1Offset = runInfo.s1oIdx * constInfo.s1BaseSize + runInfo.vecCoreOffset;
         if constexpr(isInfer) {
             if (constInfo.isGqa) {
-                s1Offset = s1Offset % consInfo.s1Size;
+                s1Offset = s1Offset % constInfo.s1Size;
             }
         }
         int64_t s2Offset = 0;
