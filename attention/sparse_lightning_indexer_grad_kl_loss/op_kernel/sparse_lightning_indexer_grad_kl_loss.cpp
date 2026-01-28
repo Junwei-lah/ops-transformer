@@ -8,30 +8,52 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
- /*!
+/*!
  * \file sparse_lightning_indexer_grad_kl_loss.cpp
  * \brief
  */
-
 #include "kernel_operator.h"
-#include "sparse_lightning_indexer_grad_kl_loss_template_tiling_key.h"
-#include "sparse_lightning_indexer_grad_kl_loss_base.h"
-#include "sparse_lightning_indexer_grad_kl_loss_common.h"
-
 using namespace AscendC;
 
-#define SLI_OP_IMPL(templateClass, tilingdataClass, ...)                                          \
-    do {                                                                                          \
-        templateClass<SLIType<__VA_ARGS__>> op;                                                   \
-        GET_TILING_DATA_WITH_STRUCT(tilingdataClass, tiling_data_in, tiling);                     \
-        const tilingdataClass *__restrict tiling_data = &tiling_data_in;                          \
-        op.Init(query, key, queryIndex, keyIndex, weight, sparseIndices,                          \
-	            softmaxMax, softmaxMum, queryRope, keyRope,                                       \
-                actualSeqLengthsQuery, actualSeqLengthsKey,                                       \
-                dQueryIndex, dKeyIndex, dWeight, loss,                                            \
-                user, tiling_data, &tPipe);                                                       \
-        op.Process();                                                                             \
+#if __CCE_AICORE__ != 310
+#include "arch32/sparse_lightning_indexer_grad_kl_loss_template_tiling_key.h"
+#include "arch32/sparse_lightning_indexer_grad_kl_loss_base.h"
+#include "arch32/sparse_lightning_indexer_grad_kl_loss_common.h"
+#define SLI_OP_IMPL(templateClass, tilingdataClass, ...)                                                               \
+    do {                                                                                                               \
+        templateClass<SLIType<__VA_ARGS__>> op;                                                                        \
+        GET_TILING_DATA_WITH_STRUCT(tilingdataClass, tiling_data_in, tiling);                                          \
+        const tilingdataClass *__restrict tiling_data = &tiling_data_in;                                               \
+        op.Init(query, key, queryIndex, keyIndex, weight, sparseIndices, softmaxMax, softmaxMum, queryRope, keyRope,   \
+                actualSeqLengthsQuery, actualSeqLengthsKey, dQueryIndex, dKeyIndex, dWeight, loss, user, tiling_data,  \
+                &tPipe);                                                                                               \
+        op.Process();                                                                                                  \
     } while (0)
+#else
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_regbase_common.h"
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_tiling_regbase.h"
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_template_tiling_key_regbase.h"
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_vector_block.h"
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_cube_block.h"
+#include "arch35/sparse_lightning_indexer_grad_kl_loss_kernel_base.h"
+using namespace SligKlLoss;
+#define SLI_OP_IMPL(templateClass, tilingdataClass, ...)                                                               \
+    do {                                                                                                               \
+        using CubeBlockType =                                                                                          \
+            typename std::conditional<g_coreType == AscendC::AIC, SligKlLoss::SligKlLossBlockCube<__VA_ARGS__>,        \
+                                      SligKlLoss::SligKlLossBlockCubeDummy<__VA_ARGS__>>::type;                        \
+        using VecBlockType =                                                                                           \
+            typename std::conditional<g_coreType == AscendC::AIV, SligKlLoss::SligKlLossBlockVec<__VA_ARGS__>,         \
+                                      SligKlLoss::SligKlLossBlockVecDummy<__VA_ARGS__>>::type;                         \
+        templateClass<CubeBlockType, VecBlockType> op;                                                                 \
+        GET_TILING_DATA_WITH_STRUCT(tilingdataClass, tiling_data_in, tiling);                                          \
+        const tilingdataClass *__restrict tiling_data = &tiling_data_in;                                               \
+        op.Init(query, key, queryIndex, keyIndex, weight, sparseIndices, softmaxMax, softmaxMum, queryRope, keyRope,   \
+                actualSeqLengthsQuery, actualSeqLengthsKey, dQueryIndex, dKeyIndex, dWeight, loss, user, tiling_data,  \
+                &tPipe);                                                                                               \
+        op.Process();                                                                                                  \
+    } while (0)
+#endif
 
 template< bool HasRope, int TopKRange, int LayoutT_QT, int LayoutT_KT, int SparseMode, bool Deterministic>
  __global__ __aicore__ void
@@ -46,6 +68,25 @@ sparse_lightning_indexer_grad_kl_loss(__gm__ uint8_t *query, __gm__ uint8_t *key
                                       __gm__ uint8_t *dWeight, __gm__ uint8_t *loss,
                                       __gm__ uint8_t *workspace, __gm__ uint8_t *tiling)
 {
+#if __CCE_AICORE__ == 310
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    REGISTER_TILING_DEFAULT(optiling::SparseLightningIndexerGradKLLossRegBaseTilingData);
+    TPipe tPipe;
+    __gm__ uint8_t *user = GetUserWorkspace(workspace);
+
+    if constexpr (ORIG_DTYPE_QUERY == DT_FLOAT16 && ORIG_DTYPE_KEY == DT_FLOAT16) {
+        SLI_OP_IMPL(SparseLightningIndexerGradKLLossKernelBase,
+                    optiling::SparseLightningIndexerGradKLLossRegBaseTilingData, half, half, float,
+                    static_cast<SLILayout>(LayoutT_QT), static_cast<SLILayout>(LayoutT_KT), SLISparseMode::RightDown,
+                    HasRope, Deterministic);
+    }
+    if constexpr (ORIG_DTYPE_QUERY == DT_BF16 && ORIG_DTYPE_KEY == DT_BF16) {
+        SLI_OP_IMPL(SparseLightningIndexerGradKLLossKernelBase,
+                    optiling::SparseLightningIndexerGradKLLossRegBaseTilingData, bfloat16_t, bfloat16_t, float,
+                    static_cast<SLILayout>(LayoutT_QT), static_cast<SLILayout>(LayoutT_KT), SLISparseMode::RightDown,
+                    HasRope, Deterministic);
+    }
+#else
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
     REGISTER_TILING_DEFAULT(optiling::SparseLightningIndexerGradKLLossTilingData);
     TPipe tPipe;
@@ -63,4 +104,5 @@ sparse_lightning_indexer_grad_kl_loss(__gm__ uint8_t *query, __gm__ uint8_t *key
             static_cast<SLILayout>(LayoutT_QT), static_cast<SLILayout>(LayoutT_KT),
             SLISparseMode::RightDown, HasRope, Deterministic);
     }
+#endif
 }

@@ -18,7 +18,7 @@
 
 #include "ascendc/host_api/tiling/template_argument.h"
 
-enum LayoutType : uint8_t {
+enum class LayoutType : uint8_t {
     LAYOUT_BSND = 0,
     LAYOUT_TND = 1,
     LAYOUT_NONE

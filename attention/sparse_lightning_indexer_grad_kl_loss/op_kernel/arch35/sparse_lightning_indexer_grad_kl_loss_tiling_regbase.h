@@ -9,69 +9,22 @@
  */
 
 /*!
- * \file sparse_lightning_indexer_grad_kl_loss_tiling.h
+ * \file sparse_lightning_indexer_grad_kl_loss_tiling_regbase.h
  * \brief
  */
-#ifndef SPARSE_LIGHTNING_INDEXER_GRAD_KL_LOSS_TILING_H
-#define SPARSE_LIGHTNING_INDEXER_GRAD_KL_LOSS_TILING_H
+#ifndef SPARSE_LIGHTNING_INDEXER_GRAD_KL_LOSS_REGBASE_TILING_H
+#define SPARSE_LIGHTNING_INDEXER_GRAD_KL_LOSS_REGBASE_TILING_H
 
 #include <cstdint>
 #include "kernel_tiling/kernel_tiling.h"
 namespace optiling {
-// ------------------算子原型索引常量定义----------------
-// Inputs Index
-constexpr uint32_t QUERY_INPUT_INDEX = 0;
-constexpr uint32_t KEY_INPUT_INDEX = 1;
-constexpr uint32_t QUERY_INDEX_INPUT_INDEX = 2;
-constexpr uint32_t KEY_INDEX_INPUT_INDEX = 3;
-constexpr uint32_t WEIGHT_INPUT_INDEX = 4;
-constexpr uint32_t SPARSE_INDICES_INPUT_INDEX = 5;
-constexpr uint32_t SOFTMAX_MAX_INPUT_INDEX = 6;
-constexpr uint32_t SOFTMAX_SUM_INPUT_INDEX = 7;
-constexpr uint32_t QUERY_ROPE_INPUT_INDEX = 8;
-constexpr uint32_t KEY_ROPE_INPUT_INDEX = 9;
-constexpr uint32_t ACTUAL_SEQ_LENGTHS_QUERY_INPUT_INDEX = 10;
-constexpr uint32_t ACTUAL_SEQ_LENGTHS_KEY_INPUT_INDEX = 11;
-
-// Outputs Index
-constexpr uint32_t D_QUERY_INDEX_OUTPUT_INDEX = 0;
-constexpr uint32_t D_KEY_INDEX_OUTPUT_INDEX = 1;
-constexpr uint32_t D_WEIGHTS_OUTPUT_INDEX = 2;
-constexpr uint32_t LOSS_OUTPUT_INDEX = 3;
-
-// Attributes Index
-constexpr uint32_t SCALE_VALUE_ATTR_INDEX = 0;
-constexpr uint32_t LAYOUT_ATTR_INDEX = 1;
-constexpr uint32_t SPARSE_MODE_ATTR_INDEX = 2;
-constexpr uint32_t DETERMINISTIC_ATTR_INDEX = 3;
-
-// Dim Num
-constexpr size_t DIM_NUM_TWO = 2;
-constexpr size_t DIM_NUM_THREE = 3;
-constexpr size_t DIM_NUM_FOUR = 4;
-// 常量
-constexpr uint32_t MAX_BLOCK_SIZE = 1024;
-constexpr uint32_t COPYND2NZ_SRC_STRIDE_LIMITATION = 65535;
-constexpr uint32_t NUM_BYTES_FLOAT = 4;
-constexpr uint32_t NUM_BYTES_FLOAT16 = 2;
-constexpr uint32_t NUM_BYTES_BF16 = 2;
-constexpr uint32_t BYTE_BLOCK = 32;
-const uint32_t SLI_MAX_AIC_CORE_NUM = 26; // 25 + 1 保证数组8字节对齐
 
 // ------------------公共定义--------------------------
-constexpr uint32_t MAX_CORE_NUM = 25; // 目前使用AIC核的最大值为25
-
-struct InnerSplitParams {
-    uint32_t s1GBaseSize = 1;
-    uint32_t s2BaseSize = 1;
-};
-
-enum class SparseMode : uint32_t {
-    RIGHT_DOWN_CAUSAL = 3  // 右下角点划分的下三角部分
-};
+const uint32_t SLI_MAX_AIC_CORE_NUM_REGBASE = 36;
+constexpr uint32_t MAX_CORE_NUM_REGBASE = 36; // 目前使用AIC核的最大值为36
 
 // -----------算子TilingData定义---------------
-class SLIGradKLLossBaseParams {
+class SLIGradKLLossBaseParamsRegbase {
 public:
     // 基础输入参数
     int32_t bSize;
@@ -129,13 +82,13 @@ public:
     void set_layoutType(uint8_t layoutTypeParam) {this->layoutType = layoutTypeParam;}
 };
 
-class SLIGradKLLossMultiCoreParams {
+class SLIGradKLLossMultiCoreParamsRegbase {
 public:
     uint32_t coreNum;
     uint32_t rsvd;
     int64_t splitFactorSize;
     int64_t totalSize; // 表明有多少个S1
-    int64_t bS1Index[MAX_CORE_NUM]; // 每个核B,S1合轴之后的起始和结束位置
+    int64_t bS1Index[MAX_CORE_NUM_REGBASE]; // 每个核B,S1合轴之后的起始和结束位置
 
     int32_t get_coreNum() const {return coreNum;}
     void set_coreNum(uint32_t coreNumParam) {this->coreNum = coreNumParam;}
@@ -149,7 +102,7 @@ public:
     int64_t *get_bS1Ptr() {return bS1Index;}
 };
 
-class SLIGradKLLossInitOutputParams {
+class SLIGradKLLossInitOutputParamsRegbase {
 public:
     uint32_t singleCoreSize; // 单核需要初始化的元素个数
     uint32_t rsvd;
@@ -162,24 +115,19 @@ public:
     void set_totalOutputSize(int64_t totalOutputSizeParam) {this->totalOutputSize = totalOutputSizeParam;}    
 };
 
-class SLIGradKLLossVecApiParams {
+class SLIGradKLLossVecApiParamsRegbase {
 public:
     SoftMaxTiling softmaxYTilingData;
     SoftMaxTiling simpleSoftmaxPTilingData;
 };
 
-class SparseLightningIndexerGradKLLossTilingData {
+class SparseLightningIndexerGradKLLossRegBaseTilingData {
 public:
-    SLIGradKLLossBaseParams baseParams;
-    SLIGradKLLossMultiCoreParams multiCoreParams;
-    SLIGradKLLossInitOutputParams initOutputParams;
-    SLIGradKLLossVecApiParams vectorParams;
+    SLIGradKLLossBaseParamsRegbase baseParams;
+    SLIGradKLLossMultiCoreParamsRegbase multiCoreParams;
+    SLIGradKLLossInitOutputParamsRegbase initOutputParams;
+    SLIGradKLLossVecApiParamsRegbase vectorParams;
 };
-
-template <typename T> inline T Align(T num, T rnd)
-{
-    return (((rnd) == 0) ? 0 : (((num) + (rnd) - 1) / (rnd) * (rnd)));
-}
 
 } // namespace optiling
 #endif // SPARSE_LIGHTNING_INDEXER_GRAD_KL_LOSS_TILING_H

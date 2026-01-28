@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file sparse_flash_attention_infershape.cpp
+ * \file sparse_lightning_indexer_grad_kl_loss_infershape.cpp
  * \brief
  */
 
@@ -88,4 +88,3 @@ ge::graphStatus InferDataTypeSparseLightningIndexerGradKLLoss(gert::InferDataTyp
 
 IMPL_OP_INFERSHAPE(SparseLightningIndexerGradKLLoss).InferShape(InferShapeSparseLightningIndexerGradKLLoss).InferDataType(InferDataTypeSparseLightningIndexerGradKLLoss);
 } // namespace ops
-  

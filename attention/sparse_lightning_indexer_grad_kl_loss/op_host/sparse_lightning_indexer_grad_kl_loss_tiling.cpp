@@ -19,17 +19,15 @@
 #include <algorithm>
 #include <graph/utils/type_utils.h>
 #include "register/op_def_registry.h"
-#include "../op_kernel/sparse_lightning_indexer_grad_kl_loss_template_tiling_key.h"
-#include "../op_kernel/sparse_lightning_indexer_grad_kl_loss_tiling.h"
-#include "sparse_lightning_indexer_grad_kl_loss_tiling_general.h"
 #include "platform/platform_info.h"
+#include "tiling_base/tiling_templates_registry.h"
+#include "sparse_lightning_indexer_grad_kl_loss_tiling_common.h"
 
 using std::map;
 using std::string;
 using std::pair;
 
 using namespace ge;
-using namespace AscendC;
 
 namespace optiling {
 
@@ -46,12 +44,16 @@ static const std::string QUERY_ROPE_NAME = "query_rope";
 static const std::string KEY_ROPE_NAME = "key_rope";
 static const std::string ATTEN_OUT_NAME = "attention_out";
 
-
 ge::graphStatus TilingSparseLightningIndexerGradKLLoss(gert::TilingContext *context)
 {
-    SparseLightningIndexerGradKLLossTilingBase sligKLLossTiling(context);
-    sligKLLossTiling.DoTiling();
-    return ge::GRAPH_SUCCESS;
+    auto platformInfoPtr = context->GetPlatformInfo();
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
+    if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95) {
+        OP_LOGW(context, "Current soc version is ASCEND910_95.");
+    } else {
+        OP_LOGW(context, "Current soc version is not ASCEND910_95.");
+    }
+    return Ops::Transformer::OpTiling::TilingRegistryNew::GetInstance().DoTilingImpl(context);
 }
 
 ge::graphStatus TilingPrepareForSparseLightningIndexerGradKLLoss(gert::TilingParseContext *context)
