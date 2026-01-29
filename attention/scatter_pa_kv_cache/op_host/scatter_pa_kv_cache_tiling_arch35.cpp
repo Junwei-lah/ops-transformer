@@ -303,13 +303,12 @@ ge::graphStatus ScatterPaKvCacheTiling::TemplateRope()
     kLoopNum_--;
 
     if (inOutMode_ == DUAL_IN_OUT) {
-        return ge::GRAPH_SUCCESS;
+        vHandleNumPerLoop_ = MAX_HANLDE_BYTE_SIZE_PER_LOOP / dtypeByteSize_;
+        vLoopNum_ = Ops::Base::CeilDiv<int64_t>(vHeadSize_, vHandleNumPerLoop_);
+        vTailHandleNum_ = vHeadSize_ - (vLoopNum_ - 1) * vHandleNumPerLoop_;
+        vLoopNum_--;
     }
 
-    vHandleNumPerLoop_ = MAX_HANLDE_BYTE_SIZE_PER_LOOP / dtypeByteSize_;
-    vLoopNum_ = Ops::Base::CeilDiv<int64_t>(vHeadSize_, vHandleNumPerLoop_);
-    vTailHandleNum_ = vHeadSize_ - (vLoopNum_ - 1) * vHandleNumPerLoop_;
-    vLoopNum_--;
     return ge::GRAPH_SUCCESS;
 }
 
