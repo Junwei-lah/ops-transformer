@@ -400,7 +400,7 @@ extern "C" __global__ __aicore__ void grouped_matmul_add(
     REGISTER_TILING_DEFAULT(GroupedMatmulAdd::GmmAddTilingDataParams);
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIC_ONLY);
     if (TILING_KEY_IS(10000900009000090001UL)) { // split_k
-        GroupedMatmulAdd::GmmAddAct<layout::ColumnMajor, layout::RowMajor>(x, weight, groupList, y, tiling);
+        GroupedMatmulAdd::GmmAddCgmct<layout::ColumnMajor, layout::RowMajor>(x, weight, groupList, y, tiling);
     }
 #else
 #ifndef __CCE_UT_TEST__
