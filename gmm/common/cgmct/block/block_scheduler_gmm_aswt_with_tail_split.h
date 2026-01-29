@@ -45,11 +45,6 @@ private:
     int64_t m_{0};
     int64_t n_{0};
     int64_t k_;
-    int32_t baseM_;
-    int32_t baseN_;
-    int32_t baseK_;
-    int32_t mBaseTail_;
-    int32_t nBaseTail_;
     int64_t mTailCnt_{1};
     int64_t nTailCnt_{1};
     int64_t tailCnt_{1}; // only update when last group
@@ -58,6 +53,11 @@ private:
     int64_t mainRow_;
     int64_t round_;
     int64_t roundIdx_;
+    int32_t baseM_;
+    int32_t baseN_;
+    int32_t baseK_;
+    int32_t mBaseTail_;
+    int32_t nBaseTail_;
     uint32_t blockNum_ = AscendC::GetBlockNum();
     uint32_t blockIdx_ = AscendC::GetBlockIdx() / AscendC::GetTaskRation();
     uint32_t startBlockIdx_;
