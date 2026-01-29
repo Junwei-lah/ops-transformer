@@ -38,6 +38,8 @@ private:
     bool IsQuant(DataType &xDtype, DataType &weightDtype) const;
     aclnnStatus CheckGeneralQuantShape() const;
     aclnnStatus CheckQuantCasesFormat() const;
+    aclnnStatus CheckWeightNzSpecialParams() const;
+    aclnnStatus CheckWeightStorageShape(int64_t kDimValue, int64_t nDimValue) const;
 
     aclnnStatus CheckGroupedMatmulMxDtype() const;
     aclnnStatus CheckGroupedMatmulPerGroupDim() const;

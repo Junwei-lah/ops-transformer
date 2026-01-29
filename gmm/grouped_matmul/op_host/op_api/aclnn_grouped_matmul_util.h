@@ -42,6 +42,8 @@ constexpr size_t MX_TUPLE_SCALE_DIM_INDEX = 2UL;
 constexpr size_t MX_TUPLE_PERTOKENSCALE_DIM_INDEX = 3UL;
 constexpr size_t MX_TUPLE_GROUP_NUMBER_DIM_INDEX = 4UL;
 
+constexpr int64_t CUBE_BLOCK_SIZE_16 = 16L;
+constexpr int64_t CUBE_BLOCK_SIZE_32 = 32L;
 constexpr int64_t PERTILE_GROUP_SIZE = 128L;
 constexpr int64_t MXFP_DIVISOR_SIZE = 64L;
 constexpr int64_t MXFP_MULTI_BASE_SIZE = 2L;
@@ -54,6 +56,8 @@ constexpr int64_t N_K_ALIGN_VALUE_WEIGHT_QUANT_4BIT = 64L;
 constexpr size_t LAST_FIRST_DIM_INDEX = 1;
 constexpr size_t LAST_SECOND_DIM_INDEX = 2;
 constexpr size_t LAST_THIRD_DIM_INDEX = 3;
+constexpr size_t LAST_FOURTH_DIM_INDEX = 4;
+constexpr size_t QUANT_WEIGHTNZ_STORAGE_DIM = 5;
 
 enum class GMMApiVersion : uint32_t {
     V1 = 1U,

@@ -133,8 +133,9 @@ aclnnStatus AclnnGroupedMatmul91095Checker<T>::CheckQuantCasesFormat() const
         CHECK_COND(!op::IsPrivateFormat(GetInputTensor(gmmParams_.x, i)->GetStorageFormat()), ACLNN_ERR_PARAM_INVALID,
                    "The format of %s[%zu] %s is invalid. It should only be ND.", xName_.c_str(), i,
                    op::ToString(GetInputTensor(gmmParams_.x, i)->GetStorageFormat()).GetString());
-        CHECK_COND(!op::IsPrivateFormat(GetInputTensor(gmmParams_.weight, i)->GetStorageFormat()),
-                   ACLNN_ERR_PARAM_INVALID, "The format of %s[%zu] %s is invalid. It should only be ND.",
+        CHECK_COND(!op::IsPrivateFormat(GetInputTensor(gmmParams_.weight, i)->GetStorageFormat()) ||
+                       GetInputTensor(gmmParams_.weight, i)->GetStorageFormat() == op::Format::FORMAT_FRACTAL_NZ,
+                   ACLNN_ERR_PARAM_INVALID, "The format of %s[%zu] %s is invalid. It should be ND or FRACTAL_NZ.",
                    weightName_.c_str(), i,
                    op::ToString(GetInputTensor(gmmParams_.weight, i)->GetStorageFormat()).GetString());
         CHECK_COND(!op::IsPrivateFormat(GetInputTensor(gmmParams_.y, i)->GetStorageFormat()), ACLNN_ERR_PARAM_INVALID,
@@ -142,6 +143,75 @@ aclnnStatus AclnnGroupedMatmul91095Checker<T>::CheckQuantCasesFormat() const
                    op::ToString(GetInputTensor(gmmParams_.y, i)->GetStorageFormat()).GetString());
     }
     return ACLNN_SUCCESS;
+}
+
+template <typename T>
+aclnnStatus AclnnGroupedMatmul91095Checker<T>::CheckWeightStorageShape(int64_t kDimValue, int64_t nDimValue) const
+{
+    auto weightStorage = GetInputTensor(gmmParams_.weight)->GetStorageShape();
+    auto weightStorageShapeDim = weightStorage.GetDimNum();
+    CHECK_COND(weightStorageShapeDim == QUANT_WEIGHTNZ_STORAGE_DIM, ACLNN_ERR_PARAM_INVALID,
+               "When format of weight is FRACTAL_NZ, the storage dim num of %s should be 5, but actual dim num is %lu",
+               weightName_.c_str(), weightStorageShapeDim);
+
+    auto weightStorageLastFourthDim = weightStorage.GetDim(weightStorageShapeDim - LAST_FOURTH_DIM_INDEX);
+    auto weightStorageLastThirdDim = weightStorage.GetDim(weightStorageShapeDim - LAST_THIRD_DIM_INDEX);
+    auto weightStorageLastSecondDim = weightStorage.GetDim(weightStorageShapeDim - LAST_SECOND_DIM_INDEX);
+    auto weightStorageLastDim = weightStorage.GetDim(weightStorageShapeDim - LAST_FIRST_DIM_INDEX);
+    CHECK_COND(weightStorageLastDim == CUBE_BLOCK_SIZE_32, ACLNN_ERR_PARAM_INVALID,
+               "When format of weight is FRACTAL_NZ, the storage shape last dim of %s should be 32, but actual last \
+dim is %ld",
+               weightName_.c_str(), weightStorageLastDim);
+    CHECK_COND(weightStorageLastSecondDim == CUBE_BLOCK_SIZE_16, ACLNN_ERR_PARAM_INVALID,
+               "When format of weight is FRACTAL_NZ, the storage shape last second dim of %s should be 16, but actual \
+last second dim is %ld",
+               weightName_.c_str(), weightStorageLastSecondDim);
+    if (gmmParams_.transposeWeight) {
+        CHECK_COND(weightStorageLastFourthDim == (kDimValue + CUBE_BLOCK_SIZE_32 - 1) / CUBE_BLOCK_SIZE_32,
+                   ACLNN_ERR_PARAM_INVALID,
+                   "When format of weight is FRACTAL_NZ and transposition is true, the storage shape second dim of %s \
+should be ceil(k/32), but actual second dim is %ld",
+                   weightName_.c_str(), weightStorageLastFourthDim);
+        CHECK_COND(weightStorageLastThirdDim == (nDimValue + CUBE_BLOCK_SIZE_16 - 1) / CUBE_BLOCK_SIZE_16,
+                   ACLNN_ERR_PARAM_INVALID,
+                   "When format of weight is FRACTAL_NZ and transposition is true, the storage shape third dim of %s \
+should be ceil(n/16), but actual third dim is %ld",
+                   weightName_.c_str(), weightStorageLastThirdDim);
+    } else {
+        CHECK_COND(weightStorageLastFourthDim == (nDimValue + CUBE_BLOCK_SIZE_32 - 1) / CUBE_BLOCK_SIZE_32,
+                   ACLNN_ERR_PARAM_INVALID,
+                   "When format of weight is FRACTAL_NZ and transposition is false, the storage shape second dim of %s \
+should be ceil(n/32), but actual second dim is %ld",
+                   weightName_.c_str(), weightStorageLastFourthDim);
+        CHECK_COND(weightStorageLastThirdDim == (kDimValue + CUBE_BLOCK_SIZE_16 - 1) / CUBE_BLOCK_SIZE_16,
+                   ACLNN_ERR_PARAM_INVALID,
+                   "When format of weight is FRACTAL_NZ and transposition is false, the storage shape third dim of %s \
+should be ceil(k/16), but actual third dim is %ld",
+                   weightName_.c_str(), weightStorageLastThirdDim);
+    }
+    return ACLNN_SUCCESS;
+}
+
+template <typename T>
+aclnnStatus AclnnGroupedMatmul91095Checker<T>::CheckWeightNzSpecialParams() const
+{
+    auto wDtype = GetInputTensor(gmmParams_.weight)->GetDataType();
+    CHECK_COND(
+        gmmParams_.xDtype == DataType::DT_INT8 && wDtype == DataType::DT_INT8, ACLNN_ERR_PARAM_INVALID,
+        "When format of weight is FRACTAL_NZ, the x dtype and weight dtype should be int8, but x dtype is %s, weight \
+dtype is %s",
+        op::ToString(gmmParams_.xDtype).GetString(), op::ToString(wDtype).GetString());
+
+    auto weightViewShapeDim = GetInputTensor(gmmParams_.weight)->GetViewShape().GetDimNum();
+    auto kDimValue =
+        GetInputTensor(gmmParams_.weight)->GetViewShape().GetDim(weightViewShapeDim - LAST_SECOND_DIM_INDEX);
+    auto nDimValue =
+        GetInputTensor(gmmParams_.weight)->GetViewShape().GetDim(weightViewShapeDim - LAST_FIRST_DIM_INDEX);
+    CHECK_COND(kDimValue != 1L && nDimValue != 1L, ACLNN_ERR_PARAM_INVALID,
+               "When format of weight is FRACTAL_NZ, neither of the last two dimensions of %s can be 1, but actual \
+k is %ld, n is %ld",
+               weightName_.c_str(), kDimValue, nDimValue);
+    return CheckWeightStorageShape(kDimValue, nDimValue);
 }
 
 template <typename T>
@@ -891,6 +961,9 @@ aclnnStatus AclnnGroupedMatmul91095Checker<T>::CheckGroupedMatmul91095() const
                    GetInputTensorSize(gmmParams_.x), GetInputTensorSize(gmmParams_.weight),
                    GetInputTensorSize(gmmParams_.y));
         CHECK_RET(CheckQuantCasesFormat() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
+        if (GetInputTensor(gmmParams_.weight)->GetStorageFormat() == op::Format::FORMAT_FRACTAL_NZ){
+            CHECK_RET(CheckWeightNzSpecialParams() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
+        }
         CHECK_RET(CheckGeneralQuantShape() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
 
         DataType scaleDtype = GetInputTensor(gmmParams_.scaleOptional)->GetDataType();
