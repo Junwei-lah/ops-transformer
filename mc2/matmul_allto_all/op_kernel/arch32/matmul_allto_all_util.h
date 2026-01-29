@@ -71,7 +71,7 @@ public:
         this->rank_size = rank_size;
 
         auto contextGM0 = AscendC::GetHcclContext<HCCL_GROUP_ID_0>();
-        winContext_ = (__gm__ HcclCombineOpParam *)contextGM0;
+        winContext_ = (__gm__ HcclA2CombineOpParam *)contextGM0;
         *rank = static_cast<uint32_t>(winContext_ -> rankId);
         this->rank = winContext_ -> rankId;
 
@@ -228,7 +228,7 @@ public:
     int32_t rank;
     int32_t rank_size;
     GM_ADDR buff[8];
-    __gm__ HcclCombineOpParam *winContext_{nullptr};
+    __gm__ HcclA2CombineOpParam *winContext_{nullptr};
     TBuf<AscendC::TPosition::VECCALC> uBuf_;
 
     int32_t m0;

@@ -158,6 +158,25 @@ static const std::initializer_list<op::DataType> OUTPUT_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT16, op::DataType::DT_BF16
 };
 
+// 校验所有输入的参数类型是否正确
+static bool CheckAllDtypesValid(const aclTensor* x1, const aclTensor* x2, const aclTensor* biasOptional, const aclTensor* output) {
+    OP_CHECK_DTYPE_NOT_SUPPORT(x1, X_DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(x2, X_DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(output, OUTPUT_DTYPE_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SAME(x1, x2, return false);
+    OP_CHECK_DTYPE_NOT_SAME(x1, output, return false);
+    // biasDtype可以为输入xDtype，也可以为fp32
+    if (biasOptional != nullptr) {
+        if (biasOptional->GetDataType() != op::DataType::DT_FLOAT && biasOptional->GetDataType() != x1->GetDataType()) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                "aclnnMatmulAlltoAll, biasOptional dtype should be x1Dtype or float32 , but it is %s .",
+                op::ToString(biasOptional->GetDataType()).GetString());
+            return false;
+        }
+    }
+    return true;
+}
+
 // 910B在输入为bfloat16时，bias不支持bfloat16，只能为float32
 static bool CheckAllDtypesValid910B(const aclTensor* x1, const aclTensor* x2, const aclTensor* biasOptional, const aclTensor* output) {
     OP_CHECK_DTYPE_NOT_SUPPORT(x1, X_DTYPE_SUPPORT_LIST, return false);
@@ -191,7 +210,12 @@ static aclnnStatus CheckAndHandleParams(const aclTensor *x1, const aclTensor *x2
     // 3. 检查shape
     CHECK_RET(CheckShape(x1, x2, biasOptional, transposeX2, output), ACLNN_ERR_PARAM_INVALID);
     // 4. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckAllDtypesValid910B(x1, x2, biasOptional, output), ACLNN_ERR_PARAM_INVALID);
+    // bias的数据类型限制在950和910B上有所区别，这里根据芯片版本做区分
+    if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        CHECK_RET(CheckAllDtypesValid(x1, x2, biasOptional, output), ACLNN_ERR_PARAM_INVALID);
+    } else {
+        CHECK_RET(CheckAllDtypesValid910B(x1, x2, biasOptional, output), ACLNN_ERR_PARAM_INVALID);
+    }
     // 5. 检查alltoallAxes是否为空或者[-1,-2]
     CHECK_RET(CheckAlltoAllAxes(alltoAllAxesOptional), ACLNN_ERR_PARAM_INVALID);
     // 6. 检查transposeX1是否合法, 目前不能为true
@@ -274,11 +298,10 @@ extern "C" aclnnStatus aclnnMatmulAlltoAllGetWorkspaceSize(const aclTensor *x1, 
 extern "C" aclnnStatus aclnnMatmulAlltoAll(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
 {
     if (NnopbaseSetHcclServerType) {
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B) {
-            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE);
+        if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_CCU);
         } else {
-            OP_LOGE(ACLNN_ERR_INNER,
-                "This is an error in launch aicore, aclnnMatmulAlltoAll only support ASCEND910B.");
+            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE);
         }
     }
     aclnnStatus ret = aclnnInnerMatmulAlltoAll(workspace, workspaceSize, executor, stream);

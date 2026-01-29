@@ -69,7 +69,7 @@ private:
     uint32_t quantType = 0;
     uint32_t tileM0 = 0;
     uint32_t tileN0 = 0;
-    uint32_t blockDim = 1U;
+    uint32_t numBlocks = 1U;
 };
 } // namespace MC2Tiling
 #endif

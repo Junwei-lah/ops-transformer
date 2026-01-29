@@ -383,6 +383,7 @@ function(add_ops_src_copy)
     endif ()
 
     set(MC2_OPS_LIST "matmul_reduce_scatter;"
+        "matmul_reduce_scatter_v2;"
         "grouped_mat_mul_allto_allv;"
         "grouped_mat_mul_all_reduce;"
         "batch_mat_mul_reduce_scatter_allto_all;"
@@ -396,11 +397,14 @@ function(add_ops_src_copy)
         "moe_distribute_combine_v2;"
         "moe_update_expert;"
         "all_gather_matmul;"
+        "all_gather_matmul_v2;"
         "matmul_all_reduce;"
         "matmul_all_reduce_apt;"
         "matmul_all_reduce_add_rms_norm;"
         "inplace_matmul_all_reduce_add_rms_norm;"
+        "quant_all_reduce;"
         "quant_reduce_scatter;"
+        "allto_all_matmul;"
         "matmul_allto_all;"
         "attention_to_ffn;"
         "ffn_to_attention;"

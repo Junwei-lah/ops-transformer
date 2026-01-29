@@ -654,7 +654,7 @@ ge::graphStatus MatmulAlltoAllTiling910B::DoOpTiling()
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     auto aicNum = ascendcPlatform.GetCoreNumAic();
     auto aivNum = ascendcPlatform.GetCoreNumAiv();
-    blockDim = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
+    numBlocks = ascendcPlatform.CalcTschBlockDim(aivNum, aicNum, aivNum);
 
     OPS_LOG_I(opName_, "Leave MatmulAlltoAll tiling func.");
     return ge::GRAPH_SUCCESS;
@@ -703,7 +703,7 @@ ge::graphStatus MatmulAlltoAllTiling910B::GetWorkspaceSize()
     OP_TILING_CHECK(workspaces == nullptr, OP_LOGE(opName_, "Get workspace failed"), return ge::GRAPH_FAILED);
     size_t wsSize = SYSTEM_NEED_WORKSPACE;
     if (quantType == SUPPORT_QUANT_MODE) {
-        wsSize += tileM0 * blockDim * WORKSPACE_NUM * tileN0 * 4; //4 is sizeof uint32_t
+        wsSize += tileM0 * numBlocks * WORKSPACE_NUM * tileN0 * 4; //4 is sizeof uint32_t
     }
     workspaces[0] = wsSize;
     OP_LOGD(opName_, "Workspaces[0] size=%ld", workspaces[0]);
@@ -737,7 +737,7 @@ void MatmulAlltoAllTiling910B::PrintMatmulAlltoAllTilingData(CoCTiling &cocTilin
 ge::graphStatus MatmulAlltoAllTiling910B::PostTiling()
 {
     MatmulAlltoAllTilingData *outTilingData = context_->GetTilingData<MatmulAlltoAllTilingData>();
-    context_->SetBlockDim(blockDim);
+    context_->SetBlockDim(numBlocks);
 
     PrintMatmulAlltoAllTilingData(outTilingData->cocTiling, outTilingData->matmulAlltoAllInfo);
     return ge::GRAPH_SUCCESS;

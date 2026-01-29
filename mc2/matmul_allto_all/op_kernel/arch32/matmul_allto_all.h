@@ -18,14 +18,11 @@
 
 using namespace AscendC;
 
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
+#include "adv_api/hccl/hccl.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "matmul_allto_all_tiling.h"
-#if __has_include("../../common/inc/kernel/moe_distribute_base.h")
-#include "../../common/inc/kernel/moe_distribute_base.h"
-#else
-#include "../../../common/inc/kernel/moe_distribute_base.h"
-#endif
+#include "moe_distribute_base.h"
 #include "matmul_allto_all_util.h"
 
 #include "../../3rd/template_linear_algebra/include/template_linear_algebra/catlass.hpp"

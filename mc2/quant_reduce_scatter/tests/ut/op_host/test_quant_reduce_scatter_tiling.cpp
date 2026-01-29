@@ -17,8 +17,7 @@
 #include <thread>
 #include <vector>
 #include <gtest/gtest.h>
-#include "tiling_context_faker.h"
-#include "tiling_case_executor.h"
+#include "mc2_tiling_case_executor.h"
 
 namespace {
 
@@ -46,6 +45,8 @@ struct QuantReduceScatterTestParam {
     std::string groupAttr;
     std::string reduceOpAttr;
     int64_t outputDtypeAttr;
+    // rank size
+    uint64_t rankNum;
     // soc version
     std::string socVersion;
     // expert result
@@ -56,211 +57,216 @@ struct QuantReduceScatterTestParam {
     uint64_t mc2TilingDataReservedLen;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const QuantReduceScatterTestParam& param)
+{
+    return os << param.caseName;
+}
+
 // 构造ut用例：这里可以按照正常用例/异常用例分开声明
 static QuantReduceScatterTestParam test_cases[] = {
     {"quant_reduce_scatter_critical_case_1",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "1024 5120 80 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "1024 5120 80 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_critical_case_2",
      {2048, 5120}, ge::DT_HIFLOAT8, ge::FORMAT_ND,
      {2048, 40}, ge::DT_FLOAT, ge::FORMAT_ND,
      {256, 5120}, ge::DT_FLOAT, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "2048 5120 40 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "2048 5120 40 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_critical_case_3",
      {1024, 7168}, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND,
      {1024, 56}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 7168}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "1024 7168 56 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "1024 7168 56 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_critical_case_1_x3d",
      {8, 128, 4096}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {8, 128, 64, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 4096}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "1024 4096 64 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "1024 4096 64 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_critical_case_2_x3d",
      {16, 128, 4096}, ge::DT_HIFLOAT8, ge::FORMAT_ND,
      {16, 128, 32}, ge::DT_FLOAT, ge::FORMAT_ND,
      {256, 4096}, ge::DT_FLOAT, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "2048 4096 32 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "2048 4096 32 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_critical_case_3_x3d",
      {8, 128, 8192}, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND,
      {8, 128, 64}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 8192}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
-     ge::GRAPH_SUCCESS, 0UL, "1024 8192 64 64 209715200 ", {16777216}, 72},
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
+     ge::GRAPH_SUCCESS, 0UL, "1024 8192 64 64 209715200 ", {16777216}, MC2_TILING_DATA_RESERVED_LEN},
     {"quant_reduce_scatter_abuse_case_1_x3d",
      {8, 128, 8192}, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND,
      {8, 128, 64}, ge::DT_FLOAT, ge::FORMAT_ND,
      {1, 128, 8192}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_2_x3d",
      {16, 128, 8192}, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND,
      {16, 128, 64}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 8192}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_1",
      {0, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {0, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_2",
      {1024, 0}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 0, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_3",
      {1024, 4096}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 64, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_4",
      {2, 1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {2, 1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_5",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_6",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_FRACTAL_NZ,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_7",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 160}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_8",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_9",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1023, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_10",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 79, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_11",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 3}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_12",
      {}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_13",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_14",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "add", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "add", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_15",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {1024, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_mx_16",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_INT8, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_1",
      {2, 1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 40}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_2",
      {1024, 5120}, ge::DT_FLOAT, ge::FORMAT_ND,
      {1024, 40}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_3",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_FRACTAL_NZ,
      {1024, 40}, ge::DT_FLOAT, ge::FORMAT_FRACTAL_NZ,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_FRACTAL_NZ,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_4",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 40, 2}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_5",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 40}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_6",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 40}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_7",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1023, 40}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_8",
      {1024, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1024, 35}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_9",
      {1023, 5120}, ge::DT_INT8, ge::FORMAT_ND,
      {1023, 40}, ge::DT_FLOAT, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_95",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_95",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
     {"quant_reduce_scatter_abuse_case_tg_10",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
      {128, 5120}, ge::DT_FLOAT16, ge::FORMAT_ND,
-     "group", "sum", ge::DT_FLOAT16, "Ascend910_93",
+     "group", "sum", ge::DT_FLOAT16, 8, "Ascend910_93",
      ge::GRAPH_FAILED, 0UL, "", {}, 0},
 };
 
@@ -279,8 +285,7 @@ protected:
 
 struct QuantReduceScatterCompileInfo {} compileInfo;
 
-// ut逻辑
-static void TestOneParamCase(const QuantReduceScatterTestParam &param)
+static gert::TilingContextPara BuildTilingContextPara(const QuantReduceScatterTestParam &param)
 {
     std::cout << "[TEST_CASE] " << param.caseName << std::endl;
     // 参数封装
@@ -299,24 +304,18 @@ static void TestOneParamCase(const QuantReduceScatterTestParam &param)
         {"reduce_op", Ops::Transformer::AnyValue::CreateFrom<std::string>(param.reduceOpAttr)},
         {"output_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(static_cast<int64_t>(param.outputDtypeAttr))}
     });
-    // 构造用例
-    gert::TilingContextPara tilingContextPara(OP_NAME, inputTensorDesc_, outputTensorDesc_, attrs_, 
-                                              &compileInfo, param.socVersion);
-    if (param.status == ge::GRAPH_SUCCESS) {
-        // 红线用例
-        ExecuteTestCase(tilingContextPara, param.status, param.expectTilingKey, param.expectTilingData,
-                        param.expectWorkspaces, param.mc2TilingDataReservedLen);
-    } else {
-        // 异常用例
-        ExecuteTestCase(tilingContextPara);
-    }
+    return gert::TilingContextPara(OP_NAME, inputTensorDesc_, outputTensorDesc_, attrs_, &compileInfo,
+                                   param.socVersion);
 }
 
 static void ThreadFunction(const QuantReduceScatterTestParam *testCases, size_t caseNum, size_t threadIdx,
                            size_t threadNum)
 {
     for (size_t idx = threadIdx; idx < caseNum; idx += threadNum) {
-        TestOneParamCase(testCases[idx]);
+        auto param = testCases[idx];
+        auto tilingContextPara = BuildTilingContextPara(param);
+        ExecuteTestCase(tilingContextPara, param.status, param.expectTilingKey, param.expectTilingData,
+                        param.expectWorkspaces, param.mc2TilingDataReservedLen);
     }
 }
 
@@ -333,7 +332,11 @@ static void TestExecMultiThread(const QuantReduceScatterTestParam *testCases, si
 
 TEST_P(TestQuantReduceScatterTiling, general_cases)
 {
-    TestOneParamCase(GetParam());
+    auto param = GetParam();
+    auto tilingContextPara = BuildTilingContextPara(param);
+    Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", param.rankNum}};
+    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, param.status, param.expectTilingKey,
+                       param.expectTilingData, param.expectWorkspaces, param.mc2TilingDataReservedLen);
 }
 
 TEST_F(TestQuantReduceScatterTiling, general_cases_multi_thread)

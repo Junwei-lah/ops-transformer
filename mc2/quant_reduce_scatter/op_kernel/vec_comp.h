@@ -17,6 +17,8 @@
 #define VEC_COMP_H
 
 
+#include "adv_api/pad/broadcast.h"
+
 namespace VectorComputeImpl {
 
 using namespace AscendC;

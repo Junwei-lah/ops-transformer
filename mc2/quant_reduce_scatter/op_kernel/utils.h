@@ -15,8 +15,14 @@
 
 #ifndef UTILS_H
 #define UTILS_H
+
+#if __has_include("../common/inc/kernel/mc2_kernel_utils.h")
+#include "../common/inc/kernel/mc2_kernel_utils.h"
+#else
+#include "../../common/inc/kernel/mc2_kernel_utils.h"
+#endif
 namespace AscendC {
-constexpr static int64_t MAX_RANK_NUM = 32;  // 支持的最大卡数
+constexpr static int64_t MAX_RANK_NUM = 64;  // 支持的最大卡数
 struct HcclA5OpResParam {
     uint64_t workSpace; // client 和server 之间通信的地址
     uint64_t workSpaceSize; // client和server之间通信空间的大小
@@ -32,15 +38,6 @@ struct HcclA5OpResParam {
     uint64_t msAddr; // MS地址，预留
     uint64_t msSize; // 可写的MS个数，预留
 };
-
-// 同步函数：等待指定事件完成
-template <AscendC::HardEvent event>
-__aicore__ inline void SyncFunc()
-{
-    int32_t eventID = static_cast<int32_t>(GetTPipePtr()->FetchEventID(event));
-    AscendC::SetFlag<event>(eventID);
-    AscendC::WaitFlag<event>(eventID);
-}
 
 // 向上取整除法：计算a除以b的向上取整结果
 __aicore__ inline uint64_t CeilDiv(uint64_t a, uint32_t b)

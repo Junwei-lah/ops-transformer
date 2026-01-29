@@ -55,7 +55,7 @@ void AlltoAllMM::EstimateKernelTime()
  */
 void AlltoAllMM::SetCommTimeFactor()
 {
-    // 时间因子AlltoAll暂时定义为2
+    // A5上的时间因子AlltoAll暂时定义为2
     commPerf_.ChangeCommTimeFactorByDivision(TWO); // 2x time of factor
 }
 

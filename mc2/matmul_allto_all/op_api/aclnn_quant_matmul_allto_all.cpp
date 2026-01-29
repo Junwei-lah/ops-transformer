@@ -234,6 +234,42 @@ static bool ReFormatNotND(const aclTensor* x1, const aclTensor* x2, const aclTen
     return true;
 }
 
+// 根据API定义，列出quant_matmul_allto_all pertoken-perchannel K-C量化输入X所能支持的所有dtype
+static const std::initializer_list<op::DataType> X_DTYPE_KC_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT8_E4M3FN, op::DataType::DT_FLOAT8_E5M2
+};
+
+// 根据API定义，列出quant_matmul_allto_all pertoken-perchannel K-C量化输入Scale所能支持的所有dtype
+static const std::initializer_list<op::DataType> SCALES_DTYPE_KC_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT
+};
+
+// 根据API定义，列出quant_matmul_allto_all pertoken-perchannel K-C量化输入Bias所能支持的所有dtype
+static const std::initializer_list<op::DataType> BIAS_DTYPE_KC_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT
+};
+
+// 根据API定义，列出quant_matmul_allto_all pertoken-perchannel K-C量化输出Output所能支持的所有dtype
+static const std::initializer_list<op::DataType> OUTPUT_DTYPE_KC_SUPPORT_LIST = {
+    op::DataType::DT_FLOAT16, op::DataType::DT_BF16, op::DataType::DT_FLOAT
+};
+
+// 检查输入、属性、输出数据类型是否在K-C量化的支持列表之内
+static bool CheckKCDtypesValid(const aclTensor* x1, const aclTensor* x2,
+                               const aclTensor* x1Scale, const aclTensor* x2Scale,
+                               const aclTensor* biasOptional, const aclTensor* output)
+{
+    OP_CHECK_DTYPE_NOT_SUPPORT(x1, X_DTYPE_KC_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(x2, X_DTYPE_KC_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(x1Scale, SCALES_DTYPE_KC_SUPPORT_LIST, return false);
+    OP_CHECK_DTYPE_NOT_SUPPORT(x2Scale, SCALES_DTYPE_KC_SUPPORT_LIST, return false);
+    if (biasOptional != nullptr) {
+        OP_CHECK_DTYPE_NOT_SUPPORT(biasOptional, BIAS_DTYPE_KC_SUPPORT_LIST, return false);
+    }
+    OP_CHECK_DTYPE_NOT_SUPPORT(output, OUTPUT_DTYPE_KC_SUPPORT_LIST, return false);
+    return true;
+}
+
 static const std::initializer_list<op::DataType> DTYPE_SUPPORT_LIST_X = {
     op::DataType::DT_INT8
 };
@@ -284,7 +320,11 @@ static bool CheckDtypesValid(const aclTensor* x1, const aclTensor* x2,
     bool isAllDtypesValid = false;
     // 目前只有KC量化场景，后续场景直接在这里补充判断
     if (static_cast<QuantModeType>(x1QuantMode) == QuantModeType::PERTOKEN_QUANT && static_cast<QuantModeType>(x2QuantMode) == QuantModeType::PERCHANNEL_QUANT) {
-        isAllDtypesValid = CheckKCBiasDtypesValid(x1, x2, x1Scale, x2Scale, biasOptional, output);
+        if(op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910B) {
+            isAllDtypesValid = CheckKCBiasDtypesValid(x1, x2, x1Scale, x2Scale, biasOptional, output);
+        } else {
+            isAllDtypesValid = CheckKCDtypesValid(x1, x2, x1Scale, x2Scale, biasOptional, output);
+        }
     }
     if (!isAllDtypesValid) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -418,11 +458,10 @@ extern "C" aclnnStatus aclnnQuantMatmulAlltoAllGetWorkspaceSize(const aclTensor*
 extern "C" aclnnStatus aclnnQuantMatmulAlltoAll(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream)
 {
     if (NnopbaseSetHcclServerType) {
-        if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B) {
-            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE);
+        if (GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_CCU);
         } else {
-            OP_LOGE(ACLNN_ERR_INNER,
-                "This is an error in launch aicore, aclnnMatmulAlltoAll only support ASCEND910B.");
+            NnopbaseSetHcclServerType(executor, NnopbaseHcclServerType::NNOPBASE_HCCL_SERVER_TYPE_MTE);
         }
     }
     aclnnStatus ret = aclnnInnerMatmulAlltoAll(workspace, workspaceSize, executor, stream);

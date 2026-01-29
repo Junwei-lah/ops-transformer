@@ -162,7 +162,6 @@ public:
         ubOffset += TileShape::COUNT * sizeof(float);
         ubPerTokenScaleBrcb = resource.ubBuf.template GetBufferByByte<float>(ubOffset);
         ubOffset += TileShape::ROW * BYTE_PER_BLK;
-        // AscendC::printf("ubOffset: %d\n", ubOffset);
         ubPerTokenMul = ubMul;
         ubBiasAdd = ubMul;
     }
@@ -219,7 +218,6 @@ public:
         uint32_t subblockNum = AscendC::GetSubBlockNum();
 
         for (uint32_t loopIdx = subblockIdx; loopIdx < tileLoops; loopIdx += subblockNum) {
-            // AscendC::printf("start dequant! tileLoops: %d\n", tileLoops);
             auto tileCoord = epilogueTileSwizzle.GetTileCoord(loopIdx);
             auto actualTileShape = epilogueTileSwizzle.GetActualTileShape(tileCoord);
             auto tileOffsetInBlock = tileCoord * tileShape;
@@ -232,7 +230,6 @@ public:
             LayoutC layoutUbC{actualTileShape, ubTileStride};
             // 把 C 从GM拷贝到UB
             AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(eventUbCVMTE2List[ubListId]);
-            // AscendC::DumpTensor(gmTileC, 236, 258);
             copyGmToUbC(ubC, gmTileC, layoutUbC, layoutGmTileC);
             AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(eventUbCMTE2VList[ubListId]);
  
@@ -291,7 +288,7 @@ public:
                 AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(eventUbBiasVMTE2List[ubListId]);
             }
  
-            // // 在UB上做广播乘法
+            // 在UB上做广播乘法
             AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(eventUbScaleMTE2VList[ubListId]);
             tileRowBroadcastMul(ubMul, ubCFp32, ubScale);
             AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(eventUbScaleVMTE2List[ubListId]);
@@ -319,7 +316,6 @@ public:
             // 将乘法结果从UB cast到D
             AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(eventUbDMTE3VList[ubListId]);
             AscendC::Cast(ubD, ubBiasAdd, AscendC::RoundMode::CAST_RINT, TileShape::COUNT);
-            // AscendC::DumpTensor(ubD, 323, 258);
             AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(eventUbDVMTE3List[ubListId]);
  
             auto gmTileD = gmBlockD[layoutBlockD.GetOffset(tileOffsetInBlock)];
