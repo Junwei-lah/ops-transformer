@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file kv_rms_norm_rope_cache_regbase_full_load_tiling.cpp
+ * \file kv_rms_norm_rope_cache_regbase_recompute_tiling.cpp
  * \brief
  */
 #include "kv_rms_norm_rope_cache_tiling.h"
@@ -32,20 +32,25 @@ constexpr static int64_t CONST_FIVE = 5;
 constexpr static int64_t CONST_SIX = 6;
 constexpr static int64_t CONST_SEVEN = 7;
 constexpr static int64_t CONST_EIGHT = 8;
+constexpr static int64_t CONST_TEN = 10;
+constexpr static int64_t CONST_ELEVEN = 11;
 constexpr static int64_t CONST_SIXTY_THREE = 63;
 
 constexpr static int64_t CONST_BRCFLAG_ZERO = 0;
 constexpr static int64_t CONST_BRCFLAG_ONE = 1;
 constexpr static int64_t CONST_BRCFLAG_TWO = 2;
+constexpr static int64_t BLOCK_SIZE = 32;
+constexpr static int64_t RECOMPUTE_REDUCE_SUM_BUFFER_BTYES = 32;
+constexpr static int64_t RECOMPUTE_BINARY_CACHE_BTYES = 2048;
 
 using namespace Ops::Base;
 
-bool KvRmsNormRopeCacheRegbaseFullLoadTiling::IsCapable()
+bool KvRmsNormRopeCacheRegbaseRecomputeTiling::IsCapable()
 {
     return isRegbase_;
 }
 
-bool KvRmsNormRopeCacheRegbaseFullLoadTiling::CheckScaleOffsetShape(
+bool KvRmsNormRopeCacheRegbaseRecomputeTiling::CheckScaleOffsetShape(
     const gert::StorageShape* inShape, int64_t lastDim, int64_t& brcFlag)
 {
     if (inShape == nullptr) {
@@ -65,14 +70,14 @@ bool KvRmsNormRopeCacheRegbaseFullLoadTiling::CheckScaleOffsetShape(
     return false;
 }
 
-bool KvRmsNormRopeCacheRegbaseFullLoadTiling::CheckInputDtype()
+bool KvRmsNormRopeCacheRegbaseRecomputeTiling::CheckInputDtype()
 {
     // kv dtype
     auto kvDesc = context_->GetInputDesc(KV_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context_, kvDesc);
     ge::DataType kvDtype = kvDesc->GetDataType();
     OP_CHECK_IF(
-        (kvDtype != ge::DT_FLOAT16 && kvDtype != ge::DT_BF16), OP_LOGE(context_->GetNodeName(), "kv dtype is invalid."),
+        (kvDtype != ge::DT_FLOAT && kvDtype != ge::DT_FLOAT16 && kvDtype != ge::DT_BF16), OP_LOGE(context_->GetNodeName(), "kv dtype is invalid."),
         return false);
 
     // gamma dtype
@@ -151,7 +156,22 @@ bool KvRmsNormRopeCacheRegbaseFullLoadTiling::CheckInputDtype()
     return true;
 }
 
-ge::graphStatus KvRmsNormRopeCacheRegbaseFullLoadTiling::DoOpTiling()
+int64_t KvRmsNormRopeCacheRegbaseRecomputeTiling::FindNearestPower2(const int64_t value)
+{
+    if (value <= CONST_ONE) {
+        return CONST_ZERO;
+    } else if (value <= CONST_TWO) {
+        return CONST_ONE;
+    } else if (value <= CONST_FOUR) {
+        return CONST_TWO;
+    } else {
+        const int64_t num = value - CONST_ONE;
+        const int64_t pow = CONST_SIXTY_THREE - __builtin_clzl(num);
+        return (CONST_ONE << pow);
+    }
+}
+
+ge::graphStatus KvRmsNormRopeCacheRegbaseRecomputeTiling::DoOpTiling()
 {
     auto kvShapeTuple = GetShapeTuple(context_, KV_INDEX);
     int64_t batchSize = std::get<SHAPE_IDX_B>(kvShapeTuple);
@@ -198,23 +218,13 @@ ge::graphStatus KvRmsNormRopeCacheRegbaseFullLoadTiling::DoOpTiling()
 
     // N = 1
     int64_t bs = batchSize * seqLen * numHead;
+    tilingData_.set_bs(bs);
     tilingData_.set_batchSize(batchSize);
     tilingData_.set_numHead(numHead);
     tilingData_.set_seqLength(seqLen);
     tilingData_.set_cacheLength(cacheLength_);
     tilingData_.set_dk(dk_);
-    tilingData_.set_halfDk(dk_ / CONST_TWO);
-    int64_t dkAlign = CeilAlign(dk_, static_cast<int64_t>(ubBlockSize_ / kvDtypeSize_));
-    int64_t dkB8Align = CeilAlign(dk_, static_cast<int64_t>(ubBlockSize_ / sizeof(int8_t)));
-    int64_t halfDkAlign = CeilAlign(tilingData_.get_halfDk(), (ubBlockSize_ / kvDtypeSize_));
-    tilingData_.set_dkAlign(dkAlign);
-    tilingData_.set_dkB8Align(dkB8Align);
-    tilingData_.set_halfDkAlign(halfDkAlign);
     tilingData_.set_dv(dv_);
-    int64_t dvAlign = CeilAlign(dv_, static_cast<int64_t>(ubBlockSize_ / kvDtypeSize_));
-    tilingData_.set_dvAlign(dvAlign);
-    int64_t dvB8Align = CeilAlign(dvAlign, static_cast<int64_t>(ubBlockSize_ / sizeof(int8_t)));
-    tilingData_.set_dvB8Align(dvB8Align);
     tilingData_.set_blockSize(blockSize_);
     tilingData_.set_reciprocal(reciprocal_);
     tilingData_.set_epsilon(epsilon_);
@@ -224,59 +234,47 @@ ge::graphStatus KvRmsNormRopeCacheRegbaseFullLoadTiling::DoOpTiling()
     tilingData_.set_vScaleType(vScaleType_);
     tilingData_.set_vOffsetType(vOffsetType_);
     tilingData_.set_cacheMode(currentCacheMode_);
-    int64_t kScaleOffsetUbSize = kScaleType_ > 0 ? K_SCALE_OFFSET_UB_NUM * halfDkAlign * sizeof(float) : 0;
-    int64_t vScaleOffsetUbSize = vScaleType_ > 0 ? V_SCALE_OFFSET_UB_NUM * dvAlign * sizeof(float) : 0;
-    int64_t gammaUbSize = dvAlign * kvDtypeSize_;
-    int64_t inCosSinUbSize = COS_SIN_UB_NUM * halfDkAlign * kvDtypeSize_;
-    int64_t inUbSize = std::max(dkAlign, dvAlign) * kvDtypeSize_;
-    int64_t kOutUbsize = 0;
-    int64_t vOutUbsize = 0;
-    // k量化场景
-    if (kScaleType_ > 0) {
-        if (isOutputKv_) {
-            kOutUbsize = dkB8Align * kvDtypeSize_ + dkB8Align * sizeof(int8_t);
-        } else {
-            kOutUbsize = dkB8Align * sizeof(int8_t);
-        }
-    } else {
-        kOutUbsize = dkAlign * kvDtypeSize_;
-    }
-    // v量化场景
-    if (vScaleType_ > 0) {
-        if (isOutputKv_) {
-            vOutUbsize = dvB8Align * kvDtypeSize_ + dvB8Align * sizeof(int8_t);
-        } else {
-            vOutUbsize = dvB8Align * kvDtypeSize_ + dvB8Align * sizeof(int8_t);
-        }
-    } else {
-        vOutUbsize = dvAlign * kvDtypeSize_;
-    }
-    int64_t outUbSize = std::max(kOutUbsize, vOutUbsize);
-    int64_t ropeWspSize = 2 * vlFp32_ * sizeof(float);
-    int64_t rmsNormWspSize = dvAlign * sizeof(float);
-    int64_t ubFactor =
-        (ubSize_ - UB_RESERVED_BYTE - kScaleOffsetUbSize - vScaleOffsetUbSize - gammaUbSize - ropeWspSize) /
-        (DOUBLE_BUFFER * inUbSize + DOUBLE_BUFFER * inCosSinUbSize + DOUBLE_BUFFER * outUbSize + rmsNormWspSize);
+
+    int64_t ubFlexible_ = ubSize_ - UB_RESERVED_BYTE - RECOMPUTE_REDUCE_SUM_BUFFER_BTYES - RECOMPUTE_BINARY_CACHE_BTYES;
+    int64_t ubFactor = FloorDiv(ubFlexible_, CONST_ELEVEN * DOUBLE_BUFFER * kvDtypeSize_);
+
     OP_CHECK_IF(
         (ubFactor <= 0),
         OP_LOGI(context_->GetNodeName(), "D full load template is not capable. dv is %ld, dk is %ld", dv_, dk_),
         return ge::GRAPH_PARAM_INVALID);
-    tilingData_.set_inUbSize(inUbSize);
-    tilingData_.set_outUbSize(outUbSize);
-    tilingData_.set_rmsNormWspSize(rmsNormWspSize);
 
+    // 1. slice datas along with the A-axis for all vector cores
     int64_t blockFactor = (bs + coreNum_ - 1) / coreNum_;
-    ubFactor = ubFactor < blockFactor ? ubFactor : blockFactor;
     usedCoreNum_ = (bs + blockFactor - 1) / blockFactor;
+    ubFactor = FloorDiv(ubFactor, CONST_TWO * BLOCK_SIZE) * CONST_TWO * BLOCK_SIZE;
+
+    // 2. slice datas along with the R-axis for every core
+    int64_t ubFactorDvLoopCountCeil = CeilDiv(dv_, ubFactor);
+    int64_t ubFactorDvLoopCountFloor = FloorDiv(dv_, ubFactor);
+    int64_t ubFactorDvTail = dv_ - ubFactor * ubFactorDvLoopCountFloor;
+    int64_t basicBlockLoop = FindNearestPower2(ubFactorDvLoopCountCeil);
+    int64_t mainFoldCount = ubFactorDvLoopCountFloor - basicBlockLoop;
+
+    int64_t ubFactorDkLoopCountCeil = CeilDiv(dk_, ubFactor);
+    int64_t ubFactorDkLoopCountFloor = FloorDiv(dk_, ubFactor);
+    int64_t ubFactorDkTail = dk_ - ubFactor * ubFactorDkLoopCountFloor;
+    
     tilingData_.set_blockFactor(blockFactor);
     tilingData_.set_ubFactor(ubFactor);
+    tilingData_.set_ubFactorDvTail(ubFactorDvTail);
+    tilingData_.set_ubFactorDvLoopCountCeil(ubFactorDvLoopCountCeil);
+    tilingData_.set_basicBlockLoop(basicBlockLoop);
+    tilingData_.set_mainFoldCount(mainFoldCount);
+    tilingData_.set_ubFactorDkTail(ubFactorDkTail);
+    tilingData_.set_ubFactorDkLoopCountCeil(ubFactorDkLoopCountCeil);  
+
     int64_t outputKvKey = isOutputKv_ == true ? 1 : 0;
     tilingData_.set_isOutputKv(outputKvKey);
-    tilingKey_ = FULL_LOAD_BASE_TILING_KEY;
+    tilingKey_ = NON_FULL_LOAD_BASE_TILING_KEY;
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus KvRmsNormRopeCacheRegbaseFullLoadTiling::PostTiling()
+ge::graphStatus KvRmsNormRopeCacheRegbaseRecomputeTiling::PostTiling()
 {
     context_->SetTilingKey(GetTilingKey());
     context_->SetBlockDim(usedCoreNum_);
@@ -287,5 +285,5 @@ ge::graphStatus KvRmsNormRopeCacheRegbaseFullLoadTiling::PostTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-REGISTER_OPS_TILING_TEMPLATE(KvRmsNormRopeCache, KvRmsNormRopeCacheRegbaseFullLoadTiling, TEMPLATE_D_FULL_LOAD_PRIORITY);
+REGISTER_OPS_TILING_TEMPLATE(KvRmsNormRopeCache, KvRmsNormRopeCacheRegbaseRecomputeTiling, TEMPLATE_D_RECOMPUTE_PRIORITY);
 } // namespace optiling

@@ -7,7 +7,6 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
 /*!
  * \file kv_rms_norm_rope_cache_ds_tiling.cpp
  * \brief
@@ -19,10 +18,12 @@
 #include "util/math_util.h"
 
 namespace optiling {
-constexpr int64_t RMS_NORM_LENGTH = 512;
+constexpr int64_t RMS_NORM_LENGTHS[2] = {512, 192};
+int64_t RMS_NORM_LENGTH = 512;
 constexpr int64_t ROPE_LENGTH = 64;
 constexpr int64_t MAX_BLOCK_DIM = 65535;
-
+constexpr int64_t V_LENGTH = 128;
+constexpr int64_t D_LENGTH = 576;
 constexpr uint64_t TLING_KEY_5011 = 5011;
 constexpr uint64_t TLING_KEY_5010 = 5010;
 constexpr uint64_t TLING_KEY_5000 = 5000;
@@ -33,8 +34,13 @@ constexpr uint64_t TLING_KEY_4000 = 4000;
 constexpr uint64_t TLING_KEY_5001 = 5001;
 constexpr uint64_t TLING_KEY_3001 = 3001;
 constexpr uint64_t TLING_KEY_3000 = 3000;
+constexpr uint64_t TLING_KEY_3010 = 3010;
 constexpr uint64_t TLING_KEY_2000 = 2000;
+constexpr uint64_t TLING_KEY_2001 = 2001;
 constexpr uint64_t TLING_KEY_1000 = 1000;
+constexpr uint64_t TLING_KEY_1010 = 1010;
+constexpr uint64_t TLING_KEY_1001 = 1001;
+constexpr uint64_t TLING_KEY_1011 = 1011;
 
 bool KvRmsNormRopeCacheTilingDs::CheckScaleValid(const gert::TilingContext* context)
 {
@@ -51,18 +57,85 @@ bool KvRmsNormRopeCacheTilingDs::CheckScaleValid(const gert::TilingContext* cont
     if (!isValid) {
         return false;
     }
-    if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
-        isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == ROPE_LENGTH);
-    } else if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
-        isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == DIM_ONE);
-        isValid = isValid && (scale1Shape->GetStorageShape().GetDim(1) == ROPE_LENGTH);
+    if(methodMode_ == 0){
+        if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == ROPE_LENGTH);
+        } else if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == DIM_ONE);
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(1) == ROPE_LENGTH);
+        }
+
+        if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == RMS_NORM_LENGTH);
+        } else if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == DIM_ONE);
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(1) == RMS_NORM_LENGTH);
+        }
+    }
+    else {
+        if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == RMS_NORM_LENGTH);
+        } else if (scale1Shape != nullptr && scale1Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(0) == tilingData_.get_numHead());
+            isValid = isValid && (scale1Shape->GetStorageShape().GetDim(1) == RMS_NORM_LENGTH);
+        }
+
+        if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == V_LENGTH);
+        } else if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == tilingData_.get_numHead());
+            isValid = isValid && (scale2Shape->GetStorageShape().GetDim(1) == V_LENGTH);
+        }
     }
 
-    if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
-        isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == RMS_NORM_LENGTH);
-    } else if (scale2Shape != nullptr && scale2Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
-        isValid = isValid && (scale2Shape->GetStorageShape().GetDim(0) == DIM_ONE);
-        isValid = isValid && (scale2Shape->GetStorageShape().GetDim(1) == RMS_NORM_LENGTH);
+    return isValid;
+}
+
+
+bool KvRmsNormRopeCacheTilingDs::CheckOffsetValid(const gert::TilingContext* context)
+{
+    auto offset1Shape = context->GetOptionalInputShape(K_ROPE_OFFSET_IDX);
+    auto offset2Shape = context->GetOptionalInputShape(C_KV_OFFSET_IDX);
+
+    bool isValid = true;
+    isValid = isValid && ((offset1Shape != nullptr) || (offset2Shape != nullptr));
+    if ((offset1Shape != nullptr) && (offset2Shape != nullptr)) {
+        isValid = isValid && (offset1Shape->GetStorageShape().GetDimNum() == offset2Shape->GetStorageShape().GetDimNum());
+    }
+    isValid = isValid && (((offset1Shape != nullptr) && (offset1Shape->GetStorageShape().GetDimNum() <= DIM_TWO)) ||
+                          ((offset2Shape != nullptr) && (offset2Shape->GetStorageShape().GetDimNum() <= DIM_TWO)));
+    if (!isValid) {
+        return false;
+    }
+    if(methodMode_ == 0){
+        if (offset1Shape != nullptr && offset1Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(0) == ROPE_LENGTH);
+        } else if (offset1Shape != nullptr && offset1Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(0) == DIM_ONE);
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(1) == ROPE_LENGTH); 
+        }
+
+        if (offset2Shape != nullptr && offset2Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(0) == RMS_NORM_LENGTH);
+        } else if (offset2Shape != nullptr && offset2Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(0) == DIM_ONE);
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(1) == RMS_NORM_LENGTH);
+        }
+    }
+    else {
+        if (offset1Shape != nullptr && offset1Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(0) == RMS_NORM_LENGTH);
+        } else if (offset1Shape != nullptr && offset1Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(0) == tilingData_.get_numHead());
+            isValid = isValid && (offset1Shape->GetStorageShape().GetDim(1) == RMS_NORM_LENGTH); 
+        }
+
+        if (offset2Shape != nullptr && offset2Shape->GetStorageShape().GetDimNum() == DIM_ONE) {
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(0) == V_LENGTH);
+        } else if (offset2Shape != nullptr && offset2Shape->GetStorageShape().GetDimNum() == DIM_TWO) {
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(0) == tilingData_.get_numHead());
+            isValid = isValid && (offset2Shape->GetStorageShape().GetDim(1) == V_LENGTH);
+        }
     }
     return isValid;
 }
@@ -76,12 +149,14 @@ void KvRmsNormRopeCacheTilingDs::DoOpTilingPaBlkNz()
 {
     int64_t batchSize = tilingData_.get_batchSize();
     int64_t seqLen = tilingData_.get_seqLength();
-    int64_t bs = batchSize * seqLen;
-    int64_t blockFactor = (bs + coreNum_ - 1) / coreNum_;
-    int64_t blockDim = (bs + blockFactor - 1) / blockFactor;
+    int64_t numHead = tilingData_.get_numHead();
+    int64_t bns = batchSize * numHead * seqLen;
+    int64_t blockFactor = (bns + coreNum_ - 1) / coreNum_;
+    int64_t blockDim = (bns + blockFactor - 1) / blockFactor;
     tilingData_.set_blockFactor(blockFactor);
     tilingData_.set_blockDim(blockDim);
-    constexpr static int64_t maxUbFactor = static_cast<int64_t>(16);
+
+    int64_t maxUbFactor = (methodMode_ == 1) ? 32 : 16;
     constexpr static int64_t needUbSize = static_cast<int64_t>(170) * static_cast<int64_t>(1024);
     if (static_cast<int64_t>(ubSize_) >= static_cast<int64_t>(needUbSize)) {
         tilingData_.set_ubFactor(maxUbFactor);
@@ -92,6 +167,7 @@ void KvRmsNormRopeCacheTilingDs::DoOpTilingPaBlkNz()
 
 ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 {
+    RMS_NORM_LENGTH = RMS_NORM_LENGTHS[methodMode_];
     auto kvShapeTuple = GetShapeTuple(context_, KV_INDEX);
     tilingData_.set_batchSize(std::get<SHAPE_IDX_B>(kvShapeTuple));
     tilingData_.set_numHead(std::get<SHAPE_IDX_N>(kvShapeTuple));
@@ -100,6 +176,8 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
     tilingData_.set_blockSize(blockSize_);
     tilingData_.set_reciprocal(reciprocal_);
     tilingData_.set_epsilon(epsilon_);
+    tilingData_.set_methodMode(methodMode_);
+
     if (isOutputKv_) {
         tilingData_.set_isOutputKv(1);
     } else {
@@ -112,16 +190,34 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
             return ge::GRAPH_FAILED);
     }
 
+    if (((!isRegbase_) && (quantMode_ > 1))) {
+        OP_CHECK_IF(
+            !CheckOffsetValid(context_), OP_LOGE(context_->GetNodeName(), "quant offset shape check failed."),
+            return ge::GRAPH_FAILED);
+    }
     OP_CHECK_IF(
         (!isRegbase_) && (dk_ != ROPE_LENGTH), OP_LOGE(context_->GetNodeName(), "rope last dim only support 64."),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(
         (!isRegbase_) && (dv_ != RMS_NORM_LENGTH),
-        OP_LOGE(context_->GetNodeName(), "rms_norm last dim only support 512."), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(
+        OP_LOGE(context_->GetNodeName(), "rms_norm last dim only support 512 or 192."), return ge::GRAPH_FAILED);
+            
+    if(methodMode_ == 0){
+        OP_CHECK_IF(
         (!isRegbase_) && (currentCacheMode_ == CacheMode::Norm) && (quantMode_ == QUANT_MODE),
         OP_LOGE(context_->GetNodeName(), "CacheMode::Norm do not support quant!"), return ge::GRAPH_FAILED);
-
+        OP_CHECK_IF(
+        (!isRegbase_) && (kv_ != D_LENGTH),
+        OP_LOGE(context_->GetNodeName(), "rms_norm last dim only support 576."), return ge::GRAPH_FAILED);
+    } else {
+        OP_CHECK_IF(
+            (!isRegbase_) && (vlen_ != V_LENGTH),
+            OP_LOGE(context_->GetNodeName(), "Tensor v last dim only support 128."), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            (!isRegbase_) && (quantMode_ != NON_QUANT_MODE && quantMode_ != QUANT_MODE),
+            OP_LOGE(context_->GetNodeName(), "Only Support QUANT or NON_QUANT."), return ge::GRAPH_FAILED);
+    }
+    
     auto scale1Shape = context_->GetOptionalInputShape(K_ROPE_SCALE_IDX);
     auto scale2Shape = context_->GetOptionalInputShape(C_KV_SCALE_IDX);
     if (scale1Shape != nullptr) {
@@ -135,7 +231,7 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
         tilingData_.set_isVQuant(0);
     }
 
-    if (currentCacheMode_ == CacheMode::PA && quantMode_ == QUANT_MODE) {
+    if (currentCacheMode_ == CacheMode::PA && quantMode_ != NON_QUANT_MODE) {
         DoOpTilingPaBlkNz();
         tilingKey_ = TLING_KEY_5011;
         return ge::GRAPH_SUCCESS;
@@ -143,7 +239,7 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 
     if (currentCacheMode_ == CacheMode::PA_BLK_BNSD) {
         DoOpTilingPaBlkNz();
-        if (quantMode_ == QUANT_MODE) {
+        if (quantMode_ != NON_QUANT_MODE) {
             tilingKey_ = TLING_KEY_5010;
         } else {
             tilingKey_ = TLING_KEY_5000;
@@ -153,7 +249,7 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 
     if (currentCacheMode_ == CacheMode::PA_NZ) {
         DoOpTilingPaBlkNz();
-        if (quantMode_ == QUANT_MODE) {
+        if (quantMode_ != NON_QUANT_MODE) {
             tilingKey_ = TLING_KEY_4011;
         } else {
             tilingKey_ = TLING_KEY_4001;
@@ -163,7 +259,7 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 
     if (currentCacheMode_ == CacheMode::PA_BLK_NZ) {
         DoOpTilingPaBlkNz();
-        if (quantMode_ == QUANT_MODE) {
+        if (quantMode_ != NON_QUANT_MODE) {
             tilingKey_ = TLING_KEY_4010;
         } else {
             tilingKey_ = TLING_KEY_4000;
@@ -181,14 +277,16 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 
     int64_t batchSize = tilingData_.get_batchSize();
     int64_t seqLen = tilingData_.get_seqLength();
+    int64_t numHead = tilingData_.get_numHead();
 
     if (IsB1SD(context_)) {
-        int64_t bs = batchSize * seqLen;
-        int64_t blockFactor = (bs + coreNum_ - 1) / coreNum_;
-        int64_t blockDim = (bs + blockFactor - 1) / blockFactor;
+        int64_t bns = batchSize * numHead * seqLen;
+        int64_t blockFactor = (bns + coreNum_ - 1) / coreNum_;
+        int64_t blockDim = (bns + blockFactor - 1) / blockFactor;
         tilingData_.set_blockFactor(blockFactor);
         tilingData_.set_blockDim(blockDim);
-        constexpr static int64_t maxUbFactor = static_cast<int64_t>(16);
+        
+        int64_t maxUbFactor = (methodMode_ == 1) ? 32 : 16;
         constexpr static int64_t needUbSize = static_cast<int64_t>(170) * static_cast<int64_t>(1024);
         if (static_cast<int64_t>(ubSize_) >= static_cast<int64_t>(needUbSize)) {
             tilingData_.set_ubFactor(maxUbFactor);
@@ -209,23 +307,51 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
             OP_LOGE(context_->GetNodeName(), "blockDim must be smaller than 65535."), return ge::GRAPH_FAILED);
     }
 
-    if (IsB1SD(context_)) {
-        if (isPagedAttention_) {
-            tilingKey_ = TLING_KEY_3001;
+    if (methodMode_ == 1) {
+        if (!isPagedAttention_ && quantMode_ == NON_QUANT_MODE) {
+            tilingData_.set_isOutputKv(0);
+        }
+        if (IsB1SD(context_)) {
+            if (isPagedAttention_) {
+                tilingKey_ = TLING_KEY_3001;
+            } else if (!isPagedAttention_ && quantMode_ == NON_QUANT_MODE) {
+                tilingKey_ = TLING_KEY_3000;
+            } else {
+                tilingKey_ = TLING_KEY_3010;
+            }
         } else {
-            tilingKey_ = TLING_KEY_3000;
+            if (isPagedAttention_) {
+                tilingKey_ = TLING_KEY_2000;
+            } else if (!isPagedAttention_ && quantMode_ == NON_QUANT_MODE) {
+                tilingKey_ = TLING_KEY_1000;
+            } else if (!isPagedAttention_ && quantMode_ > NON_QUANT_MODE) {
+                tilingKey_ = TLING_KEY_1010;
+            }
+            if (isMTP_) {
+                tilingKey_ += 1;
+            }
         }
     } else {
-        if (isPagedAttention_) {
-            tilingKey_ = TLING_KEY_2000;
-        } else {
-            tilingKey_ = TLING_KEY_1000;
-        }
-        if (isMTP_) {
-            tilingKey_ += 1;
-        }
+            if (IsB1SD(context_)) {
+                if (!isPagedAttention_ && quantMode_ == NON_QUANT_MODE) {
+                    tilingData_.set_isOutputKv(0);
+                }
+                if (isPagedAttention_) {
+                    tilingKey_ = TLING_KEY_3001;
+                } else {
+                    tilingKey_ = TLING_KEY_3000;
+                }
+            } else {
+                if (isPagedAttention_) {
+                    tilingKey_ = TLING_KEY_2000;
+                } else {
+                    tilingKey_ = TLING_KEY_1000;
+                }
+                if (isMTP_) {
+                    tilingKey_ += 1;
+                }
+            }
     }
-
     return ge::GRAPH_SUCCESS;
 }
 

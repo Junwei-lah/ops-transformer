@@ -39,6 +39,7 @@ struct KvRmsNormRopeCacheTilingData {
     int8_t isOutputKv = true;
     int8_t isKQuant = 1;
     int8_t isVQuant = 1;
+    int64_t methodMode = 0;
 };
 #define DTYPE_KV half
 #define DTYPE_K_CACHE int8_t
@@ -75,9 +76,20 @@ inline void InitTilingData(uint8_t* tiling, KvRmsNormRopeCacheTilingData* const_
     KvRmsNormRopeCacheTilingData tilingData;                                          \
     INIT_TILING_DATA(KvRmsNormRopeCacheTilingData, tilingDataPointer, tilingPointer); \
     (tilingData).blockDim = tilingDataPointer->blockDim;                              \
+    (tilingData).rowsPerBlock = tilingDataPointer->rowsPerBlock;                      \
     (tilingData).cacheLength = tilingDataPointer->cacheLength;                        \
+    (tilingData).batchSize = tilingDataPointer->batchSize;                            \
+    (tilingData).numHead = tilingDataPointer->numHead;                                \
+    (tilingData).seqLength = tilingDataPointer->seqLength;                            \
+    (tilingData).blockSize = tilingDataPointer->blockSize;                            \
+    (tilingData).blockFactor = tilingDataPointer->blockFactor;                        \
+    (tilingData).ubFactor = tilingDataPointer->ubFactor;                              \
     (tilingData).epsilon = tilingDataPointer->epsilon;                                \
-    (tilingData).reciprocal = tilingDataPointer->reciprocal;
+    (tilingData).reciprocal = tilingDataPointer->reciprocal;                          \
+    (tilingData).isOutputKv = tilingDataPointer->isOutputKv;                          \
+    (tilingData).isKQuant = tilingDataPointer->isKQuant;                              \
+    (tilingData).isVQuant = tilingDataPointer->isVQuant;                              \
+    (tilingData).methodMode = tilingDataPointer->methodMode;
 #endif
 
 #ifndef _KV_RMS_NORM_ROPE_CACHE_TILING_H_
@@ -106,6 +118,7 @@ struct KvRmsNormRopeCacheTilingData {
     int8_t isOutputKv = true;
     int8_t isKQuant = 1;
     int8_t isVQuant = 1;
+    int64_t methodMode = 0;
 };
 #define DTYPE_KV half
 #define DTYPE_K_CACHE int8_t
@@ -123,7 +136,18 @@ struct KvRmsNormRopeCacheTilingData {
     KvRmsNormRopeCacheTilingData tilingData;                                          \
     INIT_TILING_DATA(KvRmsNormRopeCacheTilingData, tilingDataPointer, tilingPointer); \
     (tilingData).blockDim = tilingDataPointer->blockDim;                              \
+    (tilingData).rowsPerBlock = tilingDataPointer->rowsPerBlock;                      \
     (tilingData).cacheLength = tilingDataPointer->cacheLength;                        \
+    (tilingData).batchSize = tilingDataPointer->batchSize;                            \
+    (tilingData).numHead = tilingDataPointer->numHead;                                \
+    (tilingData).seqLength = tilingDataPointer->seqLength;                            \
+    (tilingData).blockSize = tilingDataPointer->blockSize;                            \
+    (tilingData).blockFactor = tilingDataPointer->blockFactor;                        \
+    (tilingData).ubFactor = tilingDataPointer->ubFactor;                              \
     (tilingData).epsilon = tilingDataPointer->epsilon;                                \
-    (tilingData).reciprocal = tilingDataPointer->reciprocal;
+    (tilingData).reciprocal = tilingDataPointer->reciprocal;                          \
+    (tilingData).isOutputKv = tilingDataPointer->isOutputKv;                          \
+    (tilingData).isKQuant = tilingDataPointer->isKQuant;                              \
+    (tilingData).isVQuant = tilingDataPointer->isVQuant;                              \
+    (tilingData).methodMode = tilingDataPointer->methodMode;
 #endif

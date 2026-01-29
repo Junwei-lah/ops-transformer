@@ -42,8 +42,13 @@ __aicore__ inline int64_t Aligned(int64_t x, int64_t y)
 
 }  // namespace ops
 
-namespace platform 
+namespace platform {
+
+__aicore__ inline constexpr uint32_t GetVRegSize()
 {
+   return AscendC::VECTOR_REG_WIDTH;
+}
+
 __aicore__ inline constexpr uint32_t GetUbBlockSize()
 {
    return 32U;

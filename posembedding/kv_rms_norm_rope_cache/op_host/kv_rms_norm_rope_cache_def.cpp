@@ -13,6 +13,7 @@
  * \brief KvRmsNormRopeCache op host config
  */
 #include "register/op_def_registry.h"
+constexpr uint32_t KV_RMS_NORM_ROPE_CACHE_VERSION_TWO = 2;
 
 namespace ops {
 class KvRmsNormRopeCache : public OpDef {
@@ -144,6 +145,19 @@ public:
             .DataType(
                 {ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT,
                  ge::DT_FLOAT})
+            .Format(
+                {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                 ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat(
+                {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                 ge::FORMAT_ND, ge::FORMAT_ND})
+            .AutoContiguous();
+        this->Input("v")
+            .ParamType(OPTIONAL)
+            .Version(KV_RMS_NORM_ROPE_CACHE_VERSION_TWO)
+            .DataType(
+                {ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16,
+                 ge::DT_BF16})
             .Format(
                 {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                  ge::FORMAT_ND, ge::FORMAT_ND})
@@ -334,6 +348,19 @@ public:
                 {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                  ge::FORMAT_ND, ge::FORMAT_ND})
             .AutoContiguous();
+        config_910_95.Input("v")
+            .ParamType(OPTIONAL)
+            .Version(KV_RMS_NORM_ROPE_CACHE_VERSION_TWO)
+            .DataType(
+                {ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16,
+                 ge::DT_BF16})
+            .Format(
+                {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                 ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat(
+                {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
+                 ge::FORMAT_ND, ge::FORMAT_ND})
+            .AutoContiguous();
         config_910_95.Output("k_cache")
             .ParamType(REQUIRED)
             .DataType(
@@ -378,8 +405,10 @@ public:
             .UnknownShapeFormat(
                 {ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                  ge::FORMAT_ND, ge::FORMAT_ND});
-        config_910_95.DynamicCompileStaticFlag(true).DynamicShapeSupportFlag(true).ExtendCfgInfo(
-            "opFile.value", "kv_rms_norm_rope_cache_apt");
+        config_910_95.DynamicCompileStaticFlag(true)
+            .DynamicShapeSupportFlag(true)
+            .DynamicRankSupportFlag(true)
+            .ExtendCfgInfo("opFile.value", "kv_rms_norm_rope_cache_apt");
         this->AICore().AddConfig("ascend910_95", config_910_95);
 
         OpAICoreConfig config_kirin = GetKirinCoreConfig();

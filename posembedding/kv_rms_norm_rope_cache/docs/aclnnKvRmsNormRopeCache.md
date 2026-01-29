@@ -1,5 +1,7 @@
 # aclnnKvRmsNormRopeCache
 
+[📄 查看源码](https://gitcode.com/cann/ops-nn/tree/master/norm/kv_rms_norm_rope_cache)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -7,6 +9,10 @@
 | <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品 </term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
+
 
 ## 功能说明
 
@@ -66,12 +72,39 @@
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnKvRmsNormRopeCacheGetWorkspaceSize”接口获得入参并根据流程计算所需workspace大小，再调用“aclnnKvRmsNormRopeCache”接口执行计算。
 
-* `aclnnStatus aclnnKvRmsNormRopeCacheGetWorkspaceSize(const aclTensor* kv, const aclTensor* gamma, const aclTensor* cos, const aclTensor* sin, const aclTensor* index, aclTensor* kCacheRef, aclTensor* ckvCacheRef, const aclTensor* kRopeScaleOptional, const aclTensor* ckvScaleOptional, const aclTensor* kRopeOffsetOptional, const aclTensor* cKvOffsetOptional, double epsilon, char* cacheModeOptional, bool isOutputKv, aclTensor* kRopeOut, aclTensor* cKvOut,uint64_t workspaceSize, aclOpExecutor* executor)`
-* `aclnnStatus aclnnKvRmsNormRopeCache(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)`
+```Cpp
+aclnnStatus aclnnKvRmsNormRopeCacheGetWorkspaceSize(
+  const aclTensor* kv, 
+  const aclTensor* gamma, 
+  const aclTensor* cos, 
+  const aclTensor* sin, 
+  const aclTensor* index, 
+  aclTensor*       kCacheRef, 
+  aclTensor*       ckvCacheRef, 
+  const aclTensor* kRopeScaleOptional, 
+  const aclTensor* ckvScaleOptional, 
+  const aclTensor* kRopeOffsetOptional, 
+  const aclTensor* cKvOffsetOptional, 
+  double           epsilon, 
+  char*            cacheModeOptional, 
+  bool             isOutputKv, 
+  aclTensor*       kRopeOut, 
+  aclTensor*       cKvOut,
+  uint64_t         workspaceSize, 
+  aclOpExecutor*   executor)
+```
+
+```Cpp
+aclnnStatus aclnnKvRmsNormRopeCache(
+  void*          workspace, 
+  uint64_t       workspaceSize, 
+  aclOpExecutor* executor, 
+  aclrtStream    stream)
+```
 
 ## aclnnKvRmsNormRopeCacheGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
   * kv(aclTensor\*，计算输入)：必选参数，公式中用于切分出rms_norm计算所需数据Dv和RoPE计算所需数据Dk的输入数据。Device侧的aclTensor，支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)。shape仅支持4维[Bkv,N,Skv,D]。[数据格式](../../../docs/zh/context/数据格式.md)支持ND，数据类型支持FLOAT6、BFLOAT16。
   * gamma(aclTensor\*，计算输入)：必选参数，公式中用于rms_norm计算的输入数据。Device侧的aclTensor，支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)。shape为1维[Dv,]。[数据格式](../../../docs/zh/context/数据格式.md)支持ND。数据类型与输入kv一致。
   * cos(aclTensor\*，计算输入)：必选参数，公式中用于RoPE计算的输入数据，对输入张量Dk进行余弦变换，Device侧的aclTensor，支持[非连续的Tensor](../../../docs/zh/context/非连续的Tensor.md)。shape为4维[Bkv,1,Skv,Dk]或[Bkv,1,1,Dk]，[数据格式](../../../docs/zh/context/数据格式.md)支持ND。数据类型与输入kv一致。
@@ -91,30 +124,91 @@
   * workspaceSize(uint64_t\*，出参)：返回需要在Device侧申请的workspace大小。
   * executor(aclOpExecutor\*\*，出参)：返回op执行器，包含了算子计算流程。
 
-- **返回值：**
+- **返回值**
+
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-  ```
   第一段接口完成入参校验，出现以下场景时报错：
-    返回161001(ACLNN_ERR_PARAM_NULLPTR)：输入和输出Tensor是空指针。
-    返回161002(ACLNN_ERR_PARAM_INVALID): 输入和输出数据类型不在支持的范围内。
-    返回561002(ACLNN_ERR_INNER_TILING_ERROR): 算子tiling过程中触发主动拦截，包括如下情况：
-      1. 参数kv、gamma、cos、sin、index、kCacheRef、ckvCacheRef、kRopeScaleOptional、ckvScaleOptional、kRopeOffsetOptional、cKvOffsetOptional的shape校验非法。
-      2. 参数kv、gamma、cos、sin、index、kCacheRef、ckvCacheRef、kRopeScaleOptional、ckvScaleOptional、kRopeOffsetOptional、cKvOffsetOptional的dtype校验非法。
-      3. PA场景（cacheModeOptional为PA、PA_BNSD、PA_NZ、PA_BLK_BNSD、PA_BLK_NZ）下，cache的BlockSize维度值校验非法。
-      4. NZ场景（cacheModeOptional为PA_NZ、PA_BLK_NZ）下，Dk、Dv的维度值校验非法。
-  ```
+
+  <table style="undefined;table-layout: fixed; width: 1260px"><colgroup>
+  <col style="width: 325px">
+  <col style="width: 126px">
+  <col style="width: 809px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>返回值</th>
+      <th>错误码</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>ACLNN_ERR_PARAM_NULLPTR</td>
+      <td>161001</td>
+      <td>输入和输出Tensor是空指针。</td>
+    </tr>
+    <tr>
+      <td>ACLNN_ERR_PARAM_INVALID</td>
+      <td>161002</td>
+      <td>输入和输出数据类型不在支持的范围内。</td>
+    </tr>
+    <tr>
+      <td rowspan="4">ACLNN_ERR_INNER_TILING_ERROR</td>
+      <td rowspan="4">561002</td>
+      <td>参数kv、gamma、cos、sin、index、kCacheRef、ckvCacheRef、kRopeScaleOptional、ckvScaleOptional、kRopeOffsetOptional、cKvOffsetOptional的shape校验非法。</td>
+    </tr>
+    <tr>
+      <td>参数kv、gamma、cos、sin、index、kCacheRef、ckvCacheRef、kRopeScaleOptional、ckvScaleOptional、kRopeOffsetOptional、cKvOffsetOptional的dtype校验非法。</td>
+    </tr>
+    <tr>
+      <td>PA场景（cacheModeOptional为PA、PA_BNSD、PA_NZ、PA_BLK_BNSD、PA_BLK_NZ）下，cache的BlockSize维度值校验非法。</td>
+    </tr>
+    <tr>
+      <td>NZ场景（cacheModeOptional为PA_NZ、PA_BLK_NZ）下，Dk、Dv的维度值校验非法。</td>
+    </tr>
+  </tbody>
+  </table>
 
 ## aclnnKvRmsNormRopeCache
 
-- **参数说明：**
+- **参数说明**
   
-  * workspace(void\*，入参)：在Device侧申请workspace内存地址。
-  * workspaceSize(uint64_t，入参)：在Device侧申请的workspace大小，由第一段接口clnnKvRmsNormRopeCacheGetWorkspaceSize获取。
-  * executor(aclOpExecutor\*，入参)：op执行器，包含了算子计算流程。
-  * stream(aclrtStream，入参)：指定执行任务的Stream。
+  <table style="undefined;table-layout: fixed; width: 1150px"><colgroup>
+  <col style="width: 168px">
+  <col style="width: 128px">
+  <col style="width: 854px">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>参数名</th>
+      <th>输入/输出</th>
+      <th>描述</th>
+    </tr></thead>
+  <tbody>
+    <tr>
+      <td>workspace</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace内存地址。</td>
+    </tr>
+    <tr>
+      <td>workspaceSize</td>
+      <td>输入</td>
+      <td>在Device侧申请的workspace大小，由第一段接口clnnKvRmsNormRopeCacheGetWorkspaceSize获取。</td>
+    </tr>
+    <tr>
+      <td>executor</td>
+      <td>输入</td>
+      <td>op执行器，包含了算子计算流程。</td>
+    </tr>
+    <tr>
+      <td>stream</td>
+      <td>输入</td>
+      <td>指定执行任务的Stream。</td>
+    </tr>
+  </tbody>
+  </table>
 
-- **返回值：**
+- **返回值**
   
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
