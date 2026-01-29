@@ -9,12 +9,12 @@
  */
 
 /*!
- * \file quant_matmul_all_reduce_tiling_910_95.cc
+ * \file quant_matmul_all_reduce_tiling_950.cc
  * \brief
  */
-#ifndef _QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
-#define _QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
-#include "quant_matmul_all_reduce_tiling_910_95.h"
+#ifndef _QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_
+#define _QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_
+#include "quant_matmul_all_reduce_tiling_950.h"
 #include "op_mc2.h"
 #include "mc2_log.h"
 #include "util/math_util.h"
@@ -834,7 +834,7 @@ void QuantTilingTransferHelperA5::PrintTilingInputParam(Mc2QuantBatchMatmulInfo 
 }
 
 //注册tiling类
-REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,QuantMatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND910_95),0);
+REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,QuantMatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND950),0);
 } // namespace optiling
 
-#endif //_QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
+#endif //_QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_

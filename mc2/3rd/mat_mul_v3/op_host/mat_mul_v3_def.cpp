@@ -134,7 +134,7 @@ public:
                                  ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
         aicConfig.ExtendCfgInfo("opFile.value", "mat_mul_v3_apt")
             .ExtendCfgInfo("aclnnSupport.value", "support_aclnn");
-        this->AICore().AddConfig("ascend910_95", aicConfig);
+        this->AICore().AddConfig("ascend950", aicConfig);
     }
 };
 

@@ -134,7 +134,7 @@ protected:
     bool IsCapable() override
     {
         OP_LOGD(context_, "Entered MoeInitRoutingV3Arch35TilingClass::IsCapable()");
-        return socVersion_ == platform_ascendc::SocVersion::ASCEND910_95;
+        return socVersion_ == platform_ascendc::SocVersion::ASCEND950;
     }
     // 4、计算数据切分TilingData
     ge::graphStatus DoOpTiling() override;
@@ -1222,5 +1222,5 @@ void MoeInitRoutingV3Arch35TilingClass::Tiling4GatherOutMxQuant()
 }
 
 REGISTER_OPS_TILING_TEMPLATE(MoeInitRoutingV3, MoeInitRoutingV3Arch35TilingClass,
-                             1000); // If 910_95, use this tiling class.
+                             1000); // If 950, use this tiling class.
 } // namespace optiling

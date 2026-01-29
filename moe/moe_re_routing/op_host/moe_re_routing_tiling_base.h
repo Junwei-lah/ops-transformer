@@ -51,7 +51,7 @@ private:
 protected:
     int64_t coreNum_{0};
     int64_t ubSize_ = {0};
-    platform_ascendc::SocVersion socVersion_ = platform_ascendc::SocVersion::ASCEND910_95;
+    platform_ascendc::SocVersion socVersion_ = platform_ascendc::SocVersion::ASCEND950;
     static constexpr int64_t INDEX_UB_SIZE = 256;
     static constexpr int64_t DOUBLE_BUFFER = 2;
     static constexpr size_t RESERVE_WORKSPACE_BYTE = static_cast<size_t>(16) * 1024 * 1024;

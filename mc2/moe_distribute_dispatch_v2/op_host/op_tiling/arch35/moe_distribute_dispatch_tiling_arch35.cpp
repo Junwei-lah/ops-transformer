@@ -954,7 +954,7 @@ uint64_t MoeDistributeDispatchTilingA5::GetTilingKey() const
 
 bool MoeDistributeDispatchTilingA5::IsCapable()
 {
-    if (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) {
+    if (socVersion_ == platform_ascendc::SocVersion::ASCEND950) {
         const char *nodeName = context_->GetNodeName();
         OP_LOGD(nodeName, "Do MoeDistributeDispatchTilingA5 tiling.");
         return true;

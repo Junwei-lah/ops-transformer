@@ -24,7 +24,7 @@ if (BUILD_OPEN_PROJECT)  # custom
     # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作
     # -mllvm -cce-aicore-dcci-before-kernel-end=false：禁用在kernel函数结束前插入DCCI指令
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-    if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+    if("${CONDITION_UNIT}" STREQUAL "ascend950")
         add_ops_compile_options(
             OP_NAME MoeDistributeCombine
             OPTIONS --cce-auto-sync=off

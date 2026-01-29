@@ -583,7 +583,7 @@ static bool CheckAttrs(gert::TilingContext *context, MoeDistributeCombineTilingD
                     return false);
     tilingData.moeDistributeCombineInfo.moeExpertPerRankNum = localMoeExpertNum;
 
-    if (mc2tiling::GetSocVersion(context) == "Ascend910_95") {
+    if (mc2tiling::GetSocVersion(context) == "Ascend950") {
         // 为支持在 A5 上的验证，放开 epWorldSize 为 2 或 4 的校验
         // 检验epWorldSize是否是2的倍数
         OP_TILING_CHECK(epWorldSize % 2 != 0,
@@ -792,7 +792,7 @@ static ge::graphStatus MoeDistributeCombineA3A5TilingFuncImpl(gert::TilingContex
     if (commQuantMode == INT8_COMM_QUANT) {
         quantMode = TILINGKEY_INT8_QUANT;
     }
-    uint32_t archTag = (mc2tiling::GetSocVersion(context) == "Ascend910_95") ? TILINGKEY_TPL_A5 : TILINGKEY_TPL_A3;
+    uint32_t archTag = (mc2tiling::GetSocVersion(context) == "Ascend950") ? TILINGKEY_TPL_A5 : TILINGKEY_TPL_A3;
     const uint64_t tilingKey = GET_TPL_TILING_KEY(tp, quantMode, layeredMode, archTag);
     OP_LOGD(nodeName, "tilingKey is %lu", tilingKey);
     context->SetTilingKey(tilingKey);

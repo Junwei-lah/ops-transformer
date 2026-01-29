@@ -169,7 +169,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8NormalCaseTransposeWeightFal
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;
@@ -234,7 +234,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8NormalCaseTransposeWeightTru
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;
@@ -299,7 +299,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8IllegalCaseSharedOffset)
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;
@@ -360,7 +360,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8IllegalCaseNullRowindex)
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;
@@ -421,7 +421,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8IllegalCaseWrongxDtype)
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;
@@ -482,7 +482,7 @@ TEST_F(GroupedMatmulFinalizeRoutingTiling, TestMXFP8IllegalCaseWrongScaleDtype)
                                                                      65536,
                                                                      131072,
                                                                      0,
-                                                                     platform_ascendc::SocVersion::ASCEND910_95,
+                                                                     platform_ascendc::SocVersion::ASCEND950,
                                                                      false,
                                                                      true};
     int m = 1024;

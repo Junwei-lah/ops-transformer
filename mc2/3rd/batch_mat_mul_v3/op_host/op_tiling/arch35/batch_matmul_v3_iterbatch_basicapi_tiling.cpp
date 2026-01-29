@@ -20,7 +20,7 @@
 namespace optiling {
 namespace Mc2batch_matmul_v3_advanced {
 using namespace strategy;
-MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3IterBatchBasicApiTiling, ASCEND910_95, ITER_BATCH_BASICAPI);
+MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3IterBatchBasicApiTiling, ASCEND950, ITER_BATCH_BASICAPI);
 
 bool Mc2BatchMatMulV3IterBatchBasicApiTiling::IsCapable()
 {

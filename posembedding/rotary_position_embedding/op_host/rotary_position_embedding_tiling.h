@@ -270,7 +270,7 @@ protected:
     {
         return true;
     }
-    platform_ascendc::SocVersion socVersion_ = platform_ascendc::SocVersion::ASCEND910_95;
+    platform_ascendc::SocVersion socVersion_ = platform_ascendc::SocVersion::ASCEND950;
     int64_t b_{0};
     int64_t s_{0};
     int64_t n_{0};

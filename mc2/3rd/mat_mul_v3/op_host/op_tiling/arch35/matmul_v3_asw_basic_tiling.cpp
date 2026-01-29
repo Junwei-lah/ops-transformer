@@ -24,7 +24,7 @@ namespace mc2_matmul_v3_advanced {
 
 constexpr uint64_t FP32_SPLIT_K_THRESHOLD = 8192UL;
 using namespace strategy;
-MC2_MM_REGISTER_TILING_TEMPLATE(Mc2MatMulV3, Mc2MatMulV3AswBasicApiTiling, ASCEND910_95, BASIC_ASWT);
+MC2_MM_REGISTER_TILING_TEMPLATE(Mc2MatMulV3, Mc2MatMulV3AswBasicApiTiling, ASCEND950, BASIC_ASWT);
 
 bool Mc2MatMulV3AswBasicApiTiling::IsCapable()
 {

@@ -122,7 +122,7 @@ class MatmulReduceScatterV2 : public OpDef {
         .ExtendCfgInfo("jitCompile.flag", "static_false")  // 动态shape,复用二进制,后续图支持后修改
         .ExtendCfgInfo("multiKernelSupportDynamicGraph.value", "multi_kernel")
         .ExtendCfgInfo("opFile.value", "matmul_reduce_scatter_v2_apt");
-    this->AICore().AddConfig("ascend910_95", aicore_config);
+    this->AICore().AddConfig("ascend950", aicore_config);
     this->MC2().HcclGroup("group");
 
     OpAICoreConfig aicore_config_910b;

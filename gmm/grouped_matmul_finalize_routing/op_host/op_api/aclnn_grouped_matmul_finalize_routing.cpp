@@ -27,7 +27,7 @@
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/reshape.h"
 #include "aclnn_grouped_matmul_finalize_routing_MX_checker.h"
-#include "../../../grouped_matmul/op_host/op_api/aclnn_grouped_matmul_910_95_checker.h"
+#include "../../../grouped_matmul/op_host/op_api/aclnn_grouped_matmul_950_checker.h"
 
 using namespace op;
 using namespace GmmFinalizeRouting;

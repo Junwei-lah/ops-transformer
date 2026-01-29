@@ -493,7 +493,7 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetBaseShapeInfo()
     return ge::GRAPH_SUCCESS;
 }
 
-REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(SparseFlashAttentionGrad, SparseFlashAttentionGradBs1Regbase, (int32_t)platform_ascendc::SocVersion::ASCEND910_95, 1);
+REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(SparseFlashAttentionGrad, SparseFlashAttentionGradBs1Regbase, (int32_t)platform_ascendc::SocVersion::ASCEND950, 1);
 
 } // namespace sfag
 } // namespace optiling

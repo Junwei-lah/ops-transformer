@@ -204,7 +204,7 @@ const std::map<platform_ascendc::SocVersion, std::set<uint32_t>>
     supportedRankSizeSet = {
         {platform_ascendc::SocVersion::ASCEND310P, {1, 2, 4}},
         {platform_ascendc::SocVersion::ASCEND910B, {1, 2, 4, 8}},
-        {platform_ascendc::SocVersion::ASCEND910_95, {1, 2, 4, 8, 16, 32, 64}},
+        {platform_ascendc::SocVersion::ASCEND950, {1, 2, 4, 8, 16, 32, 64}},
 };
 
 const std::set<ge::Format> SUPPORTED_FORMAT = {
@@ -232,7 +232,7 @@ inline ge::graphStatus GetEpWinSize(const gert::TilingContext *context, const ch
     uint64_t &hcclBufferSizeEp, uint64_t &maxWindowSizeEp, uint32_t attrGroupEpIndex)
 {
     auto attrs = context->GetAttrs();
-    if (mc2tiling::GetSocVersion(context) == "Ascend910_95") {
+    if (mc2tiling::GetSocVersion(context) == "Ascend950") {
         // A5 暂不支持 Hccl CommGetBufSizeCfg 接口，此处暂作规避
         hcclBufferSizeEp = mc2tiling::Mc2TilingUtils::GetMaxWindowSize();
         // A5 上前 1MB 作为状态区，剩余空间用作数据区

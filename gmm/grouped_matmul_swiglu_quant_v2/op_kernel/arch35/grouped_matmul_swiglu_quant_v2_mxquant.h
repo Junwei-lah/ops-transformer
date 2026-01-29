@@ -53,7 +53,7 @@ __aicore__ inline void GmmSwigluAswt(GM_ADDR x, GM_ADDR weight, GM_ADDR weightSc
     using ProblemShape = MatmulShape;
     using BlockMmad = Block::BlockMxMmAicToAivBuilder<AType, LayoutA, BType, LayoutB, BiasType, C1Type, LayoutC, L1TileShape,
                                                  L0TileShape, BlockScheduler, QuantMatmulWithTileMultiBlock<>,
-                        Tile::TileCopy<Arch::Ascend910_95, Tile::CopyInAndCopyOutSplitMWithParams>>;
+                        Tile::TileCopy<Arch::Ascend950, Tile::CopyInAndCopyOutSplitMWithParams>>;
     using QGmmKernel =
     Kernel::KernelGmmSwiGluMixOnlineDynamic<ProblemShape, BlockMmad, BlockEpilogue, BlockScheduler>;
     using Params = typename QGmmKernel::Params;

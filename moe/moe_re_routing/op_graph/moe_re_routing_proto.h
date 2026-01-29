@@ -29,7 +29,7 @@ namespace ge {
       Shape supports (A) or (A,S). Format supports ND. If tokens is FLOAT8, per_token_scales must be DT_FLOAT8_E8M0. \n
   The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component support 1D. \n
   The Atlas A3 Training Series Product/Atlas A3 Inference Series Product support 1D. \n
-  Ascend 910_95 support 1D or 2D. \n
+  Ascend 950 support 1D or 2D. \n
 * @par Outputs:
 * @li permute_tokens: A 2D tensor, represents tokens in expert-order. Type is BFloat16, Float16 or
       Int8. Shape supports (A, H). Format supports ND.
@@ -37,7 +37,7 @@ namespace ge {
       Shape supports (A) or (A,S). Format supports ND.
   The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component support 1D. \n
   The Atlas A3 Training Series Product/Atlas A3 Inference Series Product support 1D. \n
-  Ascend 910_95 support 1D or 2D. \n
+  Ascend 950 support 1D or 2D. \n
 * @li permute_token_idx: A 1D tensor, represents token idx in rank-order. Type is Int32.
       Shape supports (A). Format supports ND.
 * @li expert_token_num: A 1D tensor, represents tokens nums of experts. Type is Int32 or Int64.

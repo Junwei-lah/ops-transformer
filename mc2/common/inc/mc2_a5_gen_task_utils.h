@@ -27,7 +27,7 @@
 namespace ops {
 const std::set<std::string> PLATFORM_A2 = {"Ascend910B"};
 const std::set<std::string> PLATFORM_A3 = {"Ascend910_93"};
-const std::set<std::string> NPUARCH_A5 = {"Ascend910_95"};
+const std::set<std::string> NPUARCH_A5 = {"Ascend950"};
 
 const std::string COMM_ALG_MTE = "mte";
 const std::string COMM_ALG_CCU = "ccu";

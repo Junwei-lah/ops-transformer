@@ -18,21 +18,21 @@ if (BUILD_OPEN_PROJECT)
                 -Wno-deprecated-declarations
                 -Werror
     )
-    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend910_95")
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
         add_ops_compile_options(
             OP_NAME GroupedMatmul
-            COMPUTE_UNIT ascend910_9599
+            COMPUTE_UNIT Ascend950PR_9599
             OPTIONS -mllvm -cce-aicore-dcci-before-kernel-end=false
         )
     endif()
 endif()
 
 set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+if("${CONDITION_UNIT}" STREQUAL "ascend950")
     set(grouped_matmul_depends gmm/common CACHE INTERNAL "Dependencies for grouped_matmul")
     add_ops_compile_options(
         OP_NAME GroupedMatmul
-        COMPUTE_UNIT ascend910_9599
+        COMPUTE_UNIT Ascend950PR_9599
         OPTIONS -DENABLE_CV_COMM_VIA_SSBUF=true
     )
 endif()

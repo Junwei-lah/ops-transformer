@@ -318,7 +318,7 @@ Platform &Platform::SetSocVersion(const SocVersion &socVersion)
                     "version",
                     {
                         {"SoC_version", std::string("Ascend910_9591")},
-                        {"Short_SoC_version", std::string("Ascend910_95")},
+                        {"Short_SoC_version", std::string("Ascend950")},
                     },
                 },
                 {

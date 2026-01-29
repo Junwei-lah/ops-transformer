@@ -41,7 +41,7 @@ ENABLE_BUILT_CUSTOM=FALSE
 ENABLE_STATIC=FALSE
 ENABLE_EXPERIMENTAL=FALSE
 ASCEND_SOC_UNITS="ascend910b"
-SUPPORT_COMPUTE_UNIT_SHORT=("ascend910b" "ascend910_93" "ascend910_95" "ascend310p" "kirinx90" "mc62cm12a")
+SUPPORT_COMPUTE_UNIT_SHORT=("ascend910b" "ascend910_93" "ascend950" "ascend310p" "kirinx90" "mc62cm12a")
 CMAKE_BUILD_MODE=""
 BUILD_TYPE=""
 VERSION=""
@@ -253,7 +253,7 @@ function help_info() {
                 echo $dotted_line
                 echo "Examples:"
                 echo "    bash build.sh --run_example abs eager"
-                echo "    bash build.sh --run_example abs eager --soc=ascend910_95"
+                echo "    bash build.sh --run_example abs eager --soc=ascend950"
                 echo "    bash build.sh --run_example abs graph"
                 echo "    bash build.sh --run_example abs eager cust"
                 echo "    bash build.sh --run_example abs eager cust --vendor_name=custom"
@@ -442,15 +442,15 @@ function build_example()
         return 1
     fi
     # Obtain the example file corresponding to the input soc unit.
-    if [[ "$ASCEND_SOC_UNITS" == "ascend910_95" ]]; then
-        # 1. ascend910_95/ascend950 example is independent of other soc units.
+    if [[ "$ASCEND_SOC_UNITS" == "ascend950" ]]; then
+        # 1. ascend950/ascend950 example is independent of other soc units.
         files=($(find ../ -path "*/${EXAMPLE_NAME}/examples/arch35/${pattern}*.cpp"))
         if [[ -z "$files" ]]; then
-            # 2. Example is shared with other soc units, or the current operator only supports ascend910_95/ascend950.
+            # 2. Example is shared with other soc units, or the current operator only supports ascend950/ascend950.
             files=($(find ../ -path "*/${EXAMPLE_NAME}/examples/${pattern}*.cpp"))
         fi
     else
-        # Except for ascend910_95/ascend950, the examples of other soc units are temporarily shared. 
+        # Except for ascend950/ascend950, the examples of other soc units are temporarily shared. 
         # If you need to add independent examples, you can refer to the method of adding a directory for isolation.
         files=($(find ../ -path "*/${EXAMPLE_NAME}/examples/${pattern}*.cpp"))
     fi
@@ -687,7 +687,7 @@ package_static() {
 
 function process_soc_input(){
     local input_string="$1"
-    input_string=$(echo "$input_string" | sed 's/ascend950/ascend910_95/g')
+    input_string=$(echo "$input_string" | sed 's/ascend950/ascend950/g')
     local value_part="${input_string#*=}"
     ASCEND_SOC_UNITS="${value_part//,/;}"
 }

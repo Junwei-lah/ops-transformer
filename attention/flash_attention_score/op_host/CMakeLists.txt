@@ -16,11 +16,11 @@ if (BUILD_OPEN_PROJECT)
 endif()
 
 set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+if("${CONDITION_UNIT}" STREQUAL "ascend950")
     set(flash_attention_score_apt_depends attention/common CACHE INTERNAL "Dependencies for flash_attention_score")
     add_ops_compile_options(
         OP_NAME FlashAttentionScore
-        COMPUTE_UNIT ascend910_9599
+        COMPUTE_UNIT Ascend950PR_9599
         OPTIONS -DENABLE_CV_COMM_VIA_SSBUF=true
     )
 endif()

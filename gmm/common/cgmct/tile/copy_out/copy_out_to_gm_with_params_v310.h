@@ -23,13 +23,13 @@ namespace Gemm {
 namespace Tile {
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific parameters
+ * @brief Copy struct for Ascend950 architecture with specific parameters
  * @param [in] OutputType: the type of the output tensor
  * @param [in] InputType: the type of the input tensor
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910_95, CopyWithParams, void, OutputType, InputType,
+    Arch::Ascend950, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNDOrAlign<OutputType>() &&       // GM ND/ND_ALIGN
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -82,19 +82,19 @@ public:
         }
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(gm[dstOffset], src, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific parameters
+ * @brief Copy struct for Ascend950 architecture with specific parameters
  * @param [in] OutputType: the type of the output tensor
  * @param [in] InputType: the type of the input tensor
  */
 template <class OutputType, class InputType>
-struct Copy<Arch::Ascend910_95, CopyWithParams, void, OutputType, InputType,
+struct Copy<Arch::Ascend950, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>()  && IsNz<OutputType>() &&             // GM NZ
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -143,14 +143,14 @@ public:
         }
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(gm[dstOffset], co1Local, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific parameters
+ * @brief Copy struct for Ascend950 architecture with specific parameters
  *
  * This struct is only valid when the output is in GM, the format is either ND or ND_ALIGN, and
  * the IsQuantSenario condition is satisfied
@@ -160,7 +160,7 @@ public:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910_95, CopyWithParams, void, OutputType, InputType,
+    Arch::Ascend950, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNDOrAlign<OutputType>() &&      // GM ND/ND_ALIGN
         IsQuantSenario<typename OutputType::T, typename InputType::T>() // quant
@@ -171,7 +171,7 @@ public:
     using SrcT = typename AscendC::GetMmDstType<typename InputType::T>::Type;
 
     /**
-     * @brief Overloaded operator() for Ascend910_95 architecture
+     * @brief Overloaded operator() for Ascend950 architecture
      * @param [in] dst: destination global tensor
      * @param [in] src: source local tensor
      * @param [in] curRow: current row index
@@ -194,12 +194,12 @@ public:
         CopyOutNZ2ND(dst, src, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgKc != 0 ? orgKc : orgN,
                      quantTensor);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 
     /**
-     * @brief Overloaded operator() for Ascend910_95 architecture
+     * @brief Overloaded operator() for Ascend950 architecture
      * @param [in] gm: destination global tensor
      * @param [in] co1Local: source local tensor
      * @param [in] curRow: current row index
@@ -222,7 +222,7 @@ public:
         CopyOutNZ2ND(gm, co1Local, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgKc != 0 ? orgKc : orgN,
                      quantScal);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 
@@ -332,7 +332,7 @@ private:
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific parameters
+ * @brief Copy struct for Ascend950 architecture with specific parameters
  *
  * This struct is only valid when the output is in GM, the format is NZ, and
  * the IsQuantSenario condition is satisfied
@@ -342,7 +342,7 @@ private:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910_95, CopyWithParams, void, OutputType, InputType,
+    Arch::Ascend950, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNz<OutputType>() &&             // GM NZ
         IsQuantSenario<typename OutputType::T, typename InputType::T>() // quant
@@ -375,7 +375,7 @@ public:
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3101)
         CopyOutNZ2NZ(gm, co1Local, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgM, quantTensor);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 
@@ -402,7 +402,7 @@ public:
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 3101)
         CopyOutNZ2NZ(gm, co1Local, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgM, quantScalar);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 

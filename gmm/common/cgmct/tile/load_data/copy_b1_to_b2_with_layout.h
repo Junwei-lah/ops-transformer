@@ -194,10 +194,10 @@ private:
 
 /**
  * @struct Copy
- * @brief Template structure for copying data from B1 to B2 with layout for Ascend910_95
+ * @brief Template structure for copying data from B1 to B2 with layout for Ascend950
  *
  * This template structure provides the functionality to copy data from B1 to B2 with specific layout configuration
- * for the Ascend910_95 architecture
+ * for the Ascend950 architecture
  *
  * @param [in] BType: the data type to be copied
  * @param [in] DstTrait: the trait of destination tensor
@@ -205,14 +205,14 @@ private:
  */
 template <class BType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910_95, CopyWithLayout, BType, DstTrait, SrcTrait,
+    Arch::Ascend950, CopyWithLayout, BType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<SrcTrait::tPos == AscendC::TPosition::B1 && DstTrait::tPos == AscendC::TPosition::B2>> {
 public:
     using DstTensor = AscendC::LocalTensor<DstTrait>;
     using SrcTensor = AscendC::LocalTensor<SrcTrait>;
 
     /**
-     * @brief Operator to perform the copy operation for Ascend910_95
+     * @brief Operator to perform the copy operation for Ascend950
      *
      * This operator performs the copy operation from B1 to B2 based on the provided coordinates
      * It checks the architecture and performs the appropriate load operation
@@ -232,7 +232,7 @@ public:
             NoneTransposeLoadB2(l0B, l1B, coord);
         }
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 
@@ -241,7 +241,7 @@ private:
     constexpr static int32_t C0_SIZE = AscendC::AuxGetC0Size<typename BType::T>();
 
     /**
-     * @brief Load data from B1 to B2 with transpose for Ascend910_95
+     * @brief Load data from B1 to B2 with transpose for Ascend950
      *
      * This function performs the load operation from B1 to B2 with transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData2DParamsV2`
@@ -278,7 +278,7 @@ private:
     }
 
     /**
-     * @brief Load data from B1 to B2 without transpose for Ascend910_95
+     * @brief Load data from B1 to B2 without transpose for Ascend950
      *
      * This function performs the load operation from B1 to B2 without transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData2DParamsV2`

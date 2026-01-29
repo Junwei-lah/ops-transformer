@@ -44,7 +44,7 @@ enum class SocVersion {
     SOC310_P,
     SOC910_93,
     SOC910_B4,
-    SOC910_95,
+    SOC950,
 };
 
 enum class KernelType {

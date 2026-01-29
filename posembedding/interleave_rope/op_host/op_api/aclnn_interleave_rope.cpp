@@ -39,7 +39,7 @@ aclnnStatus aclnnInterleaveRopeGetWorkspaceSize(
     const aclTensor* x, const aclTensor* cos, const aclTensor* sin, aclTensor* out, uint64_t* workspaceSize,
     aclOpExecutor** executor)
 {
-    bool useRotaryPositionEmbedding = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    bool useRotaryPositionEmbedding = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (useRotaryPositionEmbedding) {
         return aclnnInnerRotaryPositionEmbeddingGetWorkspaceSize(
             x, cos, sin, HALF_INTERLEAVE_MODE, out, workspaceSize, executor);
@@ -50,7 +50,7 @@ aclnnStatus aclnnInterleaveRopeGetWorkspaceSize(
 
 aclnnStatus aclnnInterleaveRope(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
-    bool useRotaryPositionEmbedding = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    bool useRotaryPositionEmbedding = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (useRotaryPositionEmbedding) {
         return aclnnInnerRotaryPositionEmbedding(workspace, workspaceSize, executor, stream);
     } else {

@@ -95,7 +95,7 @@ public:
             .ExtendCfgInfo("jitCompile.flag", "static_false") // 动态shape，复用二进制，后续图支持后修改
             .ExtendCfgInfo("multiKernelSupportDynamicGraph.value", "multi_kernel")
             .ExtendCfgInfo("opFile.value", "matmul_allto_all_apt");
-        this->AICore().AddConfig("ascend910_95", aicoreConfig_950);
+        this->AICore().AddConfig("ascend950", aicoreConfig_950);
 
         // 将group配置为该算子的通信域
         this->MC2().HcclGroup("group");

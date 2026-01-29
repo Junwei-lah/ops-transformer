@@ -85,7 +85,7 @@ ge::graphStatus MatmulAllToAllTilingBase::TileCommAndCompute()
 {
     OP_LOGD(opName_, "Start to find proper tile by formulaic tiling.");
     AlltoAllMM tileFormulate(contextInfo.args_, contextInfo.args_.rankDim, KernelType::ALL_TO_ALL,
-                             SocVersion::SOC910_95);
+                             SocVersion::SOC950);
     tileFormulate.GetTiling();
     CutResult mCutMMAlltoAll = tileFormulate.tilingM_.cutRes;
     inferredInfo.tileCnt = mCutMMAlltoAll.numLongTile;

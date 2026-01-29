@@ -626,8 +626,8 @@ ge::graphStatus QuantReduceScatterUtilTiling::CheckSocVersion(const gert::Tiling
     OP_TILING_CHECK(platformInfoPtr == nullptr, OP_LOGE(nodeName, "platformInfoPtr is null."), return ge::GRAPH_FAILED);
     platform_ascendc::PlatformAscendC ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     platform_ascendc::SocVersion socVersion = ascendcPlatform.GetSocVersion();
-    OP_TILING_CHECK(socVersion != platform_ascendc::SocVersion::ASCEND910_95,
-                    OP_LOGE(nodeName, "socVersion needed to be 910_95."), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(socVersion != platform_ascendc::SocVersion::ASCEND950,
+                    OP_LOGE(nodeName, "socVersion needed to be 950."), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 

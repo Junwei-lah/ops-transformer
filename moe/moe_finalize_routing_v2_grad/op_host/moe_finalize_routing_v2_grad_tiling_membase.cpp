@@ -39,7 +39,7 @@ protected:
 
     bool IsCapable() override
     {
-        if (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) {
+        if (socVersion_ == platform_ascendc::SocVersion::ASCEND950) {
             return false;
         }
         return true;

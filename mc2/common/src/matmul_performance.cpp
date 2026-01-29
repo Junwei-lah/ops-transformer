@@ -132,7 +132,7 @@ double MatmulPerformanceModel::FindCubeUtilByL2Usage(uint64_t mSize,
   /*910D
   cube利用率计算公式：两个输入为M、N的调和平均数和K。MN调和平均数的阈值为820，K阈值为1280，小于这个阈值
   认为提供负增益，大于这个阈值认为提供正增益，但是正增益最高不超过1.4倍。乘方函数用来缓和增长率，减慢变化速度*/
-  if (mmShapeInfo_.socType == SocVersion::SOC910_95) {
+  if (mmShapeInfo_.socType == SocVersion::SOC950) {
     double mnharmonicMean =
         static_cast<double>(mSize * rankTileNum * mmShapeInfo_.nValue) /
         static_cast<double>(mSize * rankTileNum + mmShapeInfo_.nValue);
@@ -214,7 +214,7 @@ void MatmulPerformanceModel::FindCubeUtil(uint64_t mSize, uint64_t rankTileNum,
 
   cubeUtil_ = FindCubeUtilByL2Usage(mSize, rankTileNum, maxTileLen);
 
-  if (mmShapeInfo_.socType == SocVersion::SOC910_95) {
+  if (mmShapeInfo_.socType == SocVersion::SOC950) {
     double mnharmonicMean =
         static_cast<double>(mmShapeInfo_.mValue * rankTileNum *
                             mmShapeInfo_.nValue) /

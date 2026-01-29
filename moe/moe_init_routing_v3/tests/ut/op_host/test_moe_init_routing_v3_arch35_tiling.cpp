@@ -46,7 +46,7 @@ void RunSuccessTestcase(int64_t N, int64_t H, int64_t K, int64_t expertCapacity,
                           std::vector<int64_t> aciveExpertRange, int64_t rowIdxType, ge::graphStatus result,
                           int64_t expectTilingKey, std::string expectTilingData, std::vector<size_t> expectWorkspaces)
 {
-    optiling::MoeInitRoutingV3CompileInfo compileInfo = {40, 262144, platform_ascendc::SocVersion::ASCEND910_95};
+    optiling::MoeInitRoutingV3CompileInfo compileInfo = {40, 262144, platform_ascendc::SocVersion::ASCEND950};
     int64_t activeNum = N * K;
     int64_t expert_num = EXPERT_NUM;
     int64_t E = aciveExpertRange[1] - aciveExpertRange[0];
@@ -81,7 +81,7 @@ void RunFailureTestcase(int64_t N, int64_t H, int64_t K, int64_t expertCapacity,
                           std::vector<int64_t> aciveExpertRange, int64_t rowIdxType, ge::graphStatus result,
                           int64_t expectTilingKey, std::string expectTilingData, std::vector<size_t> expectWorkspaces)
 {
-    optiling::MoeInitRoutingV3CompileInfo compileInfo = {40, 196608, platform_ascendc::SocVersion::ASCEND910_95};
+    optiling::MoeInitRoutingV3CompileInfo compileInfo = {40, 196608, platform_ascendc::SocVersion::ASCEND950};
     int64_t activeNum = N * K;
     int64_t expert_num = EXPERT_NUM;
     int64_t E = aciveExpertRange[1] - aciveExpertRange[0];

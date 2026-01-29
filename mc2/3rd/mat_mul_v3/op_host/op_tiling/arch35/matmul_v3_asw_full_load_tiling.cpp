@@ -41,12 +41,12 @@ bool ABL1FullLoadExtraCond91095(uint64_t al1SingleCoreSize, uint64_t bl1SingleCo
 using ABL1FullLoadExtraCondFunc = bool (*)(uint64_t, uint64_t);
 
 const static std::map<platform_ascendc::SocVersion, ABL1FullLoadExtraCondFunc> ABL1FullLoadExtraCondFuncMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, ABL1FullLoadExtraCond91095},
+    {platform_ascendc::SocVersion::ASCEND950, ABL1FullLoadExtraCond91095},
 };
 
 using CheckBL1FullLoadFunc = bool (Mc2MatMulV3AswFullLoadTiling::*)(bool&, uint64_t, uint64_t);
 const static std::map<platform_ascendc::SocVersion, CheckBL1FullLoadFunc> CheckBL1FullLoadMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, &Mc2MatMulV3AswFullLoadTiling::CheckBL1FullLoad91095},
+    {platform_ascendc::SocVersion::ASCEND950, &Mc2MatMulV3AswFullLoadTiling::CheckBL1FullLoad91095},
 };
 
 // ------------------------------ GetStepSmallK -------------------------------------------//
@@ -89,7 +89,7 @@ uint64_t GetStepSmallK91095(const Mc2MatMulV3Args& args, const Mc2MatMulV3RunInf
 using GetStepSmallKFunc = uint64_t (*)(const Mc2MatMulV3Args&, const Mc2MatMulV3RunInfo&, bool);
 
 const static std::map<platform_ascendc::SocVersion, GetStepSmallKFunc> GetStepSmallKFuncMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, GetStepSmallK91095},
+    {platform_ascendc::SocVersion::ASCEND950, GetStepSmallK91095},
 };
 
 void ResetLoadBalance(Mc2MatMulV3RunInfo& runInfo)
@@ -106,7 +106,7 @@ namespace optiling {
 namespace mc2_matmul_v3_advanced {
 using namespace strategy;
 
-MC2_MM_REGISTER_TILING_TEMPLATE(Mc2MatMulV3, Mc2MatMulV3AswFullLoadTiling, ASCEND910_95, FULL_LOAD_BASE);
+MC2_MM_REGISTER_TILING_TEMPLATE(Mc2MatMulV3, Mc2MatMulV3AswFullLoadTiling, ASCEND950, FULL_LOAD_BASE);
 
 void Mc2MatMulV3AswFullLoadTiling::FullLoadPre()
 {

@@ -66,7 +66,7 @@ public:
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("prebuildPattern.value", "Opaque")
             .ExtendCfgInfo("coreType.value", "AiCore");
-        this->AICore().AddConfig("ascend910_95", config91095);
+        this->AICore().AddConfig("ascend950", config91095);
     }
 };
 OP_ADD(GroupedMatmulAdd);

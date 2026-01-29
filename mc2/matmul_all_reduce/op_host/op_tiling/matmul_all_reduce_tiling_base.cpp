@@ -275,9 +275,9 @@ void MatmulAllReduceTilingBase::SetMCutSocVersion(SocVersion& inputSocVersion)
         return;
     }
     // __DAV_C310__
-    if (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) {
-        inputSocVersion = SocVersion::SOC910_95;
-        OP_LOGD(opName_, "TileCnt enter 910_95 branch.");
+    if (socVersion_ == platform_ascendc::SocVersion::ASCEND950) {
+        inputSocVersion = SocVersion::SOC950;
+        OP_LOGD(opName_, "TileCnt enter 950 branch.");
         return;
     }
     // end __DAV_C310__
@@ -481,7 +481,7 @@ ge::graphStatus MatmulAllReduceTilingBase::GetWorkspaceSize()
 
     // __DAV_C310__
     // 910D需要自己申请一块workSpace存放mm的输出
-    if (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) {
+    if (socVersion_ == platform_ascendc::SocVersion::ASCEND950) {
         gmcFloat = static_cast<uint64_t>(MutableRCSTilingData().rankM) *
                    static_cast<uint64_t>(MutableRCSTilingData().rankN) *
                    static_cast<uint64_t>(args_.outputDtypeSize);
@@ -779,7 +779,7 @@ ge::graphStatus MatmulAllReduceTilingBase::CheckA8W8()
             "antiquantScale, antiquantOffset should be null"),
         return ge::GRAPH_FAILED);
     if ((socVersion_ == platform_ascendc::SocVersion::ASCEND910B) ||
-        (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95)) {
+        (socVersion_ == platform_ascendc::SocVersion::ASCEND950)) {
         OP_TILING_CHECK(
             !CheckCommQuantScaleShape(nValue),
             VECTOR_INNER_ERR_REPORT_TILING(context_->GetNodeName(), "CommQuantScale shape is wrong"),
@@ -1535,7 +1535,7 @@ void MatmulAllReduceTilingBase::CalcUbTiling()
         isPertile = (*commQuantModePtr == 1);
     }
     uint32_t addX3UbBufFac =
-        ((args_.geCType == ge::DT_BF16) && (socVersion_ != platform_ascendc::SocVersion::ASCEND910_95)) || isPertile ?
+        ((args_.geCType == ge::DT_BF16) && (socVersion_ != platform_ascendc::SocVersion::ASCEND950)) || isPertile ?
             ADD_X3_BF16_UB_BUF_FACTOR :
             ADD_X3_FP16_UB_BUF_FACTOR;
     addX3UbBufFac *= isPertile ? sizeof(float) : D_MTYPE_SIZE_MAP.at(args_.cType);

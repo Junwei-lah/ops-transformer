@@ -71,9 +71,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_invalid_g
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;
@@ -113,9 +113,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_invalid_p
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;
@@ -155,9 +155,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_invalid_g
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;
@@ -197,9 +197,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_invalid_a
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;
@@ -239,9 +239,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_invalid_m
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;
@@ -281,9 +281,9 @@ TEST_F(GroupedMatmulInfershape, grouped_matmul_infershape_weight_quant_a16w4_suc
 {
     fe::PlatformInfo platformInfo;
     fe::OptionalInfo opti_compilation_info;
-    opti_compilation_info.soc_version = "Ascend910_95";
-    platformInfo.str_info.short_soc_version = "Ascend910_95";
-    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend910_95"] = platformInfo;
+    opti_compilation_info.soc_version = "Ascend950";
+    platformInfo.str_info.short_soc_version = "Ascend950";
+    fe::PlatformInfoManager::Instance().platform_info_map_["Ascend950"] = platformInfo;
     fe::PlatformInfoManager::Instance().SetOptionalCompilationInfo(opti_compilation_info);
     size_t M = 3;
     size_t K = 1280;

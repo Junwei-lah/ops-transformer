@@ -545,7 +545,7 @@ bool CheckGemmV3Support(const aclTensor* mat1, const aclTensor* mat2, MmOpInfo& 
         return false;
     }
     // 当前支持平台
-    if (GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND910_95) {
+    if (GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND950) {
         OP_LOGI("Current SOC version does not support GemmV3.");
         return false;
     }
@@ -560,7 +560,7 @@ bool CheckGemmV3Support(const aclTensor* mat1, const aclTensor* mat2, MmOpInfo& 
 bool IsInputSupportFp32() {
   if (op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910B &&
       op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_93 &&
-      op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_95) {
+      op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND950) {
     return false;
   }
   return true;
@@ -620,7 +620,7 @@ bool NeedToConvertBias(const aclTensor *self, const aclTensor *mat1, const aclTe
   bool isSplitK = false;
   if (op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910B &&
       op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_93 &&
-      op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_95) {
+      op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND950) {
     isSplitK = IsSplitk(&Tensor_matl, &Tensor_mat2);;
   }
   op::Shape selfShape = self->GetViewShape();
@@ -682,7 +682,7 @@ bool IsSplitk(const TensorInfo* self, const TensorInfo* mat2) {
 }
 
 bool IsFormatSupportNd(const aclTensor *self, const aclTensor *mat2) {
-  if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95) {
+  if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950) {
     return true;
   }
   if (GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND910B &&
@@ -1029,7 +1029,7 @@ const aclTensor *ContiguousBias(const aclTensor *self, const aclTensor *bias, ac
     CHECK_RET(contiguousBias != nullptr, nullptr);
     // bias为bf16时cast为fp32保证精度
     if ((contiguousBias->GetDataType() == DataType::DT_BF16 &&
-          GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND910_95)||
+          GetCurrentPlatformInfo().GetSocVersion() != SocVersion::ASCEND950)||
         self->GetDataType() == DataType::DT_FLOAT) {
         contiguousBias = l0op::Cast(contiguousBias, op::DataType::DT_FLOAT, executor);
         CHECK_RET(contiguousBias != nullptr, nullptr);

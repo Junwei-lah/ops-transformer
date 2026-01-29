@@ -54,7 +54,7 @@ std::string MlaPrologV2_tiling_A3SocInfo =
     "    \"L0C_SIZE\": 131072,\n"
     "    \"vector_core_cnt\": 40,\n"
     "    \"cube_core_cnt\": 20,\n"
-    "    \"socVersion\": \"Ascend910_95\"\n"
+    "    \"socVersion\": \"Ascend950\"\n"
     "  }\n"
     "}";
 
@@ -284,7 +284,7 @@ TEST_F(MlaPrologV2, MlaProlog_tiling_test4) {
         {"rmsnorm_epsilon_ckv", Ops::Transformer::AnyValue::CreateFrom<float>(0.4911813887143225)},
         {"cache_mode", Ops::Transformer::AnyValue::CreateFrom<std::string>("PA_BSND")},
     },
-    &compileInfo,"Ascend910_95", MlaPrologV2_tiling_A3SocInfo, 4096);
+    &compileInfo,"Ascend950", MlaPrologV2_tiling_A3SocInfo, 4096);
     int64_t expectTilingKey = 1835025;
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey);
 }
@@ -328,7 +328,7 @@ TEST_F(MlaPrologV2, MlaProlog_tiling_test5) {
         {"rmsnorm_epsilon_ckv", Ops::Transformer::AnyValue::CreateFrom<float>(0.9581271563003967)},
         {"cache_mode", Ops::Transformer::AnyValue::CreateFrom<std::string>("PA_NZ")},
     },
-    &compileInfo,"Ascend910_95", MlaPrologV2_tiling_A3SocInfo, 4096);
+    &compileInfo,"Ascend950", MlaPrologV2_tiling_A3SocInfo, 4096);
     int64_t expectTilingKey = 1835026;
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey);
 }

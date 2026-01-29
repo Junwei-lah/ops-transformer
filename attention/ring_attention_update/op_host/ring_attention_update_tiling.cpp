@@ -532,7 +532,7 @@ static ge::graphStatus Tiling4RingAttentionUpdate(gert::TilingContext* context) 
     OP_LOGE(context, "platformInfoPtr is null"),
     return ge::GRAPH_FAILED);
   auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-  if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95) {
+  if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND950) {
     OP_LOGD(context->GetNodeName(), "RingAttentionUpdateRegbaseTiling tiling start");
     return Tiling4RingAttentionUpdateRegbase(context);
   }

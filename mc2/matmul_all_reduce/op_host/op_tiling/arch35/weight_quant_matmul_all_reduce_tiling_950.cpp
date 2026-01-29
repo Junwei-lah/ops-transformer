@@ -9,13 +9,13 @@
  */
 
 /*!
- * \file weight_quant_matmul_all_reduce_tiling_910_95.cc
+ * \file weight_quant_matmul_all_reduce_tiling_950.cc
  * \brief
  */
-#ifndef WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
-#define WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
+#ifndef WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_
+#define WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_
 
-#include "weight_quant_matmul_all_reduce_tiling_910_95.h"
+#include "weight_quant_matmul_all_reduce_tiling_950.h"
 #include "op_mc2.h"
 #include "mc2/matmul_all_reduce/op_kernel/matmul_all_reduce_apt_tiling_key.h"
 
@@ -593,6 +593,6 @@ WeightQuantMatmulAllReduceTilingA5::WeightQuantMatmulAllReduceTilingA5(gert::Til
       weightQuantMatmulAllReduceA5Fp8TilingData_(weightQuantMatmulAllReduceA5Fp8TilingDataSelf_){}
 
 //注册Tiling类
-REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,WeightQuantMatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND910_95),1);
+REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,WeightQuantMatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND950),1);
 } // namespace optiling
-#endif // WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_910_95_CC_
+#endif // WEIGHT_QUANT_MATMUL_ALL_REDUCE_TILING_950_CC_

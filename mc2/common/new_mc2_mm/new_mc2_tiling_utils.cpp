@@ -66,7 +66,7 @@ ge::graphStatus NewGetMatmulV3PriorityPolicy(
     std::vector<int32_t> &priorities, const char *opName) {
   const static std::map<platform_ascendc::SocVersion, std::vector<int32_t>>
       MATMUL_V3_PRIOR_MAP = {
-          {platform_ascendc::SocVersion::ASCEND910_95,
+          {platform_ascendc::SocVersion::ASCEND950,
            {optiling::mc2_matmul_v3_advanced::strategy::BASE}},
       };
   if (MATMUL_V3_PRIOR_MAP.find(socVersion) != MATMUL_V3_PRIOR_MAP.end()) {

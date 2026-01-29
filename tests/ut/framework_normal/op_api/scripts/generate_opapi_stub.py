@@ -452,8 +452,8 @@ def main():
         std::string ver = "";
         if (CHIP_NAME == std::string("ascend910_93")) {{
             ver = "Ascend910_9391";
-        }} else if (CHIP_NAME == std::string("ascend910_95")) {{
-            ver = "Ascend910_9599";
+        }} else if (CHIP_NAME == std::string("ascend950")) {{
+            ver = "Ascend950PR_9599";
         }} else {{
             ver = "Ascend910B1";
         }}

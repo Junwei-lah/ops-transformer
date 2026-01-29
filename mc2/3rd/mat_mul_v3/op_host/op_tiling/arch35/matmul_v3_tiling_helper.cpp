@@ -51,7 +51,7 @@ void ResetBase91095(const Mc2MatmulV3CompileInfo &compileInfo, const Mc2MatMulV3
 using ResetBaseFunc = void (*)(const Mc2MatmulV3CompileInfo &, const Mc2MatMulV3Args &, Mc2MatMulV3RunInfo &);
 
 const static std::map<platform_ascendc::SocVersion, ResetBaseFunc> ResetBaseFuncMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, ResetBase91095},
+    {platform_ascendc::SocVersion::ASCEND950, ResetBase91095},
 };
 
 // ------------------------------ CalL1Tiling -------------------------------------------//
@@ -164,7 +164,7 @@ Mc2MatMulV3L0C2Out GetL0C2Out91095(const Mc2MatmulV3CompileInfo &compileInfo, co
 using GetL0C2OutFunc = Mc2MatMulV3L0C2Out (*)(const Mc2MatmulV3CompileInfo &, const Mc2MatMulV3Args &, const Mc2MatMulV3RunInfo &);
 
 const static std::map<platform_ascendc::SocVersion, GetL0C2OutFunc> GetL0C2OutFuncMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, GetL0C2Out91095},
+    {platform_ascendc::SocVersion::ASCEND950, GetL0C2Out91095},
 };
 
 // ------------------------------ CheckIfDoubleAswt -------------------------------------------//
@@ -193,7 +193,7 @@ bool CheckIfDoubleAswt91095(const Mc2MatMulV3Args &args, const uint64_t batchC)
 using CheckIfDoubleAswtFunc = bool (*)(const Mc2MatMulV3Args &, const uint64_t);
 
 const static std::map<platform_ascendc::SocVersion, CheckIfDoubleAswtFunc> CheckIfDoubleAswtFuncMap = {
-    {platform_ascendc::SocVersion::ASCEND910_95, CheckIfDoubleAswt91095},
+    {platform_ascendc::SocVersion::ASCEND950, CheckIfDoubleAswt91095},
 };
 }  // namespace
 

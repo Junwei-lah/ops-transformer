@@ -9,5 +9,5 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (UT_TEST_ALL OR OP_KERNEL_UT)
-    # AddOpTestCase(quant_all_reduce "Ascend910_9599" "-DDTYPE_X_REF=half" "")
+    # AddOpTestCase(quant_all_reduce "Ascend950PR_9599" "-DDTYPE_X_REF=half" "")
 endif()

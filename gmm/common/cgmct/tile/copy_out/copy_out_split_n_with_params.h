@@ -25,14 +25,14 @@ namespace Tile {
  * @struct Copy
  * @brief Define a Copy struct for implementing data copy operations
  *
- * This struct implements data copy in the Ascend910_95 architecture using the CopyOutSplitNWithParams mode
+ * This struct implements data copy in the Ascend950 architecture using the CopyOutSplitNWithParams mode
  *
  * @param [in] OutputType: the type of the output tensor
  * @param [in] InputType: the type of the input tensor
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910_95, CopyOutSplitNWithParams, void, OutputType, InputType,
+    Arch::Ascend950, CopyOutSplitNWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsUB<OutputType::pos>() && IsNDOrAlign<OutputType>() &&       // UB ND/ND_ALIGN
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -56,7 +56,7 @@ public:
      * @param [in] orgN: original N value
      * @param [in] orgKc: original Kc value
      * @param [in] id: blcok id, default is 0
-     * @note This functionimplements data copy in the Ascend910_95 architecture using the CopyOutSplitNWithParams mode
+     * @note This functionimplements data copy in the Ascend950 architecture using the CopyOutSplitNWithParams mode
      */
     __aicore__ inline void operator()(const AscendC::LocalTensor<DstT>& dst, const AscendC::LocalTensor<SrcT>& src,
         int32_t curRow, int32_t curCol, int32_t l0CTileH, int32_t l0CTileW, int32_t baseM, int32_t baseN, int32_t orgM,
@@ -93,14 +93,14 @@ public:
         params.subBlockId = id;
         AscendC::Fixpipe<DstT, SrcT, AscendC::Impl::CFG_ROW_MAJOR_UB>(dst[dstOffset], src, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific conditions
+ * @brief Copy struct for Ascend950 architecture with specific conditions
  *
  * This struct is enabled when the output is in UB, the format is NZ, and it's not a quant scenario
  *
@@ -109,7 +109,7 @@ public:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910_95, CopyOutSplitNWithParams, void, OutputType, InputType,
+    Arch::Ascend950, CopyOutSplitNWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsUB<OutputType::pos>() && IsNz<OutputType>() &&              // UB NZ
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -159,7 +159,7 @@ public:
         params.subBlockId = id;
         AscendC::Fixpipe<DstT, SrcT, AscendC::Impl::CFG_NZ_UB>(dst[dstOffset], src, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };

@@ -33,7 +33,7 @@ constexpr size_t GMMSQ_INDEX_ATTR_QUANT_MODE = 2UL;
 constexpr size_t QUANT_MODE_TYPE = 2;
 constexpr int64_t DYNAMIC_GRAPH_FIRST_INFERSHAPE_DIM_VALUE = -1;
 
-static std::set<std::string> GmmDavidSupportSoc = {"Ascend910_95"};
+static std::set<std::string> GmmDavidSupportSoc = {"Ascend950"};
 static const std::unordered_set<ge::DataType> DavidSupportedInputDtypes = {ge::DataType::DT_FLOAT8_E5M2, ge::DataType::DT_FLOAT8_E4M3FN,
                                                           ge::DataType::DT_FLOAT4_E1M2, ge::DataType::DT_FLOAT4_E2M1};
 bool  isSupportedInputDtypeForDavid(ge::DataType dtype)

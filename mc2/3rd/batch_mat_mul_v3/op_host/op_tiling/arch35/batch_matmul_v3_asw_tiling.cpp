@@ -21,7 +21,7 @@
 namespace optiling {
 namespace Mc2batch_matmul_v3_advanced {
 using namespace strategy;
-MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3AswTiling, ASCEND910_95, BASE);
+MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3AswTiling, ASCEND950, BASE);
 MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3AswTiling, RESERVED_VERSION, BASE); //supportMmadS8S4平台
 
 ge::graphStatus Mc2BatchMatMulV3AswTiling::DoOpTiling()

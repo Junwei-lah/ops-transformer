@@ -257,7 +257,7 @@ public:
             .ExtendCfgInfo("coreType.value", "AiCore")
             .ExtendCfgInfo("opFile.value", "flash_attention_score_grad_apt")
             .ExtendCfgInfo("jitCompile.flag", "static_false,dynamic_false");
-        this->AICore().AddConfig("ascend910_95", aicore_config_95);
+        this->AICore().AddConfig("ascend950", aicore_config_95);
 
         OpAICoreConfig aicore_config;
         aicore_config.Input("query")

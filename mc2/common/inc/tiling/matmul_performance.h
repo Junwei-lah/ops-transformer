@@ -30,7 +30,7 @@ constexpr uint64_t MIN_M_SIZE_FACTOR = 3;
 constexpr uint64_t MARK_CORE_NUM_SOC910B = 20;
 // start: cycle per micro second for different soc version
 constexpr double CYCLE_PER_MICRO_SEC = 1.8 * ONE_KBYTE;
-constexpr double CYCLE_PER_MICRO_SEC_VERSION910_95 = 1.65 * ONE_KBYTE;
+constexpr double CYCLE_PER_MICRO_SEC_VERSION950 = 1.65 * ONE_KBYTE;
 constexpr double CYCLE_PER_MICRO_SEC_VERSION310_P = 1.08 * ONE_KBYTE;
 // end: cycle per micro second for different soc version
 constexpr auto DEFAULT_KEY_FOR_PAR_MAP = "0_0_2_2_2";
@@ -44,7 +44,7 @@ constexpr uint64_t SMALL_RANKTILE = 2;
 constexpr uint64_t BMM_DATASIZE_K_BAR = 2048;
 constexpr uint64_t BMM_DATASIZE_SMALL_K = 16 * ONE_GBYTE;
 constexpr uint64_t BMM_DATASIZE_LARGE_K = 24 * ONE_GBYTE;
-constexpr uint64_t MM_MIN_DATASIZE_SOC910_95 = 5 * ONE_GBYTE;
+constexpr uint64_t MM_MIN_DATASIZE_SOC950 = 5 * ONE_GBYTE;
 constexpr uint64_t MM_MIN_DATASIZE_OTHER_SOC = 10 * ONE_GBYTE; // M * N * K >= 10G
 constexpr double MAX_PARTICAL_ENHANCEMENT_FACTOR_CUBE_UTIL = 1.4;
 constexpr double MNVALUE_THRESHOLD = 820;
@@ -68,16 +68,16 @@ public:
         mmShapeInfo_.cyclePerMicroSec = MatmulPerformance::CYCLE_PER_MICRO_SEC;
         if (inputSocVersion == SocVersion::SOC310_P) {
             mmShapeInfo_.cyclePerMicroSec = MatmulPerformance::CYCLE_PER_MICRO_SEC_VERSION310_P;
-        } else if (inputSocVersion == SocVersion::SOC910_95) {
-            mmShapeInfo_.cyclePerMicroSec = MatmulPerformance::CYCLE_PER_MICRO_SEC_VERSION910_95;
-            mmMinDataSize_ = MatmulPerformance::MM_MIN_DATASIZE_SOC910_95;
+        } else if (inputSocVersion == SocVersion::SOC950) {
+            mmShapeInfo_.cyclePerMicroSec = MatmulPerformance::CYCLE_PER_MICRO_SEC_VERSION950;
+            mmMinDataSize_ = MatmulPerformance::MM_MIN_DATASIZE_SOC950;
         } else {
             mmShapeInfo_.cyclePerMicroSec = MatmulPerformance::CYCLE_PER_MICRO_SEC;
         }
     }
     void SetCalcType(const mc2tiling::TilingArgs& args)
     {
-        if ((mmShapeInfo_.socType == SocVersion::SOC910_95) &&
+        if ((mmShapeInfo_.socType == SocVersion::SOC950) &&
             ((args.aType == matmul_tiling::DataType::DT_HIFLOAT8) ||
              (args.aType == matmul_tiling::DataType::DT_FLOAT8_E4M3FN) ||
              (args.aType == matmul_tiling::DataType::DT_FLOAT8_E5M2))) {

@@ -16,7 +16,7 @@ if (BUILD_OPEN_PROJECT)
 endif()
 
 set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+if("${CONDITION_UNIT}" STREQUAL "ascend950")
     set(rotary_position_embedding_grad_apt_depends posembedding/apply_rotary_pos_emb CACHE INTERNAL "Dependencies for rotary_position_embedding_grad")
 endif()
 

@@ -1296,5 +1296,5 @@ void MoeInitRountingV3TilingBase::Tiling4GatherOutCompute()
         lastCorePerLoopIndicesElements, lastCoreLastLoopIndicesElements);
 }
 
-REGISTER_OPS_TILING_TEMPLATE(MoeInitRoutingV3, MoeInitRountingV3TilingBase, 10000); // If not 910_95, fallback to this.
+REGISTER_OPS_TILING_TEMPLATE(MoeInitRoutingV3, MoeInitRountingV3TilingBase, 10000); // If not 950, fallback to this.
 } // namespace optiling

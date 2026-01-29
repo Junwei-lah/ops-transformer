@@ -29,11 +29,11 @@ namespace ge {
  * @li key_cache: Key cache tensor. The format and the shape depends on cache_mode. \n
  *   - The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component
  *     and Atlas A3 Training Series Product/Atlas A3 Inference Series Product: The format is ND.
- *   - Ascend 910_95 AI Processor: Supports the ND (cache_mode = "Norm") and FRACTAL_NZ (cache_mode = "PA_NZ") data formats.
+ *   - Ascend 950 AI Processor: Supports the ND (cache_mode = "Norm") and FRACTAL_NZ (cache_mode = "PA_NZ") data formats.
  * @li value_cache: Value cache tensor. The format and the shape depends on cache_mode.
  *   - The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component
  *     and Atlas A3 Training Series Product/Atlas A3 Inference Series Product: The format is ND.
- *   - Ascend 910_95 AI Processor: Supports the ND (cache_mode = "Norm") and FRACTAL_NZ (cache_mode = "PA_NZ") data formats.
+ *   - Ascend 950 AI Processor: Supports the ND (cache_mode = "Norm") and FRACTAL_NZ (cache_mode = "PA_NZ") data formats.
  * @li block_tables: Tensor mapping logical blocks to physical blocks in each batch. \n
  *   - Data types: int32, int64.
  *   - format: ND
@@ -43,11 +43,11 @@ namespace ge {
  * @li key: Tensor for gathered key values. Shape depends on cache_mode.
  *   - The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component
  *     and Atlas A3 Training Series Product/Atlas A3 Inference Series Product: The format is ND.
- *   - Ascend 910_95 AI Processor: The format is ND.
+ *   - Ascend 950 AI Processor: The format is ND.
  * @li value: Tensor for gathered value values. Shape depends on cache_mode.
  *   - The Atlas A2 Training Series Product/Atlas 800I A2 Inference Product/A200I A2 Box Heterogeneous Component
  *     and Atlas A3 Training Series Product/Atlas A3 Inference Series Product: The format is ND.
- *   - Ascend 910_95 AI Processor: The format is ND.
+ *   - Ascend 950 AI Processor: The format is ND.
  * @li seq_offset: Optional. Starting offset for each sequence in the block_tables. Shape: [batch]. \n
  *   - Data types: int32, int64.
  *   - format: ND

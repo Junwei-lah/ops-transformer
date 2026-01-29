@@ -97,7 +97,7 @@ ge::graphStatus MoeInitRoutingV2TilingBase::GetPlatformInfo()
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     aicoreParams_.ubSize = ubSizePlatForm - SIMT_UB_SIZE_BYTE;
     mrgSortListMaxElement = 2048; // DAVID下，单词搬运最大元素个数2048
-    regBase = (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95);
+    regBase = (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND950);
     is310P = (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND310P);
     CHECK_FAIL(context_, (is310P && dropPadMode != 0), "The dropPadMode only support 0 on 310p.");
     if (!regBase) {
@@ -254,7 +254,7 @@ ge::graphStatus MoeInitRoutingV2TilingBase::GetShapeAttrsInfo()
     OP_CHECK_IF(platformInfo == nullptr, OP_LOGE(context_->GetNodeName(), "fail to get platform info."),
               return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    bool isRegbase = ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95;
+    bool isRegbase = ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND950;
     if (isRegbase) {
         CHECK_FAIL(context_, expertIdxDimNum != DIM_ONE && expertIdxDimNum != DIM_TWO,
                    "The dim number of expertIdx should be 1 or 2.");

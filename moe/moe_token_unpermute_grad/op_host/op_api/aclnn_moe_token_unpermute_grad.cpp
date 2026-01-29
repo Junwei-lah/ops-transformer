@@ -45,7 +45,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGradGetWorkspaceSize(
     const aclTensor* probsOptional, bool paddedMode, const aclIntArray* restoreShapeOptional,
     aclTensor* permutedTokensGradOut, aclTensor* probsGradOut, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
-    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (!useMoeFinalizeRoutingV2Grad) {
         return aclnnInnerMoeTokenUnpermuteGradGetWorkspaceSize(
             permuteTokens, unpermutedTokensGrad, sortedIndices, probsOptional, paddedMode, restoreShapeOptional,
@@ -71,7 +71,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGradGetWorkspaceSize(
 aclnnStatus aclnnMoeTokenUnpermuteGrad(
     void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
-    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (!useMoeFinalizeRoutingV2Grad) {
         return aclnnInnerMoeTokenUnpermuteGrad(workspace, workspaceSize, executor, stream);
     }

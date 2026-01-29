@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (BUILD_OPEN_PROJECT)
-    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend910_95")
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
         set(quant_grouped_matmul_inplace_add_apt_depends gmm/common CACHE INTERNAL "Dependencies for quant_grouped_matmul_inplace_add_apt")
     endif()
     target_sources(op_host_aclnnExc PRIVATE
@@ -25,11 +25,11 @@ if (BUILD_OPS_RTY_KERNEL) # 回黄kernel
                 -Werror
     )
 
-    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend910_95")
+    if("${ASCEND_COMPUTE_UNIT}" STREQUAL "ascend950")
         set(quant_grouped_matmul_inplace_add_apt_depends gmm/common CACHE INTERNAL "Dependencies for quant_grouped_matmul_inplace_add_apt")
         add_ops_compile_options(
             OP_NAME QuantGroupedMatmulInplaceAdd
-            COMPUTE_UNIT ascend910_9599
+            COMPUTE_UNIT Ascend950PR_9599
             OPTIONS -mllvm -cce-aicore-dcci-before-kernel-end=false
         )
     endif()

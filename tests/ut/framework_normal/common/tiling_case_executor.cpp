@@ -140,7 +140,7 @@
             {"Ascend310P", "2002"},                                                                                    \
             {"Ascend910B", "2201"},                                                                                    \
             {"Ascend910_93", "2201"},                                                                                  \
-            {"Ascend910_95", "3510"}                                                                                   \
+            {"Ascend950", "3510"}                                                                                   \
         };                                                                                                             \
         versions = {                                                                                                   \
             {"NpuArch", socToArch[tilingContextPara.socVersion_]},                                                     \

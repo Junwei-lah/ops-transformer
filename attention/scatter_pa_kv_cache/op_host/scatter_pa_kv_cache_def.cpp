@@ -22,7 +22,7 @@ static const std::vector<ge::DataType> keyDataType = {
     ge::DT_INT8, ge::DT_INT8, ge::DT_INT8, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_BF16,
 };
 
-static const std::vector<ge::DataType> DataType_910_95 = {
+static const std::vector<ge::DataType> DataType_950 = {
     ge::DT_FLOAT,  ge::DT_FLOAT16, ge::DT_BF16,   ge::DT_INT8,     ge::DT_UINT8,       ge::DT_INT16,
     ge::DT_UINT16, ge::DT_INT32,   ge::DT_UINT32, ge::DT_HIFLOAT8, ge::DT_FLOAT8_E5M2, ge::DT_FLOAT8_E4M3FN,
     ge::DT_FLOAT,  ge::DT_FLOAT16, ge::DT_BF16,   ge::DT_INT8,     ge::DT_UINT8,       ge::DT_INT16,
@@ -39,7 +39,7 @@ static const std::vector<ge::DataType> indexDataType = {
     ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64,
 };
 
-static const std::vector<ge::DataType> indexDataType_910_95 = {
+static const std::vector<ge::DataType> indexDataType_950 = {
     ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32,
     ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT32, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64,
     ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64, ge::DT_INT64,
@@ -50,7 +50,7 @@ static const std::vector<ge::Format> DataFormat = {
     ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
 };
 
-static const std::vector<ge::Format> DataFormat_910_95 = {
+static const std::vector<ge::Format> DataFormat_950 = {
     ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
     ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
     ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
@@ -115,65 +115,65 @@ public:
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
 
-        OpAICoreConfig config_910_95;
-        config_910_95.Input("key")
+        OpAICoreConfig config_950;
+        config_950.Input("key")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("key_cache")
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("key_cache")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("slot_mapping")
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("slot_mapping")
             .ParamType(REQUIRED)
-            .DataType(indexDataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("value")
+            .DataType(indexDataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("value")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("value_cache")
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("value_cache")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("compress_lens")
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("compress_lens")
             .ParamType(OPTIONAL)
-            .DataType(indexDataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("compress_seq_offset")
+            .DataType(indexDataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("compress_seq_offset")
             .ParamType(OPTIONAL)
-            .DataType(indexDataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Input("seq_lens")
+            .DataType(indexDataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Input("seq_lens")
             .ParamType(OPTIONAL)
-            .DataType(indexDataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Output("key_cache")
+            .DataType(indexDataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Output("key_cache")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.Output("value_cache")
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.Output("value_cache")
             .ParamType(REQUIRED)
-            .DataType(DataType_910_95)
-            .Format(DataFormat_910_95)
-            .UnknownShapeFormat(DataFormat_910_95);
-        config_910_95.DynamicCompileStaticFlag(true)
+            .DataType(DataType_950)
+            .Format(DataFormat_950)
+            .UnknownShapeFormat(DataFormat_950);
+        config_950.DynamicCompileStaticFlag(true)
             .DynamicFormatFlag(false)
             .DynamicRankSupportFlag(true)
             .DynamicShapeSupportFlag(true)
             .NeedCheckSupportFlag(false)
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("opFile.value", "scatter_pa_kv_cache_apt");
-        this->AICore().AddConfig("ascend910_95", config_910_95);
+        this->AICore().AddConfig("ascend950", config_950);
     }
 };
 OP_ADD(ScatterPaKvCache);

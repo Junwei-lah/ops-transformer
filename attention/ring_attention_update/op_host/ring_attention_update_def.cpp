@@ -89,7 +89,7 @@ public:
             .NeedCheckSupportFlag(false)
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("opFile.value", "ring_attention_update_apt");
-        this->AICore().AddConfig("ascend910_95", config_91095);
+        this->AICore().AddConfig("ascend950", config_91095);
 
         OpAICoreConfig config_kirin = GetKirinCoreConfig();
         this->AICore().AddConfig("kirinx90", config_kirin);

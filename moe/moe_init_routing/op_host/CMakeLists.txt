@@ -12,7 +12,7 @@ if (BUILD_OPEN_PROJECT)
     target_sources(op_host_aclnn PRIVATE
         moe_init_routing_def.cpp
     )
-    if(CONDITION_UNIT STREQUAL "ascend910_95")
+    if(CONDITION_UNIT STREQUAL "ascend950")
         add_ops_compile_options(
                 OP_NAME MoeInitRouting
                 OPTIONS --cce-auto-sync=on

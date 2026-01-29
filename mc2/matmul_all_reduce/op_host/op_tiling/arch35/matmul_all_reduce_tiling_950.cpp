@@ -9,10 +9,10 @@
  */
 
 /*!
- * \file matmul_all_reduce_tiling_910_95.cc
+ * \file matmul_all_reduce_tiling_950.cc
  * \brief
  */
-#include "matmul_all_reduce_tiling_910_95.h"
+#include "matmul_all_reduce_tiling_950.h"
 #include "tiling/new_mc2_tiling_utils.h"
 #include "op_mc2.h"
 #include "mc2/matmul_all_reduce/op_kernel/matmul_all_reduce_apt_tiling_key.h"
@@ -322,5 +322,5 @@ MatmulAllReduceTilingA5::MatmulAllReduceTilingA5(
 {}
 
 //注册tiling类
-REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,MatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND910_95),2);
+REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(MatmulAllReduce,MatmulAllReduceTilingA5,static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND950),2);
 } // namespace optiling

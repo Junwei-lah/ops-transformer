@@ -21,7 +21,7 @@
 namespace optiling {
 namespace Mc2batch_matmul_v3_advanced {
 using namespace strategy;
-MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3AswBL1FullLoadBasicTiling, ASCEND910_95, BL1_FULL_LOAD_BASIC);
+MC2_MM_REGISTER_TILING_TEMPLATE(Mc2BatchMatMulV3, Mc2BatchMatMulV3AswBL1FullLoadBasicTiling, ASCEND950, BL1_FULL_LOAD_BASIC);
 
 bool Mc2BatchMatMulV3AswBL1FullLoadBasicTiling::IsCapable()
 {

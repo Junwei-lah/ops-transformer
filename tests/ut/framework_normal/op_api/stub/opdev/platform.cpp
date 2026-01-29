@@ -90,7 +90,7 @@ NpuArch PlatformInfo::GetCurNpuArch() const
         {SocVersion::ASCEND910, NpuArch::DAV_1001},
         {SocVersion::ASCEND910B, NpuArch::DAV_2201},
         {SocVersion::ASCEND910_93, NpuArch::DAV_2201},
-        {SocVersion::ASCEND910_95, NpuArch::DAV_3510},
+        {SocVersion::ASCEND950, NpuArch::DAV_3510},
         {SocVersion::ASCEND310P, NpuArch::DAV_2002},
         {SocVersion::ASCEND310B, NpuArch::DAV_3002},
         {SocVersion::ASCEND610LITE, NpuArch::DAV_3102}
@@ -107,7 +107,7 @@ ge::AscendString ToString(SocVersion socVersion)
 {
     static const std::map<SocVersion, std::string> kSocVersionMap = {
         {SocVersion::ASCEND910, "Ascend910"},       {SocVersion::ASCEND910B, "Ascend910B"},
-        {SocVersion::ASCEND910_93, "Ascend910_93"}, {SocVersion::ASCEND910_95, "Ascend910_95"},
+        {SocVersion::ASCEND910_93, "Ascend910_93"}, {SocVersion::ASCEND950, "Ascend950"},
         {SocVersion::ASCEND910E, "Ascend910E"},     {SocVersion::ASCEND310, "Ascend310"},
         {SocVersion::ASCEND310P, "Ascend310P"},     {SocVersion::ASCEND310B, "Ascend310B"},
         {SocVersion::ASCEND310C, "Ascend310C"},     {SocVersion::ASCEND610LITE, "Ascend610LITE"},
@@ -130,7 +130,7 @@ void SetPlatformSocVersion(SocVersion socVersion)
 void SetPlatformNpuArch(NpuArch npuArch)
 {
     static const std::map<NpuArch, SocVersion> NpuArchSocVersionMap = {
-        {NpuArch::DAV_3510, SocVersion::ASCEND910_95},
+        {NpuArch::DAV_3510, SocVersion::ASCEND950},
         {NpuArch::DAV_RESV, SocVersion::RESERVED_VERSION},
     };
     g_socVersion = SocVersion::RESERVED_VERSION;

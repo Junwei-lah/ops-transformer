@@ -40,7 +40,7 @@ namespace optiling
 {
 bool AllGatherMatmulTilingV2::IsCapable()
 {
-    if ((socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) && inputIsBf16Fp16_) {
+    if ((socVersion_ == platform_ascendc::SocVersion::ASCEND950) && inputIsBf16Fp16_) {
         OP_LOGI(opName_, "Start with AllGatherMatmulTilingV2 tiling.");
         return true;
     }
@@ -225,5 +225,5 @@ AllGatherMatmulTilingV2::AllGatherMatmulTilingV2(gert::TilingContext* context)
 }
 //注册Tiling类
 REGISTER_TILING_TEMPLATE_WITH_SOCVERSION(AllGatherMatmulV2, AllGatherMatmulTilingV2, \
-                                        static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND910_95), 0);
+                                        static_cast<int32_t>(platform_ascendc::SocVersion::ASCEND950), 0);
 }  // namespace optiling

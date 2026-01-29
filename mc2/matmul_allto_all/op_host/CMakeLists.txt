@@ -22,10 +22,10 @@ if (BUILD_OPEN_PROJECT)  # custom
     set(matmul_allto_all_depends mc2/common mc2/3rd PARENT_SCOPE)
     set(matmul_allto_all_apt_depends mc2/common mc2/3rd PARENT_SCOPE)
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-    if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+    if("${CONDITION_UNIT}" STREQUAL "ascend950")
         add_ops_compile_options(
             OP_NAME MatmulAlltoAll
-            COMPUTE_UNIT ascend910_9599
+            COMPUTE_UNIT Ascend950PR_9599
             OPTIONS --cce-auto-sync=off
                     -mllvm -cce-aicore-dcci-before-kernel-end=false
                     -DENABLE_CV_COMM_VIA_SSBUF=true

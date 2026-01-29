@@ -16,11 +16,11 @@ if (BUILD_OPEN_PROJECT)
 endif()
 
 set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+if("${CONDITION_UNIT}" STREQUAL "ascend950")
     set(rotary_position_embedding_apt_depends posembedding/apply_rotary_pos_emb CACHE INTERNAL "Dependencies for rotary_position_embedding")
     add_ops_compile_options(
         OP_NAME RotaryPositionEmbedding
-        COMPUTE_UNIT ascend910_9599
+        COMPUTE_UNIT Ascend950PR_9599
         OPTIONS -DENABLE_CV_COMM_VIA_SSBUF=true
     )
 endif()

@@ -85,7 +85,7 @@ TEST_F(RingAttentionUpdateTiling, test_ring_attention_update_regbase_sbh_fp32) {
                                                 {"input_softmax_layout", Ops::Transformer::AnyValue::CreateFrom<string>(input_softmax_layout)},
                                               },
                                               &compileInfo,
-                                              "Ascend910_95",
+                                              "Ascend950",
                                               56, 262144);
     uint64_t expectTilingKey = 100;
     string expectTilingData = "2 1024 12 128 8 56 7 3 147 142 74 128 ";
@@ -120,7 +120,7 @@ TEST_F(RingAttentionUpdateTiling, test_ring_attention_update_regbase_sbh_fp16) {
                                                 {"input_softmax_layout", Ops::Transformer::AnyValue::CreateFrom<string>(input_softmax_layout)},
                                               },
                                               &compileInfo,
-                                              "Ascend910_95",
+                                              "Ascend950",
                                               56, 262144);
     uint64_t expectTilingKey = 100;
     string expectTilingData = "2 1024 12 128 8 56 7 3 147 142 132 128 ";
@@ -156,7 +156,7 @@ TEST_F(RingAttentionUpdateTiling, test_ring_attention_update_regbase_softmaxtnd_
                                                 {"input_softmax_layout", Ops::Transformer::AnyValue::CreateFrom<string>(input_softmax_layout)},
                                               },
                                               &compileInfo,
-                                              "Ascend910_95",
+                                              "Ascend950",
                                               56, 262144);
     uint64_t expectTilingKey = 110;
     string expectTilingData = "12000 2 768 8 17 56 429 405 27 768 ";

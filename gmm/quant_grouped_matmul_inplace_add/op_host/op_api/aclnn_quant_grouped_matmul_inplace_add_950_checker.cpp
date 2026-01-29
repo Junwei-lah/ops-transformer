@@ -8,7 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "aclnn_quant_grouped_matmul_inplace_add_910_95_checker.h"
+#include "aclnn_quant_grouped_matmul_inplace_add_950_checker.h"
 
 using namespace QGmmInPlaceAdd;
 

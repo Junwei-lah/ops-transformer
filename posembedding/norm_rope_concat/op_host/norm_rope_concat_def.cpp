@@ -169,7 +169,7 @@ public:
         this->Attr("is_training").AttrType(OPTIONAL).Bool(false);
         this->AICore().AddConfig("ascend910b");
         this->AICore().AddConfig("ascend910_93");
-        this->AICore().AddConfig("ascend910_95");
+        this->AICore().AddConfig("ascend950");
     }
 };
 OP_ADD(NormRopeConcat);

@@ -99,7 +99,7 @@ namespace op {
 // add stub func for GetCurrentPlatformInfo()&GetSocVersion() in aclnn
 enum class SocVersion {
     ASCEND910B = 1,
-    ASCEND910_95 = 3,
+    ASCEND950 = 3,
     ASCEND310P = 6
 };
 
@@ -119,9 +119,9 @@ SocVersion PlatformInfo::GetSocVersion() const
     if (socVersion == "Ascend310P") {
         return SocVersion::ASCEND310P;
     }
-    if (socVersion == "Ascend910_95")
+    if (socVersion == "Ascend950")
     {
-        return SocVersion::ASCEND910_95;
+        return SocVersion::ASCEND950;
     }
 
     return SocVersion::ASCEND910B;

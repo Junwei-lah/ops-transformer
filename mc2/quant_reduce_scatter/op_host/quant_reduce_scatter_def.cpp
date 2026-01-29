@@ -77,7 +77,7 @@ public:
             .ExtendCfgInfo("aclnnSupport.value", "support_aclnn")
             .ExtendCfgInfo("jitCompile.flag", "static_false") // 动态shape，复用二进制，后续图支持后修改
             .ExtendCfgInfo("multiKernelSupportDynamicGraph.value", "multi_kernel");
-        this->AICore().AddConfig("ascend910_95", aicore_config_950);
+        this->AICore().AddConfig("ascend950", aicore_config_950);
 
         // 将group配置为该算子的通信域
         this->MC2().HcclGroup("group");

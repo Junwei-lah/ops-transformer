@@ -147,7 +147,7 @@ ge::graphStatus MoeGatingTopKSoftmaxV2KFullLoadTiling::DoLibApiTiling()
     uint32_t ubFormerAlignLocal = CeilDiv(ubFormer, ALIGN_NUM) * ALIGN_NUM;
     uint32_t kAlign = CeilDiv(k, ALIGN_NUM) * ALIGN_NUM;
     auto softmaxShape = ge::Shape({tilingData.get_ubFormer()});
-    if (socVersion == platform_ascendc::SocVersion::ASCEND910_95) {
+    if (socVersion == platform_ascendc::SocVersion::ASCEND950) {
         SoftMaxFlashV2TilingFunc(softmaxShape, dataTypeSize, dataTypeSize,
                                  GetSoftMaxFlashV2MaxTmpSize(softmaxShape, dataTypeSize, true, true),
                                  tilingData.ubFormerSoftmaxTilingData, true);
@@ -158,7 +158,7 @@ ge::graphStatus MoeGatingTopKSoftmaxV2KFullLoadTiling::DoLibApiTiling()
     }
 
     softmaxShape = ge::Shape({tilingData.get_ubTail()});
-    if (socVersion == platform_ascendc::SocVersion::ASCEND910_95) {
+    if (socVersion == platform_ascendc::SocVersion::ASCEND950) {
         SoftMaxFlashV2TilingFunc(softmaxShape, dataTypeSize, dataTypeSize,
                                  GetSoftMaxFlashV2MaxTmpSize(softmaxShape, dataTypeSize, true, true),
                                  tilingData.ubFormerSoftmaxTilingData, true);

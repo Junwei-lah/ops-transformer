@@ -203,14 +203,14 @@ private:
 
 /**
  * @struct Copy
- * @brief Define a Copy structure for tensor copy operations on the Ascend910_95 architecture based on position traits
+ * @brief Define a Copy structure for tensor copy operations on the Ascend950 architecture based on position traits
  * @param [in] AType: template parameter indicating whether to perform a transpose operation
  * @param [in] DstTrait: traits of the destination tensor
  * @param [in] SrcTrait: traits of the source tensor
  */
 template <class AType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910_95, CopyWithLayout, AType, DstTrait, SrcTrait,
+    Arch::Ascend950, CopyWithLayout, AType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<SrcTrait::tPos == AscendC::TPosition::A1 && DstTrait::tPos == AscendC::TPosition::A2>> {
 public:
     using DstTensor = AscendC::LocalTensor<DstTrait>;
@@ -235,7 +235,7 @@ public:
             NoneTransposeLoadA2(l0A, l1A, coord);
         }
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 

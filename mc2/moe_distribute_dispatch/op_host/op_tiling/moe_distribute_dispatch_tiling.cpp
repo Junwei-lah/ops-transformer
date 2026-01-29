@@ -244,7 +244,7 @@ static ge::graphStatus CheckAttrs(gert::TilingContext *context, const char *node
     OP_TILING_CHECK((tpWorldSize > 1) && (localMoeExpertNum > 1), OP_LOGE(nodeName, "Cannot support multi-moeExpert %u "
         "in a rank when tpWorldSize = %u > 1", localMoeExpertNum, tpWorldSize), return ge::GRAPH_FAILED);
 
-    if (mc2tiling::GetSocVersion(context) == "Ascend910_95") {
+    if (mc2tiling::GetSocVersion(context) == "Ascend950") {
         // 为支持在 A5 上的验证，放开 epWorldSize 为 2 或 4 的校验
         // 检验epWorldSize是否是2的倍数
         OP_TILING_CHECK(epWorldSize % 2 != 0, OP_LOGE(nodeName,
@@ -574,7 +574,7 @@ static ge::graphStatus MoeDistributeDispatchA3A5TilingFuncImpl(gert::TilingConte
     uint32_t tpWorldSize = tilingData->moeDistributeDispatchInfo.tpWorldSize;
     OP_TILING_CHECK(SetHcommCfg(context, tilingData, groupEp, groupTp, tpWorldSize) != ge::GRAPH_SUCCESS,
         OP_LOGE(nodeName, "SetHcommCfg failed."), return ge::GRAPH_FAILED);
-    uint64_t tilingKey = CalTilingKey(isScales, quantMode, tpWorldSize, mc2tiling::GetSocVersion(context) == "Ascend910_95");
+    uint64_t tilingKey = CalTilingKey(isScales, quantMode, tpWorldSize, mc2tiling::GetSocVersion(context) == "Ascend950");
     OP_LOGD(nodeName, "tilingKey is %lu", tilingKey);
     context->SetTilingKey(tilingKey);
     uint32_t numBlocks = 1U;

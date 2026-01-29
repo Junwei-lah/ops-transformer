@@ -26,7 +26,7 @@ if (BUILD_OPEN_PROJECT)  # custom
     # -mllvm -cce-aicore-dcci-before-kernel-end=false：禁用在kernel函数结束前插入DCCI指令
     # -DENABLE_CV_COMM_VIA_SSBUF=true: 启用CV模块通过共享系统缓冲区进行数据通信。
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-    if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
+    if("${CONDITION_UNIT}" STREQUAL "ascend950")
         add_ops_compile_options(
             OP_NAME MatmulAllReduce
             OPTIONS --cce-auto-sync=off

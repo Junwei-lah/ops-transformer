@@ -48,10 +48,10 @@ ge::graphStatus TilingSparseLightningIndexerGradKLLoss(gert::TilingContext *cont
 {
     auto platformInfoPtr = context->GetPlatformInfo();
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND910_95) {
-        OP_LOGW(context, "Current soc version is ASCEND910_95.");
+    if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND950) {
+        OP_LOGW(context, "Current soc version is ASCEND950.");
     } else {
-        OP_LOGW(context, "Current soc version is not ASCEND910_95.");
+        OP_LOGW(context, "Current soc version is not ASCEND950.");
     }
     return Ops::Transformer::OpTiling::TilingRegistryNew::GetInstance().DoTilingImpl(context);
 }

@@ -69,7 +69,7 @@ private:
 
 bool MoeGatingTopKSoftmaxV2PerfRegbaseTiling::IsCapable()
 {
-    if (socVersion != platform_ascendc::SocVersion::ASCEND910_95) {
+    if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
         return false;
     }
     if ((col <= MAX_COL && col % CONSTANT_EIGHT == 0 && k <= static_cast<int32_t>(CONSTANT_EIGHT)) ||

@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_910_95_CHECKER_H
-#define OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_910_95_CHECKER_H
+#ifndef OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
+#define OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
 #include "opdev/format_utils.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "aclnn_quant_grouped_matmul_finalize_routing_util.h"

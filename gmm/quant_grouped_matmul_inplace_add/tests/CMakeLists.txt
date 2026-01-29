@@ -26,7 +26,7 @@ set(_QGMMIA_KernelTilingDataDefH
 
 set(_QGMMIA_OpApiSourcesExt
         ${CMAKE_SOURCE_DIR}/src/transformer/gmm/grouped_matmul/op_host/op_api/aclnn_grouped_matmul_util.cpp
-        ${CMAKE_SOURCE_DIR}/src/transformer/gmm/grouped_matmul/op_host/op_api/arch35/aclnn_grouped_matmul_910_95_checker.cpp
+        ${CMAKE_SOURCE_DIR}/src/transformer/gmm/grouped_matmul/op_host/op_api/arch35/aclnn_grouped_matmul_950_checker.cpp
         ${CMAKE_SOURCE_DIR}/src/transformer/gmm/quant_grouped_matmul_inplace_add/op_host/op_api/aclnn_quant_grouped_matmul_inplace_add.cpp
 )
 

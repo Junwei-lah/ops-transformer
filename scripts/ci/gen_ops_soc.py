@@ -51,11 +51,11 @@ def parse_foreach_config(config_str):
     config_mapping = {
         'A2': 'ascend910b',
         '910_93': 'ascend910_93',
-        'A5': 'ascend910_95',
+        'A5': 'ascend950',
         '910B': 'ascend910b',
         '910B_93': 'ascend910_93',
-        '910B_95': 'ascend910_95',
-        '910_95': 'ascend910_95',
+        '910B_95': 'ascend950',
+        '950': 'ascend950',
         '910': 'ascend910',
         '910_55': 'ascend910_55',
     }
@@ -66,12 +66,12 @@ def parse_foreach_config(config_str):
     priority_checks = [
         ('A2', 'ascend910b'),
         ('910_93', 'ascend910_93'),
-        ('A5', 'ascend910_95'),
+        ('A5', 'ascend950'),
         ('910_55', 'ascend910_55'),
         ('910B', 'ascend910b'),
         ('910B_93', 'ascend910_93'),
-        ('910B_95', 'ascend910_95'),
-        ('910_95', 'ascend910_95'),
+        ('910B_95', 'ascend950'),
+        ('950', 'ascend950'),
         ('910', 'ascend910'),
     ]
 
@@ -207,8 +207,8 @@ def extract_ai_core_configs(file_path):
 
 
 def update_ai_core_configs(op_name, ai_core_configs):
-    if should_skip_op(op_name) and "ascend910_95" in ai_core_configs:
-        ai_core_configs.remove("ascend910_95")
+    if should_skip_op(op_name) and "ascend950" in ai_core_configs:
+        ai_core_configs.remove("ascend950")
     return ai_core_configs
 
 

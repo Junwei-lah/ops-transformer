@@ -3998,7 +3998,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_notrans)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4047,7 +4047,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_wtrans)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4096,7 +4096,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_pertensor)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4145,7 +4145,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_illegal_dtype)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4191,7 +4191,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_illegal_wshape)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4300,7 +4300,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_illegal_group_num_size)
         131072,//l0CSize
         65536,//l0ASize
         65536,//l0BSize
-        platform_ascendc::SocVersion::ASCEND910_95,//ASCEND910_95
+        platform_ascendc::SocVersion::ASCEND950,//ASCEND950
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info

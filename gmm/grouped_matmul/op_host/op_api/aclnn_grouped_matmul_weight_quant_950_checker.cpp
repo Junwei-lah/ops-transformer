@@ -8,7 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "aclnn_grouped_matmul_weight_quant_910_95_checker.h"
+#include "aclnn_grouped_matmul_weight_quant_950_checker.h"
 
 using namespace gmm;
 

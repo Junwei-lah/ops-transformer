@@ -488,7 +488,7 @@ void AllGatherMatmulTilingBase::DoSplitMTiling(Mc2Tiling::RCSTiling& rcfCfg)
         }
     } else {
         SocVersion inputSocVersion =
-            (socVersion_ == platform_ascendc::SocVersion::ASCEND910_95) ? SocVersion::SOC910_95 : SocVersion::SOC910_B;
+            (socVersion_ == platform_ascendc::SocVersion::ASCEND950) ? SocVersion::SOC950 : SocVersion::SOC910_B;
         OP_LOGD(opName_, "Start to find proper tileCnt by formulaic tiling.");
         AllGatherPlusMMV2 tileFormulate(args_, args_.rankDim, KernelType::ALL_GATHER, inputSocVersion);
         tileFormulate.GetTiling();

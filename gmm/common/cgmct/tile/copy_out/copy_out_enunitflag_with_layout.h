@@ -150,9 +150,9 @@ struct Copy<
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific traits
+ * @brief Copy struct for Ascend950 architecture with specific traits
  *
- * This struct is specialized for Ascend910_95 architecture and is used to
+ * This struct is specialized for Ascend950 architecture and is used to
  * copy data from a source tensor to a destination tensor with specific traits
  * The traits define the position and format of the tensors
  *
@@ -162,7 +162,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910_95, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::Ascend950, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNDOrAlign<OutputType>()>
 > {
     /**
@@ -206,16 +206,16 @@ struct Copy<
         auto offset = dstND.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910_95 architecture with specific traits
+ * @brief Copy struct for Ascend950 architecture with specific traits
  *
- * This struct is specialized for Ascend910_95 architecture and is used to
+ * This struct is specialized for Ascend950 architecture and is used to
  * copy data from a source tensor to a destination tensor with specific traits
  *
  * @param [in] OutputType: the type of the output tensor
@@ -224,7 +224,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910_95, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::Ascend950, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNz<OutputType>()>
 > {
     /**
@@ -267,7 +267,7 @@ struct Copy<
         auto dstOffset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(dstTensor[dstOffset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910_95"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
 #endif
     }
 };

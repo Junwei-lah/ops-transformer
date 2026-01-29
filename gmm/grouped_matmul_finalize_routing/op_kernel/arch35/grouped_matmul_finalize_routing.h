@@ -58,7 +58,7 @@ __aicore__ inline void grouped_matmul_finalize_routing(GM_ADDR x, GM_ADDR w, GM_
     using BlockMmadBuilder =
         Block::BlockMxMmAicToAivBuilder<AType, LayoutA, BType, LayoutB, BiasType, CType, LayoutC, L1TileShape,
                                         L0TileShape, BlockScheduler, QuantMatmulWithTileMultiBlock<>,
-                                        Tile::TileCopy<Arch::Ascend910_95, Tile::CopyInAndCopyOutSplitMWithParams>>;
+                                        Tile::TileCopy<Arch::Ascend950, Tile::CopyInAndCopyOutSplitMWithParams>>;
 
     using BlockPrologue = Cgmct::Gemm::Block::BlockPrologueFinalizeRouting<CType, BiasType>;
 

@@ -48,7 +48,7 @@ static aclnnStatus aclnnGroupedMatmulSwigluQuantGetWorkspaceSizeCommon(const cha
         std::make_unique<gmm_dsq_base::GroupedMatmulSwigluQuantBaseHandler>());
     factory.registerHandler(SocVersion::ASCEND910_93,
         std::make_unique<gmm_dsq_base::GroupedMatmulSwigluQuantBaseHandler>());
-    factory.registerHandler(SocVersion::ASCEND910_95,
+    factory.registerHandler(SocVersion::ASCEND950,
         std::make_unique<gmmSwigluQuantV2::GroupedMatmulSwigluQuantBaseHandler>());
 
     if (auto *handler = factory.getHandler(version)) {

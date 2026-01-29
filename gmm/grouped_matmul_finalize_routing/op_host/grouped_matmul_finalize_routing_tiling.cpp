@@ -42,7 +42,7 @@ static ge::graphStatus GroupedMatmulFinalizeRoutingTilingFunc(gert::TilingContex
     OP_CHECK_IF(compileInfoPtr == nullptr,
             OPS_REPORT_CUBE_INNER_ERR("GroupedMatmulFinalizeRouting", "CompileInfo is null"),
             return ge::GRAPH_FAILED);
-    if (compileInfoPtr->socVersion == platform_ascendc::SocVersion::ASCEND910_95) {
+    if (compileInfoPtr->socVersion == platform_ascendc::SocVersion::ASCEND950) {
         std::vector<int32_t> tilingRegisterList = {1};
         OP_LOGD("GroupedMatmulFinalizeRoutingTilingFunc", "Using the tiling strategy of A5");
         return Ops::Transformer::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context, tilingRegisterList);

@@ -52,7 +52,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGetWorkspaceSize(
     const aclTensor* permutedTokens, const aclTensor* sortedIndices, const aclTensor* probsOptional, bool paddedMode,
     const aclIntArray* restoreShapeOptional, aclTensor* out, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
-    static bool useMoeFinalizeRoutingV2 = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    static bool useMoeFinalizeRoutingV2 = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (!useMoeFinalizeRoutingV2) {
         return aclnnInnerMoeTokenUnpermuteGetWorkspaceSize(
             permutedTokens, sortedIndices, probsOptional, paddedMode, restoreShapeOptional, out, workspaceSize,
@@ -73,7 +73,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGetWorkspaceSize(
 
 aclnnStatus aclnnMoeTokenUnpermute(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
-    static bool useMoeFinalizeRoutingV2 = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910_95;
+    static bool useMoeFinalizeRoutingV2 = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
     if (!useMoeFinalizeRoutingV2) {
         return aclnnInnerMoeTokenUnpermute(workspace, workspaceSize, executor, stream);
     }

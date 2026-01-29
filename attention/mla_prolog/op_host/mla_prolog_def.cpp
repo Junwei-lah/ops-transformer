@@ -264,7 +264,7 @@ public:
             .NeedCheckSupportFlag(false)
             .PrecisionReduceFlag(true)
             .ExtendCfgInfo("aclnnSupport.value", "support_aclnn");
-        this->AICore().AddConfig("ascend910_95", aicore_config_95);
+        this->AICore().AddConfig("ascend950", aicore_config_95);
     }
 };
 OP_ADD(MlaProlog, optiling::MlaPrologCompileInfo);

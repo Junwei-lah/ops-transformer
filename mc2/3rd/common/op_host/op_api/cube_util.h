@@ -42,7 +42,7 @@ bool NeedCubeGoHF32(const op::DataType cubeTensorPromoteType, int8_t cubeMathTyp
 inline bool IsCubeSupportFp32() {
     if (op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910B &&
         op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_93 &&
-        op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_95) {
+        op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND950) {
         return false;
     }
     return true;
@@ -52,7 +52,7 @@ inline bool IsCubeSupportFp32() {
 inline bool IsCubeSupportHf32() {
     if (op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910B &&
         op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_93 &&
-        op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND910_95) {
+        op::GetCurrentPlatformInfo().GetSocVersion() != op::SocVersion::ASCEND950) {
         return false;
     }
     return true;
