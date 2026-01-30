@@ -521,6 +521,13 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckShapeInfo(AlltoAllMatmulInfo &inf
                     OP_LOGE(opName_, "The input dimNum should be two, but x1DimNum is %lu, x2DimNum is %lu.", x1DimNum, x2DimNum),
                     return ge::GRAPH_FAILED);
 
+    info.M = x1Shape->GetStorageShape().GetDim(0);
+    info.K = x1Shape->GetStorageShape().GetDim(1);
+    uint64_t x2Dim0 = x2Shape->GetStorageShape().GetDim(0);
+    uint64_t x2Dim1 = x2Shape->GetStorageShape().GetDim(1);
+    bool isTrans = info.K * info.rankSize == x2Dim1;
+    info.N = isTrans ? x2Dim0 : x2Dim1;
+
     // 校验输出
     const gert::StorageShape *yShape = context_->GetOutputShape(OUTPUT_Y_INDEX);
     OP_TILING_CHECK((yShape == nullptr), OP_LOGE(opName_, "The yShape is nullptr."), return ge::GRAPH_FAILED);
@@ -533,17 +540,25 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckShapeInfo(AlltoAllMatmulInfo &inf
     status = CheckMatrixMulShapes(context_, opName_);
     if (status != ge::GRAPH_SUCCESS)
         return status;
+    // info.K * info.rankSize限制：A16W8时不超过6144，其余情况不超过35000；A16W8要为32倍数，A4W4要为偶数
+    uint32_t tokenSize = info.K * info.rankSize;
+    if (quantType == TILINGKEY_TPL_A16W8) {
+        OP_TILING_CHECK((tokenSize > 6144), 
+                    OP_LOGE(opName_, "%lu times of the second dim of x1 should be in range[1, 6144], but it is %lu.",
+                        info.rankSize, tokenSize),
+                    return ge::GRAPH_FAILED);
+        OP_TILING_CHECK((tokenSize % 32 != 0), 
+                    OP_LOGE(opName_, "%lu times of the second dim of x1 should be a multiple of 32, but it is %lu.",
+                        info.rankSize, tokenSize),
+                    return ge::GRAPH_FAILED);
+    } else {
+        OP_TILING_CHECK((tokenSize > 35000), 
+                    OP_LOGE(opName_, "%lu times of the second dim of x1 should be in range[1, 35000], but it is %lu.",
+                        info.rankSize, tokenSize),
+                    return ge::GRAPH_FAILED);
+    }
 
     // INT4计算时，需要额外验证维度为偶数
-    auto x1TensorDesc = context_->GetInputDesc(INPUT_X1_INDEX);
-    ge::DataType x1Dtype = x1TensorDesc->GetDataType();
-    info.M = x1Shape->GetStorageShape().GetDim(0);
-    info.K = x1Shape->GetStorageShape().GetDim(1);
-    uint64_t x2Dim0 = x2Shape->GetStorageShape().GetDim(0);
-    uint64_t x2Dim1 = x2Shape->GetStorageShape().GetDim(1);
-    bool isTrans = info.K * info.rankSize == x2Dim1;
-    info.N = isTrans ? x2Dim0 : x2Dim1;
-
     if (quantType == TILINGKEY_TPL_A4W4) {
         OP_TILING_CHECK((info.K % 2 == 1), 
                         OP_LOGE(opName_, "The x1 second dim should be an even number, but it is %lu.", info.K),
@@ -571,8 +586,8 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckShapeInfo(AlltoAllMatmulInfo &inf
         const gert::StorageShape *x1ScaleShape = context_->GetOptionalInputShape(INPUT_X1_SCALE_INDEX);
         uint64_t x1ScaleShapeDimNum = x1ScaleShape->GetStorageShape().GetDimNum();
         uint64_t x1ScaleDim0 = x1ScaleShape->GetStorageShape().GetDim(0);
-        OP_TILING_CHECK((x1ScaleDim0 != info.M / info.rankSize),  // ALLTOALL后，m轴缩小为原来的1/rankSize
-                        OP_LOGE(opName_, "The x1Scale dimNum0 should be %u, but actual value is %lu.", info.M / info.rankSize, x1ScaleDim0),
+        OP_TILING_CHECK((x1ScaleDim0 != info.M),
+                        OP_LOGE(opName_, "The x1Scale dimNum0 should be %u, but actual value is %lu.", info.M, x1ScaleDim0),
                         return ge::GRAPH_FAILED);
 
         const gert::StorageShape *x2ScaleShape = context_->GetOptionalInputShape(INPUT_X2_SCALE_INDEX);
@@ -687,6 +702,9 @@ void AlltoAllMatmulTiling910b::DoTwoRankTiling(CoCTiling &cocTilingData, AlltoAl
     TilingParamMap[&cocTilingData.allToAllRecvCoreNum] = AlltoAllMatmulTilingValue(CORE_NUM_FOUR);
     CalTilingParam(cocTilingData, TilingParamMap, info);
     TilingParamDeal(cocTilingData, info, ubSize);
+    if (quantType == TILINGKEY_TPL_A4W4) {
+        cocTilingData.pValue = cocTilingData.pValue * 4;  // int4时，peermem相较于fp16/bf16可以容纳4倍的元素数量
+    }
 }
 
 void AlltoAllMatmulTiling910b::DoFourRankTiling(CoCTiling &cocTilingData, AlltoAllMatmulInfo &info)
@@ -703,6 +721,9 @@ void AlltoAllMatmulTiling910b::DoFourRankTiling(CoCTiling &cocTilingData, AlltoA
     TilingParamMap[&cocTilingData.allToAllRecvCoreNum] = AlltoAllMatmulTilingValue(CORE_NUM_EIGHT);
     CalTilingParam(cocTilingData, TilingParamMap, info);
     TilingParamDeal(cocTilingData, info, ubSize);
+    if (quantType == TILINGKEY_TPL_A4W4) {
+        cocTilingData.pValue = cocTilingData.pValue * 4;  // int4时，peermem相较于fp16/bf16可以容纳4倍的元素数量
+    }
 }
 
 void AlltoAllMatmulTiling910b::DoEightRankTiling(CoCTiling &cocTilingData, AlltoAllMatmulInfo &info)
@@ -718,6 +739,9 @@ void AlltoAllMatmulTiling910b::DoEightRankTiling(CoCTiling &cocTilingData, Allto
     TilingParamMap[&cocTilingData.allToAllRecvCoreNum] = AlltoAllMatmulTilingValue(CORE_NUM_EIGHT);
     CalTilingParam(cocTilingData, TilingParamMap, info);
     TilingParamDeal(cocTilingData, info, ubSize);
+    if (quantType == TILINGKEY_TPL_A4W4) {
+        cocTilingData.pValue = cocTilingData.pValue * 4;  // int4时，peermem相较于fp16/bf16可以容纳4倍的元素数量
+    }
 }
 
 ge::graphStatus AlltoAllMatmulTiling910b::DoMmCommTiling(CoCTiling &cocTilingData, AlltoAllMatmulInfo &info)
