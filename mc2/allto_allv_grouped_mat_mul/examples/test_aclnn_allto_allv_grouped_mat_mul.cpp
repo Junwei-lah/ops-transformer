@@ -69,7 +69,7 @@ struct Args {
 };
 
 // shape 基本信息
-constexpr int64_t EP_WORLD_SIZE = 8;
+constexpr int64_t EP_WORLD_SIZE = 2;
 constexpr int64_t BS = 4096;
 constexpr int64_t K = 2;
 constexpr int64_t H = 7168;
@@ -247,7 +247,6 @@ int LaunchOneThreadAlltoAllvGmm(Args &args)
 
 int main(int argc, char *argv[])
 {
-    // 本样例基于Atlas A3实现，必须在Atlas A3上运行
     int ret = aclInit(nullptr);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclInit failed. ret = %d \n", ret); return ret);
     aclrtStream stream[EP_WORLD_SIZE];

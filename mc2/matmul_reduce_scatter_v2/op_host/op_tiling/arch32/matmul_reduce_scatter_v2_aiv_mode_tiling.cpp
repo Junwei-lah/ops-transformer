@@ -915,7 +915,7 @@ inline ge::graphStatus checkAndResetTilingData_SmallM(CoCTiling &cocTilingData, 
     OP_TILING_CHECK(cocTilingData.m0 != 128 && cocTilingData.m0 != 256,
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "m0 is invalid."), return ge::GRAPH_FAILED);
 
-    OP_TILING_CHECK(cocTilingData.swizzlCount < 1 || cocTilingData.swizzlCount > 9,
+    OP_TILING_CHECK(cocTilingData.swizzlCount < 1 || cocTilingData.swizzlCount > 16,
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "swizzlCount is invalid."),
                     return ge::GRAPH_FAILED);
 
@@ -927,7 +927,7 @@ inline ge::graphStatus checkAndResetTilingData_SmallM(CoCTiling &cocTilingData, 
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "pValue is invalid."),
                     return ge::GRAPH_FAILED);
 
-    OP_TILING_CHECK(cocTilingData.ubMoveNum < 6 || cocTilingData.ubMoveNum > 100,
+    OP_TILING_CHECK(cocTilingData.ubMoveNum < 4 || cocTilingData.ubMoveNum > 100,
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "ubMoveNum is invalid."),
                     return ge::GRAPH_FAILED);
 

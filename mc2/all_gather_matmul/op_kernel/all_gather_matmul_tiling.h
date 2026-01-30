@@ -23,8 +23,8 @@
 #else
 #include "../../common/inc/kernel/mc2_tiling_struct.h"
 #endif
+using namespace Mc2Tiling;
 
-namespace Mc2Tiling {
 struct AllGatherSoc {
     uint32_t commAlg;
     uint32_t isA3;
@@ -43,7 +43,7 @@ class AllGatherMatmulTilingData {
         Mc2Tiling::TileL2Tiling tailL2Tiling;
         Mc2Tiling::TileL2Tiling localL2Tiling;
         Mc2Tiling::RCSTiling param;
-        Mc2Tiling::AllGatherSoc socParam;
+        AllGatherSoc socParam;
 };
-}
+
 #endif //__ALL_GATHER_MATMUL_TILING_H__

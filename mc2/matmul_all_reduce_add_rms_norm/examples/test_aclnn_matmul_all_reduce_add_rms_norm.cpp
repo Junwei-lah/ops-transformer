@@ -19,7 +19,7 @@
 #include "hccl/hccl.h"
 #include "aclnnop/aclnn_matmul_all_reduce_add_rms_norm.h"
 
-int ndev = 8;
+int ndev = 2;
 
 #define CHECK_RET(cond, return_expr) \
 do {                               \

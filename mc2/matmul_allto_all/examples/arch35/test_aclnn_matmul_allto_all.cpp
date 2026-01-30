@@ -173,7 +173,7 @@ int launchOneThreadMatmulAlltoAll(Args &args) {
 
 int main(int argc, char *argv[])
 {
-    // 本样例基于Atlas A2实现，必须在Atlas A2上运行
+    // 本样例基于Atlas A5实现，必须在Atlas A5上运行
     int ret;
     int32_t devices[ndev];
     for (int i = 0; i < ndev; i++) {

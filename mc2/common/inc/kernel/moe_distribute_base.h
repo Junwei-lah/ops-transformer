@@ -27,7 +27,7 @@ constexpr uint32_t AICPU_MAX_RANK_NUM = 128 * 1024;
 constexpr uint32_t TIME_CYCLE = 50; // 系统cycle数转换成时间的基准单位，固定为50
 
 namespace Mc2Kernel {
-constexpr uint32_t HCCL_MTE_MAX_RANK_NUM = 32;
+constexpr uint32_t HCCL_MTE_MAX_RANK_NUM = 64;
 constexpr uint64_t A5_MTE_STATE_WIN_SIZE = 1024UL * 1024UL;
 }
 

@@ -22,7 +22,7 @@
 #include "hccl/hccl.h"
 #include "aclnnop/aclnn_moe_update_expert.h"
 #include "aclnnop/aclnn_moe_distribute_dispatch_v2.h"
-#include "aclnnop/aclnn_moe_distribute_combine_add_rms_norm.h"
+#include "aclnnop/aclnn_moe_distribute_combine_v2.h"
 
 #define CHECK_RET(cond, return_expr) \
     do {                             \
@@ -52,7 +52,7 @@ constexpr uint32_t EP_WORLD_SIZE = 2;
 constexpr uint32_t TP_WORLD_SIZE = 1;
 constexpr uint32_t DEV_NUM = EP_WORLD_SIZE * TP_WORLD_SIZE;
 
-int64_t GetShapeSize(const std::vector<int64_t> &shape)
+inline int64_t GetShapeSize(const std::vector<int64_t> &shape)
 {
     int64_t shape_size = 1;
     for (auto i : shape) {
@@ -89,21 +89,15 @@ int LaunchOneProcessUpdateExpertAndDispatchAndCombine(Args &args)
     ret = HcclGetCommName(args.hcclEpComm, hcomEpName);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclGetEpCommName failed, ret %d\n", ret); return -1);
     char hcomTpName[128] = {0};
-    ret = HcclGetCommName(args.hcclTpComm, hcomTpName);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclGetTpCommName failed, ret %d\n", ret); return -1);
-    LOG_PRINT(
-        "[INFO] rank = %d, hcomEpName = %s, hcomTpName = %s, eplbStream = %p, dispatchStream = %p, combineStream = %p, context = %p\n",
-        args.rankId, hcomEpName, hcomTpName, args.eplbStream, args.dispatchStream, args.combineStream, args.context
-    );
 
     int64_t BS = 8;
     int64_t H = 7168;
-    int64_t K = 3;
+    int64_t K = 2;
     int64_t F = 2;
     int64_t expertShardType = 0;
     int64_t sharedExpertNum = 0;
     int64_t sharedExpertRankNum = 0;
-    int64_t moeExpertNum = 8;
+    int64_t moeExpertNum = 2;
     int64_t quantMode = 0;
     int64_t globalBS = BS * EP_WORLD_SIZE;
     int64_t balanceMode = 0;
@@ -287,13 +281,13 @@ int LaunchOneProcessUpdateExpertAndDispatchAndCombine(Args &args)
     aclOpExecutor *dispatchExecutor = nullptr;
     void *dispatchWorkspaceAddr = nullptr;
 
-    uint64_t combineAddRmsNormWorkspaceSize = 0;
-    aclOpExecutor *combineAddRmsNormExecutor = nullptr;
+    uint64_t combineWorkspaceSize = 0;
+    aclOpExecutor *combineExecutor = nullptr;
     void *combineWorkspaceAddr = nullptr;
 
     /**************************************** 调用eplb ********************************************/
     ret = aclnnMoeUpdateExpertGetWorkspaceSize(expertIds, eplbTable, nullptr, nullptr, nullptr, args.epRankId,
-EP_WORLD_SIZE, balanceMode, balancedExpertIds, balancedActiveMask, &eplbworkspaceSize, &eplbexecutor);
+        EP_WORLD_SIZE, balanceMode, balancedExpertIds, balancedActiveMask, &eplbworkspaceSize, &eplbexecutor);
 
     CHECK_RET(ret == ACL_SUCCESS,
             LOG_PRINT("[ERROR] aclnnMoeUpdateExpertGetWorkspaceSize failed. ret = %d \n", ret); return ret);
@@ -329,38 +323,39 @@ EP_WORLD_SIZE, balanceMode, balancedExpertIds, balancedActiveMask, &eplbworkspac
     ret = aclrtSynchronizeStreamWithTimeout(args.dispatchStream, 10000);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclnnMoeDistributeDispatchV2 failed. ret = %d \n", ret);  \
         return ret);
-
-    /**************************************** 调用combineAddRmsNorm ********************************************/
-    // 调用第一阶段接口
-    ret = aclnnMoeDistributeCombineAddRmsNormGetWorkspaceSize(
-        expandX, balancedExpertIds, expandIdx, epRecvCounts, expertScales, residualX, gamma, tpRecvCounts, nullptr, nullptr,
-        nullptr, nullptr, nullptr, sharedExpertX, hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE,
-        args.tpRankId, expertShardType, sharedExpertNum, sharedExpertRankNum, globalBS, outDtype, commQuantMode,
-        groupList_type, nullptr, 1e-6, yOut, rstdOut, xOut, &combineAddRmsNormWorkspaceSize, &combineAddRmsNormExecutor);
-    CHECK_RET(ret == ACL_SUCCESS,
-        LOG_PRINT("[ERROR] aclnnMoeDistributeCombineAddRmsNormGetWorkspaceSize failed. ret = %d \n", ret); return ret);
-    // 根据第一阶段接口计算出的workspaceSize申请device内存
-    if (combineAddRmsNormWorkspaceSize > 0) {
-        ret = aclrtMalloc(&combineWorkspaceAddr, combineAddRmsNormWorkspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtMalloc workspace failed. ret = %d \n", ret); return ret);
+    
+    /**************************************** 调用combine ********************************************/
+    
+    //调用combine算子第一阶段接口
+    ret = aclnnMoeDistributeCombineV2GetWorkspaceSize(expandX, expertIds, expandIdx, epRecvCounts, expertScales,
+        tpRecvCounts, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE, args.tpRankId,
+        expertShardType, sharedExpertNum, sharedExpertRankNum, globalBS, outDtype, commQuantMode,
+        groupList_type, nullptr, x, &combineWorkspaceSize, &combineExecutor);
+    CHECK_RET(
+        ret == ACL_SUCCESS,
+        LOG_PRINT("[ERROR] aclnnMoeDistributeCombineV2GetWorkspaceSize failed. ret = %d \n", ret); return ret
+    );
+    // 根据combine算子第一阶段接口计算出的workspaceSize申请device内存
+    if (combineWorkspaceSize > 0) {
+        ret = aclrtMalloc(&combineWorkspaceAddr, combineWorkspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtMalloc failed. ret = %d \n", ret);
+                return ret);
     }
 
-    // 调用第二阶段接口
-    ret = aclnnMoeDistributeCombineAddRmsNorm(combineWorkspaceAddr, combineAddRmsNormWorkspaceSize, combineAddRmsNormExecutor, args.combineStream);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclnnMoeDistributeCombineAddRmsNorm failed. ret = %d \n", ret);
-        return ret);
-    // （固定写法）同步等待任务执行结束
-    ret = aclrtSynchronizeStreamWithTimeout(args.combineStream, 10000);
-    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtSynchronizeStreamWithTimeout failed. ret = %d \n", ret);
-        return ret);
-    LOG_PRINT("[INFO] device_%d aclnnMoeUpdateExpert, aclnnMoeDistributeDispatchV2 and aclnnMoeDistributeCombineAddRmsNorm    \
+    // 调用combine算子第二阶段接口
+    ret = aclnnMoeDistributeCombineV2(combineWorkspaceAddr, combineWorkspaceSize, combineExecutor, args.combineStream);
+    CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclnnMoeDistributeCombineV2 failed. ret = %d \n", ret);
+            return ret);
+
+    LOG_PRINT("[INFO] device_%d aclnnMoeUpdateExpert, aclnnMoeDistributeDispatchV2 and aclnnMoeDistributeCombineV2    \
                 execute successfully.\n", args.rankId);
 
     // 释放device资源
     if (dispatchWorkspaceSize > 0) {
         aclrtFree(dispatchWorkspaceAddr);
     }
-    if (combineAddRmsNormWorkspaceSize > 0) {
+    if (combineWorkspaceSize > 0) {
         aclrtFree(combineWorkspaceAddr);
     }
     if (x != nullptr) {
@@ -496,7 +491,6 @@ EP_WORLD_SIZE, balanceMode, balancedExpertIds, balancedActiveMask, &eplbworkspac
 
 int main(int argc, char *argv[])
 {
-    // 本样例基于Atlas A3实现，必须在Atlas A3上运行
     int ret = aclInit(nullptr);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclInit failed, ret = %d\n", ret); return ret);
 

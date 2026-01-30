@@ -49,10 +49,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    Mc2Tiling::AllGatherMatmulTilingData *tiling_data = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tiling_data->param.tailM = 16;
     tiling_data->param.aicCoreNum = 20;
 
@@ -89,10 +89,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_bias) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    Mc2Tiling::AllGatherMatmulTilingData *tiling_data = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tiling_data->param.tailM = 16;
     tiling_data->param.aicCoreNum = 20;
     tiling_data->param.biasLen = 1536 * sizeof(float);
@@ -131,10 +131,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_l2cache) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    Mc2Tiling::AllGatherMatmulTilingData *tilingData = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tilingData->param.tailM = 128;
     tilingData->param.aicCoreNum = 20;
     tilingData->param.rankDim = 8;
@@ -191,10 +191,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_computation_only) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
  
-    Mc2Tiling::AllGatherMatmulTilingData *tiling_data = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tiling_data->param.tailM = 16;
     tiling_data->param.aicCoreNum = 20;
  
@@ -226,10 +226,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_communication_only) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
  
-    Mc2Tiling::AllGatherMatmulTilingData *tiling_data = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tiling_data->param.tailM = 16;
     tiling_data->param.aicCoreNum = 20;
  
@@ -261,10 +261,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_normalization) {
     size_t usrWorkspaceSize = 38191616;
     size_t allWorkspaceSize = usrWorkspaceSize + sysWorkspaceSize;
     uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(allWorkspaceSize);
-    size_t tilingSize = sizeof(Mc2Tiling::AllGatherMatmulTilingData);
+    size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    Mc2Tiling::AllGatherMatmulTilingData *tiling_data = reinterpret_cast<Mc2Tiling::AllGatherMatmulTilingData*>(tiling);
+    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
     tiling_data->param.tailM = 372;
     tiling_data->param.aicCoreNum = 20;
     tiling_data->param.rankDim = 8;
