@@ -177,6 +177,11 @@ __aicore__ inline int64_t ComputeOffsetForNoCompress(const RunInfo<isInfer> &run
             bOffset = runInfo.b1SSAttenMaskOffset;
         }
         int64_t s1Offset = runInfo.s1oIdx * constInfo.s1BaseSize + runInfo.vecCoreOffset;
+        if constexpr(isInfer) { 
+             if (constInfo.isGqa) { 
+                 s1Offset = s1Offset % constInfo.s1Size; 
+             } 
+         }
         int64_t s2Offset = 0;
         if constexpr (enableKVPrefix) {
             if ((runInfo.s2LoopCount + runInfo.s2StartIdx / constInfo.s2BaseSize) < constInfo.prefixLoopCount) {
@@ -324,7 +329,7 @@ __aicore__ inline int64_t ComputeAttenMaskInnerOffset(const RunInfo<isInfer> &ru
 {
     if constexpr (hasAtten == true) {
         if (attenMaskInfo.compressMode == static_cast<uint8_t>(AttenMaskCompressMode::NO_COMPRESS_MODE)) {
-            return ComputeOffsetForNoCompress<hasAtten, enableKVPrefix>(runInfo, constInfo, attenMaskInfo);
+            return ComputeOffsetForNoCompress<hasAtten, enableKVPrefix, isInfer>(runInfo, constInfo, attenMaskInfo);
         }
         if (constInfo.layoutType == (uint32_t)LayOutTypeEnum::LAYOUT_TND && !isInfer) {
             // compress mode

@@ -494,12 +494,7 @@ bool PromptFlashAttentionTilingV2::GetAndCheckShape(ContextParamsForPFATiling& c
         OP_CHECK_IF((d > DLIMIT || d <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "d size of %s should be less than or equal to %u and > 0, but d = %ld, and layout is BSH, d = h / headsNumber.",
             sName.c_str(), DLIMIT, d), return false);
-        OP_CHECK_IF((n > NLIMIT || n <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
-            "n size of %s should be less than or equal to %u and > 0, but n = %ld, and layout is BSH, n = headsNumber.", 
-            sName.c_str(), NLIMIT, n), return false);
     } else {
-        OP_CHECK_IF((n > NLIMIT || n <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
-             "n size of %s should be less than or equal to %u and > 0, but n = %ld.", sName.c_str(), NLIMIT, n), return false);
         OP_CHECK_IF((d > DLIMIT || d <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "d size of %s should be less than or equal to %u and > 0, but d = %ld.", sName.c_str(), DLIMIT, d), return false);
     }
@@ -744,10 +739,6 @@ bool PromptFlashAttentionTilingV2::CheckInputDimAndHeadNum(ContextParamsForPFATi
         }
     }
 
-    OP_CHECK_IF(nQ > 256U, // The maximum limit for head is 256. 
-         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "numHeads(%u) should not be more than 256!", nQ), 
-         return false);
-
     OP_CHECK_IF(queryShapeHeadNum != nQ,
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "numHeads(%u) in query shape must be equal to numHeads(%u) in attr!", queryShapeHeadNum, nQ),
@@ -766,7 +757,7 @@ bool PromptFlashAttentionTilingV2::CheckInputDimAndHeadNum(ContextParamsForPFATi
     return true;
 }
 
-bool PromptFlashAttentionTilingV2::SetAndCheckHeadNumRatio(ContextParamsForPFATiling& contextKeyParams,
+bool PromptFlashAttentionTilingV2::SetAndCheckHeadNumRatio(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo,
     PromptFlashAttentionTilingData& tilingData) {
     const int32_t nQ = *contextKeyParams.headsNumber;
     const int32_t nKV = *contextKeyParams.numKeyValueHeads;
@@ -791,9 +782,22 @@ bool PromptFlashAttentionTilingV2::SetAndCheckHeadNumRatio(ContextParamsForPFATi
         return false;
     }
     
-    if ((!enablePFAMLA && !enableIFAMLA) && (nQ / nKV > 64)) { // G cannot be greater than 64.	 
-        OP_LOGE(contextKeyParams.opName, "numHeads / numKeyValueHeads = %d, cannot be larger than 64.", nQ / nKV);	 
-        return false;
+    if (enableKVAntiquant || enablePerblockQuant || enablePertensorQuant) {	 
+         if (nQ / nKV > 64) { // G cannot be greater than 64.	 
+             OP_LOGE(contextKeyParams.opName, "In antiquant and fullquant scenario, the G(numHeads / numKeyValueHeads) connot be larger than 64, but G = %d", nQ / nKV);	 
+             return false; 
+         } 
+          
+     } else if (enableIFAMLA || enablePFAMLA || enableIFAMLAFullQuant) { 
+         if ((enableIFAMLA || enableIFAMLAFullQuant) && (nQ / nKV > 128)) { // G cannot be greater than 128. 
+             OP_LOGE(contextKeyParams.opName, "In mla decode (non quant and fullquant) scenario, the G(numHeads / numKeyValueHeads) connot be larger than 128, but G = %d", nQ / nKV); 
+             return false; 
+         } 
+     } else { 
+         if ((nQ / nKV > 64) && (queryShapeInfo.d != 64 && queryShapeInfo.d != 128)) { 
+             OP_LOGE(contextKeyParams.opName, "In gqa non quant scenario, when dSize is not 64 or 128, the G(numHeads / numKeyValueHeads) connot be larger than 64, but dSize = %d", queryShapeInfo.d); 
+             return false; 
+         } 
     }
 
     if (enableIFAMLA || enableIFA) {
@@ -1694,7 +1698,7 @@ bool PromptFlashAttentionTilingV2::CheckKV(ContextParamsForPFATiling& contextKey
 bool PromptFlashAttentionTilingV2::CheckQueryAndKey(ContextParamsForPFATiling& contextKeyParams,
     PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, PromptFlashAttentionTilingData& tilingData) {
     // check numhead ratio
-    if (!SetAndCheckHeadNumRatio(contextKeyParams, tilingData)) {
+    if (!SetAndCheckHeadNumRatio(contextKeyParams, queryShapeInfo, tilingData)) {
         return false;
     }
 
@@ -2631,7 +2635,7 @@ bool PromptFlashAttentionTilingV2::ParseActualSeqLengths(ContextParamsForPFATili
 
         if (!enableActSeqLen) {
             actualSeqLengths[i] = queryShapeInfo.s;
-        } else if (enableIFAMLA) {
+        } else if (enableIFAMLA || enableIFA) {
             actualSeqLengths[i] = (actSeqLenDims > 1) ? static_cast<uint32_t>(actSeqLenData->GetData<int64_t>()[i]) :
                 static_cast<uint32_t>(actSeqLenData->GetData<int64_t>()[0]);
             if (actualSeqLengths[i] != queryShapeInfo.s / gSize) {

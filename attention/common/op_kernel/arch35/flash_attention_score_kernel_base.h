@@ -380,6 +380,13 @@ __aicore__ inline void FlashAttentionScoreKernelBase<ChildClass, CubeBlockType, 
     constInfo.n2GS1Dv = constInfo.n2Size * constInfo.gS1Dv;
     constInfo.layoutType = sharedParams.layoutType;
 
+    if constexpr (isInfer) {
+        constInfo.s1D = constInfo.s1Size * constInfo.dSize;
+        constInfo.gD = constInfo.gSize * constInfo.dSize;
+        constInfo.n2GD = constInfo.n2Size * constInfo.gD; 
+        constInfo.gS1D = constInfo.gS1 * constInfo.dSize;
+    }
+
     if constexpr (layout == LayOutTypeEnum::LAYOUT_TND) {
         // (BS)ND
         constInfo.s1BaseN2GDv = s1BaseSize * constInfo.n2GDv;
