@@ -178,7 +178,7 @@ bool IFATiling::CheckCommonConditions(const ValidityConfigFD& config) const {
            CheckActualSeqLengths(config.expectedActualSeqLength);
 }
 
-bool IFATiling::CheckBatchAndQSeqSize(const std::vector<int>& validBatchSizes, const std::vector<int>& validQSeqSizes) const {
+bool IFATiling::CheckBatchAndQSeqSize(const std::vector<int32_t>& validBatchSizes, const std::vector<int32_t>& validQSeqSizes) const {
     if (std::find(validBatchSizes.begin(), validBatchSizes.end(), batchSize_) == validBatchSizes.end())
         return false;
 
@@ -188,14 +188,14 @@ bool IFATiling::CheckBatchAndQSeqSize(const std::vector<int>& validBatchSizes, c
     return true;
 }
 
-bool IFATiling::CheckHeadDimensions(int numHeads, int numKvHeads, int headDim, int headDimV) const {
+bool IFATiling::CheckHeadDimensions(int32_t numHeads, int32_t numKvHeads, int32_t headDim, int32_t headDimV) const {
     return (numHeads_ == numHeads &&
             numKvHeads_ == numKvHeads &&
             headDim_ == headDim &&
             headDimV_ == headDimV);
 }
 
-bool IFATiling::CheckQuantizationFlags(int sparseMode) const {
+bool IFATiling::CheckQuantizationFlags(int32_t sparseMode) const {
     if (!quantFlag_)
         return false;
 
