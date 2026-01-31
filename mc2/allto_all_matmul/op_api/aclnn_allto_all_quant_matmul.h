@@ -25,23 +25,32 @@ extern "C" {
  * 算子功能：实现all2all + quant + matmul融合计算
  * @brief aclnnAlltoAllQuantMatMul的第一段接口，根据具体的计算流程，计算workspace大小。
  * @domain aclnn_ops_infer
- * @param [in] x1: 左矩阵输入张量。
- * @param [in] x2: 右矩阵输入张量。
- * @param [in] biasOptional: 可选输入张量，偏置项。
- * @param [in] x1ScaleOptional: 可选输入张量，左矩阵的量化参数。
- * @param [in] x2Scale: 右矩阵的反量化参数。
- * @param [in] commScaleOptional: 可选输入张量，低比特通信的量化系数。
- * @param [in] x1OffsetOptional: 可选输入，左矩阵的量化偏置。
- * @param [in] x2OffsetOptional: 可选输入，右矩阵的量化偏置。
+ * @param [in] x1: 左矩阵输入张量，数据类型支持FLOAT16、BFLOAT16、INT4。
+ * @param [in] x2: 右矩阵输入张量，数据类型支持FLOAT8_E4M3FN、FLOAT8_E5M2、INT8、INT4。
+ * @param [in] biasOptional: 可选输入张量，偏置项，仅在传入非空时生效，数据类型为FLOAT16、BFLOAT16、FLOAT32。
+ * @param [in] x1ScaleOptional: 可选输入张量，左矩阵的量化参数，数据类型为FLOAT32。
+ * @param [in] x2Scale: 右矩阵的反量化参数，数据类型为FLOAT32。
+ * @param [in] commScaleOptional: 可选输入张量，低比特通信的量化系数，暂不支持。
+ * @param [in] x1OffsetOptional: 可选输入，左矩阵的量化偏置，暂不支持。
+ * @param [in] x2OffsetOptional: 可选输入，右矩阵的量化偏置，暂不支持。
  * @param [in] group: 通信域标识，用于标识不同的通信组。
- * @param [in] alltoAllAxesOptional: all2all做数据交换的方向。
- * @param [in] x1QuantMode: Matmul左矩阵的量化方式。
- * @param [in] x2QuantMode: Matmul右矩阵的量化方式。
- * @param [in] commQuantMode: 低比特通信的量化方式。
- * @param [in] commQuantDtype: 低比特通信的量化类型。
- * @param [in] x1QuantDtype: Matmul左矩阵的量化类型。
+ * @param [in] alltoAllAxesOptional: all2all做数据交换的方向，支持配置空或[-2,-1]，传入空时默认按[-2,-1]处理。
+ * @param [in] x1QuantMode: Matmul左矩阵的量化方式，支持以下模式：
+ *        - 0：无量化
+ *        - 1：PerTensor量化
+ *        - 2：PerChannel量化
+ *        - 3：PerToken量化
+ *        - 4：PerGroup量化
+ *        - 5：PerBlock量化
+ *        - 6：Mx Quant量化
+ *        - 7：PerToken动态量化
+ *        当前仅支持配置为3或者7。
+ * @param [in] x2QuantMode: Matmul右矩阵的量化方式，同上，当前仅支持配置为2。
+ * @param [in] commQuantMode: 低比特通信的量化方式，预留参数，当前仅支持配置为0，表示不量化。
+ * @param [in] commQuantDtype: 低比特通信的量化类型，预留参数，当前仅支持配置为-1，表示ACL_DT_UNDEFINED。
+ * @param [in] x1QuantDtype: Matmul左矩阵的量化类型，在A5中仅支持配置35（表示ACL_FLOAT8_E5M2）或36（表示ACL_FLOAT8_E4M3FN），在A2中仅支持配置2（表示ACL_INT8）。
  * @param [in] groupSize: Matmul计算三个方向上的量化分组大小。
- * @param [in] transposeX1: 左矩阵是否转置过。
+ * @param [in] transposeX1: 左矩阵是否转置过，暂不支持配置为True。
  * @param [in] transposeX2: 右矩阵是否转置过。
  * @param [out] output: 矩阵乘法的输出结果。
  * @param [out] alltoAllOutOptional: all-to-all通信的输出结果。
