@@ -359,7 +359,7 @@ for filename in tqdm(os.listdir(os.path.join(floder_path))):
                              (dis_status_num * 8), len(int32_dis_0_status))
             if dis_0_1 == 0:
                 logging.info("2.2 dispatch 0区状态区数据:%s", int32_dis_0_status.dtype)
-                logging.info("2.2 dispatch 0区状态区数据 shape:", len(int32_dis_0_status))
+                logging.info("2.2 dispatch 0区状态区数据 shape:%d", len(int32_dis_0_status))
                 logging.info("2.2 dispatch 0区状态区数据:%s", int32_dis_0_status)
                 dis_status_class = WinData(win_data_list_01=int32_dis_0_status, win_data_list_02=dis_status_list, 
                                               win_data_01=dis_status_num, win_data_02=dis_0_1, card_num_class=card_num,
