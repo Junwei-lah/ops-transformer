@@ -140,6 +140,45 @@ const auto Tc_QGmm_Aclnn_David_Case = ::testing::Values(AclnnQGMMInplaceAddCase(
             GenTensor("y", {1025, 96, 128}, ge::DataType::DT_FLOAT),
             GenTensor("scale1", {1025}, ge::DataType::DT_FLOAT),
             GenTensor("groupList", {1025}, ge::DataType::DT_INT64)}, std::vector<int64_t>(1025, 1), 1, 0), 0
+    ),
+    AclnnQGMMInplaceAddCase(
+        "AclnnQGMMInplaceAddCase_M0", true, "", /* CaseName, Enable, DebugInfo */
+        OpInfo(ControlInfo(true, false),
+            ExpectInfo(false,
+                            ExpectInfo::kInvalidTilingKey,
+                            ExpectInfo::kInvalidTilingBlockDim)), /* ExpectSuccess, ExpectTilingKey, ExpectTilingBlockDim */
+        AclnnQGMMInplaceAddParam({GenTensor("x1", {512, 0}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("x2", {512, 128}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("scale2", {4, 128}, ge::DataType::DT_FLOAT),
+            GenTensor("y", {4, 0, 128}, ge::DataType::DT_FLOAT),
+            GenTensor("scale1", {4, 0}, ge::DataType::DT_FLOAT),
+            GenTensor("groupList", {4}, ge::DataType::DT_INT64)}, {128, 128, 128, 128}, 1, 0), 0
+    ),
+    AclnnQGMMInplaceAddCase(
+        "AclnnQGMMInplaceAddCase_N0", true, "", /* CaseName, Enable, DebugInfo */
+        OpInfo(ControlInfo(true, false),
+            ExpectInfo(false,
+                            ExpectInfo::kInvalidTilingKey,
+                            ExpectInfo::kInvalidTilingBlockDim)), /* ExpectSuccess, ExpectTilingKey, ExpectTilingBlockDim */
+        AclnnQGMMInplaceAddParam({GenTensor("x1", {512, 96}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("x2", {512, 0}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("scale2", {4, 0}, ge::DataType::DT_FLOAT),
+            GenTensor("y", {5, 96, 0}, ge::DataType::DT_FLOAT),
+            GenTensor("scale1", {4}, ge::DataType::DT_FLOAT),
+            GenTensor("groupList", {4}, ge::DataType::DT_INT64)}, {128, 128, 128, 128}, 1, 0), 0
+    ),
+    AclnnQGMMInplaceAddCase(
+        "AclnnQGMMInplaceAddCase_K0", true, "", /* CaseName, Enable, DebugInfo */
+        OpInfo(ControlInfo(true, false),
+            ExpectInfo(false,
+                            ExpectInfo::kInvalidTilingKey,
+                            ExpectInfo::kInvalidTilingBlockDim)), /* ExpectSuccess, ExpectTilingKey, ExpectTilingBlockDim */
+        AclnnQGMMInplaceAddParam({GenTensor("x1", {0, 96}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("x2", {0, 128}, ge::DataType::DT_HIFLOAT8),
+            GenTensor("scale2", {4, 128}, ge::DataType::DT_FLOAT),
+            GenTensor("y", {5, 96, 128}, ge::DataType::DT_FLOAT),
+            GenTensor("scale1", {4}, ge::DataType::DT_FLOAT),
+            GenTensor("groupList", {4}, ge::DataType::DT_INT64)}, {0, 0, 0, 0}, 1, 0), 0
     ));
 INSTANTIATE_TEST_SUITE_P(QuantGroupedMatmulInplaceAdd, Ts_Aclnn_QGMMInplaceAdd_WithParam_Ascend910_9591, Tc_QGmm_Aclnn_David_Case);
 }  // namespace

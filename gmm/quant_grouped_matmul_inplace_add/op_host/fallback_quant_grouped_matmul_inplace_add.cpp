@@ -85,12 +85,14 @@ static inline aclTensor *GeTensor2AclTensor(const gert::Tensor *geTensor, bool e
         // dimM the second-to-last dim， dimN the last dim
         auto dimM = viewShape.size() - 2;
         auto dimN = viewShape.size() - 1;
-        auto swap = strides[dimN];
-        strides[dimN] = strides[dimM];
-        strides[dimM] = swap;
-        swap = viewShape[dimN];
-        viewShape[dimN] = viewShape[dimM];
-        viewShape[dimM] = swap;
+        if (viewShape[dimM] != 1 && viewShape[dimN] != 0) {
+            auto swap = strides[dimN];
+            strides[dimN] = strides[dimM];
+            strides[dimM] = swap;
+            swap = viewShape[dimN];
+            viewShape[dimN] = viewShape[dimM];
+            viewShape[dimM] = swap;
+        }
     }
     auto aclFormat = aclFormat::ACL_FORMAT_ND;
     aclTensor *out = aclCreateTensor(viewShape.data(), viewShape.size(), dataType, strides.data(), 0, aclFormat,

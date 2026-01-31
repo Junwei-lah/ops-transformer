@@ -85,12 +85,12 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckGeneralQuantS
     for (size_t i = 0; i < GetInputTensorSize(gmmParams_.x); i++) {
         auto weightNIndex = GetInputTensor(gmmParams_.weight, i)->GetViewShape().GetDimNum() - 1;
         auto yNIndex = GetInputTensor(gmmParams_.y, i)->GetViewShape().GetDimNum() - 1;
-        CHECK_COND(GetInputTensor(gmmParams_.weight, i)->GetViewShape().GetDim(weightNIndex) > 0,
-                   ACLNN_ERR_PARAM_INVALID, "In quant case, the N value[%ld] should be positive.",
-                   GetInputTensor(gmmParams_.weight, i)->GetViewShape().GetDim(weightNIndex));
-        CHECK_COND(GetInputTensor(gmmParams_.x, i)->GetViewShape().GetDim(0) > 0, ACLNN_ERR_PARAM_INVALID,
-                   "When groupType is 2 (split K), the M value[%ld] in %s should be positive.",
-                   GetInputTensor(gmmParams_.x, i)->GetViewShape().GetDim(0), xName_.c_str());
+        CHECK_COND(GetInputTensor(gmmParams_.weight, i)->GetViewShape().GetDim(0) > 0,
+                    ACLNN_ERR_PARAM_INVALID, "In quant case, the K value[%ld] in %s should be positive.",
+                    GetInputTensor(gmmParams_.weight, i)->GetViewShape().GetDim(0), weightName_.c_str());
+         CHECK_COND(GetInputTensor(gmmParams_.x, i)->GetViewShape().GetDim(1) > 0, ACLNN_ERR_PARAM_INVALID,
+                    "In quant case, the K value[%ld] in %s should be positive.",
+                    GetInputTensor(gmmParams_.x, i)->GetViewShape().GetDim(1), xName_.c_str());
         CHECK_COND(GetInputTensor(gmmParams_.y, i)->GetViewShape().GetDim(0) == groupNum, ACLNN_ERR_PARAM_INVALID,
                    "When groupType is 2 (split K), the first dim of %s[%ld] should be equal to that of \
 %s[%ld].",

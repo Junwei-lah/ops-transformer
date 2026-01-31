@@ -146,7 +146,7 @@ static aclnnStatus CheckShape(QGmmInPlaceAdd::QuantGroupedMatmulInplaceAddParams
     auto yMDim = params.yRef->GetViewShape().GetDim(1);
     auto yNDim = params.yRef->GetViewShape().GetDim(2);
 
-    CHECK_COND(mDim > 0, ACLNN_ERR_PARAM_INVALID, "The M value[%ld] in x1 should be positive.", mDim);
+    CHECK_COND(mDim >= 0, ACLNN_ERR_PARAM_INVALID, "The M value[%ld] in x1 should be positive.", mDim);
 
     CHECK_COND(aKDim == bKDim, ACLNN_ERR_PARAM_INVALID,
                "The kDimNum of x1/x2 should be equal, but the actual is %ld/%ld.", aKDim, bKDim);
@@ -294,6 +294,13 @@ static aclnnStatus aclnnQuantGroupedMatmulInplaceAddGetWorkspaceSizeCommon(QGmmI
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
     auto executorPtr = uniqueExecutor.get();
+    auto x1MDim = params.x1->GetViewShape().GetDim(0);
+    auto x2NDim = params.x2->GetViewShape().GetDim(1);
+    if (x1MDim == 0 || x2NDim == 0) {
+        *workspaceSize = 0UL;
+        uniqueExecutor.ReleaseTo(executor);
+        return ACLNN_SUCCESS;
+    }
     // 固定写法，参数检查
     auto ret = CheckParams(params);
     CHECK_RET(ret == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);

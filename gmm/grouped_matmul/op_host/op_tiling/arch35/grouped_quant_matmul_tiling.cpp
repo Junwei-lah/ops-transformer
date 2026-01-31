@@ -726,11 +726,11 @@ bool GroupedQbmmTiling::SetMKN(const gert::Shape &xShape, const gert::Shape &wSh
                                        xShape.GetDim(xDimNum - LAST_FIRST_DIM_INDEX);
     auto nSize = inputParams_.transB ? wShape.GetDim(wDimNum - LAST_SECOND_DIM_INDEX) :
                                        wShape.GetDim(wDimNum - LAST_FIRST_DIM_INDEX);
-    OP_CHECK_IF(mSize <= 0 || kSize <= 0 || nSize <= 0,
-               OP_LOGE(inputParams_.opName,
-                                         "Invalid mSize[%ld] kSize[%ld] or nSize[%ld], expect all greater than 0",
-                                         mSize, kSize, nSize),
-               return false);
+    // In static graph mode, when M or N is 0, the framework will skip tiling check and return empty tensors, but when
+    // K = 0, tiling should be able to intercept.
+    OP_CHECK_IF(xShape.GetShapeSize() == 0 || wShape.GetShapeSize() == 0,
+                OP_LOGE(inputParams_.opName, "Unsupported empty tensor here. Please check your k dimension."),
+                return false);
     inputParams_.mSize = mSize;
     inputParams_.kSize = kSize;
     inputParams_.nSize = nSize;

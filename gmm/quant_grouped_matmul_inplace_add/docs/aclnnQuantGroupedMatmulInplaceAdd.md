@@ -4,7 +4,7 @@
 
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
-|<term>Ascend 950PR/Ascend 950DT AI处理器</term>|      √     |
+|<term>Ascend 950PR/Ascend 950DT</term>|      √     |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      ×     |
 |<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      ×     |
 
@@ -89,7 +89,11 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>x1</td>
       <td>输入</td>
       <td>Device侧的aclTensor，公式中的输入x1。</td>
-      <td>-</td>
+      <td>
+        <ul>
+          <li>支持M轴为0的空Tensor输入。</li>
+        </ul>
+      </td>
       <td>FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8</td>
       <td>ND</td>
       <td>2(K，M)</td>
@@ -99,7 +103,11 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>x2</td>
       <td>输入</td>
       <td>Device侧的aclTensor，公式中的输入x2。</td>
-      <td>-</td>
+      <td>
+      <ul>
+          <li>支持N轴为0的空Tensor输入。</li>
+        </ul>
+      </td>
       <td>FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8</td>
       <td>ND</td>
       <td>2(K，N)</td>
@@ -152,7 +160,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>yRef</td>
       <td>输入输出</td>
       <td>Device侧的aclTensor，对应公式中的输入输出y。</td>
-      <td>-</td>
+      <td>当x1的M轴或者x2的N轴为0时，yRef为空Tensor。</td>
       <td>FLOAT32</td>
       <td>ND</td>
       <td>3(g，M，N)</td>
