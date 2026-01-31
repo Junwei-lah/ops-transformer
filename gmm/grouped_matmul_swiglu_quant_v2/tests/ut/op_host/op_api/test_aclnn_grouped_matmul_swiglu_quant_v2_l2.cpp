@@ -152,3 +152,31 @@ TEST_F(l2_GroupedMatmulSwigluQuantV2_test, ascend91095_test_opapi_illegal_case)
     uint64_t workspace_size = 0;
     aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
 }
+
+TEST_F(l2_GroupedMatmulSwigluQuantV2_test, ascend91095_test_opapi_pertoken_normal_case)
+{
+    int64_t m = 2048;
+    int64_t k = 7168;
+    int64_t n = 4096;
+    int64_t e = 8;
+
+    TensorDesc x_desc = TensorDesc({m, k}, ACL_FLOAT8_E5M2, ACL_FORMAT_ND).ValueRange(-10, 10);
+    TensorDesc weight =
+        TensorDesc({e, k, n}, ACL_FLOAT8_E5M2, ACL_FORMAT_ND).ValueRange(-10, 10);
+    TensorListDesc weight_desc = TensorListDesc({weight});
+    TensorDesc weight_sacle = TensorDesc({e, n}, ACL_FLOAT, ACL_FORMAT_ND).ValueRange(-10, 10);
+    TensorListDesc weight_scale_desc = TensorListDesc({weight_sacle});
+    TensorDesc xScale_desc = TensorDesc({m}, ACL_FLOAT, ACL_FORMAT_ND).ValueRange(-10, 10);
+    TensorDesc groupList_desc = TensorDesc({e}, ACL_INT64, ACL_FORMAT_ND).ValueRange(-10, 10);
+    vector<int64_t> tuningConfigVal = { 1 };
+    aclIntArray* tuningConfig = aclCreateIntArray(tuningConfigVal.data(), tuningConfigVal.size());
+    TensorDesc out1_desc = TensorDesc({m, n / 2}, ACL_FLOAT8_E5M2, ACL_FORMAT_ND).ValueRange(-10, 10);
+    TensorDesc out2_desc = TensorDesc({m}, ACL_FLOAT, ACL_FORMAT_ND).ValueRange(-10, 10);
+
+    auto ut = OP_API_UT(aclnnGroupedMatmulSwigluQuantV2,
+                        INPUT(x_desc, weight_desc, weight_scale_desc, nullptr, nullptr, xScale_desc,
+                              nullptr, groupList_desc, 2, 0, 2, 2, nullptr),
+                        OUTPUT(out1_desc, out2_desc));
+    uint64_t workspace_size = 0;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSize(&workspace_size);
+}

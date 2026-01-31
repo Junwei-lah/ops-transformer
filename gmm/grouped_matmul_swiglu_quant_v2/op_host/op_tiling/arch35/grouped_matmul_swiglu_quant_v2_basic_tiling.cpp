@@ -392,6 +392,7 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoLibApiTiling()
 ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::PostTiling()
 {
     context_->SetBlockDim(aicoreParams_.aicNum);
+    context_->SetScheduleMode(1);
     OP_CHECK_IF(
         tilingData_.GetDataSize() % sizeof(uint64_t) != 0,
         OP_LOGE(context_->GetNodeName(), "Tiling data size[%zu] is not aligned to 8", tilingData_.GetDataSize()),

@@ -356,6 +356,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingV3(
   - biasOptional支持BF16。
   - perTokenScaleOptional支持FLOAT8_E8M0。shape支持三维，维度为(m,Ceil(k/64),2)。
   - x1、x2、scaleOptional、pertokenScaleOptional、groupListOptional、logitOptional、rowIndexOptional是必选参数，biasOptional，sharedInputOptional是可选参数。目前暂不支持offsetOptional参数。
+  - out的第一维bacth、sharedInputOffset必须大于等于0。
 - **返回值**
 
   返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

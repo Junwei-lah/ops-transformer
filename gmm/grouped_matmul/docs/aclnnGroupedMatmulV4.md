@@ -23,7 +23,7 @@
     - 支持伪量化weight是INT4的输入，不带激活场景，支持perchannel和pergroup两种模式。
   - <term>Ascend 950PR/Ascend 950DT AI处理器</term>：
     - 支持静态量化（1.pertensor-perchannel(T-C)；2.pertensor-pertensor(T-T)）BFLOAT16，FLOAT16和FLOAT32输出，带bias，不带激活场景。
-    - 支持动态量化（1.pertoken-perchannel(K-C)；2.pertoken-pertensor(K-T)；3.pertensor-pertensor(T-T)；4.pertensor-perchannel(T-C)；4.mx量化；5.pergroup-perblock(G-B)）BFLOAT16，FLOAT16和FLOAT32输出，带bias，不带激活场景。
+    - 支持动态量化（1.pertoken-perchannel(K-C)；2.pertoken-pertensor(K-T)；3.pertensor-pertensor(T-T)；4.pertensor-perchannel(T-C)；5.mx量化；6.pergroup-perblock(G-B)）BFLOAT16，FLOAT16和FLOAT32输出，带bias，不带激活场景。
     - 支持伪量化weight是INT4、FLOAT8_E5M2、FLOAT8_E4M3FN、HIFLOAT8的输入，不带激活场景，仅支持perchannel模式。
 
     **说明：**

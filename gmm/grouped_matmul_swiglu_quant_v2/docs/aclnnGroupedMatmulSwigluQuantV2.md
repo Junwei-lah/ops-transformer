@@ -62,7 +62,7 @@
           >
           >则第一个输出Q的shape为[30，:]，其中Q[18:，：]的部分不会进行更新和初始化，其中数据为显存空间申请时的原数据。
           >
-          >同理，第二个输出Q\_scale的shape为[30]，其中Q\_scale[18:]的部分不会进行更新或初始化，其中数据为显存空间申请时的原数据。
+          >同理，第二个输出Q的shape为[30]，其中Q\_scale[18:]的部分不会进行更新或初始化，其中数据为显存空间申请时的原数据。
           >
           >即输出的Q[:grouplist[-1],:]和Q\_scale[:grouplist[-1]]为有效数据部分。
 
@@ -195,7 +195,42 @@
             |  FLOAT4_E2M1  |  2   |
           - $blocksize$：指每次量化的元素个数，仅支持32。
     </details>
+    <details>
+    <summary>Pertoken量化场景：</summary>
 
+      - **定义**：
+
+        * **⋅** 表示矩阵乘法。
+        * **⊙** 表示逐元素乘法。
+      - **输入**：
+
+        * $X∈\mathbb{Z_8}^{M \times K}$：激活矩阵（左矩阵），M是总token数，K是特征维度。
+        * $W∈\mathbb{Z_8}^{E \times K \times N}$：分组权重矩阵（右矩阵），E是专家个数，K是特征维度，N是输出维度。
+        * $w\_scale∈\mathbb{R}^{E \times ceil(K / 64) \times N \times 2}$：分组权重矩阵（右矩阵）的逐通道缩放因子，E是专家个数，K是特征维度, N是输出维度。
+        * $x\_scale∈\mathbb{R}^{M \times ceil(K / 64) \times 2}$：激活矩阵（左矩阵）的逐 token缩放因子，M是总token数，K是特征维度。
+        * $grouplist∈\mathbb{N}^{E}$：cumsum或count的分组索引列表。
+      - **输出**：
+
+        * $Q∈\mathbb{Z_8}^{M \times N / 2}$：量化后的输出矩阵。
+        * $Q\_scale∈\mathbb{R}^{M \times ceil((N / 2) / 64) \times 2}$：量化缩放因子。
+      - **计算过程**
+        - 1.根据groupList[i]确定当前分组的 token ，$i \in [0,Len(groupList)]$
+ 	 
+ 	         - 2.根据分组确定的入参进行如下计算：
+ 	 
+ 	           $C_{i} = (X_{i}\cdot W_{i} )\odot xScale_{i} \odot wScale_{i}$
+ 	 
+ 	           $C_{i,act}, gate_{i} = split(C_{i})$
+ 	 
+ 	           $S_{i}=Swish(C_{i,act})\odot gate_{i}$，其中$Swish(x)=\frac{x}{1+e^{-x}}$
+ 	           
+ 	           其中,$xScale_{i}$代表的是对应token对应的量化因子
+ 	         - 3.量化输出结果
+ 	 
+ 	           $Q\_scale_{i} = \frac{max(|S_{i}|)}{max(type)}$
+ 	 
+ 	           $Q_{i} = \lfloor \frac{S_{i}}{Q\_scale_{i}} \rceil$
+    </details>
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnGroupedMatmulSwigluQuantV2GetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnGroupedMatmulSwigluQuantV2”接口执行计算。
@@ -259,7 +294,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
         <td rowspan="1">输入</td>
         <td>表示左矩阵，对应公式中的X。</td>
         <td>不支持空tensor。</td>
-        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8</td>
+        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8、HIFLOAT8</td>
         <td>ND</td>
         <td>2，形如(M, K)</td>
         <td>√</td>
@@ -272,7 +307,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
           <li>目前仅支持tensorlist长度为1。</li>
           <li>不支持空tensorlist。</li>
         </ul></td>
-        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8、INT4、INT32</td>
+        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8、INT4、INT32、HIFLOAT8</td>
         <td>ND、FRACTAL_NZ</td>
         <td>3、5</td>
         <td>√</td>
@@ -415,7 +450,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
         <td rowspan="1">输出</td>
         <td>表示输出的量化结果，公式中的Q。</td>
         <td>-</td>
-        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8</td>
+        <td>FLOAT8_E4M3FN、FLOAT8_E5M2、FLOAT4_E1M2、FLOAT4_E2M1、INT8、HIFLOAT8</td>
         <td>ND</td>
         <td>2，形如(M, N / 2)</td>
         <td>√</td>
@@ -459,9 +494,9 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
       - 不支持dequantDtype和quantMode参数。
     - <term>Ascend 950PR/Ascend 950DT</term>：
       - weight支持转置，仅支持ND格式。
-      - 支持dequantMode参数：当前仅支持取值2。
-      - 支持dequantDtype参数：当前仅支持取值0。
-      - 支持quantMode参数：当前仅支持取值2。
+      - 支持dequantMode参数：MX量化场景支持取值2，Pertoken场景支持取值为0。
+      - 支持dequantDtype参数：MX量化场景支持取值0，Pertoken场景支持取值为0、1、27。
+      - 支持quantMode参数：MX量化场景支持取值2，Pertoken场景支持取值为0。
 
 
 - **返回值**
@@ -542,7 +577,6 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
 
   - 确定性计算：
       - aclnnGroupedMatmulSwigluQuantV2默认为确定性实现。
-
   - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     - A8W8/A8W4量化场景下需满足以下约束条件：
         - 数据类型需要满足下表：
@@ -642,9 +676,13 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
     - MX量化场景下需满足以下约束条件：
         - 数据类型需要满足下表：
           <table style="undefined;table-layout: fixed; width: 1134px"><colgroup>
-          <col style="width: 319px">
-          <col style="width: 144px">
-          <col style="width: 671px">
+          <col style="width: 130px">
+          <col style="width: 130px">
+          <col style="width: 300px">
+          <col style="width: 300px">
+          <col style="width: 130px">
+          <col style="width: 130px">
+          <col style="width: 130px">
           </colgroup>
           <thead>
             <tr>
@@ -684,8 +722,8 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
           <col style="width: 250px">
           <col style="width: 320px">
           <col style="width: 180px">
+          <col style="width: 250px">
           <col style="width: 160px">
-          <col style="width: 230px">
           </colgroup>
           <thead>
             <tr>
@@ -716,6 +754,88 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
         - MX量化场景下，需满足N为128对齐。
         - MXFP4场景不支持K=2。
         - MXFP4场景需满足K为偶数；当output的数据类型为FLOAT4_E1M2、FLOAT4_E2M1时，需满足N为大于等于4的偶数。
+        - groupList第1维最大支持1024，即最多支持1024个group。
+    
+    - Pertoken量化场景下需满足以下约束条件：
+        - 数据类型需要满足下表：
+          <table style="undefined;table-layout: fixed; width: 1134px"><colgroup>
+          <col style="width: 250px">
+          <col style="width: 250px">
+          <col style="width: 300px">
+          <col style="width: 130px">
+          <col style="width: 130px">
+          <col style="width: 130px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>x</th>
+              <th>weight</th>
+              <th>weightScale</th>
+              <th>xScale</th>
+              <th>output</th>
+              <th>outputScale</th>
+            </tr></thead>
+          <tbody>
+            <tr>
+              <td>FLOAT8_E4M3FN、FLOAT8_E5M2</td>
+              <td>FLOAT8_E4M3FN、FLOAT8_E5M2</td>
+              <td>FLOAT、BF16</td>
+              <td>FLOAT</td>
+              <td>FLOAT8_E4M3FN、FLOAT8_E5M2</td>
+              <td>FLOAT</td>
+            </tr>
+            <tr>
+              <td>INT_8</td>
+              <td>INT_8</td>
+              <td>FLOAT、BF16、FLOAT16</td>
+              <td>FLOAT</td>
+              <td>INT_8</td>
+              <td>FLOAT</td>
+            </tr>
+            <tr>
+              <td>HIFLOAT_8</td>
+              <td>HIFLOAT_8</td>
+              <td>FLOAT、BF16</td>
+              <td>FLOAT</td>
+              <td>HIFLOAT_8</td>
+              <td>FLOAT</td>
+            </tr>
+          </tbody>
+          </table>
+
+        - shape约束需要满足下表：
+          <table style="undefined;table-layout: fixed; width: 1134px"><colgroup>
+          <col style="width: 130px">
+          <col style="width: 250px">
+          <col style="width: 320px">
+          <col style="width: 180px">
+          <col style="width: 160px">
+          <col style="width: 230px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>x</th>
+              <th>weight</th>
+              <th>weightScale</th>
+              <th>xScale</th>
+              <th>output</th>
+              <th>outputScale</th>
+            </tr></thead>
+          <tbody>
+            <tr>
+              <td>(M, K)</td>
+              <td><ul>
+              <li>非转置shape形如{(E, K, N)}</li>
+              <li>转置shape形如{(E, N, K)}</li></td>
+              <td><ul>
+              <li>shape形如{(E, N)}</li>
+              </td>
+              <td>(M, )</td>
+              <td>(M, N / 2)</td>
+              <td>(M, )</td>
+            </tr>
+          </tbody>
+          </table>
         - groupList第1维最大支持1024，即最多支持1024个group。
 
 ## 调用示例
