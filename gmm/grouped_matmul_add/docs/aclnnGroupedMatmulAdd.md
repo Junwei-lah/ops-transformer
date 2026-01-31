@@ -4,9 +4,12 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT AI处理器</term>           |    √     |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
@@ -81,8 +84,8 @@ aclnnStatus aclnnGroupedMatmulAdd(
         <td>√</td>
       </tr>
       <tr>
-        <td rowspan="2">weight</td>
-        <td rowspan="2">输入</td>
+        <td>weight</td>
+        <td>输入</td>
         <td>公式中的weight。</td>
         <td>-</td>
         <td>FLOAT16、BFLOAT16</td>
@@ -90,14 +93,16 @@ aclnnStatus aclnnGroupedMatmulAdd(
         <td>2</td>
         <td>√</td>
       </tr>
-      <tr>
-        <td>表示输入K轴方向的matmul大小分布。</td>
-        <td>仅支持累积和（cumsum模式）。</td>
-        <td>INT64</td>
-        <td>ND</td>
-        <td>1</td>
-        <td>√</td>
-      </tr>
+    <tr>
+      <td>groupList</td>
+      <td>输入</td>
+      <td>表示输入和输出分组轴方向的matmul大小分布，Device侧的aclTensor类型。</td>
+      <td>仅支持累积和（cumsum模式）。</td>
+      <td>INT64</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
       <tr>
         <td>y</td>
         <td>输入</td>
@@ -105,7 +110,7 @@ aclnnStatus aclnnGroupedMatmulAdd(
         <td>-</td>
         <td>FLOAT32</td>
         <td>ND</td>
-        <td>2</td>
+        <td>2<sup>1</sup>、3</td>
         <td>×</td>
       </tr>
       <tr>
@@ -155,10 +160,34 @@ aclnnStatus aclnnGroupedMatmulAdd(
         <td>-</td>
         <td>FLOAT32</td>
         <td>ND</td>
-        <td>2</td>
+        <td>2<sup>1</sup>、3</td>
         <td>×</td>
       </tr>
+      <tr>
+        <td>workspaceSize</td>
+        <td>输出</td>
+        <td>返回需要在Device侧申请的workspace大小。</td>
+        <td></td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td>executor</td>
+        <td>输出</td>
+        <td>返回op执行器，包含了算子计算流程。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+      </tr>
     </tbody></table>
+
+  - <term>Ascend 950PR/Ascend 950DT</term>：
+
+    - 上表维度列中的角标“1”代表该系列不支持的数据类型。
 
 - **返回值：**
 

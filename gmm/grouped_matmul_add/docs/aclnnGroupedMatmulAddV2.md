@@ -6,15 +6,18 @@
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT AI处理器</term>             |    √     |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 ## 功能说明
 
 - 接口功能：实现分组矩阵乘计算，每组矩阵乘的维度大小可以不同。基本功能为矩阵乘，如$y_i[m_i,n_i]=x_i[m_i,k_i] \times weight_i[k_i,n_i]+y_i[m_i,n_i], i=1...g$，其中g为分组个数，$m_i/k_i/n_i$为对应shape。输入输出数据类型均为aclTensor，K轴分组。
 
   - k轴分组：$k_i$各不相同，但$m_i/n_i$每组相同。
-  - 相较于aclnnGroupedMatmulAdd接口，此接口新增：
+  - 与[GroupedMatmulAdd](../../grouped_matmul_add/docs/aclnnGroupedMatmulAdd.md)接口对比新增功能：
     - 支持groupList中数值为分组轴上每组大小
 - 计算公式：
 
@@ -22,29 +25,28 @@
   yRef_i=x_i\times weight_i + y_i
   $$
 
-
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnGroupedMatmulAddV2GetWorkspaceSize”接口获取入参并根据计算流程计算所需workspace大小，再调用“aclnnGroupedMatmulAddV2”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnGroupedMatmulAddV2GetWorkspaceSize(
-    const aclTensor *x, 
-    const aclTensor *weight, 
-    const aclTensor *groupList, 
-    aclTensor       *yRef, 
-    bool             transposeX, 
-    bool             transposeWeight, 
-    int64_t          groupType, 
-    int64_t          group_list_type, 
-    uint64_t        *workspaceSize, 
+    const aclTensor *x,
+    const aclTensor *weight,
+    const aclTensor *groupList,
+    aclTensor       *yRef,
+    bool             transposeX,
+    bool             transposeWeight,
+    int64_t          groupType,
+    int64_t          group_list_type,
+    uint64_t        *workspaceSize,
     aclOpExecutor   **executor)
 ```
 ```cpp
 aclnnStatus aclnnGroupedMatmulAddV2(
-    void          *workspace, 
-    uint64_t       workspaceSize, 
-    aclOpExecutor *executor, 
+    void          *workspace,
+    uint64_t       workspaceSize,
+    aclOpExecutor *executor,
     aclrtStream    stream)
 ```
 
@@ -126,16 +128,6 @@ aclnnStatus aclnnGroupedMatmulAddV2(
       <td>-</td>
     </tr>
     <tr>
-      <td>yRef</td>
-      <td>输出</td>
-      <td>表示原地累加的输入矩阵y的引用（与y完全相同），Device侧的aclTensor类型，公式中的yRef</td>
-      <td>-</td>
-      <td>FLOAT32</td>
-      <td>ND</td>
-      <td>3</td>
-      <td>-</td>
-    </tr>
-    <tr>
       <td>transposeX</td>
       <td>输入</td>
       <td>表示x矩阵是否转置，Host侧的布尔值。</td>
@@ -144,7 +136,7 @@ aclnnStatus aclnnGroupedMatmulAddV2(
           <li>当前仅支持True。</li>
         </ul>
       </td>
-      <td>-</td>
+      <td>BOOL</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -158,7 +150,7 @@ aclnnStatus aclnnGroupedMatmulAddV2(
           <li>当前仅支持False。</li>
         </ul>
       </td>
-      <td>-</td>
+      <td>BOOL</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -172,14 +164,14 @@ aclnnStatus aclnnGroupedMatmulAddV2(
           <li>当前仅支持2（K轴分组）。</li>
         </ul>
       </td>
-      <td>-</td>
+      <td>INT64</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
     </tr>
     <tr>
       <td>groupListType</td>
-      <td>输出</td>
+      <td>输入</td>
       <td>整数型参数，目前仅支持两个取值。</td>
       <td>
         <ul>
@@ -187,9 +179,19 @@ aclnnStatus aclnnGroupedMatmulAddV2(
           <li>1：groupList中的数值为分组轴上每组大小。</li>
         </ul>
       </td>
+      <td>INT64</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
+    </tr>
+    <tr>
+      <td>yRef</td>
+      <td>输出</td>
+      <td>表示原地累加的输入矩阵y的引用（与y完全相同），Device侧的aclTensor类型，公式中的yRef</td>
+      <td>-</td>
+      <td>FLOAT32</td>
+      <td>ND</td>
+      <td>3</td>
       <td>-</td>
     </tr>
     <tr>
