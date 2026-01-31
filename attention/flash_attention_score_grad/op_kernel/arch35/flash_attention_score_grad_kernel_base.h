@@ -629,6 +629,10 @@ FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::Chec
         int64_t curBIdx = baseIdx / constInfo.n2GS1oS2o;
         s2EndLen = Min(Max(s2EndLen, ((__gm__ int64_t *)prefixNAddr)[curBIdx]),
                        static_cast<int64_t>(constInfo.commonConstInfo.s2Size));
+    } else {
+        if (constInfo.sparseMode == RIGHT_DOWN_CAUSAL) {
+            s2EndLen = Min(s2EndLen, constInfo.commonConstInfo.s2Size);
+        }
     }
     if constexpr (IS_BN2_MULTIBLK) {
         multiBlkInfo.s2oDimIdx = s2oDimIdx;
