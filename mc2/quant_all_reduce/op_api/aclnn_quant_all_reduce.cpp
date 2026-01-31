@@ -201,7 +201,7 @@ static aclnnStatus QuantAllReduceCheckParams(const aclTensor* x, const aclTensor
 
 extern "C" aclnnStatus aclnnInnerQuantAllReduceGetWorkspaceSize(const aclTensor* x, const aclTensor* scales,
                                                                 const char* group, const char* reduceOp,
-                                                                uint64_t yDtype, aclTensor* output,
+                                                                uint64_t yDtype, int64_t worldSize, aclTensor* output,
                                                                 uint64_t* workspaceSize, aclOpExecutor** executor);
 
 extern "C" aclnnStatus aclnnInnerQuantAllReduce(void* workspace, uint64_t workspaceSize,
@@ -217,7 +217,8 @@ extern "C" aclnnStatus aclnnQuantAllReduceGetWorkspaceSize(const aclTensor* x, c
     aclnnStatus retParam = QuantAllReduceCheckParams(x, scales, group, output);
     CHECK_RET(retParam == ACLNN_SUCCESS, retParam);
     uint64_t yDtype = static_cast<uint64_t>(output->GetDataType());
-    aclnnStatus ret = aclnnInnerQuantAllReduceGetWorkspaceSize(x, scales, group, reduceOp, yDtype,
+    int64_t worldSize = -1;
+    aclnnStatus ret = aclnnInnerQuantAllReduceGetWorkspaceSize(x, scales, group, reduceOp, yDtype, worldSize,
                                                                output, workspaceSize, executor);
     OP_LOGD("QuantAllReduce, aclnnGetWorkspaceSize ret %d.", ret);
     return ret;

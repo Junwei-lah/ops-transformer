@@ -43,11 +43,13 @@ const std::string ALLTO_ALLV_GROUPED_MAT_MUL_OP_TYPE = "AlltoAllvGroupedMatMul";
 const std::string GROUPED_MAT_MUL_ALLTO_ALLV_OP_TYPE = "GroupedMatMulAlltoAllv";
 const std::string ATTENTION_TO_FFN_OP_TYPE = "AttentionToFFN";
 const std::string FFN_TO_ATTENTION_OP_TYPE = "FFNToAttention";
+const std::string QUANT_ALL_REDUCE_OP_TYPE = "QuantAllReduce";
 const int32_t GROUP_CNT_OF_DS_TRAINING = 1;
 const int32_t GROUP_CNT_OF_MOE_DISTRIBUTE = 2;
 const int32_t ONE_GROUP_CNT_OF_MOE_DISTRIBUTE = 1;
 const int32_t GROUP_CNT_OF_DISTRIBUTE_BARRIER = 1;
 const int32_t GROUP_CNT_OF_ATTENTION_FFN = 1;
+const int32_t GROUP_CNT_OF_QUANT_ALL_REDUCE = 1;
 const int32_t GROUP_CNT = 2;
 const int32_t MAX_GROUP_CNT = 16;
 
@@ -69,7 +71,9 @@ static const std::map<const std::string, int32_t> GROUP_CNT_MAP{
     {ALLTO_ALLV_GROUPED_MAT_MUL_OP_TYPE, GROUP_CNT_OF_DS_TRAINING},
     {GROUPED_MAT_MUL_ALLTO_ALLV_OP_TYPE, GROUP_CNT_OF_DS_TRAINING},
     {ATTENTION_TO_FFN_OP_TYPE, GROUP_CNT_OF_ATTENTION_FFN},
-    {FFN_TO_ATTENTION_OP_TYPE, GROUP_CNT_OF_ATTENTION_FFN}};
+    {FFN_TO_ATTENTION_OP_TYPE, GROUP_CNT_OF_ATTENTION_FFN},
+    {QUANT_ALL_REDUCE_OP_TYPE, GROUP_CNT_OF_QUANT_ALL_REDUCE}
+};
 
 static const std::unordered_set<std::string> NO_AI_CPU_SET{MOE_DISTRIBUTE_DISPATCH_OP_TYPE,
                                                            MOE_DISTRIBUTE_COMBINE_OP_TYPE,
@@ -331,7 +335,8 @@ ge::Status Mc2MoeGenTaskOpsUtils::Mc2MoeGenTaskCallbackV2(const gert::ExeResGene
     bool useAiCpu = ((opTypeStr != MOE_DISTRIBUTE_DISPATCH_V2_OP_TYPE) &&
                      (opTypeStr != MOE_DISTRIBUTE_COMBINE_V2_OP_TYPE) && (opTypeStr != DISTRIBUTE_BARRIER_OP_TYPE) &&
                      (opTypeStr != MOE_DISTRIBUTE_DISPATCH_OP_TYPE) && (opTypeStr != MOE_DISTRIBUTE_COMBINE_OP_TYPE) &&
-                     (opTypeStr != ATTENTION_TO_FFN_OP_TYPE) && (opTypeStr != FFN_TO_ATTENTION_OP_TYPE));
+                     (opTypeStr != ATTENTION_TO_FFN_OP_TYPE) && (opTypeStr != FFN_TO_ATTENTION_OP_TYPE) &&
+                     (opTypeStr != QUANT_ALL_REDUCE_OP_TYPE));
     return useAiCpu ? Mc2MoeInsertTask(context, tasks, groupCnt) : ge::GRAPH_SUCCESS;
 }
 } // namespace ops

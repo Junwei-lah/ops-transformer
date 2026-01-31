@@ -44,6 +44,7 @@ static ge::graphStatus CheckAttrsInfo(const gert::TilingContext *context, Tiling
     OP_TILING_CHECK(groupPtr == nullptr, OP_LOGE(nodeName, "groupPtr is null."), return ge::GRAPH_FAILED);
     OP_TILING_CHECK(std::string(groupPtr).empty(), OP_LOGE(nodeName, "group should not be empty."),
                     return ge::GRAPH_FAILED);
+    runInfo.groupPtr = groupPtr;
     runInfo.group = std::string(groupPtr);
     // 校验reduce_op的类型是否为sum
     const char *reduceOpPtr = attrs->GetAttrPointer<char>(REDUCE_OP_INDEX);
@@ -72,12 +73,21 @@ static ge::graphStatus CheckAttrsInfo(const gert::TilingContext *context, Tiling
 static ge::graphStatus SetRankSize(const gert::TilingContext *context, TilingRunInfo &runInfo)
 {
     const char *nodeName = context->GetNodeName();
-    uint32_t rankSize = mc2tiling::MatmulFormulaicTiling::GetRankSize(runInfo.group.c_str());
-    OP_TILING_CHECK(!IsContains(RANK_SIZE_LIST, rankSize),
-                    OP_LOGE(nodeName, "The rankSize should be in [2, 4, 8], but actual value is %u.", rankSize),
+    // attrs在函数CheckAttrsInfo中已做校验
+    const gert::RuntimeAttrs *attrs = context->GetAttrs();
+    const int *rankSizePtr = attrs->GetAttrPointer<int>(WORLD_SIZE_INDEX);
+    if (rankSizePtr == nullptr || *rankSizePtr == RANK_SIZE_DEFAULT) {
+        int64_t rankSize = 0;
+        OP_TILING_CHECK(!mc2tiling::GetRankSize(nodeName, runInfo.groupPtr, rankSize),
+                        OP_LOGE(nodeName, "Get rankSize failed."),
+                        return ge::GRAPH_FAILED);
+        runInfo.rankSize = rankSize;
+    } else {
+        runInfo.rankSize = *rankSizePtr;
+    }
+    OP_TILING_CHECK(!IsContains(RANK_SIZE_LIST, runInfo.rankSize),
+                    OP_LOGE(nodeName, "The rankSize should be in [2, 4, 8], but actual value is %u.", runInfo.rankSize),
                     return ge::GRAPH_FAILED);
-    // 设置rankSize
-    runInfo.rankSize = rankSize;
     return ge::GRAPH_SUCCESS;
 }
 

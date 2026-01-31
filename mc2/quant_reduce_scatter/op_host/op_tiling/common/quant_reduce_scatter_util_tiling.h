@@ -29,12 +29,14 @@ constexpr size_t OUTPUT_INDEX = 0;
 constexpr size_t GROUP_INDEX = 0;
 constexpr size_t REDUCE_OP_INDEX = 1;
 constexpr size_t OUTPUT_DTYPE_INDEX = 2;
+constexpr size_t WORLD_SIZE_INDEX = 3;
 // 参数范围
 const std::string REDUCE_OP_TYPE = "sum";
 const std::vector<uint32_t> X_DTYPE_LIST = {ge::DT_INT8, ge::DT_HIFLOAT8, ge::DT_FLOAT8_E4M3FN, ge::DT_FLOAT8_E5M2};
 const std::vector<uint32_t> SCALES_DTYPE_LIST = {ge::DT_FLOAT, ge::DT_FLOAT8_E8M0};
 const std::vector<uint32_t> OUTPUT_DTYPE_LIST = {ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT};
 const std::vector<uint32_t> RANK_SIZE_LIST = {2, 4, 8};
+constexpr uint32_t RANK_SIZE_DEFAULT = -1;
 constexpr uint64_t H_VALUE_5120 = 5120UL;
 constexpr uint64_t H_VALUE_7168 = 7168UL;
 constexpr uint64_t H_VALUE_LOWER_LIMIT = 1024UL;
@@ -73,6 +75,7 @@ enum OpType : size_t {
 
 // 封装参数
 struct TilingRunInfo {
+    const char *groupPtr;  // group指针
     std::string group;  // group属性
     uint32_t quantMode; // 量化方式
     uint32_t rankSize;  // rank大小

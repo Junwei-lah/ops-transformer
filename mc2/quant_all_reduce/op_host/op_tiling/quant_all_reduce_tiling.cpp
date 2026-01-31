@@ -135,6 +135,15 @@ static ge::graphStatus QuantAllReduceTilingFunc(gert::TilingContext *context)
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(QuantAllReduce).Tiling(QuantAllReduceTilingFunc);
+struct QuantAllReduceCompileInfo {};
+
+ge::graphStatus TilingParseForQuantAllReduce(gert::TilingParseContext *context) { 
+    (void)context;
+ 	return ge::GRAPH_SUCCESS; 
+}
+
+IMPL_OP_OPTILING(QuantAllReduce)
+    .Tiling(QuantAllReduceTilingFunc)
+    .TilingParse<QuantAllReduceCompileInfo>(TilingParseForQuantAllReduce);
 
 } // namespace MC2Tiling
