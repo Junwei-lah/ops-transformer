@@ -28,9 +28,17 @@ namespace AttentionToFFNUT {
 
 class aclnn_attention_to_ffn_test : public testing::Test {
  protected:
-  static void SetUpTestCase() { cout << "aclnn_attention_to_ffn_test SetUp" << endl; }
+  static void SetUpTestCase()
+  {
+    op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
+    cout << "aclnn_attention_to_ffn_test SetUp" << endl;
+  }
 
-  static void TearDownTestCase() { cout << "aclnn_attention_to_ffn_test TearDown" << endl; }
+  static void TearDownTestCase()
+  {
+    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+    cout << "aclnn_attention_to_ffn_test TearDown" << endl;
+  }
 };
 
 TEST_F(aclnn_attention_to_ffn_test, test_attention_to_ffn_no_quant) {

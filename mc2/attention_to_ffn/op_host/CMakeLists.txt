@@ -13,10 +13,10 @@ if (BUILD_OPEN_PROJECT)  # custom
         attention_to_ffn_def.cpp
     )
     add_modules_sources(
- 	         OP_API_INDEPENDENT ON 
- 	         OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
- 	         OP_MC2_ENABLE ON 
- 	         OPTYPE attention_to_ffn ACLNNTYPE aclnn_inner)
+        OP_API_INDEPENDENT ON 
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api 
+        OP_MC2_ENABLE ON 
+        OPTYPE attention_to_ffn ACLNNTYPE aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
     set(attention_to_ffn_depends mc2/common mc2/3rd PARENT_SCOPE)

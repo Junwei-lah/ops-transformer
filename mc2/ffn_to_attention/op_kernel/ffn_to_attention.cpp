@@ -13,7 +13,7 @@
 * \brief
 */
 
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
 #include "ffn_to_attention.h"
 #include "ffn_to_attention_tiling.h"
 #include "ffn_to_attention_tilling_key.h"

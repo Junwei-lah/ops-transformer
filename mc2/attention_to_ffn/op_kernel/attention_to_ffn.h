@@ -16,7 +16,8 @@
 #ifndef ATTENTION_TO_FFN_H
 #define ATTENTION_TO_FFN_H
 
-#include "kernel_operator.h"
+#include "basic_api/kernel_basic_intf.h"
+#include "adv_api/reduce/sum.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "attention_to_ffn_tiling.h"
 #if __has_include("../common/inc/kernel/moe_distribute_base.h")
@@ -36,13 +37,12 @@ constexpr uint32_t WIN_ALIGN = 512; // win offset 512字节对齐
 constexpr uint32_t REP_STRIDE = 8; // 相邻迭代间的地址步长
 constexpr uint32_t STATUS_REP_STRIDE = 8; // 32B / sizeof(int32) = 8
 constexpr uint32_t EXPERT_TABLE_REP_STRIDE = 16; // 64B / sizeof(int32) = 16
-constexpr uint32_t WORKSPACE_ELEMENT_STRIDE = 32;   // workspace预留128B,128B / sizeof(int32) = 32
+constexpr uint32_t WORKSPACE_ELEMENT_STRIDE = 32;   // 128B / sizeof(int32) = 32
 constexpr uint32_t DYNAMIC_QUANT = 2; // 动态量化
 constexpr uint32_t RANK_OFFSET_STRIDE = 2; // RankTable第一个为rankCnt，后面两两组合
 constexpr uint32_t TOKEN_INFO_TABLE_RS = 2; // tokenInfoTable前2位为flag和layer_id
 constexpr uint32_t TOKEN_INFO_TABLE_COPY_BLOCK_CNT = 2; // tokenInfoTable在DataCopy时每次搬运2个int32
 constexpr float INT8_MAX_VALUE = 127.0f;
-
 
 #define TemplateMC2TypeClass typename XType, bool isQuant, bool isSync, bool isActiveMask
 #define TemplateMC2TypeFunc XType, isQuant, isSync, isActiveMask
@@ -103,7 +103,7 @@ private:
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> xQueue_;  // 非量化使用
     TQue<QuePosition::VECIN, 1> xInQueue_; // 量化使用，量化前的输入
     TQue<QuePosition::VECOUT, 1> xOutQueue_; // 量化使用，量化后的输出
-    GM_ADDR syncStatusWorkspaceGM_;    // 异步场景使用workSpace记录发送状态信息
+    GM_ADDR syncStatusWorkspaceGM_;    // 异步场景使用workSpace
 
     int32_t dstExpertId_{0};
     int32_t toRankId_{0};
@@ -390,7 +390,7 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetExpertAndRank(uin
         dstExpertId_ = moeExpertNum_ + (topkId - axisK_);  // 前moeExpertNum_个为路由专家，共享专家排在后面
     }
     FindExpertRank(dstExpertId_); // 查表获取当前要发送的rankId以及localExpId
-    
+
     if (tokenIdx > 0) {
         SyncFunc<AscendC::HardEvent::MTE3_S>(); // 等待前面的statusTensor_的搬出
     }
@@ -483,6 +483,7 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SendTokenToFFN()
     DataCopyExtParams expertIdsCntParams = {1U, static_cast<uint32_t>(expertIdsCnt_ * sizeof(uint32_t)), 0U, 0U, 0U};
     DataCopyPadExtParams<int32_t> copyPadParams{false, 0U, 0U, 0U};
     DataCopyPad(expertIdsTensor_, expertIdsGMTensor_, expertIdsCntParams, copyPadParams);
+
     SplitToCore(totalSendNum_, aivNum_, startId, endId, sendNum_);
     if (startId >= totalSendNum_) {
         return;

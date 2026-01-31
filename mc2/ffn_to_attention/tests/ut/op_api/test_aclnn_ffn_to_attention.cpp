@@ -28,9 +28,17 @@ namespace FFNToAttentionUT {
 
 class aclnn_ffn_to_attention_test : public testing::Test {
  protected:
-  static void SetUpTestCase() { cout << "aclnn_ffn_to_attention_test SetUp" << endl; }
+  static void SetUpTestCase()
+  {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
+      cout << "aclnn_ffn_to_attention_test SetUp" << endl;
+  }
 
-  static void TearDownTestCase() { cout << "aclnn_ffn_to_attention_test TearDown" << endl; }
+  static void TearDownTestCase()
+  {
+    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+    cout << "aclnn_ffn_to_attention_test TearDown" << endl;
+  }
 };
 
 TEST_F(aclnn_ffn_to_attention_test, test_ffn_to_attention_attnRank_table) {
