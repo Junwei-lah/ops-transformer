@@ -66,7 +66,7 @@ protected:
     void PrintAlltoAllMatmulTilingData(CoCTiling &cocTilingData, AlltoAllMatmulInfo &info);
 
 private:
-    bool needTransX2 = false;
+    bool x2Transpose = false;
     bool hasBias = false;
     uint32_t quantType = TILINGKEY_TPL_NOQUANT;
     uint32_t biasDtype_ = 0;
