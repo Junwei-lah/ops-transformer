@@ -1121,7 +1121,9 @@ __aicore__ inline void IncreFlashAttentionNormalSplitBbn2s2Us2<IFAT>::ComputeSca
     if (softmaxLseFlag) {
         lseOutputUb = softmaxLseOutputQue.template AllocTensor<T>();
     }
-    FaVectorApi::ComputeScaleValue_VF(lseMaxUb, lseSumUb, lseOutputUb, splitSize, actualCombineLoopSize, softmaxLseFlag);
+    LocalTensor<bfloat16_t> tmpSinkUb;
+    bool learnableSinkFlag = false;
+    FaVectorApi::ComputeScaleValue_VF(tmpSinkUb, lseMaxUb, lseSumUb, lseOutputUb, splitSize, actualCombineLoopSize, softmaxLseFlag, learnableSinkFlag);
     if (softmaxLseFlag) {
         softmaxLseOutputQue.template EnQue<T>(lseOutputUb);
         softmaxLseOutputQue.DeQue<T>();

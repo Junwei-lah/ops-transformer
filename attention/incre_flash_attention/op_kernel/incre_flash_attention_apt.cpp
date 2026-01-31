@@ -58,7 +58,7 @@ incre_flash_attention(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t
                                             query, key, value, pseShift, attenMask, nullptr, actualSeqLengths, deqScale1,
                                             quantScale1, deqScale2, quantScale2, quantOffset2, antiquantScale, antiquantOffset, blocktable, nullptr,
                                             kvPaddingSize, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                                            attentionOut, nullptr, workspace, tiling);
+                                            nullptr, attentionOut, nullptr, workspace, tiling);
     } else {
         incre_flash_attention_FIAS<inOutLayoutType, config, pseMode, quantMode, hasAttenMask, hasRope, isPa, isFd, emptyTensor, PFAMask, pFAMatMulType, enableKVPrefix>(
                                     query, key, value, pseShift, attenMask, nullptr, actualSeqLengths, deqScale1, quantScale1,

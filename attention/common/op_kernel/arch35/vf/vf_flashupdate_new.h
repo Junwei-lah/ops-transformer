@@ -18,6 +18,9 @@
 #include "kernel_tensor.h"
 
 namespace FaVectorApi {
+// bf16->fp32
+static constexpr MicroAPI::CastTrait castTraitFp16_32_update = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN,
+                                                   MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
 constexpr uint16_t REDUCE_SIZE = 1;
 template <typename T, typename INPUT_T, typename OUTPUT_T, uint16_t srcD, uint16_t reduceSize, bool isUpdatePre, bool isMlaFullQuant>
 __simd_vf__ inline void FlashUpdateBasicVF(__ubuf__ float * dstUb, __ubuf__ float * curUb, __ubuf__ float * preUb,
@@ -524,6 +527,117 @@ __aicore__ inline void ComputeLseOutputVF(const LocalTensor<T>& dstTensor, const
     __ubuf__ T * dstUb = (__ubuf__ T *)dstTensor.GetPhyAddr();
 
     ComputeLseOutputVF<T>(srcSumUb, srcMaxUb, dstUb, dealCount);
+}
+
+template <typename T>
+__simd_vf__ inline void SinkSubExpAddVF(__ubuf__ T *srcSumUb, __ubuf__ T *srcMaxUb, __ubuf__ T *sinkUb, const uint32_t dealCount)
+{
+    MicroAPI::RegTensor<T> vregSum;
+    MicroAPI::RegTensor<T> vregMax;
+    MicroAPI::RegTensor<T> vregRes;
+    MicroAPI::RegTensor<T> vregSink;
+
+    constexpr uint32_t floatRepSize = 64;
+
+    uint16_t updateLoops = dealCount / floatRepSize;
+    uint16_t tailSize = dealCount % floatRepSize;
+    uint32_t pltTail = static_cast<uint32_t>(tailSize);
+
+    //mask
+    MicroAPI::MaskReg pregAll = MicroAPI::CreateMask<T, MicroAPI::MaskPattern::ALL>();
+    MicroAPI::MaskReg pregTail = MicroAPI::UpdateMask<T>(pltTail);
+
+    MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_BRC_B32>(vregSink, sinkUb);
+
+    for (uint16_t i = 0; i < updateLoops; ++i) {
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregSum, srcSumUb + (i * floatRepSize));
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregMax, srcMaxUb + (i * floatRepSize));
+
+        MicroAPI::Sub<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregSink, vregMax, pregAll);
+        MicroAPI::Exp<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregRes, pregAll);
+        MicroAPI::Add<T, MicroAPI::MaskMergeMode::ZEROING>(vregSum, vregSum, vregRes, pregAll);
+
+        MicroAPI::StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(srcSumUb + (i * floatRepSize), vregSum, pregAll);
+    }
+
+    if (tailSize != 0) {
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregSum, srcSumUb + (updateLoops * floatRepSize));
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregMax, srcMaxUb + (updateLoops * floatRepSize));
+
+        MicroAPI::Sub<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregSink, vregMax, pregTail);
+        MicroAPI::Exp<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregRes, pregTail);
+        MicroAPI::Add<T, MicroAPI::MaskMergeMode::ZEROING>(vregSum, vregSum, vregRes, pregTail);
+        
+        MicroAPI::StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(srcSumUb + (updateLoops * floatRepSize), vregSum, pregTail);
+    }
+}
+
+template <typename T>
+__aicore__ inline void SinkSubExpAddVF(const LocalTensor<T>& dstTensor, const LocalTensor<T>& softmaxSumTensor,
+    const LocalTensor<T>& softmaxMaxTensor, uint32_t dealCount)
+{
+    __ubuf__ T * srcSumUb = (__ubuf__ T *)softmaxSumTensor.GetPhyAddr();
+    __ubuf__ T * srcMaxUb = (__ubuf__ T *)softmaxMaxTensor.GetPhyAddr();
+    __ubuf__ T * dstUb = (__ubuf__ T *)dstTensor.GetPhyAddr();
+
+    SinkSubExpAddVF<T>(srcSumUb, srcMaxUb, dstUb, dealCount);
+}
+
+template <typename T, typename SINK_T>
+__simd_vf__ inline void SinkSubExpAddGSFusedVF(__ubuf__ T *srcSumUb, __ubuf__ T *srcMaxUb, __ubuf__ uint16_t *sinkUb, const uint32_t dealCount)
+{
+    MicroAPI::RegTensor<T> vregSum;
+    MicroAPI::RegTensor<T> vregMax;
+    MicroAPI::RegTensor<T> vregRes;
+    MicroAPI::RegTensor<SINK_T> vregSink;
+    MicroAPI::RegTensor<T> vregSinkCast;
+
+    constexpr uint32_t floatRepSize = 64;
+
+    uint16_t updateLoops = dealCount / floatRepSize;
+    uint16_t tailSize = dealCount % floatRepSize;
+    uint32_t pltTail = static_cast<uint32_t>(tailSize);
+
+    //mask
+    MicroAPI::MaskReg pregAll = MicroAPI::CreateMask<T, MicroAPI::MaskPattern::ALL>();
+    MicroAPI::MaskReg pregTail = MicroAPI::UpdateMask<T>(pltTail);
+    MicroAPI::MaskReg pregSinkAll = MicroAPI::CreateMask<T, MicroAPI::MaskPattern::ALL>();
+
+    MicroAPI::LoadAlign<uint16_t, MicroAPI::LoadDist::DIST_UNPACK_B16>((MicroAPI::RegTensor<uint16_t>&)vregSink, sinkUb);
+    MicroAPI::Cast<T, SINK_T, castTraitFp16_32_update>(vregSinkCast, vregSink, pregSinkAll);
+
+    for (uint16_t i = 0; i < updateLoops; ++i) {
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregSum, srcSumUb + (i * floatRepSize));
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregMax, srcMaxUb + (i * floatRepSize));
+
+        MicroAPI::Sub<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregSinkCast, vregMax, pregAll);
+        MicroAPI::Exp<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregRes, pregAll);
+        MicroAPI::Add<T, MicroAPI::MaskMergeMode::ZEROING>(vregSum, vregSum, vregRes, pregAll);
+
+        MicroAPI::StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(srcSumUb + (i * floatRepSize), vregSum, pregAll);
+    }
+
+    if (tailSize != 0) {
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregSum, srcSumUb + (updateLoops * floatRepSize));
+        MicroAPI::LoadAlign<T, MicroAPI::LoadDist::DIST_NORM>(vregMax, srcMaxUb + (updateLoops * floatRepSize));
+
+        MicroAPI::Sub<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregSinkCast, vregMax, pregTail);
+        MicroAPI::Exp<T, MicroAPI::MaskMergeMode::ZEROING>(vregRes, vregRes, pregTail);
+        MicroAPI::Add<T, MicroAPI::MaskMergeMode::ZEROING>(vregSum, vregSum, vregRes, pregTail);
+        
+        MicroAPI::StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(srcSumUb + (updateLoops * floatRepSize), vregSum, pregTail);
+    }
+}
+
+template <typename T, typename SINK_T>
+__aicore__ inline void SinkSubExpAddGSFusedVF(const LocalTensor<SINK_T>& dstTensor, const LocalTensor<T>& softmaxSumTensor,
+    const LocalTensor<T>& softmaxMaxTensor, uint32_t dealCount)
+{
+    __ubuf__ T * srcSumUb = (__ubuf__ T *)softmaxSumTensor.GetPhyAddr();
+    __ubuf__ T * srcMaxUb = (__ubuf__ T *)softmaxMaxTensor.GetPhyAddr();
+    __ubuf__ uint16_t * dstUb = (__ubuf__ uint16_t *)dstTensor.GetPhyAddr();
+
+    SinkSubExpAddGSFusedVF<T, SINK_T>(srcSumUb, srcMaxUb, dstUb, dealCount);
 }
 
 template <typename T>

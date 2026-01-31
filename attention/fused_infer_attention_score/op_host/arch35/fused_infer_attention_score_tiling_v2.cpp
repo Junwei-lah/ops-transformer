@@ -85,6 +85,7 @@ constexpr uint32_t ACTUAL_SHARED_PREFIX_LEN_INDEX = 23;
 constexpr uint32_t QUERY_ROPE_INDEX = 24;
 constexpr uint32_t KEY_ROPE_INDEX = 25;
 constexpr uint32_t DEQUANT_SCALE_QUERY_INDEX = 27;
+constexpr uint32_t LEARNABLE_SINK_INDEX = 28;
 constexpr uint32_t Q_START_IDX_INDEX = 29;
 constexpr uint32_t KV_START_IDX_INDEX = 30;
 
@@ -394,6 +395,10 @@ static ge::graphStatus ConvertContextToParamsPFA(gert::TilingContext* context, C
     contextKeyParams.keySharedPrefix = context->GetOptionalInputTensor(KEY_SHARED_PREFIX_INDEX);
     contextKeyParams.valueSharedPrefix = context->GetOptionalInputTensor(VALUE_SHARED_PREFIX_INDEX);
     contextKeyParams.actualSharedPrefixLen = context->GetOptionalInputTensor(ACTUAL_SHARED_PREFIX_LEN_INDEX);
+    contextKeyParams.learnableSink = context->GetOptionalInputTensor(LEARNABLE_SINK_INDEX);
+    contextKeyParams.learnableSinkShape = context->GetOptionalInputShape(LEARNABLE_SINK_INDEX);
+    contextKeyParams.hasLearnableSink = ((contextKeyParams.learnableSink != nullptr) && (contextKeyParams.learnableSinkShape != nullptr) &&
+                                        (contextKeyParams.learnableSinkShape->GetStorageShape().GetShapeSize() != 0)) ? true : false;
     contextKeyParams.inputDataType = context->GetInputDesc(QUERY_INDEX)->GetDataType();
     contextKeyParams.kDataType = context->GetInputDesc(KEY_INDEX)->GetDataType();
     contextKeyParams.vDataType = context->GetInputDesc(VALUE_INDEX)->GetDataType();
@@ -416,6 +421,8 @@ static ge::graphStatus ConvertContextToParamsPFA(gert::TilingContext* context, C
         context->GetOptionalInputDesc(KEY_SHARED_PREFIX_INDEX)->GetDataType() : contextKeyParams.inputDataType;
     contextKeyParams.valueSharedPrefixDataType = (contextKeyParams.valueSharedPrefix != nullptr) ?
         context->GetOptionalInputDesc(VALUE_SHARED_PREFIX_INDEX)->GetDataType() : contextKeyParams.inputDataType;
+    contextKeyParams.learnableSinkDataType = (contextKeyParams.learnableSink != nullptr) ? 
+        context->GetOptionalInputDesc(LEARNABLE_SINK_INDEX)->GetDataType() : contextKeyParams.inputDataType;
 
     auto convertQuantRet = ConvertQuantOptionalInputs(context, contextKeyParams);
     if (convertQuantRet != ge::GRAPH_SUCCESS) {

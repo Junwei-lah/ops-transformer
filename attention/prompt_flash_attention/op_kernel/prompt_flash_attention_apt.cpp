@@ -39,8 +39,8 @@ __global__ __aicore__ void prompt_flash_attention_FIAS(__gm__ uint8_t* query, __
             isPa, isFd, emptyTensor, PFAMask, pFAMatMulType, enableKVPrefix>(query, key, value, pseShift, attenMask, actualSeqLengths,
             actualSeqLengthsKV, deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset,
             blocktable, queryPaddingSize, kvPaddingSize, key_antiquant_scale, key_antiquant_offset, value_antiquant_scale, 
-            value_antiquant_offset, keySharedPrefix, valueSharedPrefix, actualSharedPrefixLen, queryRope, keyRope, dequantScaleQuery, attentionOut,
-            softmaxLse, workspace, tiling);
+            value_antiquant_offset, keySharedPrefix, valueSharedPrefix, actualSharedPrefixLen, queryRope, keyRope, dequantScaleQuery, learnableSink, 
+            attentionOut, softmaxLse, workspace, tiling);
     }    
 }
 

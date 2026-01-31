@@ -182,6 +182,8 @@ protected:
         PromptFlashAttentionTilingData& tilingData);
     bool CheckTNDLayoutCrossover(ContextParamsForPFATiling& contextKeyParams);
     bool CheckNTDLayoutCrossover(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo);
+    bool CheckLearnSink(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo, 
+        PromptFlashAttentionTilingData& tilingData);
     bool ParseActualSeqLengths(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, 
         std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV);
     bool CheckMultiFeatureCrossover(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, 
@@ -314,6 +316,8 @@ protected:
     bool enablePostQuant = false;
     bool enablePertensorQuant = false;
     bool enablePerblockQuant = false;
+    // attention sink
+    bool enableLearnSink = false;
     uint32_t gSize = 1;
     int64_t t1Size = 0;
     int64_t t2Size = 0;
