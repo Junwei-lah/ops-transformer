@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -9,18 +9,22 @@
  */
 
 /*!
- * \file pipeline_builder.h
+ * \file quantize_stage.h
  * \brief
  */
 
-#ifndef MC2_PIPELINE_BUILDER_H
-#define MC2_PIPELINE_BUILDER_H
+#ifndef MC2_QUANTIZE_STAGE_H
+#define MC2_QUANTIZE_STAGE_H
 
-#include "../communication/comm_stage.h"
-#include "../computation/compute_stage.h"
-#include "../quantization/quantize_stage.h"
-#include "./template/pipeline_template_comm_trans_compute.h"
-#include "./template/pipeline_template_compute_trans_comm.h"
-#include "./template/pipeline_template_comm_trans_quantize_compute.h"
+#include "./fp8/fp8_dynamic_quant_pertoken.h"
+
+namespace MC2KernelTemplate {
+// fp8DynamicQuant的动态实现
+#ifndef DEFINE_MC2_FP8_DYNAMIC_QUANT_PERTOKEN
+#define DEFINE_MC2_FP8_DYNAMIC_QUANT_PERTOKEN(QuantInputDataType, QuantOutputDataType, DynamicQuantType)               \
+    using DynamicQuantType = Fp8DynamicQuantPertoken<QuantInputDataType, QuantOutputDataType>
+#endif
+
+} // namespace MC2KernelTemplate
 
 #endif

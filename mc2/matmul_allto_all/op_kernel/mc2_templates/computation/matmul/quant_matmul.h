@@ -59,8 +59,8 @@ __aicore__ inline void QuantMatmul<MMKernel, ExtraDataType, TilingDataType>::Pro
         baseAddrs_.bGM = (GM_ADDR)((uint64_t)baseAddrs_.bGM + extraData_.b_offset);
         baseAddrs_.cGM = (GM_ADDR)((uint64_t)baseAddrs_.cGM + extraData_.c_offset);
         extraData_.x1_scale = (GM_ADDR)((uint64_t)extraData_.x1_scale + extraData_.x1_scale_offset);
-        Init();
     }
+    Init();
     mmOp_.Process();
 }
 
@@ -82,7 +82,6 @@ __aicore__ inline void QuantMatmul<MMKernel, ExtraDataType, TilingDataType>::Upd
     }
     if (tilingData != nullptr) {
         tilingData_ = tilingData;
-        Init();
     }
 }
 

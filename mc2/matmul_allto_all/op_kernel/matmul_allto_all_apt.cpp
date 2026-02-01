@@ -68,7 +68,7 @@ __global__ __aicore__ void matmul_allto_all(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
     REGISTER_TILING_DEFAULT(KcQuantMatmulAlltoAllTilingData);
     GET_TILING_DATA_WITH_STRUCT(KcQuantMatmulAlltoAllTilingData, tilingData, tilingGM);
 
-    DEFINE_AND_IMPL_MC2_MATMUL_FOR_MATMUL_COMPUTATION_QUANT(DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams, ComputationType);
+    DEFINE_AND_IMPL_MC2_MATMUL_FOR_MATMUL_COMPUTATION_QUANT(DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams, ComputationType, DTYPE_X1, DTYPE_X2);
     ComputationType matmulImplName(&pipe);
     DEFINE_MC2_TRANSPOSE_FOR_MATH_COMPUTATION(DTYPE_Y, TransposeType);
     TransposeType transposeImplName(&pipe);

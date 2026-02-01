@@ -23,6 +23,8 @@ using namespace gert;
 // 参数范围
 const std::set<int> SUPPORT_RANK_SIZE{2, 4, 8, 16};
 constexpr uint64_t K_MAX_VALUE = 65535UL;
+constexpr uint64_t MAX_INT32_VALUE = 2147483647UL;
+constexpr size_t MAX_GROUP_NAME_LEN = 128;
 constexpr int64_t RANK_DEFAULT_NUM = -1;
 // FOR NON_QUANT
 const std::vector<uint32_t> NON_QUANT_X_DTYPE_LIST = {ge::DT_BF16, ge::DT_FLOAT16};
@@ -111,6 +113,8 @@ struct TilingContextInfo {
     mc2tiling::TilingArgs args_;
     bool allToAllOutFlag =
         false; // AlltoAllMatmul用于存放alltoAllFlag的标识,AlltoAll在前，为true表示当前存在alltoall的对应地址
+    ge::DataType hcclGeType;
+    uint64_t x1KcDynQuantDTypeVal = 0;
 };
 
 // 封装Tiling过程中推导得到的参数
@@ -120,11 +124,13 @@ struct TilingInferredInfo {
     uint64_t commLen = 0UL; // 存储通信结果的临时空间，仅对于AlltoAllMatmul，需要有空间存放重排的地址（和kernel侧约定）
     uint64_t permuteLen =
         0UL; // 重排空间大小,对于AlltoAllMatmul来说，当alltoAllout存在时，就有一个额外的alltoall地址传递给kernel侧，不需要额外分配
-    uint32_t biasLen = 0UL; // 存储偏移的地址大小
-    uint32_t tileM = 0UL;   // 头块大小
-    uint32_t tileCnt = 0UL; // 头块数量
-    uint32_t tailM = 0UL;   // 尾块大小
-    uint32_t tailCnt = 0UL; // 尾块数量
+    uint64_t x1ScaleOptionalLen = 0UL; // 存储x1ScaleOptional的地址大小
+    uint64_t quantOutLen = 0UL;        // 存储quantOut的空间
+    uint32_t biasLen = 0UL;            // 存储偏移的地址大小
+    uint32_t tileM = 0UL;              // 头块大小
+    uint32_t tileCnt = 0UL;            // 头块数量
+    uint32_t tailM = 0UL;              // 尾块大小
+    uint32_t tailCnt = 0UL;            // 尾块数量
 };
 
 
@@ -140,6 +146,7 @@ public:
                                           const OpAttrIndexSchema &indexSchema);
     static ge::graphStatus CheckKcQuantShapeInfo(const gert::TilingContext *context, const char *opName,
                                           const OpAttrIndexSchema &indexSchema);
+    static ge::graphStatus CheckTensorFormat(const gert::TilingContext *context, const char *opName);
     static ge::graphStatus CheckNonQuantTensorDataType(const gert::TilingContext *context, const char *opName);
     static ge::graphStatus CheckKcQuantTensorDataType(const gert::TilingContext *context, const char *opName);
     static ge::graphStatus SetAttrsInfo(const gert::TilingContext *context, const char *opName,
@@ -148,7 +155,7 @@ public:
     static ge::graphStatus SetDataTypeInfo(const gert::TilingContext *context, const char *opName,
                                            TilingContextInfo &contextInfo);
     static ge::graphStatus SetKcDataTypeInfo(const gert::TilingContext *context, const char *opName,
-                                            TilingContextInfo &contextInfo);
+                                             TilingContextInfo &contextInfo);
 };
 
 // Builder模式成员函数通常使用小写字母开头
@@ -241,7 +248,7 @@ public:
                                            const std::string &algConfig);
 };
 
-inline bool IsArrayEqual(std::vector<uint32_t>& arr1, const std::vector<uint32_t>& arr2, uint32_t size)
+inline bool IsArrayEqual(std::vector<uint32_t> &arr1, const std::vector<uint32_t> &arr2, uint32_t size)
 {
     if (arr1.size() < size || arr2.size() < size) {
         return false;

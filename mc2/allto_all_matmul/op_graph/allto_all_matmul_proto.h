@@ -23,7 +23,7 @@ namespace ge {
  * @par Inputs:
  * two inputs, including:
  * @li x1: A matrix Tensor. The type support bfloat16, float16. The format supports ND.
- * @li x2: A matrix Tensor. The type support bfloat16, float16. The format supports ND.
+ * @li x2: A matrix Tensor. The type support bfloat16, float16, float8_e4m3fn, float8_e5m2. The format supports ND.
  * @li bias: A matrix Tensor. The type support bfloat16, float16, float. The format supports ND.
  * @li x1_scale: A matrix Tensor. The type support float. The format supports ND.
  * @li x2_scale: A matrix Tensor. The type support float. The format supports ND.
@@ -32,7 +32,7 @@ namespace ge {
  * @li x2_offset: A matrix Tensor. The type support float, float16. The format supports ND.
  *
  * @par Outputs:
- * @li y: A matrix Tensor. The type support bfloat16, float16. The format supports ND.
+ * @li y: A matrix Tensor. The type support bfloat16, float16, float. The format supports ND.
  * @li all2all_out: A matrix Tensor. The type support bfloat16, float16. The format supports ND.
  *
  * @par Attributes:
@@ -52,14 +52,14 @@ namespace ge {
  */
 REG_OP(AlltoAllMatmul)
     .INPUT(x1, TensorType({DT_BF16, DT_FLOAT16}))
-    .INPUT(x2, TensorType({DT_BF16, DT_FLOAT16}))
+    .INPUT(x2, TensorType({DT_BF16, DT_FLOAT16, DT_FLOAT8_E4M3FN, DT_FLOAT8_E5M2}))
     .OPTIONAL_INPUT(bias, TensorType({DT_BF16, DT_FLOAT16, DT_FLOAT}))
     .OPTIONAL_INPUT(x1_scale, TensorType({DT_FLOAT}))
     .OPTIONAL_INPUT(x2_scale, TensorType({DT_FLOAT}))
     .OPTIONAL_INPUT(comm_scale, TensorType({DT_FLOAT}))
     .OPTIONAL_INPUT(x1_offset, TensorType({DT_FLOAT}))
     .OPTIONAL_INPUT(x2_offset, TensorType({DT_FLOAT}))
-    .OUTPUT(y, TensorType({DT_BF16, DT_FLOAT16}))
+    .OUTPUT(y, TensorType({DT_BF16, DT_FLOAT16, DT_FLOAT}))
     .OUTPUT(all2all_out, TensorType({DT_BF16, DT_FLOAT16}))
     .REQUIRED_ATTR(group, String)
     .REQUIRED_ATTR(world_size, Int)

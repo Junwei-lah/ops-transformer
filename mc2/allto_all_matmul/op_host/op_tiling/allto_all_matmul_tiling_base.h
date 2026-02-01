@@ -50,6 +50,8 @@ protected:
     ge::graphStatus CheckAlltoAllOut(const gert::TilingContext *context, const char *opName);
     ge::graphStatus CheckMatrixMulShapes(const gert::TilingContext *context, const char *opName);
     ge::graphStatus SetAlltoAllMatmulShapeInfo(const gert::TilingContext *context, TilingContextInfo &contextInfo);
+    ge::graphStatus CheckKcQuantTensorDataType(const gert::TilingContext *context, const char *opName);
+    ge::graphStatus CheckKcQuantShapeInfo(const gert::TilingContext *context, const char *opName, const OpAttrIndexSchema &indexSchema);
 
     platform_ascendc::SocVersion socVersion_;
     const char *opName_{nullptr};
