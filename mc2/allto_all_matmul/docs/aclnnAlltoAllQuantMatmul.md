@@ -37,6 +37,15 @@
   output = output + bias
   $$
 
+  - **动态量化场景：**
+
+  $$
+  commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+  permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+  dynQuantX1, dynQuantX1Scale = dynamicQuant(permutedOut) \\
+  output = (dynQuantX1@x2 + bias) \times dynQuantX1Scale \times x2Scale
+  $$
+
 ## 函数原型
 
 每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用 “aclnnAlltoAllQuantMatmulGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnAlltoAllQuantMatmul”接口执行计算。

@@ -126,4 +126,72 @@ bool CheckShape(const aclTensor* x1, const aclTensor* x2, const aclTensor* biasO
     return true;
 }
 
+// 处理支持转置的tensor物理排布不连续问题
+aclTensor *TransX2Tensor(const aclTensor *x2)
+{
+    uint64_t storageShapeDimNum = x2->GetStorageShape().GetDimNum();
+    std::vector<int64_t> storageDim(storageShapeDimNum);
+    for (uint64_t i = 0; i < storageShapeDimNum; i++) {
+        storageDim[i] = x2->GetStorageShape().GetDim(i);
+    }
+
+    uint64_t viewShapeDimNum = x2->GetViewShape().GetDimNum();
+    std::vector<int64_t> viewDim;
+    viewDim.resize(viewShapeDimNum);
+    for (uint64_t i = 0; i < viewShapeDimNum; i++) {
+        viewDim[i] = x2->GetViewShape().GetDim(i);
+    }
+    // transpose the viewshape last two dimensions
+    viewDim[0] = x2->GetViewShape().GetDim(1);
+    viewDim[1] = x2->GetViewShape().GetDim(0);
+
+    aclDataType dataType = aclDataType::ACL_DT_UNDEFINED;
+    aclGetDataType(x2, &dataType);
+    std::vector<int64_t> stride(viewShapeDimNum);
+    auto transStride = x2->GetViewStrides();
+    stride = std::vector<int64_t>(transStride.begin(), transStride.end());
+    // transpose the two dimensions
+    stride[0] = transStride[1];
+    stride[1] = transStride[0];
+
+    auto offset = x2->GetViewOffset();
+    aclFormat format = aclFormat::ACL_FORMAT_ND;
+
+    return aclCreateTensor(viewDim.data(), viewShapeDimNum, dataType, stride.data(), offset, format, storageDim.data(),
+                           storageShapeDimNum, x2->GetTensor()->GetAddr());
+}
+
+// 检查tensor是否连续
+bool IsTransposeLastTwoDims(const aclTensor *tensor) {
+    // 当输入tensor的shape小于2或者大于6的时候，返回错误
+    if (tensor->GetViewShape().GetDimNum() < 2 || tensor->GetViewShape().GetDimNum() > 6) {
+        return false;
+    }
+    int64_t dim1 = tensor->GetViewShape().GetDimNum() - 1;
+    int64_t dim2 = tensor->GetViewShape().GetDimNum() - 2;
+    // BMM 场景下，Batch维度的stride需要等于 N, D 的乘积
+    if (tensor->GetViewStrides()[dim2] == 1
+      && tensor->GetViewStrides()[dim1] == tensor->GetViewShape().GetDim(dim2)) {
+        if (tensor->GetViewShape().GetDim(dim1) == 1
+          && tensor->GetViewShape().GetDim(dim2) == 1) {
+            return false;
+          }
+        return true;
+      }
+    return false;
+}
+
+// 检查x2是否合法
+bool CheckX2Valid(const aclTensor* x2) {
+    if (x2 == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "Input x2 should not be null.");
+        return false;
+    }
+  	if (x2->IsEmpty()) {
+    	OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Input x2 do not support empty tensor.");
+    	return false;
+  	}
+    OP_CHECK_WRONG_DIMENSION(x2, TWO_DIMS, return false);
+    return true;
+}
 } // namespace matmul_allto_all_check
