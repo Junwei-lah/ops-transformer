@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -46,17 +46,8 @@ using namespace AlltoAllMatmulImpl;
     } while (0)
 #endif
 
-#ifndef ALLTO_ALL_KC_DYN_QUANT_MATMUL_IMPL
-#define ALLTO_ALL_KC_DYN_QUANT_MATMUL_IMPL(tilingData, pipe)                                                           \
-    do {                                                                                                               \
-        if (tilingData.alltoAllKcQuantMatmulTilingInfo.x1QuantDtype == KC_DYN_QUANT_FP8E5M2) {                                \
-            ALLTO_ALL_KC_DYN_QUANT_MATMUL_SUB_IMPL(tilingData, pipe, float8_e5m2_t);                                   \
-        } else if (tilingData.alltoAllKcQuantMatmulTilingInfo.x1QuantDtype == KC_DYN_QUANT_FP8E4M3) {                         \
-            ALLTO_ALL_KC_DYN_QUANT_MATMUL_SUB_IMPL(tilingData, pipe, float8_e4m3_t);                                   \
-        }                                                                                                              \
-    } while (0)
-
-#define ALLTO_ALL_KC_DYN_QUANT_MATMUL_SUB_IMPL(tilingData, pipe, MMDataTypeX1)                                         \
+#ifndef ALLTO_ALL_KC_QUANT_MATMUL_IMPL
+#define ALLTO_ALL_KC_QUANT_MATMUL_IMPL(tilingData, pipe, MMDataTypeX1)                                                 \
     do {                                                                                                               \
         DEFINE_MC2_HCCL_FOR_COMMUNICATION(HcclServerType::HCCL_SERVER_TYPE_CCU, 0, 1, AlltoAllKcQuantMatmulTilingData, \
                                           CommunicationType);                                                          \
@@ -65,8 +56,8 @@ using namespace AlltoAllMatmulImpl;
         TransposeType transposeImplName(&pipe);                                                                        \
         DEFINE_MC2_FP8_DYNAMIC_QUANT_PERTOKEN(DTYPE_X1, MMDataTypeX1, DynamicQuantType);                               \
         DynamicQuantType dynamicQuantImplName(&pipe);                                                                  \
-        DEFINE_AND_IMPL_MC2_MATMUL_FOR_MATMUL_COMPUTATION_QUANT(DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams,     \
-                                                                ComputationType, MMDataTypeX1, DTYPE_X2);              \
+        DEFINE_AND_IMPL_MC2_MATMUL_FOR_MATMUL_COMPUTATION_QUANT(                                                       \
+            DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams, ComputationType, MMDataTypeX1, DTYPE_X2);               \
         ComputationType matmulImplName(&pipe);                                                                         \
         using SchedulerContextType =                                                                                   \
             PipelineContext<QuantExtraData, DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams>;                        \
@@ -104,6 +95,10 @@ __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
     REGISTER_TILING_DEFAULT(AlltoAllKcQuantMatmulTilingData);
     GET_TILING_DATA_WITH_STRUCT(AlltoAllKcQuantMatmulTilingData, tilingData, tilingGM);
 
-    ALLTO_ALL_KC_DYN_QUANT_MATMUL_IMPL(tilingData, pipe);
+    if constexpr (QUANTMODE == KC_QUANT_FP8E5M2_MODE) {
+        ALLTO_ALL_KC_QUANT_MATMUL_IMPL(tilingData, pipe, float8_e5m2_t);
+    } else if constexpr (QUANTMODE == KC_QUANT_FP8E4M3_MODE) {
+        ALLTO_ALL_KC_QUANT_MATMUL_IMPL(tilingData, pipe, float8_e4m3_t);
+    }
 #endif
 }

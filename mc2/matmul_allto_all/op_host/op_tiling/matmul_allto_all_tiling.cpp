@@ -32,5 +32,9 @@ static ge::graphStatus TilingParseForMatmulAlltoAll(gert::TilingParseContext *co
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(MatmulAlltoAll).Tiling(MatmulAlltoAllTilingFunc);
+struct MatmulAlltoAllCompileInfo {};
+
+IMPL_OP_OPTILING(MatmulAlltoAll)
+    .Tiling(MatmulAlltoAllTilingFunc)
+    .TilingParse<MatmulAlltoAllCompileInfo>(TilingParseForMatmulAlltoAll);
 } // namespace MC2Tiling

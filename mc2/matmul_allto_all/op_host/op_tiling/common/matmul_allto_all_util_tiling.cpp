@@ -156,13 +156,18 @@ ge::graphStatus MatmulAlltoAllTilingUtil::CheckTensorFormat(const gert::TilingCo
                         return ge::GRAPH_FAILED);
     }
     // alltoallout:optional
-    auto allToAllOutDesc = context->GetOutputDesc(ALLTO_ALL_OUT_INDEX);
-    if (allToAllOutDesc != nullptr) {
-        ge::Format allToAllFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(allToAllOutDesc->GetStorageFormat()));
-        OP_TILING_CHECK(allToAllFormat != ge::FORMAT_ND,
-                        OP_LOGE(opName, "AlltoallOut format should be ND, but actual value is %s.",
-                                Ops::Base::ToString(allToAllFormat).c_str()),
-                        return ge::GRAPH_FAILED);
+    const gert::RuntimeAttrs *attrs = context->GetAttrs();
+    const bool *allToAllOutFlagPtr = attrs->GetAttrPointer<bool>(ALLTOALLMATMUL_ATTR_ALLTO_ALL_OUT_FLAG_INDEX);
+    bool allToAllOutFlag = (allToAllOutFlagPtr != nullptr) ? *allToAllOutFlagPtr : false;
+    if (allToAllOutFlag) {
+        auto allToAllOutDesc = context->GetOutputDesc(ALLTO_ALL_OUT_INDEX);
+        if (allToAllOutDesc != nullptr) {
+            ge::Format allToAllFormat = static_cast<ge::Format>(ge::GetPrimaryFormat(allToAllOutDesc->GetStorageFormat()));
+            OP_TILING_CHECK(allToAllFormat != ge::FORMAT_ND,
+                            OP_LOGE(opName, "AlltoallOut format should be ND, but actual value is %s.",
+                                    Ops::Base::ToString(allToAllFormat).c_str()),
+                            return ge::GRAPH_FAILED);
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -714,7 +719,7 @@ QuantMode MatmulAlltoAllTilingUtil::GetQuantMode(const gert::TilingContext *cont
     if (x1QuantMode == X1_QUANTMODE_VALUE && x2QuantMode == X2_QUANTMODE_VALUE) {
         return QuantMode::KC_QUANT;
     } else {
-        OP_LOGE(opName,
+        OP_LOGD(opName,
                 "Quantization mode error, KC quantization X1 should be three, X2 should be two."
                 "currently X1=%d, X2=%d.",
                 x1QuantMode, x2QuantMode);
