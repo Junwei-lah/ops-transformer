@@ -27,20 +27,23 @@ struct HcclCombinOpParam {
     uint32_t rankDim;
 };
 
-class all_gather_matmul_test : public testing::Test {
+class AllGatherMatmulTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         size_t ctxSize = sizeof(HcclCombinOpParam);
         g_hcclContextReserved[0] = (uint8_t*)AscendC::GmAlloc(ctxSize);
-        std::cout << "all_gather_matmul_test SetUp\n" << std::endl;
+        std::cout << "AllGatherMatmulTest SetUp\n" << std::endl;
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         AscendC::GmFree((void*)g_hcclContextReserved[0]);
-        std::cout << "all_gather_matmul_test TearDown\n" << std::endl;
+        std::cout << "AllGatherMatmulTest TearDown\n" << std::endl;
     }
 };
 
-TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulTestNoBias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./all_gather_matmul_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -52,9 +55,9 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias) {
     size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
-    tiling_data->param.tailM = 16;
-    tiling_data->param.aicCoreNum = 20;
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
+    tilingData->param.tailM = 16;
+    tilingData->param.aicCoreNum = 20;
 
     uint8_t *aGM = (uint8_t *)AscendC::GmAlloc(1024 * 12288 * sizeof(uint16_t));
     uint8_t *bGM = (uint8_t *)AscendC::GmAlloc(1536 * 12288 * sizeof(uint16_t));
@@ -63,14 +66,14 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(1536 * 1024 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
 
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(3);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
     ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -80,7 +83,8 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias) {
     AscendC::GmFree((void*)aicpuWin);
 }
 
-TEST_F(all_gather_matmul_test, all_gather_matmul_bias) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulBias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./all_gather_matmul_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -92,10 +96,10 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_bias) {
     size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
-    tiling_data->param.tailM = 16;
-    tiling_data->param.aicCoreNum = 20;
-    tiling_data->param.biasLen = 1536 * sizeof(float);
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
+    tilingData->param.tailM = 16;
+    tilingData->param.aicCoreNum = 20;
+    tilingData->param.biasLen = 1536 * sizeof(float);
 
     uint8_t *aGM = (uint8_t *)AscendC::GmAlloc(1024 * 12288 * sizeof(uint16_t));
     uint8_t *bGM = (uint8_t *)AscendC::GmAlloc(1536 * 12288 * sizeof(uint16_t));
@@ -104,14 +108,14 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_bias) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(1536 * 1024 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
 
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(7);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
     ICPU_SET_TILING_KEY(5);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -122,7 +126,8 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_bias) {
     AscendC::GmFree((void*)aicpuWin);
 }
 
-TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_l2cache) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulTestNoBiasL2cache)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./all_gather_matmul_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -169,12 +174,12 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_l2cache) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(512 * 8192 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
 
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(3);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, biasGM, output, nullptr, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -184,7 +189,8 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_l2cache) {
     AscendC::GmFree((void*)aicpuWin);
 }
 
-TEST_F(all_gather_matmul_test, all_gather_matmul_test_computation_only) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulTestComputationOnly)
+{
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
@@ -194,9 +200,9 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_computation_only) {
     size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
  
-    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
-    tiling_data->param.tailM = 16;
-    tiling_data->param.aicCoreNum = 20;
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
+    tilingData->param.tailM = 16;
+    tilingData->param.aicCoreNum = 20;
  
     uint8_t *aGM = (uint8_t *)AscendC::GmAlloc(1024 * 12288 * sizeof(uint16_t));
     uint8_t *bGM = (uint8_t *)AscendC::GmAlloc(1536 * 12288 * sizeof(uint16_t));
@@ -204,12 +210,12 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_computation_only) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(1536 * 1024 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
  
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(3);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
  
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -219,7 +225,8 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_computation_only) {
     AscendC::GmFree((void*)aicpuWin);
 }
  
-TEST_F(all_gather_matmul_test, all_gather_matmul_test_communication_only) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulTestCommunicationOnly)
+{
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
@@ -229,9 +236,9 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_communication_only) {
     size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
  
-    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
-    tiling_data->param.tailM = 16;
-    tiling_data->param.aicCoreNum = 20;
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
+    tilingData->param.tailM = 16;
+    tilingData->param.aicCoreNum = 20;
  
     uint8_t *aGM = (uint8_t *)AscendC::GmAlloc(1024 * 12288 * sizeof(uint16_t));
     uint8_t *bGM = (uint8_t *)AscendC::GmAlloc(1536 * 12288 * sizeof(uint16_t));
@@ -239,12 +246,12 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_communication_only) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(1536 * 1024 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
  
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(3);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
  
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -254,7 +261,8 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_communication_only) {
     AscendC::GmFree((void*)aicpuWin);
 }
 
-TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_normalization) {
+TEST_F(AllGatherMatmulTest, AllGatherMatmulTestNoBiasNormalization)
+{
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint32_t numBlocks = 20;
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
@@ -264,14 +272,14 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_normalization) {
     size_t tilingSize = sizeof(AllGatherMatmulTilingData);
     uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingSize);
 
-    AllGatherMatmulTilingData *tiling_data = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
-    tiling_data->param.tailM = 372;
-    tiling_data->param.aicCoreNum = 20;
-    tiling_data->param.rankDim = 8;
-    tiling_data->param.rankM = 1012;
-    tiling_data->param.tileCnt = 5;
-    tiling_data->param.rankN = 768;
-    tiling_data->param.rankK = 6144;
+    AllGatherMatmulTilingData *tilingData = reinterpret_cast<AllGatherMatmulTilingData*>(tiling);
+    tilingData->param.tailM = 372;
+    tilingData->param.aicCoreNum = 20;
+    tilingData->param.rankDim = 8;
+    tilingData->param.rankM = 1012;
+    tilingData->param.tileCnt = 5;
+    tilingData->param.rankN = 768;
+    tilingData->param.rankK = 6144;
  
     uint8_t *aGM = (uint8_t *)AscendC::GmAlloc(1012 * 6144 * sizeof(uint16_t));
     uint8_t *bGM = (uint8_t *)AscendC::GmAlloc(768 * 6144 * sizeof(uint16_t));
@@ -279,12 +287,12 @@ TEST_F(all_gather_matmul_test, all_gather_matmul_test_no_bias_normalization) {
     uint8_t *output = (uint8_t *)AscendC::GmAlloc(1012 * 768 * sizeof(uint16_t));
     uint8_t *aicpuWin = (uint8_t *)AscendC::GmAlloc(16 * 1024 * 1024 * sizeof(uint8_t));
 
-    auto all_gather_matmul_wrapper = []
+    auto allGatherMatmulWrapper = []
     (GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR cGM, GM_ADDR gatherOut, GM_ADDR workspaceGM, GM_ADDR tilingGM){
         all_gather_matmul<true, false, false>(aGM, bGM, biasGM, cGM, gatherOut, workspaceGM, tilingGM);
     };
     ICPU_SET_TILING_KEY(1);
-    ICPU_RUN_KF(all_gather_matmul_wrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
+    ICPU_RUN_KF(allGatherMatmulWrapper, 20, aGM, bGM, nullptr, output, nullptr, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);

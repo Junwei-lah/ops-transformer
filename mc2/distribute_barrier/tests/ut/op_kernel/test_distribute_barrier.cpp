@@ -23,7 +23,7 @@ extern "C" __global__ __aicore__ void distribute_barrier(GM_ADDR xRef, GM_ADDR t
 
 extern uint8_t* g_hcclContextReserved[2];
 
-class distribute_barrier_test : public testing::Test {
+class DistributeBarrierTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -39,7 +39,8 @@ protected:
     }
 };
 
-TEST_F(distribute_barrier_test, distribute_barrier_test_10000) {
+TEST_F(DistributeBarrierTest, DistributeBarrierTest10000)
+{
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     size_t sysWorkspaceSize = 16 * 1024 * 1024;
     size_t usrWorkspaceSize = 0;
@@ -51,10 +52,10 @@ TEST_F(distribute_barrier_test, distribute_barrier_test_10000) {
     auto winContext = (__gm__ HcclOpResParam *) AscendC::GetHcclContext<AscendC::HCCL_GROUP_ID_0>();
     winContext->localWindowsExp = (uint64_t)workspace;
 
-    DistributeBarrierTilingData *tiling_data = reinterpret_cast<DistributeBarrierTilingData*>(tiling);
-    tiling_data->distributeBarrierInfo.worldSize = 16;
-    tiling_data->distributeBarrierInfo.rankId = 0;
-    tiling_data->distributeBarrierInfo.aivNum = 48;
+    DistributeBarrierTilingData *tilingData = reinterpret_cast<DistributeBarrierTilingData*>(tiling);
+    tilingData->distributeBarrierInfo.worldSize = 16;
+    tilingData->distributeBarrierInfo.rankId = 0;
+    tilingData->distributeBarrierInfo.aivNum = 48;
 
     uint8_t *xRef = (uint8_t *)AscendC::GmAlloc(1024 * sizeof(uint16_t));
     uint8_t *xRefOut = (uint8_t *)AscendC::GmAlloc(1024 * sizeof(uint16_t));

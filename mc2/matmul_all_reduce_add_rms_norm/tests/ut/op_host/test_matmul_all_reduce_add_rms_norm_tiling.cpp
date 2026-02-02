@@ -51,7 +51,8 @@ protected:
     }
 };
 
-static void SplitStr2Vec(const string& input, const string& delimiter, vector<string>& output) {
+static void SplitStr2Vec(const string& input, const string& delimiter, vector<string>& output)
+{
     auto delimiterLen = delimiter.size();
     std::string::size_type currPos = 0;
     std::string::size_type nextPos = input.find(delimiter, currPos);
@@ -69,23 +70,24 @@ map<string, ge::DataType> dtypeMap = {{"FLOAT16", ge::DT_FLOAT16}, {"FLOAT", ge:
                                       {"INT8", ge::DT_INT8},       {"INT4", ge::DT_INT4},   {"UINT64", ge::DT_UINT64},
                                       {"INT32", ge::DT_INT32}};
 
-struct MatmulAllReduceArnCompileInfo{
+struct MatmulAllReduceArnCompileInfo {
     int32_t totalCoreNum = 0;
     uint64_t ubSize = 0;    
 };
-static void TestOneParamCase(const WeightQuantTestParam& param) {
+static void TestOneParamCase(const WeightQuantTestParam& param)
+{
     std::cout << "run case " << param.caseName << std::endl;
     std::vector<string> testParam;
     SplitStr2Vec(param.caseName, "_", testParam);
 
     size_t idx = 0;
-    string model_name = testParam[idx++];
-    bool is_valid_case = false;
-    if (model_name.find("InValid") != std::string::npos) {
-        is_valid_case = true;
+    string modelName = testParam[idx++];
+    bool isValidCase = false;
+    if (modelName.find("InValid") != std::string::npos) {
+        isValidCase = true;
     }
-    string group_name = testParam[idx++];
-    string reduce_op = testParam[idx++];
+    string groupName = testParam[idx++];
+    string reduceOp = testParam[idx++];
 
     int64_t m = stol(testParam[idx++]);
     int64_t k = stol(testParam[idx++]);
@@ -96,9 +98,9 @@ static void TestOneParamCase(const WeightQuantTestParam& param) {
     int64_t transA = stol(testParam[idx++]);
     int64_t transB = stol(testParam[idx++]);
     int64_t group = stol(testParam[idx++]);
-    int64_t antiquant_offsetExistFlag = stol(testParam[idx++]);
-    int64_t antiquant_scaleExistFlag = stol(testParam[idx++]);
-    int64_t dequant_scaleExistFlag = stol(testParam[idx++]);
+    int64_t antiquantOffsetExistFlag = stol(testParam[idx++]);
+    int64_t antiquantScaleExistFlag = stol(testParam[idx++]);
+    int64_t dequantScaleExistFlag = stol(testParam[idx++]);
     int64_t antigroupSize = stol(testParam[idx++]);
     float epslion = stof(testParam[idx++]);
 
@@ -163,13 +165,13 @@ static void TestOneParamCase(const WeightQuantTestParam& param) {
     if (biasFlag){
         biasShape->shape_ = {{n}, {n}};
     }
-    if (!antiquant_offsetExistFlag){
+    if (!antiquantOffsetExistFlag){
         antiQuantOffsetShape->shape_ = {};
     }
-    if (!antiquant_scaleExistFlag){
+    if (!antiquantScaleExistFlag){
         antiQuantScaleShape->shape_ = {};
     }
-    if (!dequant_scaleExistFlag){
+    if (!dequantScaleExistFlag){
         quantScaleShape->shape_ = {};
     }
 
@@ -197,8 +199,8 @@ static void TestOneParamCase(const WeightQuantTestParam& param) {
         },
         {
             // attr
-            {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(group_name)},
-            {"reduce_op", Ops::Transformer::AnyValue::CreateFrom<std::string>(reduce_op)},
+            {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(groupName)},
+            {"reduceOp", Ops::Transformer::AnyValue::CreateFrom<std::string>(reduceOp)},
             {"is_trans_a", Ops::Transformer::AnyValue::CreateFrom<bool>(transA)},
             {"is_trans_b", Ops::Transformer::AnyValue::CreateFrom<bool>(transB)},
             {"comm_turn", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
@@ -211,19 +213,20 @@ static void TestOneParamCase(const WeightQuantTestParam& param) {
         ubSize,
         tilingDataSize);
     Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    if (is_valid_case) {
+    if (isValidCase) {
         Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
     } else {
         Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, param.tilingKey);
     }
 }
 
-TEST_P(MatmulAllReduceAddRmsNormTiling, generalTest) {
-TestParam param = GetParam();
-TestOneParamCase(param);
+TEST_P(MatmulAllReduceAddRmsNormTiling, GeneralTest)
+{
+    TestParam param = GetParam();
+    TestOneParamCase(param);
 }
 
-static TestParam casesParamsQuant[] = {
+static TestParam g_casesParamsQuant[] = {
         // 量化
         {"MODEL0_group_sum_4096_688_4096_1_0_0_0_-1_0_0_1_0_0.1_INT8_INT8_INT32_BF16", 8, 8},
         // transB
@@ -240,7 +243,7 @@ static TestParam casesParamsQuant[] = {
         {"MODEL0_group_sum_9471_18_379_1_0_0_0_32_0_0_0_32_0.1_BF16_BF16_BF16_BF16", 8, 256UL},
 
 };
-static TestParam InValidCheckcasesParamsQuant[] = {
+static TestParam g_inValidCheckcasesParamsQuant[] = {
         // dequant设置的同时，antiquant信息也设置
         {"InValidMODEL0_group_sum_4_4096_11008_1_0_0_0_-1_1_1_1_10_0.1_INT8_INT8_BF16_BF16", 8, 365333139620609},
         // transA
@@ -264,10 +267,10 @@ static TestParam InValidCheckcasesParamsQuant[] = {
 // 正常用例合集
 
 INSTANTIATE_TEST_CASE_P(MatMulAllReduceAddResNormal, MatmulAllReduceAddRmsNormTiling,
-        testing::ValuesIn(casesParamsQuant));
+        testing::ValuesIn(g_casesParamsQuant));
 
 // 异常用例合集
 
 INSTANTIATE_TEST_CASE_P(MatMulAllReduceAddResNormal2, MatmulAllReduceAddRmsNormTiling,
-        testing::ValuesIn(InValidCheckcasesParamsQuant));
+        testing::ValuesIn(g_inValidCheckcasesParamsQuant));
 }//matmul_all_reduce_add_rms_norm_ut

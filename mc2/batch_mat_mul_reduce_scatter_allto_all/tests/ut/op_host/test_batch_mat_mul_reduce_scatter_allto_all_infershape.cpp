@@ -26,7 +26,8 @@ class BatchMatMulReduceScatterAlltoAllInfershape : public testing::Test {
 };
 
 // infer shape with bias, success
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_0) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape0)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -68,7 +69,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_0) {
 }
 
 // infer shape without bias, success
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_1) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape1)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -110,7 +112,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_1) {
 }
 
 // infer shape without bias, tp failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_2) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape2)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -151,7 +154,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_2) {
 }
 
 // infer shape without bias, empty tensor, c = 0 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_3) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape3)
+{
     constexpr int E = 16;
     constexpr int C = 0; // empty tensor, currently failed
     constexpr int H = 1024;
@@ -192,7 +196,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_3) {
 }
 
 // infer shape with bias, ep failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_4) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape4)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -233,7 +238,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_4) {
 }
 
 // infer shape with bias, group ep failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_5) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape5)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -274,7 +280,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_5) {
 }
 
 // infer shape with bias, group tp failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_6) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape6)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -315,7 +322,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_6) {
 }
 
 // infer shape with bias, dim num invalid
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_7) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape7)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -356,7 +364,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_7) {
 }
 
 // infer shape with bias, x[2] != w[1] failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_8) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape8)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -397,7 +406,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_8) {
 }
 
 // infer shape with bias, x[2] = w[1] = 0 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_9) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape9)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -438,7 +448,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_9) {
 }
 
 // infer shape without bias, y shard = 1 condition check failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_10) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape10)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -479,7 +490,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_10) {
 }
 
 // infer shape with bias, yShard failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_11) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape11)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -520,7 +532,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_11) {
 }
 
 // infer shape without bias, yShard = -1 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_12) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape12)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -561,7 +574,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_12) {
 }
 
 // infer shape with bias, bias dim failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_13) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape13)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -602,7 +616,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_13) {
 }
 
 // infer shape with bias, bias[2] != w[M] failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_14) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape14)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -643,7 +658,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_14) {
 }
 
 // infer shape with bias, bias[E] != w[E] failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_15) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape15)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -684,7 +700,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_15) {
 }
 
 // infer shape with bias, E < 0 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_16) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape16)
+{
     constexpr int E = -16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -725,7 +742,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_16) {
 }
 
 // infer shape with bias, C < 0 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_17) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape17)
+{
     constexpr int E = 16;
     constexpr int C = -16;
     constexpr int H = 1024;
@@ -766,7 +784,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_17) {
 }
 
 // infer shape with bias, H > 65535 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_18) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape18)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 6553500;
@@ -807,7 +826,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_18) {
 }
 
 // infer shape with bias, M/tp > 65535 failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_19) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferShape19)
+{
     constexpr int E = 16;
     constexpr int C = 4;
     constexpr int H = 1024;
@@ -848,7 +868,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_shape_19) {
 }
 
 // fp16 infer dtype without bias, success
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_0) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype0)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_FLOAT16;
 
@@ -866,7 +887,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_0) {
 }
 
 // fp16 infer dtype with bias, success
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_1) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype1)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_FLOAT16;
     ge::DataType biasType = ge::DT_FLOAT16;
@@ -885,7 +907,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_1) {
 }
 
 // fp16 infer dtype with bias, xType != weightType, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_2) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype2)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_BF16;
     ge::DataType biasType = ge::DT_FLOAT16;
@@ -902,7 +925,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_2) {
 }
 
 // fp16 infer dtype with bias, xType != biasType, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_3) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype3)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_FLOAT16;
     ge::DataType biasType = ge::DT_FLOAT;
@@ -919,7 +943,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_3) {
 }
 
 // bf16 infer dtype with bias, success
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_4) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype4)
+{
     ge::DataType xType = ge::DT_BF16;
     ge::DataType weightType = ge::DT_BF16;
     ge::DataType biasType = ge::DT_FLOAT;
@@ -938,7 +963,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_4) {
 }
 
 // infer dtype with bias, xType invalid, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_5) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype5)
+{
     ge::DataType xType = ge::DT_INT8;
     ge::DataType weightType = ge::DT_FLOAT16;
     ge::DataType biasType = ge::DT_FLOAT16;
@@ -955,7 +981,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_5) {
 }
 
 // infer dtype with bias, weightType invalid, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_6) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype6)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_INT8;
     ge::DataType biasType = ge::DT_FLOAT16;
@@ -972,7 +999,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_6) {
 }
 
 // infer dtype with bias, biasType invalid, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_7) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype7)
+{
     ge::DataType xType = ge::DT_FLOAT16;
     ge::DataType weightType = ge::DT_FLOAT16;
     ge::DataType biasType = ge::DT_INT8;
@@ -989,7 +1017,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_7) {
 }
 
 // infer dtype with bias, biasType invalid, failed
-TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, infer_dtype_8) {
+TEST_F(BatchMatMulReduceScatterAlltoAllInfershape, InferDtype8)
+{
     ge::DataType xType = ge::DT_BF16;
     ge::DataType weightType = ge::DT_BF16;
     ge::DataType biasType = ge::DT_FLOAT16;

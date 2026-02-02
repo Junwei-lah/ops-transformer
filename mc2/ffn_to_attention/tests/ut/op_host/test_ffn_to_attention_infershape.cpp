@@ -1,12 +1,12 @@
 /**
+ * This program is free software, you can redistribute it and/or modify.
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * This file is a part of the CANN Open Software.
+ * Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <iostream>
 #include <gtest/gtest.h>
@@ -27,24 +27,25 @@ protected:
     }
 };
 
-TEST_F(FFNToAttentionInferShapeTest, basic) {
-    gert::StorageShape x_shape = {{1584, 7168}, {}};
-    gert::StorageShape session_ids_shape = {{1584}, {}};
-    gert::StorageShape micro_batch_ids_shape = {{1584}, {}};
-    gert::StorageShape token_ids_shape = {{1584}, {}};
-    gert::StorageShape expert_offsets_shape = {{1584}, {}};
-    gert::StorageShape actual_token_num_shape = {{1}, {}};
-    gert::StorageShape attn_rank_table_shape = {{11}, {}};
+TEST_F(FFNToAttentionInferShapeTest, Basic)
+{
+    gert::StorageShape xShape = {{1584, 7168}, {}};
+    gert::StorageShape sessionIdsShape = {{1584}, {}};
+    gert::StorageShape microBatchIdsShape = {{1584}, {}};
+    gert::StorageShape tokenIdsShape = {{1584}, {}};
+    gert::StorageShape expertOffsetsShape = {{1584}, {}};
+    gert::StorageShape actualTokenNumShape = {{1}, {}};
+    gert::StorageShape attnRankTableShape = {{11}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("FFNToAttention",
         {
-            {x_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {session_ids_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {micro_batch_ids_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {token_ids_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {expert_offsets_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {actual_token_num_shape, ge::DT_INT64, ge::FORMAT_ND},
-            {attn_rank_table_shape, ge::DT_INT32, ge::FORMAT_ND}
+            {xShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {sessionIdsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {microBatchIdsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {tokenIdsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {expertOffsetsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {actualTokenNumShape, ge::DT_INT64, ge::FORMAT_ND},
+            {attnRankTableShape, ge::DT_INT32, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND}

@@ -19,17 +19,20 @@
 #include "batch_mat_mul_reduce_scatter_allto_all_tiling_def.h"
 #include "../../../op_kernel/batch_mat_mul_reduce_scatter_allto_all.cpp"
 
-class batch_matmul_reduce_scatter_all_to_all_test : public testing::Test {
+class BatchMatmulReduceScatterAllToAllTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "batch_mat_mul_reduce_scatter_allto_all_test SetUp\n" << std::endl;
     }
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "batch_mat_mul_reduce_scatter_allto_all_test TearDown\n" << std::endl;
     }
 };
 
-TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_all_to_all_fp16_no_bias) {
+TEST_F(BatchMatmulReduceScatterAllToAllTest, BatchMatmulReduceScatterAllToAllFp16NoBias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -65,7 +68,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     uint8_t *biasGM = nullptr;
     uint8_t *yGM = (uint8_t *)AscendC::GmAlloc(E * C / tp * H * sizeof(uint16_t));
 
-    auto batch_mat_mul_reduce_scatter_allto_all_warpper = [](GM_ADDR xGM, GM_ADDR weightGM,
+    auto batchMatMulReduceScatterAlltoAllWarpper = [](GM_ADDR xGM, GM_ADDR weightGM,
                                                              GM_ADDR biasGM, GM_ADDR yGM,
                                                              GM_ADDR workspaceGM, GM_ADDR tilingGM
     ) {
@@ -73,9 +76,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -84,7 +87,8 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     AscendC::GmFree((void*)yGM);
 }
 
-TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_all_to_all_fp16_with_fp16_bias) {
+TEST_F(BatchMatmulReduceScatterAllToAllTest, BatchMatmulReduceScatterAllToAllFp16WithFp16Bias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'float16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -120,7 +124,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     uint8_t *biasGM = (uint8_t *)AscendC::GmAlloc(E / ep * H * sizeof(uint16_t));
     uint8_t *yGM = (uint8_t *)AscendC::GmAlloc(E * C / tp * H * sizeof(uint16_t));
 
-    auto batch_mat_mul_reduce_scatter_allto_all_warpper = [](GM_ADDR xGM, GM_ADDR weightGM,
+    auto batchMatMulReduceScatterAlltoAllWarpper = [](GM_ADDR xGM, GM_ADDR weightGM,
                                                              GM_ADDR biasGM, GM_ADDR yGM,
                                                              GM_ADDR workspaceGM, GM_ADDR tilingGM
     ) {
@@ -128,9 +132,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -140,7 +144,8 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     AscendC::GmFree((void*)yGM);
 }
 
-TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_all_to_all_bf16_no_bias) {
+TEST_F(BatchMatmulReduceScatterAllToAllTest, BatchMatmulReduceScatterAllToAllBf16NoBias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'bfloat16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -176,7 +181,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     uint8_t *biasGM = nullptr;
     uint8_t *yGM = (uint8_t *)AscendC::GmAlloc(E * C / tp * H * sizeof(uint16_t));
 
-    auto batch_mat_mul_reduce_scatter_allto_all_warpper = [](GM_ADDR xGM, GM_ADDR weightGM,
+    auto batchMatMulReduceScatterAlltoAllWarpper = [](GM_ADDR xGM, GM_ADDR weightGM,
                                                              GM_ADDR biasGM, GM_ADDR yGM,
                                                              GM_ADDR workspaceGM, GM_ADDR tilingGM
     ) {
@@ -184,9 +189,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, nullptr, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);
@@ -195,7 +200,8 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     AscendC::GmFree((void*)yGM);
 }
 
-TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_all_to_all_bf16_with_float_bias) {
+TEST_F(BatchMatmulReduceScatterAllToAllTest, BatchMatmulReduceScatterAllToAllBf16WithFloatBias)
+{
     // std::vector<std::vector<uint64_t>> shapeInfos = {{1024, 12288}, {12288, 1536}};
     // system("cd ./batch_matmul_reduce_scatter_all_to_all_data/ && python3 gen_data.py 1024 12288 1536 'bfloat16'");
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -231,7 +237,7 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
     uint8_t *biasGM = (uint8_t *)AscendC::GmAlloc(E / ep * H * sizeof(float));
     uint8_t *yGM = (uint8_t *)AscendC::GmAlloc(E * C / tp * H * sizeof(uint16_t));
 
-    auto batch_mat_mul_reduce_scatter_allto_all_warpper = [](GM_ADDR xGM, GM_ADDR weightGM,
+    auto batchMatMulReduceScatterAlltoAllWarpper = [](GM_ADDR xGM, GM_ADDR weightGM,
                                                              GM_ADDR biasGM, GM_ADDR yGM,
                                                              GM_ADDR workspaceGM, GM_ADDR tilingGM
     ) {
@@ -239,9 +245,9 @@ TEST_F(batch_matmul_reduce_scatter_all_to_all_test, batch_matmul_reduce_scatter_
                                                                            biasGM, yGM,
                                                                            workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
-    ICPU_RUN_KF(batch_mat_mul_reduce_scatter_allto_all_warpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
+    ICPU_RUN_KF(batchMatMulReduceScatterAlltoAllWarpper, numBlocks, xGM, weightGM, biasGM, yGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
     AscendC::GmFree((void*)tiling);

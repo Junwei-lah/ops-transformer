@@ -24,21 +24,21 @@ struct HcclCombinOpParam {
     uint32_t rankId;
     uint32_t rankDim;
 };
-class allto_allv_grouped_mat_mul_test : public testing::Test
+class AlltoAllvGroupedMatMulTest : public testing::Test
 {
 protected:
     static void SetUpTestCase()
     {
-        std::cout << "allto_allv_grouped_mat_mul_test SetUp\n" << std::endl;
+        std::cout << "AlltoAllvGroupedMatMulTest SetUp\n" << std::endl;
     }
     static void TearDownTestCase()
     {
-        std::cout << "allto_allv_grouped_mat_mul_test TearDown\n" << std::endl;
+        std::cout << "AlltoAllvGroupedMatMulTest TearDown\n" << std::endl;
     }
 };
 
 // shard = 1
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_0)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest0)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -51,8 +51,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_0)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -68,7 +68,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_0)
 
     ICPU_SET_TILING_KEY(0);
 
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -79,7 +79,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_0)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -90,7 +90,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_0)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_10)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest10)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -103,8 +103,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_10)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -119,7 +119,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_10)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(10);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -130,7 +130,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_10)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -141,7 +141,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_10)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_100)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest100)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -154,8 +154,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_100)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -170,7 +170,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_100)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(100);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -181,7 +181,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_100)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -192,7 +192,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_100)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_101)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest101)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -205,8 +205,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_101)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -221,7 +221,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_101)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(101);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -232,7 +232,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_101)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -243,7 +243,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_101)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_110)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest110)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -256,8 +256,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_110)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -272,7 +272,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_110)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(110);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -283,7 +283,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_110)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -294,7 +294,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_110)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_111)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest111)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -307,8 +307,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_111)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -323,7 +323,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_111)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(111);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -334,7 +334,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_111)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -345,7 +345,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_111)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1000)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest1000)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -358,8 +358,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1000)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -374,7 +374,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1000)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(1000);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -385,7 +385,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1000)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -396,7 +396,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1000)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1010)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest1010)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -409,8 +409,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1010)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -425,7 +425,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1010)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(1010);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -436,7 +436,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1010)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -447,7 +447,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1010)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1110)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest1110)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -460,8 +460,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1110)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -476,7 +476,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1110)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(1110);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -487,7 +487,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1110)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);
@@ -498,7 +498,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1110)
     AscendC::GmFree((void*)gmmyGM);
 }
 
-TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1111)
+TEST_F(AlltoAllvGroupedMatMulTest, AlltoAllvGroupedMatMulTest1111)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -511,8 +511,8 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1111)
 
     AlltoAllvGmmCommonTilingInfo commonTilingInfo{4096, 2048, 2,      7168,  7168,  4096,  4096,  4096,  1,   1,
                                                   40,   20,   194560, false, false, false, false, false, true};
-    AlltoAllvGmmTilingData* tiling_data = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    AlltoAllvGmmTilingData* tilingData = reinterpret_cast<AlltoAllvGmmTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.BSK * commonTilingInfo.H1 * sizeof(uint16_t));
     uint8_t* gmmweightGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.E_ep * commonTilingInfo.H1 *
@@ -527,7 +527,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1111)
     uint8_t* alltoAllvOutGM = nullptr;
 
     ICPU_SET_TILING_KEY(1111);
-    auto allto_allv_grouped_mat_mul_wrapper = [](
+    auto alltoAllvGroupedMatMulWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR expertTokenNumGM, GM_ADDR mmxGM,
                                                                  GM_ADDR mmweightGM, GM_ADDR gmmyGM, GM_ADDR mmyGM,
@@ -538,7 +538,7 @@ TEST_F(allto_allv_grouped_mat_mul_test, allto_allv_grouped_mat_mul_test_1111)
                                                             mmweightGM, gmmyGM, mmyGM,
                                                             allGatherOutGM, alltoAllvOutGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(allto_allv_grouped_mat_mul_wrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
+    ICPU_RUN_KF(alltoAllvGroupedMatMulWrapper, 20, gmmxGM, gmmweightGM, expertTokenNumGM, mmxGM, mmweightGM, gmmyGM, mmyGM,
                 allGatherOutGM, alltoAllvOutGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);

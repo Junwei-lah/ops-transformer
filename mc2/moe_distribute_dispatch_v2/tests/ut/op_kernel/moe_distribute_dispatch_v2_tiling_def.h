@@ -14,8 +14,8 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "../../../op_kernel/moe_distribute_dispatch_v2_tiling.h"
 
-#define GET_TILING_DATA_WITH_STRUCT(TilingDataStru, tiling_data, tiling_arg)       \
-    TilingDataStru tiling_data;                                                 \
-    memcpy(&tiling_data, tiling_arg, sizeof(TilingDataStru))
+#define GET_TILING_DATA_WITH_STRUCT(TilingDataStru, tilingData, tilingArg)       \
+    TilingDataStru tilingData;                                                 \
+    memcpy(&tilingData, tilingArg, sizeof(TilingDataStru))
 
 #endif // OPS_TRANSFORMER_DEV_DISTRIBUTE_DISPATCH_V2_TILING_DEF_H

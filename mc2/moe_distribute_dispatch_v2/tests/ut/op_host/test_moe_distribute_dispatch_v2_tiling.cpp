@@ -23,17 +23,19 @@
 namespace MoeDistributeDispatchV2 {
 class MoeDistributeDispatchV2Tiling : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "MoeDistributeDispatchV2Tiling SetUp" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "MoeDistributeDispatchV2Tiling TearDown" << std::endl;
     }
 };
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_0)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling0)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -78,7 +80,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_0)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_1)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling1)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -123,7 +125,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_1)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_2)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling2)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -168,7 +170,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_2)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_3)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling3)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -213,7 +215,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_3)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_4)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling4)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -259,7 +261,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_4)
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_5)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling5)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -304,7 +306,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_5)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_6)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling6)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -349,7 +351,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_6)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_7)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling7)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -394,7 +396,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_7)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_8)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling8)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -439,7 +441,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_8)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_9)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling9)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -484,7 +486,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_9)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_10)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTiling10)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -530,7 +532,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_10)
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_ep_world_size_384)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilingepWorldSize384)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -575,7 +577,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_ep_wor
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_ep_world_size_72)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilingepWorldSize72)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -621,7 +623,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_ep_wor
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_x_active_mask_2dims)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilingxActiveMask2dims)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -669,7 +671,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_x_acti
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_elastic_info)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilingElasticInfo)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -718,7 +720,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_elasti
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_zeroComputeExpertNum)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestZeroComputeExpertNum)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -763,7 +765,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_zeroComputeEx
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_zeroComputeExpertNum_invalid)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestZeroComputeExpertNumInvalid)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -810,7 +812,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_zeroComputeEx
 // =======================================A2===========================================
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_empty)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgEmpty)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -855,7 +857,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_fullmesh)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgFullmesh)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -900,7 +902,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_hierarchy)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgHierarchy)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -950,7 +952,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_error)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgError)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -996,7 +998,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_empty_with_env)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgEmptyWithEnv)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -1047,7 +1049,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_fullmesh_with_env)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgFullmeshWithEnv)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;
@@ -1094,7 +1096,7 @@ TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_com
 
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchV2Tiling, moe_distribute_dispatch_test_tiling_a2_commalg_fullmesh_zeroComputeExpert_not_zero)
+TEST_F(MoeDistributeDispatchV2Tiling, MoeDistributeDispatchTestTilinga2CommalgFullmeshZeroComputeExpertNotZero)
 {
     struct MoeDistributeDispatchV2CompileInfo {};
     MoeDistributeDispatchV2CompileInfo compileInfo;

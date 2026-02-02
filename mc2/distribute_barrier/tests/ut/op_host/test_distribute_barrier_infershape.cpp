@@ -27,12 +27,12 @@ protected:
     }
 };
 
-TEST_F(DistributeBarrierInfershape, infer_shape_0) {
-    gert::StorageShape x_ref_shape = {{32, 7168}, {}};
+TEST_F(DistributeBarrierInfershape, InferShape0) {
+    gert::StorageShape xRefShape = {{32, 7168}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("DistributeBarrier",
         {
-            {x_ref_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {xRefShape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND}

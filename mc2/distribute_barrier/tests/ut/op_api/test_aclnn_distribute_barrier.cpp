@@ -22,131 +22,139 @@
 using namespace op;
 using namespace std;
 
-class l2_aclnn_distribute_barrier_test : public testing::Test {
- protected:
-  static void SetUpTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
-    cout << "l2_aclnn_distribute_barrier_test SetUp" << endl;
-  }
+class L2AclnnDistributeBarrierTest : public testing::Test {
+protected:
+    static void SetUpTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
+      cout << "L2AclnnDistributeBarrierTest SetUp" << endl;
+    }
 
-  static void TearDownTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "l2_aclnn_distribute_barrier_test TearDown" << endl;
-  }
+    static void TearDownTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "L2AclnnDistributeBarrierTest TearDown" << endl;
+    }
 };
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_first_api) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierFirstApi)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrier,
-                      INPUT(x_ref, "test_distribute_barrier", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrier,
+                        INPUT(xRef, "test_distribute_barrier", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_first_api_nullptr_group) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierFirstApiNullptrGroup)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrier,
-                      INPUT(x_ref, nullptr, worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_NE(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrier,
+                        INPUT(xRef, nullptr, worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_first_api_group_min) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierFirstApiGroupMin)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrier,
-                      INPUT(x_ref, "", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrier,
+                        INPUT(xRef, "", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_v2_first_api) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierV2FirstApi)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrierV2,
-                      INPUT(x_ref, nullptr, nullptr, "test_distribute_barrier", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrierV2,
+                        INPUT(xRef, nullptr, nullptr, "test_distribute_barrier", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_v2_first_api_nullptr_group) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierV2FirstApiNullptrGroup)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrierV2,
-                      INPUT(x_ref, nullptr, nullptr, nullptr, worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_NE(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrierV2,
+                        INPUT(xRef, nullptr, nullptr, nullptr, worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_v2_first_api_group_min) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierV2FirstApiGroupMin)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrierV2,
-                      INPUT(x_ref, nullptr, nullptr, "", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrierV2,
+                        INPUT(xRef, nullptr, nullptr, "", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_v2_first_api_time_out) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc time_out = TensorDesc({1}, ACL_INT32, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierV2FirstApiTimeOut)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc timeOut = TensorDesc({1}, ACL_INT32, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrierV2,
-                      INPUT(x_ref, time_out, nullptr, "test_distribute_barrier", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrierV2,
+                        INPUT(xRef, timeOut, nullptr, "test_distribute_barrier", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_distribute_barrier_test, test_aclnn_distribute_barrier_v2_first_api_elastic_info) {
-  TensorDesc x_ref = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc elastic_info = TensorDesc({36}, ACL_INT32, ACL_FORMAT_ND);
+TEST_F(L2AclnnDistributeBarrierTest, TestAclnnDistributeBarrierV2FirstApiElasticInfo)
+{
+    TensorDesc xRef = TensorDesc({3, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc elasticInfo = TensorDesc({36}, ACL_INT32, ACL_FORMAT_ND);
 
-  int64_t worldSize = 16;
+    int64_t worldSize = 16;
 
-  auto ut = OP_API_UT(aclnnDistributeBarrierV2,
-                      INPUT(x_ref, nullptr, elastic_info, "test_distribute_barrier", worldSize),
-                      OUTPUT());
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnDistributeBarrierV2,
+                        INPUT(xRef, nullptr, elasticInfo, "test_distribute_barrier", worldSize),
+                        OUTPUT());
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }

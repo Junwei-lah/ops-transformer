@@ -17,10 +17,10 @@
 
 using namespace std;
 
-constexpr uint64_t mc2TilingDataReservedLen = sizeof(Mc2InitTiling) + sizeof(Mc2CcTiling);
+constexpr uint64_t g_mc2TilingDataReservedLen = sizeof(Mc2InitTiling) + sizeof(Mc2CcTiling);
 
 template <typename T>
-static string to_string(void* buf, size_t size, unordered_set<size_t> mask={})
+static string ToString(void* buf, size_t size, unordered_set<size_t> mask={})
 {
     string result;
     const T* data = reinterpret_cast<const T*>(buf);
@@ -32,7 +32,7 @@ static string to_string(void* buf, size_t size, unordered_set<size_t> mask={})
     return result;
 }
 
-const unordered_set<size_t> barrier_tiling_data_mask = {4};
+const unordered_set<size_t> g_barrierTilingDataMask = {4};
 
 class DistributeBarrierTiling : public testing::Test {
 protected:
@@ -45,7 +45,7 @@ protected:
     }
 };
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling)
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTiling)
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -60,13 +60,13 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling)
     //barrier算子没有tilingkey，需要单独搭建与其他mc2算子不同的测试
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
-    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
-                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
-                                                barrier_tiling_data_mask);
+    auto tilingDataResult = ToString<uint32_t>(tilingInfo.tilingData.get() + g_mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - g_mc2TilingDataReservedLen,
+                                                g_barrierTilingDataMask);
     EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_1)
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTilingWorldSize1)
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -81,7 +81,7 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_1)
     ASSERT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_385)
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTilingWorldSize385)
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -96,7 +96,7 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_world_size_385)
     ASSERT_FALSE(ExecuteTiling(tilingContextPara, tilingInfo));
 }
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out) 
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTilingTimeOut) 
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -114,13 +114,13 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out)
     std::string expectTilingData = "16 0 20 0 * 0 0 0 1 0 ";
         TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
-    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
-                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
-                                                barrier_tiling_data_mask);
+    auto tilingDataResult = ToString<uint32_t>(tilingInfo.tilingData.get() + g_mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - g_mc2TilingDataReservedLen,
+                                                g_barrierTilingDataMask);
     EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_elastic_info) 
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTilingElasticInfo) 
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -138,13 +138,13 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_elastic_info)
     std::string expectTilingData = "16 0 20 0 * 0 0 0 256 0 ";
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
-    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
-                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
-                                                barrier_tiling_data_mask);
+    auto tilingDataResult = ToString<uint32_t>(tilingInfo.tilingData.get() + g_mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - g_mc2TilingDataReservedLen,
+                                                g_barrierTilingDataMask);
     EXPECT_EQ(expectTilingData, tilingDataResult);
 }
 
-TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out_elastic_info) 
+TEST_F(DistributeBarrierTiling, DistributeBarrierTestTilingTimeOutElasticInfo) 
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -162,8 +162,8 @@ TEST_F(DistributeBarrierTiling, distribute_barrier_test_tiling_time_out_elastic_
     std::string expectTilingData = "16 0 20 0 * 0 0 0 257 0 ";
     TilingInfo tilingInfo;
     ASSERT_TRUE(ExecuteTiling(tilingContextPara, tilingInfo));
-    auto tilingDataResult = to_string<uint32_t>(tilingInfo.tilingData.get() + mc2TilingDataReservedLen,
-                                                tilingInfo.tilingDataSize - mc2TilingDataReservedLen,
-                                                barrier_tiling_data_mask);
+    auto tilingDataResult = ToString<uint32_t>(tilingInfo.tilingData.get() + g_mc2TilingDataReservedLen,
+                                                tilingInfo.tilingDataSize - g_mc2TilingDataReservedLen,
+                                                g_barrierTilingDataMask);
     EXPECT_EQ(expectTilingData, tilingDataResult);
 }

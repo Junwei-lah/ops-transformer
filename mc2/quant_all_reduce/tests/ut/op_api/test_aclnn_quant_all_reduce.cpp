@@ -27,245 +27,245 @@ using namespace op;
 using namespace std;
 
 namespace QuantAllReduceUT {
-class test_aclnn_quant_all_reduce : public testing::Test {
+class TestAclnnQuantAllReduce : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         op::SetPlatformNpuArch(NpuArch::DAV_3510);
-        cout << "test_aclnn_quant_all_reduce SetUp" << endl;
+        cout << "TestAclnnQuantAllReduce SetUp" << endl;
     }
     static void TearDownTestCase()
     {
         op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-        cout << "test_aclnn_quant_all_reduce TearDown" << endl;
+        cout << "TestAclnnQuantAllReduce TearDown" << endl;
     }
 };
 
 struct QuantAllReduceAclnnTestParam {
-    string case_name;
+    string caseName;
     // shape
-    vector<int64_t> x_shape;
-    vector<int64_t> scales_shape;
-    vector<int64_t> output_shape;
+    vector<int64_t> xShape;
+    vector<int64_t> scalesShape;
+    vector<int64_t> outputShape;
     // 通信域标识
     char* group;
     // dtype
-    aclDataType x_dtype;
-    aclDataType scales_dtype;
-    aclDataType output_dtype;
+    aclDataType xDtype;
+    aclDataType scalesDtype;
+    aclDataType outputDtype;
     // format
-    aclFormat x_format;
-    aclFormat scales_format;
-    aclFormat output_format;
+    aclFormat xFormat;
+    aclFormat scalesFormat;
+    aclFormat outputFormat;
     // 返回状态
-    aclnnStatus aclnn_status;
+    aclnnStatus aclnnStatusUt;
 };
 
-static QuantAllReduceAclnnTestParam dtype_cases_params[] = {
+static QuantAllReduceAclnnTestParam g_dtypeCasesParams[] = {
     // mx正常用例
     {"test_aclnn_quant_all_reduce_mx_BS96_H7168_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_true",
-        {96, 7168}, {96, 112, 2}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 112, 2}, {96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_BS96_H7168_FLOAT8E5M2_FLOAT8E8M0_FLOAT16_true",
-        {96, 7168}, {96, 112, 2}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 112, 2}, {96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E8M0, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H7168_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_true",
-        {1, 96, 7168}, {1, 96, 112, 2}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 112, 2}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H7168_FLOAT8E5M2_FLOAT8E8M0_BF16_true",
-        {1, 96, 7168}, {1, 96, 112, 2}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 112, 2}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E8M0, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_BS96_H4096_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_true",
-        {96, 4096}, {96, 64, 2}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 64, 2}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_BS96_H4096_FLOAT8E5M2_FLOAT8E8M0_FLOAT16_true",
-        {96, 4096}, {96, 64, 2}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 64, 2}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E8M0, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H4096_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT16_true",
-        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H4096_FLOAT8E5M2_FLOAT8E8M0_FLOAT_true",
-        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     // T-G正常用例
     {"test_aclnn_quant_all_reduce_tg_BS96_H7168_INT8_FLOAT_FLOAT_true",
-        {96, 7168}, {96, 56}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 56}, {96, 7168}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H7168_HIFLOAT8_FLOAT_FLOAT_true",
-        {96, 7168}, {96, 56}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 56}, {96, 7168}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H7168_FLOAT8E4M3FN_FLOAT_FLOAT_true",
-        {96, 7168}, {96, 56}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 56}, {96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H7168_FLOAT8E5M2_FLOAT_FLOAT_true",
-        {96, 7168}, {96, 56}, {96, 7168}, {"quantallreduce_test_group"},
+        {96, 7168}, {96, 56}, {96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H7168_INT8_FLOAT_BF16_true",
-        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H7168_HIFLOAT8_FLOAT_FLOAT_true",
-        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H7168_FLOAT8E4M3FN_FLOAT_BF16_true",
-        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H7168_FLOAT8E5M2_FLOAT_BF16_true",
-        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, {"quantallreduce_test_group"},
+        {1, 96, 7168}, {1, 96, 56}, {1, 96, 7168}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_INT8_FLOAT_FLOAT16_true",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_HIFLOAT8_FLOAT_BF16_true",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_FLOAT8E4M3FN_FLOAT_BF16_true",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_FLOAT8E5M2_FLOAT_FLOAT16_true",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_INT8_FLOAT_BF16_true",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_HIFLOAT8_FLOAT_BF16_true",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_FLOAT8E4M3FN_FLOAT_BF16_true",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_FLOAT8E5M2_FLOAT_FLOAT16_true",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS},
     // 异常用例-组合异常与类型异常
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H4096_INT8_FLOAT8E8M0_BF16_false",
-        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT8_E8M0, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // 组合异常mx量化
     {"test_aclnn_quant_all_reduce_mx_BS96_H4096_HIFLOAT8_FLOAT8E8M0_FLOAT16_false",
-        {96, 4096}, {96, 64, 2}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 64, 2}, {96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT8_E8M0, ACL_FLOAT16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // 组合异常mx量化
     {"test_aclnn_quant_all_reduce_mx_B1_S96_H4096_FLOAT16_FLOAT8E8M0_BF16_false",
-        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 64, 2}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT16, ACL_FLOAT8_E8M0, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // x类型异常mx量化
     {"test_aclnn_quant_all_reduce_mx_BS96_H4096_FLOAT8E4M3FN_FLOAT16_FLOAT_false",
-        {96, 4096}, {96, 64, 2}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 64, 2}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT16, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // scales类型异常mx量化
     {"test_aclnn_quant_all_reduce_mx_BS96_H4096_FLOAT_FLOAT8E8M0_INT8_false",
-        {96, 4096}, {96, 64, 2}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 64, 2}, {96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E8M0, ACL_INT8,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // output类型异常mx量化
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_FLOAT16_FLOAT_BF16_false",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_FLOAT16, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // x类型异常T-G量化
     {"test_aclnn_quant_all_reduce_tg_B1_S96_H4096_INT8_FLOAT_FLOAT_false",
-        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, {"quantallreduce_test_group"},
+        {1, 96, 4096}, {1, 96, 32}, {1, 96, 4096}, "quantallreduce_test_group",
         ACL_INT8, ACL_FLOAT16, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // scales类型异常T-G量化
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_HIFLOAT8_FLOAT_INT8_false",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_INT8,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // output类型异常T-G量化
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_HIFLOAT8_FLOAT_INT8_false_invalid_format_NZ",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_INT8,
         ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_FRACTAL_Z,
         ACLNN_ERR_PARAM_INVALID}, // output format异常 T-G量化
     {"test_aclnn_quant_all_reduce_tg_BS96_H4096_HIFLOAT8_FLOAT_INT8_false_invalid_format_NCL",
-        {96, 4096}, {96, 32}, {96, 4096}, {"quantallreduce_test_group"},
+        {96, 4096}, {96, 32}, {96, 4096}, "quantallreduce_test_group",
         ACL_HIFLOAT8, ACL_FLOAT, ACL_INT8,
         ACL_FORMAT_NCL, ACL_FORMAT_NCL, ACL_FORMAT_NCL,
         ACLNN_ERR_PARAM_INVALID}, // output format异常 T-G量化
 };
 
-static QuantAllReduceAclnnTestParam group_cases_params[] = {
+static QuantAllReduceAclnnTestParam g_groupCasesParams[] = {
     // group长度校验用例, this_is_a_very_long_groupname_长度为30字符
     {"test_aclnn_quant_all_reduce_mx_BS96_H7168_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_false_group_length_127",
         {96, 7168}, {96, 112, 2}, {96, 7168},
-        {"this_is_a_very_long_groupname_"
+        "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
-         "this_is"},
+         "this_is",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_SUCCESS}, // group长度为127
     {"test_aclnn_quant_all_reduce_mx_BS96_H7168_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_false_group_length_128",
         {96, 7168}, {96, 112, 2}, {96, 7168},
-        {"this_is_a_very_long_groupname_"
+        "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
-         "this_is_"},
+         "this_is_",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // group长度为128-越界
     {"test_aclnn_quant_all_reduce_mx_BS96_H7168_FLOAT8E4M3FN_FLOAT8E8M0_FLOAT_false_group_length_129",
         {96, 7168}, {96, 112, 2}, {96, 7168},
-        {"this_is_a_very_long_groupname_"
+        "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
          "this_is_a_very_long_groupname_"
-         "this_is_a"},
+         "this_is_a",
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         ACLNN_ERR_PARAM_INVALID}, // group长度为129-越界
@@ -273,22 +273,22 @@ static QuantAllReduceAclnnTestParam group_cases_params[] = {
 
 static void TestOneParamCase(const QuantAllReduceAclnnTestParam& param)
 {
-    std::cout << "run case " << param.case_name << std::endl;
+    std::cout << "run case " << param.caseName << std::endl;
     if (param.group == nullptr) {
         std::cerr << "[ERROR]: group is null" << std::endl;
         return;
     }
-    vector<int64_t> xShape = param.x_shape;
-    vector<int64_t> scalesShape = param.scales_shape;
-    vector<int64_t> outputShape = param.output_shape;
+    vector<int64_t> xShape = param.xShape;
+    vector<int64_t> scalesShape = param.scalesShape;
+    vector<int64_t> outputShape = param.outputShape;
     char* group = param.group;
-    aclDataType xDtype = param.x_dtype;
-    aclDataType scalesDtype = param.scales_dtype;
-    aclDataType outputDtype = param.output_dtype;
-    aclFormat xFormat = param.x_format;
-    aclFormat scalesFormat = param.scales_format;
-    aclFormat outputFormat = param.output_format;
-    aclnnStatus retStatus = param.aclnn_status;
+    aclDataType xDtype = param.xDtype;
+    aclDataType scalesDtype = param.scalesDtype;
+    aclDataType outputDtype = param.outputDtype;
+    aclFormat xFormat = param.xFormat;
+    aclFormat scalesFormat = param.scalesFormat;
+    aclFormat outputFormat = param.outputFormat;
+    aclnnStatus retStatus = param.aclnnStatusUt;
     // 封装
     TensorDesc x = TensorDesc(xShape, xDtype, xFormat);
     TensorDesc scales = TensorDesc(scalesShape, scalesDtype, scalesFormat);
@@ -303,22 +303,22 @@ static void TestOneParamCase(const QuantAllReduceAclnnTestParam& param)
     EXPECT_EQ(aclRet, retStatus);
 }
 
-TEST_F(test_aclnn_quant_all_reduce, dtype_cases_params)
+TEST_F(TestAclnnQuantAllReduce, DtypeCasesParamsTest)
 {
-    if (std::size(dtype_cases_params) != 0) {
-        uint64_t numCases = sizeof(dtype_cases_params) / sizeof(dtype_cases_params[0]);
+    if (std::size(g_dtypeCasesParams) != 0) {
+        uint64_t numCases = sizeof(g_dtypeCasesParams) / sizeof(g_dtypeCasesParams[0]);
         for (size_t idx = 0; idx < numCases; idx += 1) {
-            TestOneParamCase(dtype_cases_params[idx]);
+            TestOneParamCase(g_dtypeCasesParams[idx]);
         }
     }
 }
 
-TEST_F(test_aclnn_quant_all_reduce, group_cases_params)
+TEST_F(TestAclnnQuantAllReduce, GroupCasesParamsTest)
 {
-    if (std::size(group_cases_params) != 0) {
-        uint64_t numCases = sizeof(group_cases_params) / sizeof(group_cases_params[0]);
+    if (std::size(g_groupCasesParams) != 0) {
+        uint64_t numCases = sizeof(g_groupCasesParams) / sizeof(g_groupCasesParams[0]);
         for (size_t idx = 0; idx < numCases; idx += 1) {
-            TestOneParamCase(group_cases_params[idx]);
+            TestOneParamCase(g_groupCasesParams[idx]);
         }
     }
 }

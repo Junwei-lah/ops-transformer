@@ -15,16 +15,18 @@ using namespace std;
 
 class MoeUpdateExpertTiling : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "MoeUpdateExpertTiling SetUp" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "MoeUpdateExpertTiling TearDown" << std::endl;
     }
 };
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_no_tailor)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingNoTailor)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -65,7 +67,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_no_tailor)
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_expert_tailor)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingExpertTailor)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -110,7 +112,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_expert_tailor)
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_expertIds)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimExpertIds)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -153,7 +155,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_expertIds)
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_expert_scales)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimExpertScales)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -197,7 +199,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_expert_scal
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_pruning_threshold)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimPruningThreshold)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -240,7 +242,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_pruning_thr
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_active_mask)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimActiveMask)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -283,7 +285,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_active_mask
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_balancedExpertIds)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimBalancedExpertIds)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";
@@ -327,7 +329,7 @@ TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_balancedExp
                        expectTilingData, expectWorkspaces, mc2TilingDataReservedLen);
 }
 
-TEST_F(MoeUpdateExpertTiling, moe_update_expert_test_tiling_wrongDim_balanced_active_mask)
+TEST_F(MoeUpdateExpertTiling, MoeUpdateExpertTestTilingWrongDimBalancedActiveMask)
 {
     struct MoeUpdateExpertCompileInfo {} compileInfo;
     const std::string socVersion = "";

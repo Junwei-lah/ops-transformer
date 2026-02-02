@@ -14,9 +14,9 @@
 
 namespace MoeDistributeCombineAddRmsNormNameSpace{
 struct TestParam {
-    string test_name{};
-    std::vector<std::pair<string, string>> tiling_params_str_pair{};
-    std::vector<std::pair<size_t, ge::DataType>> tiling_dTypes_pair{};
+    string testName{};
+    std::vector<std::pair<string, string>> tilingParamsStrPair{};
+    std::vector<std::pair<size_t, ge::DataType>> tilingDTypesPair{};
     ge::graphStatus status;
 };
 
@@ -26,22 +26,22 @@ struct TilingParams {
     int64_t BS{8};
     int64_t K{8};
     int64_t H{7168};
-    int64_t ep_world_size{8};
-    int64_t ep_rank_id{0};
-    int64_t moe_expert_num{8};
-    int64_t tp_world_size{1};
-    int64_t tp_rank_id{0};
-    int64_t expert_shard_type{0};
-    int64_t shared_expert_num{0};
-    int64_t shared_expert_rank_num{0};
-    int64_t global_bs{0};
-    int64_t out_dtype{0};
-    int64_t comm_quant_mode{0};
-    int64_t group_list_type{0};
-    float norm_eps{1e-6};
-    std::string comm_alg{""};
-    std::string group_ep{"group_ep"};
-    std::string group_tp{"group_tp"};
+    int64_t epWorldSize{8};
+    int64_t epRankId{0};
+    int64_t moeExpertNum{8};
+    int64_t tpWorldSize{1};
+    int64_t tpRankId{0};
+    int64_t expertShardType{0};
+    int64_t sharedExpertNum{0};
+    int64_t sharedExpertRankNum{0};
+    int64_t globalBs{0};
+    int64_t outDtype{0};
+    int64_t commQuantMode{0};
+    int64_t groupListType{0};
+    float normEps{1e-6};
+    std::string commAlg{""};
+    std::string groupEp{"groupEp"};
+    std::string groupTp{"groupTp"};
 };
 
 class MoeDistributeCombineAddRmsNormTilingTest : public testing::TestWithParam<TestParam>
@@ -58,18 +58,18 @@ protected:
     }
 };
 
-std::unordered_map<string, std::function<void(TilingParams& tiling_params, const string& value_str)>>
-    tiling_params_str_handlers = {
-        {"BSK", [](TilingParams& tiling_params, const string& value_str) { tiling_params.BSK = std::stoi(value_str); }}};
+std::unordered_map<string, std::function<void(TilingParams& tilingParams, const string& valueStr)>>
+    g_tilingParamsStrHandlers = {
+        {"BSK", [](TilingParams& tilingParams, const string& valueStr) { tilingParams.BSK = std::stoi(valueStr); }}};
 
-TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
+TEST_P(MoeDistributeCombineAddRmsNormTilingTest, CommonTest)
 {
-    auto test_param = GetParam();
-    auto tiling_params = TilingParams{};
+    auto testParam = GetParam();
+    auto tilingParams = TilingParams{};
 
-    for (auto& kv : test_param.tiling_params_str_pair) {
-        if (tiling_params_str_handlers.count(kv.first) != 0) {
-            tiling_params_str_handlers[kv.first](tiling_params, kv.second);
+    for (auto& kv : testParam.tilingParamsStrPair) {
+        if (g_tilingParamsStrHandlers.count(kv.first) != 0) {
+            g_tilingParamsStrHandlers[kv.first](tilingParams, kv.second);
         }
     }
 
@@ -77,20 +77,20 @@ TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
     MoeDistributeCombineAddRmsNormInfo compileInfo;
     gert::TilingContextPara tilingContextPara("MoeDistributeCombineAddRmsNorm",
         {
-            {{{tiling_params.A, tiling_params.H}, {tiling_params.A, tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND},
-            {{{tiling_params.BS, tiling_params.K}, {tiling_params.BS, tiling_params.K}}, ge::DT_INT32, ge::FORMAT_ND},
-            {{{tiling_params.A * 128}, {tiling_params.A * 128}}, ge::DT_INT32, ge::FORMAT_ND},
-            {{{tiling_params.ep_world_size}, {tiling_params.ep_world_size}}, ge::DT_INT32, ge::FORMAT_ND},
-            {{{tiling_params.BS, tiling_params.K}, {tiling_params.BS, tiling_params.K}}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{{tiling_params.BS, 1, tiling_params.H}, {tiling_params.BS, 1, tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND},
-            {{{tiling_params.H}, {tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND},
-            {{{tiling_params.tp_world_size}, {tiling_params.tp_world_size}}, ge::DT_INT32, ge::FORMAT_ND},
-            {{{tiling_params.BS}, {tiling_params.BS}}, ge::DT_BOOL, ge::FORMAT_ND},
+            {{{tilingParams.A, tilingParams.H}, {tilingParams.A, tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND},
+            {{{tilingParams.BS, tilingParams.K}, {tilingParams.BS, tilingParams.K}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{tilingParams.A * 128}, {tilingParams.A * 128}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{tilingParams.epWorldSize}, {tilingParams.epWorldSize}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{tilingParams.BS, tilingParams.K}, {tilingParams.BS, tilingParams.K}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{tilingParams.BS, 1, tilingParams.H}, {tilingParams.BS, 1, tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND},
+            {{{tilingParams.H}, {tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND},
+            {{{tilingParams.tpWorldSize}, {tilingParams.tpWorldSize}}, ge::DT_INT32, ge::FORMAT_ND},
+            {{{tilingParams.BS}, {tilingParams.BS}}, ge::DT_BOOL, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_INT64, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{{tiling_params.BS, tiling_params.H}, {tiling_params.BS, tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND},
+            {{{tilingParams.BS, tilingParams.H}, {tilingParams.BS, tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND},
             {{}, ge::DT_INT32, ge::FORMAT_ND},
             {{}, ge::DT_BF16, ge::FORMAT_ND},
             {{}, ge::DT_BF16, ge::FORMAT_ND},
@@ -98,27 +98,27 @@ TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
             {{}, ge::DT_BF16, ge::FORMAT_ND}
         },
         {
-            {{{tiling_params.BS, 1, tiling_params.H}, {tiling_params.BS, 1, tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND},
-            {{{tiling_params.BS, 1, 1}, {tiling_params.BS, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{{tiling_params.BS, 1, tiling_params.H}, {tiling_params.BS, 1, tiling_params.H}}, ge::DT_BF16, ge::FORMAT_ND}
+            {{{tilingParams.BS, 1, tilingParams.H}, {tilingParams.BS, 1, tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND},
+            {{{tilingParams.BS, 1, 1}, {tilingParams.BS, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{{tilingParams.BS, 1, tilingParams.H}, {tilingParams.BS, 1, tilingParams.H}}, ge::DT_BF16, ge::FORMAT_ND}
         },
         {
-            {"group_ep", Ops::Transformer::AnyValue::CreateFrom<std::string>(tiling_params.group_ep)},
-            {"ep_world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.ep_world_size)},
-            {"ep_rank_id", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.ep_rank_id)},
-            {"moe_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.moe_expert_num)},
-            {"group_tp", Ops::Transformer::AnyValue::CreateFrom<std::string>(tiling_params.group_tp)},
-            {"tp_world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.tp_world_size)},
-            {"tp_rank_id", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.tp_rank_id)},
-            {"expert_shard_type", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.expert_shard_type)},
-            {"shared_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.shared_expert_num)},
-            {"shared_expert_rank_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.shared_expert_rank_num)},
-            {"global_bs", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.global_bs)},
-            {"out_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.out_dtype)},
-            {"comm_quant_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.comm_quant_mode)},
-            {"group_list_type", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.group_list_type)},
-            {"comm_alg", Ops::Transformer::AnyValue::CreateFrom<std::string>(tiling_params.comm_alg)},
-            {"norm_eps", Ops::Transformer::AnyValue::CreateFrom<float>(tiling_params.norm_eps)},
+            {"groupEp", Ops::Transformer::AnyValue::CreateFrom<std::string>(tilingParams.groupEp)},
+            {"epWorldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.epWorldSize)},
+            {"epRankId", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.epRankId)},
+            {"moeExpertNum", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.moeExpertNum)},
+            {"groupTp", Ops::Transformer::AnyValue::CreateFrom<std::string>(tilingParams.groupTp)},
+            {"tpWorldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.tpWorldSize)},
+            {"tpRankId", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.tpRankId)},
+            {"expertShardType", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.expertShardType)},
+            {"sharedExpertNum", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.sharedExpertNum)},
+            {"sharedExpertRankNum", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.sharedExpertRankNum)},
+            {"globalBs", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.globalBs)},
+            {"outDtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.outDtype)},
+            {"commQuantMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.commQuantMode)},
+            {"groupListType", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.groupListType)},
+            {"commAlg", Ops::Transformer::AnyValue::CreateFrom<std::string>(tilingParams.commAlg)},
+            {"normEps", Ops::Transformer::AnyValue::CreateFrom<float>(tilingParams.normEps)},
             {"zero_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
             {"copy_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
             {"const_expert_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}
@@ -128,7 +128,7 @@ TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
         20,
         196608);
     Mc2Hcom::MockValues hcomTopologyMockValues{{"rankNum", 8}};
-    if(test_param.status == ge::GRAPH_FAILED){
+    if(testParam.status == ge::GRAPH_FAILED){
         Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
     }
     else {
@@ -137,14 +137,14 @@ TEST_P(MoeDistributeCombineAddRmsNormTilingTest, common_test)
     }
 }
 
-static TestParam test_params[] = {
+static TestParam g_testParams[] = {
     {"Test_sample", {}, {}, ge::GRAPH_SUCCESS}
 };
 
 INSTANTIATE_TEST_SUITE_P(MoeDistributeCombineAddRmsNormTilingTest, MoeDistributeCombineAddRmsNormTilingTest,
-                         testing::ValuesIn(test_params),
+                         testing::ValuesIn(g_testParams),
                          [](const testing::TestParamInfo<MoeDistributeCombineAddRmsNormTilingTest::ParamType>& info) {
-                             return info.param.test_name;
+                             return info.param.testName;
                          });
 
 } // MoeDistributeCombineAddRmsNormNameSpace

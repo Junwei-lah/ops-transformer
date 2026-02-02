@@ -23,16 +23,16 @@ protected:
     static void TearDownTestCase() { std::cout << "MatmulReduceScatterV2InferShapeTest TearDown" << std::endl; }
 };
 
-TEST_F(MatmulReduceScatterV2InferShapeTest, basic)
+TEST_F(MatmulReduceScatterV2InferShapeTest, Basic)
 {
-    gert::StorageShape x1_shape = {{8192, 1536}, {}};
-    gert::StorageShape x2_shape = {{1536, 12288}, {}};
+    gert::StorageShape x1Shape = {{8192, 1536}, {}};
+    gert::StorageShape x2Shape = {{1536, 12288}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "MatmulReduceScatterV2",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -64,16 +64,16 @@ TEST_F(MatmulReduceScatterV2InferShapeTest, basic)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(MatmulReduceScatterV2InferShapeTest, empty_tensor_test)
+TEST_F(MatmulReduceScatterV2InferShapeTest, EmptyTensorTest)
 {
-    gert::StorageShape x1_shape = {{8192, 0}, {}};
-    gert::StorageShape x2_shape = {{0, 12288}, {}};
+    gert::StorageShape x1Shape = {{8192, 0}, {}};
+    gert::StorageShape x2Shape = {{0, 12288}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "MatmulReduceScatterV2",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -104,22 +104,22 @@ TEST_F(MatmulReduceScatterV2InferShapeTest, empty_tensor_test)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MatmulReduceScatterV2InferShapeTest, pertensor)
+TEST_F(MatmulReduceScatterV2InferShapeTest, Pertensor)
 {
-    gert::StorageShape x1_shape = {{8192, 1536}, {}};
-    gert::StorageShape x2_shape = {{1536, 12288}, {}};
-    gert::StorageShape bais_shape = {{12288}, {}};
-    gert::StorageShape x1_scale_shape = {{1}, {}};
-    gert::StorageShape x2_scale_shape = {{1}, {}};
+    gert::StorageShape x1Shape = {{8192, 1536}, {}};
+    gert::StorageShape x2Shape = {{1536, 12288}, {}};
+    gert::StorageShape biasShape = {{12288}, {}};
+    gert::StorageShape x1ScaleShape = {{1}, {}};
+    gert::StorageShape x2ScaleShape = {{1}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "MatmulReduceScatterV2",
         {
-            {x1_shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
-            {bais_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-            {x1_scale_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-            {x2_scale_shape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
+            {biasShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {x1ScaleShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {x2ScaleShape, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND}
         },
         {
@@ -148,21 +148,21 @@ TEST_F(MatmulReduceScatterV2InferShapeTest, pertensor)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(MatmulReduceScatterV2InferShapeTest, perblock)
+TEST_F(MatmulReduceScatterV2InferShapeTest, Perblock)
 {
-    gert::StorageShape x1_shape = {{8192, 1536}, {}};
-    gert::StorageShape x2_shape = {{1536, 12288}, {}};
-    gert::StorageShape x1_scale_shape = {{1}, {}};
-    gert::StorageShape x2_scale_shape = {{1}, {}};
+    gert::StorageShape x1Shape = {{8192, 1536}, {}};
+    gert::StorageShape x2Shape = {{1536, 12288}, {}};
+    gert::StorageShape x1ScaleShape = {{1}, {}};
+    gert::StorageShape x2ScaleShape = {{1}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "MatmulReduceScatterV2",
         {
-            {x1_shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {x1_scale_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-            {x2_scale_shape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {x1ScaleShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {x2ScaleShape, ge::DT_FLOAT, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND}
         },
         {
@@ -200,11 +200,11 @@ protected:
 
 // TEST_F(MatmulReduceScatterV2InferDTypeTest, y_dtype_equal_x1_dtype_fp16)
 // {
-//     ge::DataType x1_type = ge::DT_FLOAT16;
+//     ge::DataType x1Type = ge::DT_FLOAT16;
 
 //     auto contextHolder = gert::InferDataTypeContextFaker()
 //         .NodeIoNum(1, 2)
-//         .InputDataTypes({&x1_type})
+//         .InputDataTypes({&x1Type})
 //         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
 //         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
 //         .Build();
@@ -212,17 +212,17 @@ protected:
 //     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
 //     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("MatmulReduceScatterV2")->infer_datatype;
 //     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-//     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1_type);
+//     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1Type);
 // }
 
 
 // TEST_F(MatmulReduceScatterV2InferDTypeTest, y_dtype_equal_x1_dtype_bf16)
 // {
-//     ge::DataType x1_type = ge::DT_BF16;
+//     ge::DataType x1Type = ge::DT_BF16;
 
 //     auto contextHolder = gert::InferDataTypeContextFaker()
 //         .NodeIoNum(1, 2)
-//         .InputDataTypes({&x1_type})
+//         .InputDataTypes({&x1Type})
 //         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
 //         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
 //         .Build();
@@ -230,17 +230,17 @@ protected:
 //     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
 //     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("MatmulReduceScatterV2")->infer_datatype;
 //     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-//     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1_type);
+//     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1Type);
 // }
 
-TEST_F(MatmulReduceScatterV2InferDTypeTest, attr_y_dtype)
+TEST_F(MatmulReduceScatterV2InferDTypeTest, AttrYDtype)
 {
-    ge::DataType x1_type = ge::DT_FLOAT8_E4M3FN;
-    ge::DataType attr_y_dtype = ge::DT_FLOAT;
+    ge::DataType x1Type = ge::DT_FLOAT8_E4M3FN;
+    ge::DataType attrYDtype = ge::DT_FLOAT;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
         .NodeIoNum(1, 2)
-        .InputDataTypes({&x1_type})
+        .InputDataTypes({&x1Type})
         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeAttrs({
@@ -260,7 +260,7 @@ TEST_F(MatmulReduceScatterV2InferDTypeTest, attr_y_dtype)
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("MatmulReduceScatterV2")->infer_datatype;
     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), attr_y_dtype);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), attrYDtype);
 }
 
 } // namespace

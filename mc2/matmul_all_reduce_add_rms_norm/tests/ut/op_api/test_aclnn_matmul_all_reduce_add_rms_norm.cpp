@@ -25,121 +25,127 @@ using namespace std;
 
 namespace MatmulAllReduceAddRmsNormUT {
 
-class l2_matmul_all_reduce_add_rms_norm_test : public testing::Test {
- protected:
-  static void SetUpTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "l2_matmul_all_reduce_add_rms_norm_test SetUp" << endl;
-  }
+class L2MatmulAllReduceAddRmsNormTest : public testing::Test {
+protected:
+    static void SetUpTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "L2MatmulAllReduceAddRmsNormTest SetUp" << endl;
+    }
 
-  static void TearDownTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "l2_matmul_all_reduce_add_rms_norm_test TearDown" << endl;
-  }
+    static void TearDownTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "L2MatmulAllReduceAddRmsNormTest TearDown" << endl;
+    }
 };
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_first_api) {
-  TensorDesc x1_desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNormFirstApi)
+{
+    TensorDesc x1Desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_empty_M) {
-  TensorDesc x1_desc = TensorDesc({0, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNorm_empty_M)
+{
+    TensorDesc x1Desc = TensorDesc({0, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_empty_K) {
-  TensorDesc x1_desc = TensorDesc({16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNormEmptyK)
+{
+    TensorDesc x1Desc = TensorDesc({16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({0, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_NE(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_empty_N) {
-  TensorDesc x1_desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({32, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({0}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNormEmptyN)
+{
+    TensorDesc x1Desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({32, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({0}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 16, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_EQ(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_wrong_k) {
-  TensorDesc x1_desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({30, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNormWrongK)
+{
+    TensorDesc x1Desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({30, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_NE(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_matmul_all_reduce_add_rms_norm_test, test_mm_all_reduce_add_rms_norm_wrong_n) {
-  TensorDesc x1_desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc x2_desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc y_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc residual_desc = TensorDesc({1, 16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc gamma_desc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
-  TensorDesc normOut_desc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+TEST_F(L2MatmulAllReduceAddRmsNormTest, TestMmAllReduceAddRmsNormWrongN)
+{
+    TensorDesc x1Desc = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Desc = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc bias = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc yDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc residualDesc = TensorDesc({1, 16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gammaDesc = TensorDesc({16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc normOutDesc = TensorDesc({1, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
 
-  auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1_desc, x2_desc, bias, residual_desc, gamma_desc, 0.000001,
-                      "test_group", "sum", 8, 1), OUTPUT(y_desc, normOut_desc));
-  uint64_t workspace_size = 0;
-  aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
-  EXPECT_NE(aclRet, ACLNN_SUCCESS);
+    auto ut = OP_API_UT(aclnnMatmulAllReduceAddRmsNorm, INPUT(x1Desc, x2Desc, bias, residualDesc, gammaDesc, 0.000001,
+                        "test_group", "sum", 8, 1), OUTPUT(yDesc, normOutDesc));
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
 } // MatmulAllReduceAddRmsNormUT

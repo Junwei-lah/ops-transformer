@@ -21,16 +21,19 @@
 
 class BatchMatMulReduceScatterAlltoAllTiling : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "BatchMatMulReduceScatterAlltoAllTiling SetUp" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "BatchMatMulReduceScatterAlltoAllTiling TearDown" << std::endl;
     }
 };
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_1) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16Test1)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -57,7 +60,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_1_weight_trans) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16Test1WeightTrans)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -84,7 +88,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_M_0) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingM0)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -110,7 +115,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16Shard)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -137,7 +143,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBias)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -165,7 +172,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_0) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16Shard0)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -191,7 +199,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test1) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest1)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -218,7 +227,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test2) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest2)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -245,7 +255,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test3) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest3)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -272,7 +283,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test4) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest4)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -299,7 +311,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test5) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest5)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -326,7 +339,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test6) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest6)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -353,7 +367,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test7) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest7)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -380,7 +395,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_float16_shard_with_bias_test8) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFloat16ShardWithBiasTest8)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -407,7 +423,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_fp16_shard0_with_bias) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFp16Shard0WithBias)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -435,7 +452,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_fp16_shard0_nonlocalE_tail_front) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFp16Shard0NonlocalETailFront)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -463,7 +481,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_bf16_shard0_with_bias) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingBf16Shard0WithBias)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -491,7 +510,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_fp16_shard0_with_bias_invalid_Xshape) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFp16Shard0WithBiasInvalidXshape)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -518,7 +538,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_fp16_shard1_with_bias_invalid_Xshape) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFp16Shard1WithBiasInvalidXshape)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;
@@ -545,7 +566,8 @@ TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_t
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(BatchMatMulReduceScatterAlltoAllTiling, batch_matmul_reduce_scatter_all_to_all_test_tiling_fp16_shard0_with_bias_invalid_H) {
+TEST_F(BatchMatMulReduceScatterAlltoAllTiling, BatchMatmulReduceScatterAllToAllTestTilingFp16Shard0WithBiasInvalidH)
+{
     struct BatchMatMulReduceScatterAlltoAllCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
     uint64_t ubSize = 196608;

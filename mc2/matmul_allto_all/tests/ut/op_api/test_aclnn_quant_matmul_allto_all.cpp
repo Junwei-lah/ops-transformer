@@ -21,12 +21,12 @@
 using namespace op;
 using namespace std;
 
-class test_aclnn_quant_matmul_allto_all : public testing::Test {
+class TestAclnnQuantMatmulAlltoAll : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         op::SetPlatformNpuArch(NpuArch::DAV_3510);
-        cout << "test_aclnn_quant_matmul_allto_all SetUp" << endl;
+        cout << "TestAclnnQuantMatmulAlltoAll SetUp" << endl;
     }
 
     static void TearDownTestCase()
@@ -38,43 +38,43 @@ protected:
 
 struct QuantMatmulAlltoAllAclnnTestParam {
     // 用例名
-    string case_name;
+    string caseName;
     // 通信域卡数，ut测试默认为2
-    int world_size;
+    int worldSize;
     // 数据形状
-    int64_t x1_quantmode; // x1量化模式
-    int64_t x2_quantmode; // x2量化模式
-    vector<int64_t> x1_shape; // x1数据shape，正常为（BS，H1）
-    vector<int64_t> x2_shape; // x2数据shape，正常为（H1，H2）
-    vector<int64_t> bias_shape; // bias数据shape，正常为（H2）
-    vector<int64_t> x1_scale_shape; // x1scales数据shape，正常为（BS）
-    vector<int64_t> x2_scale_shape; // x2scales数据shape，正常为（H2）
-    vector<int64_t> output_shape; // output数据shape，正常为（BS * world_size，H2 / world_size）
+    int64_t x1Quantmode; // x1量化模式
+    int64_t x2Quantmode; // x2量化模式
+    vector<int64_t> x1Shape; // x1数据shape，正常为（BS，H1）
+    vector<int64_t> x2Shape; // x2数据shape，正常为（H1，H2）
+    vector<int64_t> biasShape; // bias数据shape，正常为（H2）
+    vector<int64_t> x1ScaleShape; // x1scales数据shape，正常为（BS）
+    vector<int64_t> x2ScaleShape; // x2scales数据shape，正常为（H2）
+    vector<int64_t> outputShape; // output数据shape，正常为（BS * world_size，H2 / world_size）
     // 数据类型
-    aclDataType x1_dtype; // x1数据dtype，仅支持float8_e5m2和float8_e4m3fn
-    aclDataType x2_dtype; // x2数据dtype，仅支持float8_e5m2和float8_e4m3fn
-    aclDataType bias_dtype; // bias数据dtype，仅支持float32
-    aclDataType x1_scale_dtype; // x1scales数据dtype，仅支持float32
-    aclDataType x2_scale_dtype; // x2scales数据dtype，仅支持float32
-    aclDataType output_dtype; // 输出数据dtype，支持bfloat16、float16和float32
+    aclDataType x1Dtype; // x1数据dtype，仅支持float8_e5m2和float8_e4m3fn
+    aclDataType x2Dtype; // x2数据dtype，仅支持float8_e5m2和float8_e4m3fn
+    aclDataType biasDtype; // bias数据dtype，仅支持float32
+    aclDataType x1ScaleDtype; // x1scales数据dtype，仅支持float32
+    aclDataType x2ScaleDtype; // x2scales数据dtype，仅支持float32
+    aclDataType outputDtype; // 输出数据dtype，支持bfloat16、float16和float32
     // 数据格式
-    aclFormat x1_format; // x1数据format，仅支持ND
-    aclFormat x2_format; // x2数据format，仅支持ND
-    aclFormat bias_format; // bias数据format，仅支持ND
-    aclFormat x1_scale_format; // x1Scale数据format，仅支持ND
-    aclFormat x2_scale_format; // x2Scale数据format，仅支持ND
-    aclFormat output_format; // output数据format，仅支持ND
+    aclFormat x1Format; // x1数据format，仅支持ND
+    aclFormat x2Format; // x2数据format，仅支持ND
+    aclFormat biasFormat; // bias数据format，仅支持ND
+    aclFormat x1ScaleFormat; // x1Scale数据format，仅支持ND
+    aclFormat x2ScaleFormat; // x2Scale数据format，仅支持ND
+    aclFormat outputFormat; // output数据format，仅支持ND
     // 其它属性
     vector<int64_t> alltoAllAxesOptional; // alltoall数据交换的方向，只能为空或者[-1,-2]
     char* group; // 通信域标识，字符串，长度要求（0，128）
     bool transposeX1; // x1是否转置，现不支持为true
     bool transposeX2; // x2是否转置，为true时x2shape为（H2，H1）
-    aclnnStatus aclnn_status; //期望状态
+    aclnnStatus aclnnStatusUt; //期望状态
 };
 
-static QuantMatmulAlltoAllAclnnTestParam quant_cases_params[] = {
+static QuantMatmulAlltoAllAclnnTestParam g_quantCasesParams[] = {
     // 正常用例 48条，caseid按照[算子名-x1-x2-bias-x1scale-x2scale-output-format-transpose-id]构成
-    // x1_dtype = ACL_FLOAT8_E4M3FN, x2_dtype = ACL_FLOAT8_E4M3FN (共12个), 按output（bf16、fp16、fp32）分组
+    // x1Dtype = ACL_FLOAT8_E4M3FN, x2Dtype = ACL_FLOAT8_E4M3FN (共12个), 按output（bf16、fp16、fp32）分组
     {"AclnnQuantMatmulAlltoAll-e4m3-e4m3-f32-f32-f32-bf16-nd-notrans-01", 2, 3, 2, {256, 128}, {128, 256}, {256}, {256}, {256}, {512, 128},
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
@@ -123,7 +123,7 @@ static QuantMatmulAlltoAllAclnnTestParam quant_cases_params[] = {
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E4M3FN, ACL_DT_UNDEFINED, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS},
-    // x1_dtype = ACL_FLOAT8_E4M3FN, x2_dtype = ACL_FLOAT8_E5M2 (共12个)
+    // x1Dtype = ACL_FLOAT8_E4M3FN, x2Dtype = ACL_FLOAT8_E5M2 (共12个)
     {"AclnnQuantMatmulAlltoAll-e4m3-e5m2-f32-f32-f32-bf16-nd-notrans-13", 2, 3, 2, {256, 128}, {128, 256}, {256}, {256}, {256}, {512, 128},
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
@@ -172,7 +172,7 @@ static QuantMatmulAlltoAllAclnnTestParam quant_cases_params[] = {
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E5M2, ACL_DT_UNDEFINED, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS},
-    // x1_dtype = ACL_FLOAT8_E5M2, x2_dtype = ACL_FLOAT8_E4M3FN (共12个)
+    // x1Dtype = ACL_FLOAT8_E5M2, x2Dtype = ACL_FLOAT8_E4M3FN (共12个)
     {"AclnnQuantMatmulAlltoAll-e5m2-e4m3-f32-f32-f32-bf16-nd-notrans-25", 2, 3, 2, {256, 128}, {128, 256}, {256}, {256}, {256}, {512, 128},
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
@@ -221,7 +221,7 @@ static QuantMatmulAlltoAllAclnnTestParam quant_cases_params[] = {
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E4M3FN, ACL_DT_UNDEFINED, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
         {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS},
-    // x1_dtype = ACL_FLOAT8_E5M2, x2_dtype = ACL_FLOAT8_E5M2 (共12个)
+    // x1Dtype = ACL_FLOAT8_E5M2, x2Dtype = ACL_FLOAT8_E5M2 (共12个)
     {"AclnnQuantMatmulAlltoAll-e5m2-e5m2-f32-f32-f32-bf16-nd-notrans-37", 2, 3, 2, {256, 128}, {128, 256}, {256}, {256}, {256}, {512, 128},
         ACL_FLOAT8_E5M2, ACL_FLOAT8_E5M2, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT, ACL_BF16,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
@@ -435,66 +435,66 @@ static QuantMatmulAlltoAllAclnnTestParam quant_cases_params[] = {
 
 static void TestQuantOneParamCase(const QuantMatmulAlltoAllAclnnTestParam& param)
 {
-    std::cout << "run case " << param.case_name << std::endl;
+    std::cout << "run case " << param.caseName << std::endl;
     // 从结构体list中获取实际用例属性
-    int64_t x1quantmode = param.x1_quantmode;
-    int64_t x2quantmode = param.x2_quantmode;
-    vector<int64_t> x1Shape = param.x1_shape;
-    vector<int64_t> x2Shape = param.x2_shape;
-    vector<int64_t> biasShape = param.bias_shape;
-    vector<int64_t> x1scalesShape = param.x1_scale_shape;
-    vector<int64_t> x2scalesShape = param.x2_scale_shape;
-    vector<int64_t> outputShape = param.output_shape;
-    aclDataType x1Dtype = param.x1_dtype;
-    aclDataType x2Dtype = param.x2_dtype;
-    aclDataType biasDtype = param.bias_dtype;
-    aclDataType x1scalesDtype = param.x1_scale_dtype;
-    aclDataType x2scalesDtype = param.x2_scale_dtype;
-    aclDataType outputDtype = param.output_dtype;
-    aclFormat x1_format = param.x1_format;
-    aclFormat x2_format = param.x2_format;
-    aclFormat bias_format = param.bias_format;
-    aclFormat x1_scale_format = param.x1_scale_format;
-    aclFormat x2_scale_format = param.x2_scale_format;
-    aclFormat output_format = param.output_format;
-    vector<int64_t> axes_acl = param.alltoAllAxesOptional;
-    aclIntArray *alltoAllAxesOptional = aclCreateIntArray(axes_acl.data(), axes_acl.size());
+    int64_t x1quantmode = param.x1Quantmode;
+    int64_t x2quantmode = param.x2Quantmode;
+    vector<int64_t> x1Shape = param.x1Shape;
+    vector<int64_t> x2Shape = param.x2Shape;
+    vector<int64_t> biasShape = param.biasShape;
+    vector<int64_t> x1scalesShape = param.x1ScaleShape;
+    vector<int64_t> x2scalesShape = param.x2ScaleShape;
+    vector<int64_t> outputShape = param.outputShape;
+    aclDataType x1Dtype = param.x1Dtype;
+    aclDataType x2Dtype = param.x2Dtype;
+    aclDataType biasDtype = param.biasDtype;
+    aclDataType x1scalesDtype = param.x1ScaleDtype;
+    aclDataType x2scalesDtype = param.x2ScaleDtype;
+    aclDataType outputDtype = param.outputDtype;
+    aclFormat x1Format = param.x1Format;
+    aclFormat x2Format = param.x2Format;
+    aclFormat biasFormat = param.biasFormat;
+    aclFormat x1ScaleFormat = param.x1ScaleFormat;
+    aclFormat x2ScaleFormat = param.x2ScaleFormat;
+    aclFormat outputFormat = param.outputFormat;
+    vector<int64_t> axesAcl = param.alltoAllAxesOptional;
+    aclIntArray *alltoAllAxesOptional = aclCreateIntArray(axesAcl.data(), axesAcl.size());
     const char* group = param.group;
     bool transposeX1 = param.transposeX1;
     bool transposeX2 = param.transposeX2;
-    aclnnStatus retStatus = param.aclnn_status;
-    TensorDesc x1 = TensorDesc(x1Shape, x1Dtype, x1_format);
-    TensorDesc x2 = TensorDesc(x2Shape, x2Dtype, x2_format);
-    TensorDesc x1scales = TensorDesc(x1scalesShape, x1scalesDtype, x1_scale_format);
-    TensorDesc x2scales = TensorDesc(x2scalesShape, x2scalesDtype, x2_scale_format);
-    TensorDesc output = TensorDesc(outputShape, outputDtype, output_format);
-    uint64_t workspace_size = 0;
+    aclnnStatus retStatus = param.aclnnStatusUt;
+    TensorDesc x1 = TensorDesc(x1Shape, x1Dtype, x1Format);
+    TensorDesc x2 = TensorDesc(x2Shape, x2Dtype, x2Format);
+    TensorDesc x1scales = TensorDesc(x1scalesShape, x1scalesDtype, x1ScaleFormat);
+    TensorDesc x2scales = TensorDesc(x2scalesShape, x2scalesDtype, x2ScaleFormat);
+    TensorDesc output = TensorDesc(outputShape, outputDtype, outputFormat);
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
     if (biasShape.empty()) {
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
                             INPUT(x1, x2, nullptr, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, group,
                                   x1quantmode, x2quantmode, 0, -1, 0, transposeX1, transposeX2),
                             OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     } else {
-        TensorDesc bias = TensorDesc(biasShape, biasDtype, bias_format);
+        TensorDesc bias = TensorDesc(biasShape, biasDtype, biasFormat);
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
                             INPUT(x1, x2, bias, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, group,
                                   x1quantmode, x2quantmode, 0, -1, 0, transposeX1, transposeX2),
                             OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     }
-    std::cout << "end case " <<  param.case_name << std::endl;
+    std::cout << "end case " <<  param.caseName << std::endl;
 }
 
-TEST_F(test_aclnn_quant_matmul_allto_all, quant_cases_params)
+TEST_F(TestAclnnQuantMatmulAlltoAll, QuantCasesParamsTest)
 {
-    if (std::size(quant_cases_params) != 0) {
-        uint64_t numCases = sizeof(quant_cases_params) / sizeof(quant_cases_params[0]);
+    if (std::size(g_quantCasesParams) != 0) {
+        uint64_t numCases = sizeof(g_quantCasesParams) / sizeof(g_quantCasesParams[0]);
         for (size_t idx = 0; idx < numCases; idx += 1) {
-            TestQuantOneParamCase(quant_cases_params[idx]);
+            TestQuantOneParamCase(g_quantCasesParams[idx]);
         }
     }
 }
@@ -502,23 +502,23 @@ TEST_F(test_aclnn_quant_matmul_allto_all, quant_cases_params)
 // 此表只为构造QuantMatmulAlltoAll暂不支持的参数验证ut
 struct QuantMatmulAlltoAllAclnnTest2Param {
     // 用例名
-    string case_name;
-    vector<int64_t> comm_scale_optional_shape; // 低比特通信的量化系数shape，暂不支持。
-    vector<int64_t> x1_offset_optional_shape; // 左矩阵的偏置shape，暂不支持。
-    vector<int64_t> x2_offset_optional_shape; // 右矩阵的偏置shape，暂不支持。
-    aclDataType comm_scale_optional_dtype; // 低比特通信的量化系数dtype，暂不支持。
-    aclDataType x1_offset_optional_dtype; // 左矩阵的偏置dtype，暂不支持。
-    aclDataType x2_offset_optional_dtype; // 右矩阵的偏置dtype，暂不支持。
-    aclFormat comm_scale_optional_format; // 低比特通信的量化系数format，暂不支持。
-    aclFormat x1_offset_optional_format; // 左矩阵的偏置format，暂不支持。
-    aclFormat x2_offset_optional_format; // 右矩阵的偏置format，暂不支持。
+    string caseName;
+    vector<int64_t> commScaleOptionalShape; // 低比特通信的量化系数shape，暂不支持。
+    vector<int64_t> x1OffsetOptionalShape; // 左矩阵的偏置shape，暂不支持。
+    vector<int64_t> x2OffsetOptionalShape; // 右矩阵的偏置shape，暂不支持。
+    aclDataType commScaleOptionalDtype; // 低比特通信的量化系数dtype，暂不支持。
+    aclDataType x1OffsetOptionalDtype; // 左矩阵的偏置dtype，暂不支持。
+    aclDataType x2OffsetOptionalDtype; // 右矩阵的偏置dtype，暂不支持。
+    aclFormat commScaleOptionalFormat; // 低比特通信的量化系数format，暂不支持。
+    aclFormat x1OffsetOptionalFormat; // 左矩阵的偏置format，暂不支持。
+    aclFormat x2OffsetOptionalFormat; // 右矩阵的偏置format，暂不支持。
     int64_t commQuantMode; // 低比特通信的量化模式，预留参数，当前仅支持配置为0，表示不量化。
     int64_t commQuantDtype; // 低比特通信的量化类型，预留参数，当前仅支持配置为-1，表示ACL_DT_UNDEFINED。
     int64_t groupSize; // 用于Matmul计算三个方向上的量化分组大小，预留参数，T-C量化模式下仅支持配置为0，取值不生效。
-    aclnnStatus aclnn_status; //期望状态
+    aclnnStatus aclnnStatusUt; //期望状态
 };
 
-static QuantMatmulAlltoAllAclnnTest2Param reserved_cases[] = {
+static QuantMatmulAlltoAllAclnnTest2Param g_reservedCases[] = {
     // 正常用例 1条
     // 低比特通信tensor和偏置tensor都为空，commQuantMode取0，commQuantDtype取-1，groupSize取0
     {"AclnnQuantMatmulAlltoAll-all_reserved_params_valid", {}, {}, {}, ACL_DT_UNDEFINED, ACL_DT_UNDEFINED, ACL_DT_UNDEFINED,
@@ -540,18 +540,18 @@ static QuantMatmulAlltoAllAclnnTest2Param reserved_cases[] = {
 
 static void TestQuantReservedCase(const QuantMatmulAlltoAllAclnnTest2Param& param)
 {
-    std::cout << "run case " << param.case_name << std::endl;
+    std::cout << "run case " << param.caseName << std::endl;
     // 从结构体list中获取实际用例属性
-    vector<int64_t> commScaleShape = param.comm_scale_optional_shape;
-    vector<int64_t> x1OffsetShape = param.x1_offset_optional_shape;
-    vector<int64_t> x2OffsetShape = param.x2_offset_optional_shape;
-    aclDataType commScaleDtype = param.comm_scale_optional_dtype;
-    aclDataType x1OffsetDtype = param.x1_offset_optional_dtype;
-    aclDataType x2OffsetDtype = param.x2_offset_optional_dtype;
-    aclFormat commScaleFormat = param.comm_scale_optional_format;
-    aclFormat x1OffsetFormat = param.x1_offset_optional_format;
-    aclFormat x2OffsetFormat = param.x2_offset_optional_format;
-    aclnnStatus retStatus = param.aclnn_status;
+    vector<int64_t> commScaleShape = param.commScaleOptionalShape;
+    vector<int64_t> x1OffsetShape = param.x1OffsetOptionalShape;
+    vector<int64_t> x2OffsetShape = param.x2OffsetOptionalShape;
+    aclDataType commScaleDtype = param.commScaleOptionalDtype;
+    aclDataType x1OffsetDtype = param.x1OffsetOptionalDtype;
+    aclDataType x2OffsetDtype = param.x2OffsetOptionalDtype;
+    aclFormat commScaleFormat = param.commScaleOptionalFormat;
+    aclFormat x1OffsetFormat = param.x1OffsetOptionalFormat;
+    aclFormat x2OffsetFormat = param.x2OffsetOptionalFormat;
+    aclnnStatus retStatus = param.aclnnStatusUt;
     TensorDesc commScale = TensorDesc(commScaleShape, commScaleDtype, commScaleFormat);
     TensorDesc x1Offset = TensorDesc(x1OffsetShape, x1OffsetDtype, x1OffsetFormat);
     TensorDesc x2Offset = TensorDesc(x2OffsetShape, x2OffsetDtype, x2OffsetFormat);
@@ -565,48 +565,48 @@ static void TestQuantReservedCase(const QuantMatmulAlltoAllAclnnTest2Param& para
     TensorDesc x1scales = TensorDesc({256}, ACL_FLOAT, ACL_FORMAT_ND);
     TensorDesc x2scales = TensorDesc({256}, ACL_FLOAT, ACL_FORMAT_ND);
     TensorDesc output = TensorDesc({512, 128}, ACL_FLOAT16, ACL_FORMAT_ND);
-    vector<int64_t> axes_acl = {-1, -2};
-    aclIntArray *alltoAllAxesOptional = aclCreateIntArray(axes_acl.data(), axes_acl.size());
-    uint64_t workspace_size = 0;
+    vector<int64_t> axesAcl = {-1, -2};
+    aclIntArray *alltoAllAxesOptional = aclCreateIntArray(axesAcl.data(), axesAcl.size());
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
     if (!commScaleShape.empty()) {
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
                     INPUT(x1, x2, bias, x1scales, x2scales, commScale, nullptr, nullptr, alltoAllAxesOptional, "ut_test_quant_matmul_allto_all",
                           3, 2, commQuantMode, commQuantDtype, groupSize, false, false),
                     OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     } else if (!x1OffsetShape.empty()) {
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
                     INPUT(x1, x2, bias, x1scales, x2scales, nullptr, x1Offset, nullptr, alltoAllAxesOptional, "ut_test_quant_matmul_allto_all",
                           3, 2, commQuantMode, commQuantDtype, groupSize, false, false),
                     OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     } else if (!x2OffsetShape.empty()) {
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
             INPUT(x1, x2, bias, x1scales, x2scales, nullptr, nullptr, x2Offset, alltoAllAxesOptional, "ut_test_quant_matmul_allto_all",
                   3, 2, commQuantMode, commQuantDtype, groupSize, false, false),
             OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     } else {
         auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
             INPUT(x1, x2, bias, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, "ut_test_quant_matmul_allto_all",
                   3, 2, commQuantMode, commQuantDtype, groupSize, false, false),
             OUTPUT(output));
-        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+        aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
         EXPECT_EQ(aclRet, retStatus);
     }
-    std::cout << "end case " <<  param.case_name << std::endl;
+    std::cout << "end case " <<  param.caseName << std::endl;
 }
 
-TEST_F(test_aclnn_quant_matmul_allto_all, reserved_cases)
+TEST_F(TestAclnnQuantMatmulAlltoAll, ReservedCasesTest)
 {
-    if (std::size(reserved_cases) != 0) {
-        uint64_t numCases = sizeof(reserved_cases) / sizeof(reserved_cases[0]);
+    if (std::size(g_reservedCases) != 0) {
+        uint64_t numCases = sizeof(g_reservedCases) / sizeof(g_reservedCases[0]);
         for (size_t idx = 0; idx < numCases; idx += 1) {
-            TestQuantReservedCase(reserved_cases[idx]);
+            TestQuantReservedCase(g_reservedCases[idx]);
         }
     }
 }

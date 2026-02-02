@@ -48,29 +48,29 @@ struct AlltoAllMatmulTestParam {
     ge::Format biasFormat;
 
     // x1_scale
-    std::initializer_list<int64_t> x1_scaleShape;
-    ge::DataType x1_scaleDtype;
-    ge::Format x1_scaleFormat;
+    std::initializer_list<int64_t> x1ScaleShape;
+    ge::DataType x1ScaleDtype;
+    ge::Format x1ScaleFormat;
 
     // x2_scale
-    std::initializer_list<int64_t> x2_scaleShape;
-    ge::DataType x2_scaleDtype;
-    ge::Format x2_scaleFormat;
+    std::initializer_list<int64_t> x2ScaleShape;
+    ge::DataType x2ScaleDtype;
+    ge::Format x2ScaleFormat;
 
     // comm_scale
-    std::initializer_list<int64_t> comm_scaleShape;
-    ge::DataType comm_scaleDtype;
-    ge::Format comm_scaleFormat;
+    std::initializer_list<int64_t> commScaleShape;
+    ge::DataType commScaleDtype;
+    ge::Format commScaleFormat;
 
     // x1_offset
-    std::initializer_list<int64_t> x1_offsetShape;
-    ge::DataType x1_offsetDtype;
-    ge::Format x1_offsetFormat;
+    std::initializer_list<int64_t> x1OffsetShape;
+    ge::DataType x1OffsetDtype;
+    ge::Format x1OffsetFormat;
 
     // x2_offset
-    std::initializer_list<int64_t> x2_offsetShape;
-    ge::DataType x2_offsetDtype;
-    ge::Format x2_offsetFormat;
+    std::initializer_list<int64_t> x2OffsetShape;
+    ge::DataType x2OffsetDtype;
+    ge::Format x2OffsetFormat;
 
     // output
     // y
@@ -109,7 +109,7 @@ struct AlltoAllMatmulTestParam {
 // ut/
 // expectWorkspaces = 16 * 1024 * 1024
 // tilingDataReservedLen = 43tilingDatamc2InitTilingmc2CcTiling
-static AlltoAllMatmulTestParam test_cases[] = {
+static AlltoAllMatmulTestParam testCases[] = {
     // legal
     {"alltoall_matmul_case_dtype_float16",
      {88, 128}, ge::DT_FLOAT16, ge::FORMAT_ND,
@@ -830,11 +830,11 @@ static void TestOneParamCase(const AlltoAllMatmulTestParam &param)
     gert::StorageShape x1Shape = {param.x1Shape, param.x1Shape};
     gert::StorageShape x2Shape = {param.x2Shape, param.x2Shape};
     gert::StorageShape biasShape = {param.biasShape, param.biasShape};
-    gert::StorageShape x1_scaleShape = {param.x1_scaleShape, param.x1_scaleShape};
-    gert::StorageShape x2_scaleShape = {param.x2_scaleShape, param.x2_scaleShape};
-    gert::StorageShape comm_scaleShape = {param.comm_scaleShape, param.comm_scaleShape};
-    gert::StorageShape x1_offsetShape = {param.x1_offsetShape, param.x1_offsetShape};
-    gert::StorageShape x2_offsetShape = {param.x2_offsetShape, param.x2_offsetShape};
+    gert::StorageShape x1ScaleShape = {param.x1ScaleShape, param.x1ScaleShape};
+    gert::StorageShape x2ScaleShape = {param.x2ScaleShape, param.x2ScaleShape};
+    gert::StorageShape commScaleShape = {param.commScaleShape, param.commScaleShape};
+    gert::StorageShape x1OffsetShape = {param.x1OffsetShape, param.x1OffsetShape};
+    gert::StorageShape x2OffsetShape = {param.x2OffsetShape, param.x2OffsetShape};
 
     gert::StorageShape yShape = {param.yShape, param.yShape};
     gert::StorageShape all2allOutShape = {param.all2allOutShape, param.all2allOutShape};
@@ -844,11 +844,11 @@ static void TestOneParamCase(const AlltoAllMatmulTestParam &param)
         {{x1Shape, param.x1Dtype, param.x1Format},
          {x2Shape, param.x2Dtype, param.x2Format},
          {biasShape, param.biasDtype, param.biasFormat},
-         {x1_scaleShape, param.x1_scaleDtype, param.x1_scaleFormat},
-         {x2_scaleShape, param.x2_scaleDtype, param.x2_scaleFormat},
-         {comm_scaleShape, param.comm_scaleDtype, param.comm_scaleFormat},
-         {x1_offsetShape, param.x1_offsetDtype, param.x1_offsetFormat},
-         {x2_offsetShape, param.x2_offsetDtype, param.x2_offsetFormat}});
+         {x1ScaleShape, param.x1ScaleDtype, param.x1ScaleFormat},
+         {x2ScaleShape, param.x2ScaleDtype, param.x2ScaleFormat},
+         {commScaleShape, param.commScaleDtype, param.commScaleFormat},
+         {x1OffsetShape, param.x1OffsetDtype, param.x1OffsetFormat},
+         {x2OffsetShape, param.x2OffsetDtype, param.x2OffsetFormat}});
 
     //  output tensor
     std::vector<gert::TilingContextPara::TensorDescription> outputTensorDesc_(
@@ -895,16 +895,16 @@ static void TestExecMultiThread(const AlltoAllMatmulTestParam *testCases, size_t
     }
 }
 
-TEST_P(TestAlltoAllMatmulTiling, general_cases)
+TEST_P(TestAlltoAllMatmulTiling, GeneralCases)
 {
     TestOneParamCase(GetParam());
 }
 
-TEST_F(TestAlltoAllMatmulTiling, general_cases_multi_thread)
+TEST_F(TestAlltoAllMatmulTiling, GeneralCasesMultiThread)
 {
-    TestExecMultiThread(test_cases, sizeof(test_cases) / sizeof(AlltoAllMatmulTestParam), 1);
+    TestExecMultiThread(testCases, sizeof(testCases) / sizeof(AlltoAllMatmulTestParam), 1);
 }
 
-INSTANTIATE_TEST_CASE_P(AlltoAllMatmulTilingUT, TestAlltoAllMatmulTiling, testing::ValuesIn(test_cases));
+INSTANTIATE_TEST_CASE_P(AlltoAllMatmulTilingUT, TestAlltoAllMatmulTiling, testing::ValuesIn(testCases));
 
 } // namespace

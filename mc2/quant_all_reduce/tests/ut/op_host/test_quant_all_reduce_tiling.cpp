@@ -64,7 +64,7 @@ inline std::ostream& operator<<(std::ostream& os, const QuantAllReduceTestParam&
 
 // 构造ut用例：这里可以按照正常用例/异常用例分开声明
 // expectWorkspaces = 16 * 1024 * 1024
-static QuantAllReduceTestParam test_cases[] = {
+static QuantAllReduceTestParam g_testCases[] = {
     {"quant_all_reduce_critical_case_1",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
@@ -244,7 +244,7 @@ static void TestExecMultiThread(const QuantAllReduceTestParam *testCases, size_t
     }
 }
 
-TEST_P(TestQuantAllReduceTiling, general_cases)
+TEST_P(TestQuantAllReduceTiling, GeneralCases)
 {
     auto param = GetParam();
     auto tilingContextPara = BuildTilingContextPara(param);
@@ -253,11 +253,11 @@ TEST_P(TestQuantAllReduceTiling, general_cases)
                        param.expectTilingData, param.expectWorkspaces, param.mc2TilingDataReservedLen);
 }
 
-TEST_F(TestQuantAllReduceTiling, general_cases_multi_thread)
+TEST_F(TestQuantAllReduceTiling, GeneralCasesMultiThread)
 {
-    TestExecMultiThread(test_cases, sizeof(test_cases) / sizeof(QuantAllReduceTestParam), 3);
+    TestExecMultiThread(g_testCases, sizeof(g_testCases) / sizeof(QuantAllReduceTestParam), 3);
 }
 
-INSTANTIATE_TEST_CASE_P(QuantAllReduceTilingUT, TestQuantAllReduceTiling, testing::ValuesIn(test_cases));
+INSTANTIATE_TEST_CASE_P(QuantAllReduceTilingUT, TestQuantAllReduceTiling, testing::ValuesIn(g_testCases));
 
 } // namespace

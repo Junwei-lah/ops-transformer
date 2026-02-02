@@ -19,20 +19,27 @@ namespace {
 // inferShape用例 ======================================================================================================
 class AllGatherMatmulV2InferShapeTest : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "AllGatherMatmulV2InferShapeTest SetUp" << std::endl; }
-    static void TearDownTestCase() { std::cout << "AllGatherMatmulV2InferShapeTest TearDown" << std::endl; }
+    static void SetUpTestCase()
+    {
+        std::cout << "AllGatherMatmulV2InferShapeTest SetUp" << std::endl;
+    }
+
+    static void TearDownTestCase()
+    {
+        std::cout << "AllGatherMatmulV2InferShapeTest TearDown" << std::endl;
+    }
 };
 
-TEST_F(AllGatherMatmulV2InferShapeTest, basic)
+TEST_F(AllGatherMatmulV2InferShapeTest, Basic)
 {
-    gert::StorageShape x1_shape = {{8192, 12288}, {}};
-    gert::StorageShape x2_shape = {{12288, 3904}, {}};
+    gert::StorageShape x1Shape = {{8192, 12288}, {}};
+    gert::StorageShape x2Shape = {{12288, 3904}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "AllGatherMatmulV2",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -62,16 +69,16 @@ TEST_F(AllGatherMatmulV2InferShapeTest, basic)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(AllGatherMatmulV2InferShapeTest, empty_tensor_fail_test)
+TEST_F(AllGatherMatmulV2InferShapeTest, EmptyTensorFailTest)
 {
-    gert::StorageShape x1_shape = {{8192, 0}, {}};
-    gert::StorageShape x2_shape = {{0, 3904}, {}};
+    gert::StorageShape x1Shape = {{8192, 0}, {}};
+    gert::StorageShape x2Shape = {{0, 3904}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "AllGatherMatmulV2",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -100,21 +107,21 @@ TEST_F(AllGatherMatmulV2InferShapeTest, empty_tensor_fail_test)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AllGatherMatmulV2InferShapeTest, pertensor)
+TEST_F(AllGatherMatmulV2InferShapeTest, Pertensor)
 {
-    gert::StorageShape x1_shape = {{8192, 12288}, {}};
-    gert::StorageShape x2_shape = {{12288, 3904}, {}};
-    gert::StorageShape x1_scale_shape = {{1}, {}};
-    gert::StorageShape x2_scale_shape = {{1}, {}};
+    gert::StorageShape x1Shape = {{8192, 12288}, {}};
+    gert::StorageShape x2Shape = {{12288, 3904}, {}};
+    gert::StorageShape x1ScaleShape = {{1}, {}};
+    gert::StorageShape x2ScaleShape = {{1}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "AllGatherMatmulV2",
         {
-            {x1_shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{x1_scale_shape}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{x2_scale_shape}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{x1ScaleShape}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{x2ScaleShape}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -144,21 +151,21 @@ TEST_F(AllGatherMatmulV2InferShapeTest, pertensor)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(AllGatherMatmulV2InferShapeTest, perblock)
+TEST_F(AllGatherMatmulV2InferShapeTest, Perblock)
 {
-    gert::StorageShape x1_shape = {{8192, 12288}, {}};
-    gert::StorageShape x2_shape = {{12288, 3904}, {}};
-    gert::StorageShape x1_scale_shape = {{64, 96}, {}};
-    gert::StorageShape x2_scale_shape = {{96, 30}, {}};
+    gert::StorageShape x1Shape = {{8192, 12288}, {}};
+    gert::StorageShape x2Shape = {{12288, 3904}, {}};
+    gert::StorageShape x1ScaleShape = {{64, 96}, {}};
+    gert::StorageShape x2ScaleShape = {{96, 30}, {}};
 
     gert::InfershapeContextPara infershapeContextPara(
         "AllGatherMatmulV2",
         {
-            {x1_shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
+            {x1Shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT8_E5M2, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{x1_scale_shape}, ge::DT_FLOAT, ge::FORMAT_ND},
-            {{x2_scale_shape}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{x1ScaleShape}, ge::DT_FLOAT, ge::FORMAT_ND},
+            {{x2ScaleShape}, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -191,17 +198,23 @@ TEST_F(AllGatherMatmulV2InferShapeTest, perblock)
 // inferDtype用例 ======================================================================================================
 class AllGatherMatmulV2InferDTypeTest : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "AllGatherMatmulV2InferDTypeTest SetUp" << std::endl; }
-    static void TearDownTestCase() { std::cout << "AllGatherMatmulV2InferDTypeTest TearDown" << std::endl; }
+    static void SetUpTestCase()
+    {
+        std::cout << "AllGatherMatmulV2InferDTypeTest SetUp" << std::endl;
+    }
+    static void TearDownTestCase()
+    {
+        std::cout << "AllGatherMatmulV2InferDTypeTest TearDown" << std::endl;
+    }
 };
 
-TEST_F(AllGatherMatmulV2InferDTypeTest, y_dtype_equal_x1_dtype_fp16)
+TEST_F(AllGatherMatmulV2InferDTypeTest, YDtypeEqualX1DtypeFp16)
 {
-    ge::DataType x1_type = ge::DT_FLOAT16;
+    ge::DataType x1Type = ge::DT_FLOAT16;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
         .NodeIoNum(1, 2)
-        .InputDataTypes({&x1_type})
+        .InputDataTypes({&x1Type})
         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
         .Build();
@@ -209,17 +222,17 @@ TEST_F(AllGatherMatmulV2InferDTypeTest, y_dtype_equal_x1_dtype_fp16)
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("AllGatherMatmulV2")->infer_datatype;
     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1_type);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1_type);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1Type);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1Type);
 }
 
-TEST_F(AllGatherMatmulV2InferDTypeTest, y_dtype_equal_x1_dtype_bf16)
+TEST_F(AllGatherMatmulV2InferDTypeTest, YDtypeEqualX1DtypeBf16)
 {
-    ge::DataType x1_type = ge::DT_BF16;
+    ge::DataType x1Type = ge::DT_BF16;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
         .NodeIoNum(1, 2)
-        .InputDataTypes({&x1_type})
+        .InputDataTypes({&x1Type})
         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
         .Build();
@@ -227,18 +240,18 @@ TEST_F(AllGatherMatmulV2InferDTypeTest, y_dtype_equal_x1_dtype_bf16)
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("AllGatherMatmulV2")->infer_datatype;
     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1_type);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1_type);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), x1Type);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1Type);
 }
 
-TEST_F(AllGatherMatmulV2InferDTypeTest, attr_y_dtype)
+TEST_F(AllGatherMatmulV2InferDTypeTest, AttrYDtype)
 {
-    ge::DataType x1_type = ge::DT_FLOAT8_E5M2;
-    ge::DataType attr_y_dtype = ge::DT_FLOAT;
+    ge::DataType x1Type = ge::DT_FLOAT8_E5M2;
+    ge::DataType attrYDtype = ge::DT_FLOAT;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
         .NodeIoNum(1, 2)
-        .InputDataTypes({&x1_type})
+        .InputDataTypes({&x1Type})
         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeAttrs({
@@ -252,15 +265,15 @@ TEST_F(AllGatherMatmulV2InferDTypeTest, attr_y_dtype)
             {"group_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
             {"is_gather_out", Ops::Transformer::AnyValue::CreateFrom<bool>(true)},
             {"is_amax_out", Ops::Transformer::AnyValue::CreateFrom<bool>(false)},
-            {"y_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(static_cast<int>(attr_y_dtype))}
+            {"y_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(static_cast<int>(attrYDtype))}
         })
         .Build();
 
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     auto inferDataTypeFunc = spaceRegistry->GetOpImpl("AllGatherMatmulV2")->infer_datatype;
     ASSERT_EQ(inferDataTypeFunc(contextHolder.GetContext<gert::InferDataTypeContext>()), ge::GRAPH_SUCCESS);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), attr_y_dtype);
-    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1_type);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), attrYDtype);
+    EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), x1Type);
 }
 
 } // namespace

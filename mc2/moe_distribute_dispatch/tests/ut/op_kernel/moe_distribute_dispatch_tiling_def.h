@@ -13,13 +13,13 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "../../../../moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_tiling.h"
 
-inline void InitMoeDistributeDispatchTilingData(uint8_t* tiling, MoeDistributeDispatchA2TilingData* const_data)
+inline void InitMoeDistributeDispatchTilingData(uint8_t* tiling, MoeDistributeDispatchA2TilingData* constData)
 {
-    memcpy(const_data, tiling, sizeof(MoeDistributeDispatchA2TilingData));
+    memcpy(constData, tiling, sizeof(MoeDistributeDispatchA2TilingData));
 }
 
-#define GET_TILING_DATA_WITH_STRUCT(MoeDistributeDispatchA2TilingData, tiling_data, tiling_arg)       \
-    MoeDistributeDispatchA2TilingData tiling_data;                                                 \
-    InitMoeDistributeDispatchTilingData(tiling_arg, &tiling_data)
+#define GET_TILINGDATA_WITH_STRUCT(MoeDistributeDispatchA2TilingData, tilingData, tilingArg)       \
+    MoeDistributeDispatchA2TilingData tilingData;                                                 \
+    InitMoeDistributeDispatchTilingData(tilingArg, &tilingData)
 
 #endif

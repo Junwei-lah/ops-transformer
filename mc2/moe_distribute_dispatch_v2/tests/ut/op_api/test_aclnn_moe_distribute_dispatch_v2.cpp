@@ -25,22 +25,23 @@ using namespace op;
 using namespace std;
 
 namespace MoeDistributeDispatchV2 {
-class l2_aclnn_moe_distribute_dispatch_v2_test : public testing::Test {
+class L2AclnnMoeDistributeDispatchV2Test : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-        cout << "l2_aclnn_moe_distribute_dispatch_v2_test SetUp" << endl;
+        cout << "L2AclnnMoeDistributeDispatchV2Test SetUp" << endl;
     }
 
     static void TearDownTestCase()
     {
         op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-        cout << "l2_aclnn_moe_distribute_dispatch_v2_test TearDown" << endl;
+        cout << "L2AclnnMoeDistributeDispatchV2Test TearDown" << endl;
     }
 };
 
-TEST_F(l2_aclnn_moe_distribute_dispatch_v2_test, test_aclnn_moe_distribute_dispatch_first_api) {
+TEST_F(L2AclnnMoeDistributeDispatchV2Test, TestAclnnMoeDistributeDispatchFirstApi)
+{
     TensorDesc x = TensorDesc({8, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc expertIds = TensorDesc({8, 8}, ACL_INT32, ACL_FORMAT_ND);
     TensorDesc scales = TensorDesc({256, 7168}, ACL_FLOAT, ACL_FORMAT_ND);
@@ -71,9 +72,9 @@ TEST_F(l2_aclnn_moe_distribute_dispatch_v2_test, test_aclnn_moe_distribute_dispa
                                                             epWorldSize, epRankId, moeExpertNum, "test_moe_distribute_dispatch_tp",
                                                             tpWorldSize, tpRankId, expertShardType, sharedExpertNum, shareExpertRankNum, quantMode, globalBs, expertTokenNumsType, "test"),
                         OUTPUT(expandX, dynamicScales, expandIdx, expertTokensNums, epRecvCounts, tpRecvCounts, expandScales));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 } // MoeDistributeDispatchV2

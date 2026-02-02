@@ -17,34 +17,41 @@
 namespace MoeUpdateExpertInfershapeUT{
 class MoeUpdateExpertInfershape : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "MoeUpdateExpertInfershape SetUp" << std::endl; }
-    static void TearDownTestCase() { std::cout << "MoeUpdateExpertInfershape TearDown" << std::endl; }
+    static void SetUpTestCase()
+    {
+        std::cout << "MoeUpdateExpertInfershape SetUp" << std::endl;
+    }
+    static void TearDownTestCase()
+    {
+        std::cout << "MoeUpdateExpertInfershape TearDown" << std::endl;
+    }
 };
 
-TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_shape) {
-    gert::StorageShape expert_ids_shape = {{128, 8}, {128, 8}};
-    gert::StorageShape eplb_table_shape = {{56, 5}, {56, 5}};
+TEST_F(MoeUpdateExpertInfershape, MoeUpdateExpertTestShape)
+{
+    gert::StorageShape expertIdsShape = {{128, 8}, {128, 8}};
+    gert::StorageShape eplbTableShape = {{56, 5}, {56, 5}};
 
-    gert::StorageShape balanced_expert_ids_shape = {{128, 8}, {128, 8}};
-    gert::StorageShape balanced_active_mask_shape = {{128, 8}, {128, 8}};
+    gert::StorageShape balancedExpertIdsShape = {{128, 8}, {128, 8}};
+    gert::StorageShape balancedActiveMaskShape = {{128, 8}, {128, 8}};
 
-    int64_t local_rank_id = 0;
-    int64_t world_size = 8;
-    int64_t balance_mode = 0;
+    int64_t localRankId = 0;
+    int64_t worldSize = 8;
+    int64_t balanceMode = 0;
 
     gert::InfershapeContextPara infershapeContextPara("MoeUpdateExpert",
         {
-            {expert_ids_shape, ge::DT_INT64, ge::FORMAT_ND},
-            {eplb_table_shape, ge::DT_INT32, ge::FORMAT_ND},
+            {expertIdsShape, ge::DT_INT64, ge::FORMAT_ND},
+            {eplbTableShape, ge::DT_INT32, ge::FORMAT_ND},
         },
         {
-            {balanced_expert_ids_shape, ge::DT_INT64, ge::FORMAT_ND},
-            {balanced_active_mask_shape, ge::DT_BOOL, ge::FORMAT_ND},
+            {balancedExpertIdsShape, ge::DT_INT64, ge::FORMAT_ND},
+            {balancedActiveMaskShape, ge::DT_BOOL, ge::FORMAT_ND},
         },
         {
-            {"local_rank_id", Ops::Transformer::AnyValue::CreateFrom<int64_t>(local_rank_id)},
-            {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(world_size)},
-            {"balance_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(balance_mode)},
+            {"localRankId", Ops::Transformer::AnyValue::CreateFrom<int64_t>(localRankId)},
+            {"worldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(worldSize)},
+            {"balanceMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(balanceMode)},
         }
     );
     Mc2Hcom::MockValues hcomTopologyMockValues {
@@ -55,36 +62,37 @@ TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_shape) {
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
-TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_enhanced_shape) {
-    gert::StorageShape expert_ids_shape = {{128, 8}, {128, 8}};
-    gert::StorageShape eplb_table_shape = {{56, 5}, {56, 5}};
-    gert::StorageShape expert_scales_shape = {{128, 8}, {128, 8}};
-    gert::StorageShape pruing_threshold_shape = {{8, }, {8, }};
-    gert::StorageShape active_mask_shape = {{128,}, {128,}};
+TEST_F(MoeUpdateExpertInfershape, MoeUpdateExpertTestEnhancedShape)
+{
+    gert::StorageShape expertIdsShape = {{128, 8}, {128, 8}};
+    gert::StorageShape eplbTableShape = {{56, 5}, {56, 5}};
+    gert::StorageShape expertScalesShape = {{128, 8}, {128, 8}};
+    gert::StorageShape pruingThresholdShape = {{8, }, {8, }};
+    gert::StorageShape activeMaskShape = {{128,}, {128,}};
 
-    gert::StorageShape balanced_expert_ids_shape = {{128, 8}, {128, 8}};
-    gert::StorageShape balanced_active_mask_shape = {{128, 8}, {128, 8}};
+    gert::StorageShape balancedExpertIdsShape = {{128, 8}, {128, 8}};
+    gert::StorageShape balancedActiveMaskShape = {{128, 8}, {128, 8}};
 
-    int64_t local_rank_id = 0;
-    int64_t world_size = 8;
-    int64_t balance_mode = 0;
+    int64_t localRankId = 0;
+    int64_t worldSize = 8;
+    int64_t balanceMode = 0;
 
     gert::InfershapeContextPara infershapeContextPara("MoeUpdateExpert",
         {
-            {expert_ids_shape, ge::DT_INT64, ge::FORMAT_ND},
-            {eplb_table_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {expert_scales_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {pruing_threshold_shape, ge::DT_FLOAT, ge::FORMAT_ND},
-            {active_mask_shape, ge::DT_BOOL, ge::FORMAT_ND},
+            {expertIdsShape, ge::DT_INT64, ge::FORMAT_ND},
+            {eplbTableShape, ge::DT_INT32, ge::FORMAT_ND},
+            {expertScalesShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {pruingThresholdShape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {activeMaskShape, ge::DT_BOOL, ge::FORMAT_ND},
         },
         {
-            {balanced_expert_ids_shape, ge::DT_INT64, ge::FORMAT_ND},
-            {balanced_active_mask_shape, ge::DT_BOOL, ge::FORMAT_ND},
+            {balancedExpertIdsShape, ge::DT_INT64, ge::FORMAT_ND},
+            {balancedActiveMaskShape, ge::DT_BOOL, ge::FORMAT_ND},
         },
         {
-            {"local_rank_id", Ops::Transformer::AnyValue::CreateFrom<int64_t>(local_rank_id)},
-            {"world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(world_size)},
-            {"balance_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(balance_mode)},
+            {"localRankId", Ops::Transformer::AnyValue::CreateFrom<int64_t>(localRankId)},
+            {"worldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(worldSize)},
+            {"balanceMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(balanceMode)},
         }
     );
     Mc2Hcom::MockValues hcomTopologyMockValues {
@@ -96,13 +104,14 @@ TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_enhanced_shape) {
 }
 
 
-TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_type) {
-    ge::DataType expert_ids_type = ge::DT_INT64;
-    ge::DataType eplb_table_type = ge::DT_INT32;
+TEST_F(MoeUpdateExpertInfershape, MoeUpdateExpertTestType)
+{
+    ge::DataType expertIdsType = ge::DT_INT64;
+    ge::DataType eplbTableType = ge::DT_INT32;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
                     .NodeIoNum(2, 2)
-                    .InputDataTypes({&expert_ids_type, &eplb_table_type})
+                    .InputDataTypes({&expertIdsType, &eplbTableType})
                     .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
                     .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
                     .Build();
@@ -115,17 +124,18 @@ TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_type) {
     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(1), ge::DT_BOOL);
 }
 
-TEST_F(MoeUpdateExpertInfershape, moe_update_expert_test_enhanced_type) {
-    ge::DataType expert_ids_type = ge::DT_INT64;
-    ge::DataType eplb_table_type = ge::DT_INT32;
-    ge::DataType expert_scales_type = ge::DT_FLOAT16;
-    ge::DataType pruning_threshold_type = ge::DT_FLOAT;
-    ge::DataType active_mask_type = ge::DT_BOOL;
+TEST_F(MoeUpdateExpertInfershape, MoeUpdateExpertTestEnhancedType)
+{
+    ge::DataType expertIdsType = ge::DT_INT64;
+    ge::DataType eplbTableType = ge::DT_INT32;
+    ge::DataType expertScalesType = ge::DT_FLOAT16;
+    ge::DataType pruningThresholdType = ge::DT_FLOAT;
+    ge::DataType activeMaskType = ge::DT_BOOL;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
                     .NodeIoNum(5, 2)
-                    .InputDataTypes({&expert_ids_type, &eplb_table_type, &expert_scales_type,
-                                     &pruning_threshold_type, &active_mask_type})
+                    .InputDataTypes({&expertIdsType, &eplbTableType, &expertScalesType,
+                                     &pruningThresholdType, &activeMaskType})
                     .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
                     .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
                     .Build();

@@ -14,27 +14,30 @@
 #include "infer_datatype_context_faker.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-namespace all_gather_matmul_ut {
+namespace AllGatherMatmulUt {
 
 class AllGatherMatmulInferShapeTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "AllGatherMatmulInferShapeTest SetUp" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "AllGatherMatmulInferShapeTest TearDown" << std::endl;
     }
 };
 
-TEST_F(AllGatherMatmulInferShapeTest, basic) {
-    gert::StorageShape x1_shape = {{8192, 12288}, {}};
-    gert::StorageShape x2_shape = {{12288, 3904}, {}};
+TEST_F(AllGatherMatmulInferShapeTest, Basic)
+{
+    gert::StorageShape x1Shape = {{8192, 12288}, {}};
+    gert::StorageShape x2Shape = {{12288, 3904}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("AllGatherMatmul",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -58,14 +61,15 @@ TEST_F(AllGatherMatmulInferShapeTest, basic) {
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(AllGatherMatmulInferShapeTest, empty_tensor_test) {
-    gert::StorageShape x1_shape = {{8192, 0}, {}};
-    gert::StorageShape x2_shape = {{0, 3904}, {}};
+TEST_F(AllGatherMatmulInferShapeTest, EmptyTensorTest)
+{
+    gert::StorageShape x1Shape = {{8192, 0}, {}};
+    gert::StorageShape x2Shape = {{0, 3904}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("AllGatherMatmul",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -88,14 +92,15 @@ TEST_F(AllGatherMatmulInferShapeTest, empty_tensor_test) {
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AllGatherMatmulInferShapeTest, is_gather_out_false) {
-    gert::StorageShape x1_shape = {{8192, 12288}, {}};
-    gert::StorageShape x2_shape = {{12288, 3904}, {}};
+TEST_F(AllGatherMatmulInferShapeTest, IsGatherOutFalse)
+{
+    gert::StorageShape x1Shape = {{8192, 12288}, {}};
+    gert::StorageShape x2Shape = {{12288, 3904}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("AllGatherMatmul",
         {
-            {x1_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {x2_shape, ge::DT_FLOAT16, ge::FORMAT_ND}
+            {x1Shape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {x2Shape, ge::DT_FLOAT16, ge::FORMAT_ND}
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -119,12 +124,13 @@ TEST_F(AllGatherMatmulInferShapeTest, is_gather_out_false) {
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(AllGatherMatmulInferShapeTest, infer_datatype) {
-    ge::DataType x1_type = ge::DT_FLOAT16;
-    ge::DataType x2_type = ge::DT_FLOAT16;
-    ge::DataType bias_type = ge::DT_FLOAT16;
-    ge::DataType output_type = ge::DT_UNDEFINED;
-    ge::DataType gather_output_type = ge::DT_UNDEFINED;
+TEST_F(AllGatherMatmulInferShapeTest, InferDatatype)
+{
+    ge::DataType x1Type = ge::DT_FLOAT16;
+    ge::DataType x2Type = ge::DT_FLOAT16;
+    ge::DataType biasType = ge::DT_FLOAT16;
+    ge::DataType outputType = ge::DT_UNDEFINED;
+    ge::DataType gatherOutputType = ge::DT_UNDEFINED;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
         .NodeIoNum(3, 2)
@@ -135,13 +141,13 @@ TEST_F(AllGatherMatmulInferShapeTest, infer_datatype) {
                     {"comm_turn", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
                     {"rank_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
                     {"is_gather_out", Ops::Transformer::AnyValue::CreateFrom<int64_t>(true)}})
-        .NodeInputTd(0, x1_type, ge::FORMAT_ND, ge::FORMAT_ND)
-        .NodeInputTd(1, x2_type, ge::FORMAT_ND, ge::FORMAT_ND)
-        .NodeInputTd(2, bias_type, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(0, x1Type, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(1, x2Type, ge::FORMAT_ND, ge::FORMAT_ND)
+        .NodeInputTd(2, biasType, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
         .NodeOutputTd(1, ge::FORMAT_ND, ge::FORMAT_ND)
-        .InputDataTypes({&x1_type, &x2_type, &bias_type})
-        .OutputDataTypes({&output_type, &gather_output_type})
+        .InputDataTypes({&x1Type, &x2Type, &biasType})
+        .OutputDataTypes({&outputType, &gatherOutputType})
         .Build();
 
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();

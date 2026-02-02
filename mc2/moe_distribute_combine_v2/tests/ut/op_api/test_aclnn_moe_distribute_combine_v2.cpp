@@ -25,22 +25,23 @@ using namespace op;
 using namespace std;
 
 namespace MoeDistributeCombineV2 {
-class l2_moe_distribute_combine_v2_test : public testing::Test {
- protected:
-  static void SetUpTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "l2_moe_distribute_combine_test SetUp" << endl;
-  }
+class L2MoeDistributeCombineV2Test : public testing::Test {
+protected:
+    static void SetUpTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "l2_moe_distribute_combine_test SetUp" << endl;
+    }
 
-  static void TearDownTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "l2_moe_distribute_combine_test TearDown" << endl;
-  }
+    static void TearDownTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "l2_moe_distribute_combine_test TearDown" << endl;
+    }
 };
 
-TEST_F(l2_moe_distribute_combine_v2_test, test_moe_distribute_combine_first_api) {
+TEST_F(L2MoeDistributeCombineV2Test, TestMoeDistributeCombineFirstApi)
+{
   TensorDesc expandX = TensorDesc({32, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
   TensorDesc expertIds = TensorDesc({32, 8}, ACL_INT32, ACL_FORMAT_ND);
   TensorDesc expandIdx = TensorDesc({32*8}, ACL_INT32, ACL_FORMAT_ND);
@@ -65,7 +66,7 @@ TEST_F(l2_moe_distribute_combine_v2_test, test_moe_distribute_combine_first_api)
   int64_t globalBs = 0;
   int64_t outDtype = 0;
   int64_t commQuantMode = 0;
-  int64_t groupList_type = 0;
+  int64_t groupListType = 0;
 
   TensorDesc x = TensorDesc({32, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 
@@ -73,7 +74,7 @@ TEST_F(l2_moe_distribute_combine_v2_test, test_moe_distribute_combine_first_api)
                       xActiveMask, activationScale, weightScale, groupList, expandScales, sharedExpertX,
                       "test_moe_distribute_combine_ep", epWorldSize, epRankId, moeExpertNum,
                       "test_moe_distribute_combine_tp", tpWorldSize, tpRankId,
-                      expertShardType, sharedExpertNum, sharedExpertRankNum, globalBs, outDtype, commQuantMode, groupList_type, "test"),
+                      expertShardType, sharedExpertNum, sharedExpertRankNum, globalBs, outDtype, commQuantMode, groupListType, "test"),
                                         OUTPUT(x));
   uint64_t workspace_size = 0;
   aclOpExecutor* executor = nullptr;

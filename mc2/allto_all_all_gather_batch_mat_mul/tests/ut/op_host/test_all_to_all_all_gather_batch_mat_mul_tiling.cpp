@@ -18,19 +18,20 @@
 
 using namespace std;
 
-class AlltoAllAllGatherBmmTiling : public testing::Test
-{
+class AlltoAllAllGatherBmmTiling : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         std::cout << "AlltoAllAllGatherBmmTiling SetUp" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         std::cout << "AlltoAllAllGatherBmmTiling TearDown" << std::endl;
     }
 };
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_1)
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Test1)
 {
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
@@ -60,7 +61,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -89,7 +91,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_0_invalid_H) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard0InvalidH)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -118,7 +121,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_0_unequal_H) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard0UnequalH)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -147,7 +151,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_1_weight_trans) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Test1WeightTrans)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -176,7 +181,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xShard_1_actType_1) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16XShard1ActType1)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -205,7 +211,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xShard_1_actType_4) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16XShard1ActType4)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -234,7 +241,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_invalid_E) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16InvalidE)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -262,7 +270,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -291,7 +300,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_invalid_EOverep_intercept) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingInvalidEOverepIntercept)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -319,7 +329,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBias)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -349,7 +360,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_bf16) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasBf16)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -379,7 +391,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_0) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard0)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -407,7 +420,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_1) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard1)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -435,7 +449,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_1_test1) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Shard1Test1)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -463,7 +478,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test1) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest1)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -492,7 +508,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test2) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest2)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -521,7 +538,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test3) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest3)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -550,7 +568,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test4) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest4)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -579,7 +598,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test5) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest5)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -608,7 +628,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test6) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest6)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -637,7 +658,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test7) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest7)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -666,7 +688,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test8) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest8)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -695,7 +718,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test9) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest9)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -724,7 +748,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test10) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest10)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -753,7 +778,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test11) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest11)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -782,7 +808,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_shard_with_bias_test12) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16ShardWithBiasTest12)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -811,7 +838,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_ep2) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0Ep2)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -840,7 +868,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_cut_e) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0CutE)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -869,7 +898,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_cut_c) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0CutC)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -898,7 +928,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_tile_short) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0TileShort)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -927,7 +958,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_multi_e) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0MultiE)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;
@@ -956,7 +988,8 @@ TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tilin
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AlltoAllAllGatherBmmTiling, all_to_all_all_gather_batch_matmul_test_tiling_float16_xshard_0_local_tail_e) {
+TEST_F(AlltoAllAllGatherBmmTiling, AllToAllAllGatherBatchMatmulTestTilingFloat16Xshard0LocalTailE)
+{
     struct DistributeBarrierCompileInfo {} compileInfo;
     const std::string socVersion = "Ascend910_93";
     uint64_t coreNum = 20;

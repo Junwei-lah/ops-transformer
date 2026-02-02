@@ -1,12 +1,12 @@
 /**
+ * This program is free software, you can redistribute it and/or modify.
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * This file is a part of the CANN Open Software.
+ * Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <iostream>
 #include <gtest/gtest.h>
@@ -26,7 +26,8 @@ protected:
     }
 };
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_sync_no_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingNoQuantSyncNoActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -60,7 +61,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_sync_no_activate_m
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_async_no_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingNoQuantAsyncNoActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -94,7 +96,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_async_no_activate_
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_sync_no_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingQuantSyncNoActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -128,7 +131,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_sync_no_activate_mask
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_async_no_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingQuantAsyncNoActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -162,7 +166,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_async_no_activate_mas
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_sync_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingNoQuantSyncActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -197,7 +202,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_sync_activate_mask
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_async_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingNoQuantAsyncActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -233,7 +239,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_no_quant_async_activate_mas
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_sync_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingQuantSyncActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -269,7 +276,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_sync_activate_mask) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_async_activate_mask) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingQuantAsyncActivateMask)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -305,7 +313,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_quant_async_activate_mask) 
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_num_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingMicroBatchNumInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -338,7 +347,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_num_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_bs_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingBsInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -371,7 +381,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_bs_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_k_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingKInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -404,7 +415,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_k_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_h_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingHInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -437,7 +449,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_h_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layer_num_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingLayerNumInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -470,7 +483,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layer_num_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_moe_expert_num_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingMoeExpertNumInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -503,7 +517,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_moe_expert_num_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_ffn_token_info_table_shape_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingFfnTokenInfoTableShapeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -536,7 +551,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_ffn_token_info_table_shape_
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_ffn_token_data_shape_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingFfnTokenDataShapeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -569,7 +585,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_ffn_token_data_shape_invali
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_attn_token_info_table_shape_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingAttnTokenInfoTableShapeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -602,7 +619,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_attn_token_info_table_shape
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingXDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -635,7 +653,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingSessionIdDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -668,7 +687,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingMicroBatchIdDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -701,7 +721,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_dim_invalid)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layer_id_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingLayerIdDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -734,7 +755,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layer_id_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertIdsDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -767,7 +789,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertRankTableDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -800,7 +823,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_dim_inval
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingScalesDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -834,7 +858,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_active_mask_dim_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingActiveMaskDimInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -869,7 +894,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_active_mask_dim_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingXDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -902,7 +928,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_dtype_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingSessionIdDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -935,7 +962,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_dtype_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingMicroBatchIdDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -968,7 +996,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_dtype_invali
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layler_id_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingLayerIdDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1001,7 +1030,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layler_id_dtype_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertIdsDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1034,7 +1064,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_dtype_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertRankTableDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1067,7 +1098,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_dtype_inv
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingScalesDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1101,7 +1133,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_dtype_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_active_mask_dtype_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingActiveMaskDtypeInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1136,7 +1169,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_active_mask_dtype_invalid) 
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingXFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1169,7 +1203,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_x_format_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingSessionIdFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1202,7 +1237,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_session_id_format_invalid) 
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingMicroBatchIdFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1235,7 +1271,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_micro_batch_id_format_inval
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layler_id_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingLayerIdFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1268,7 +1305,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_layler_id_format_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertIdsFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1301,7 +1339,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_ids_format_invalid) 
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingExpertRankTableDormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1334,7 +1373,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_expert_rank_table_format_in
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingScalesFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",
@@ -1368,7 +1408,8 @@ TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_scales_format_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AttentionToFFNTiling, attention_to_ffn_tiling_active_mask_format_invalid) {
+TEST_F(AttentionToFFNTiling, AttentionToFfnTilingActiveMaskFormatInvalid)
+{
     struct AttentionToFFNCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("AttentionToFFN",

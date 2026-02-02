@@ -27,7 +27,8 @@ protected:
     }
 };
 
-TEST_F(MatmulReduceScatterInfershape, basic) {
+TEST_F(MatmulReduceScatterInfershape, Basic)
+{
     gert::StorageShape x1StorageShape = {{8192, 1536}, {}};
     gert::StorageShape x2StorageShape = {{1536, 12288}, {}};
 
@@ -57,7 +58,8 @@ TEST_F(MatmulReduceScatterInfershape, basic) {
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(MatmulReduceScatterInfershape, empty_tensor_test) {
+TEST_F(MatmulReduceScatterInfershape, EmptyTensorTest)
+{
     gert::StorageShape x1StorageShape = {{8192, 0}, {}};
     gert::StorageShape x2StorageShape = {{0, 12288}, {}};
 

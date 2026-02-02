@@ -23,22 +23,23 @@ using namespace op;
 using namespace std;
 
 namespace AlltoAllvGroupedMatMulUT {
-class l2_allto_allv_grouped_mat_mul_test : public testing::Test {
- protected:
-  static void SetUpTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
-	cout << "l2_allto_allv_grouped_mat_mul_test SetUp" << endl;
-  }
+class L2AlltoAllvGroupedMatMulTest : public testing::Test {
+protected:
+    static void SetUpTestCase()
+	{
+	op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
+	cout << "L2AlltoAllvGroupedMatMulTest SetUp" << endl;
+	}
 
-  static void TearDownTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-	cout << "l2_allto_allv_grouped_mat_mul_test TearDown" << endl;
-  }
+	static void TearDownTestCase()
+	{
+	op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+	cout << "L2AlltoAllvGroupedMatMulTest TearDown" << endl;
+	}
 };
 
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, Test)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 
@@ -66,7 +67,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test) {
 }
 
 // sendCounts null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_sendCounts_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestSendCountsNull)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
@@ -91,7 +93,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_sendCounts_null) {
 }
 
 // recvCounts null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_recvCounts_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestRecvCountsNull)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
@@ -116,7 +119,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_recvCounts_null) {
 }
 
 // gmmx null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmx_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestGmmxNull)
+{
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
 	constexpr int64_t BS = 4096;
@@ -142,7 +146,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmx_null) {
   }
 
 // gmmWeight null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmWeight_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestGmmWeightNull)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
 	constexpr int64_t BS = 4096;
@@ -168,7 +173,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmWeight_null) {
   }
 
 // gmmY null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmY_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestGmmYNull)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
@@ -194,7 +200,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_gmmY_null) {
 }
 
 // group ep null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_groupEp_null) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestGroupEpNull)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
@@ -221,7 +228,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_groupEp_null) {
 }
 
 // group ep invalid
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_groupEp_invalid) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestGroupEpInvalid)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;
@@ -252,7 +260,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_groupEp_invalid) {
 }
 
 // mmx not_null mmweight null mmy null
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_mmX_invalid) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestMmXInvalid)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc mmX = TensorDesc({1024, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -279,7 +288,8 @@ TEST_F(l2_allto_allv_grouped_mat_mul_test, test_mmX_invalid) {
 	EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_allto_allv_grouped_mat_mul_test, test_permuteOutFlag_invalid) {
+TEST_F(L2AlltoAllvGroupedMatMulTest, TestPermuteOutFlagInvalid)
+{
 	TensorDesc gmmX = TensorDesc({4096, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
 	TensorDesc gmmWeight = TensorDesc({4, 7168, 4096}, ACL_FLOAT16, ACL_FORMAT_ND);
 	constexpr int64_t epWorldSize = 8;

@@ -19,22 +19,23 @@ class MoeDistributeCombineV2Infershape : public testing::Test{
 };
 
 // infer shape with bias, success
-TEST_F(MoeDistributeCombineV2Infershape, infer_shape_0) {
-    gert::StorageShape expand_x_shape = {{576, 7168}, {}};
-    gert::StorageShape expert_ids_shape = {{32, 8}, {}};
-    gert::StorageShape expand_idx_shape = {{16384}, {}};
-    gert::StorageShape ep_send_counts_shape = {{288}, {}};
-    gert::StorageShape tp_send_counts_shape = {{2}, {}};
-    gert::StorageShape expert_scales_shape = {{32, 8}, {}};
+TEST_F(MoeDistributeCombineV2Infershape, InferShape0)
+{
+    gert::StorageShape expandXShape = {{576, 7168}, {}};
+    gert::StorageShape expertIdsShape = {{32, 8}, {}};
+    gert::StorageShape expandIdxShape = {{16384}, {}};
+    gert::StorageShape epSendCountsShape = {{288}, {}};
+    gert::StorageShape tpSendCountsShape = {{2}, {}};
+    gert::StorageShape expertScalesShape = {{32, 8}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("MoeDistributeCombineV2",
         {
-            {expand_x_shape, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {expert_ids_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {expand_idx_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {ep_send_counts_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {tp_send_counts_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {expert_scales_shape, ge::DT_FLOAT, ge::FORMAT_ND},
+            {expandXShape, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {expertIdsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {expandIdxShape, ge::DT_INT32, ge::FORMAT_ND},
+            {epSendCountsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {tpSendCountsShape, ge::DT_INT32, ge::FORMAT_ND},
+            {expertScalesShape, ge::DT_FLOAT, ge::FORMAT_ND},
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -65,18 +66,19 @@ TEST_F(MoeDistributeCombineV2Infershape, infer_shape_0) {
 }
 
 
-TEST_F(MoeDistributeCombineV2Infershape, infer_dtype_0) {
-    ge::DataType expand_x_type = ge::DT_FLOAT16;
-    ge::DataType expert_ids_type = ge::DT_INT32;
-    ge::DataType expand_idx_type = ge::DT_INT32;
-    ge::DataType ep_send_counts_type = ge::DT_INT32;
-    ge::DataType tp_send_counts_type = ge::DT_INT32;
-    ge::DataType expert_scales_type = ge::DT_FLOAT;
+TEST_F(MoeDistributeCombineV2Infershape, InferDtype0)
+{
+    ge::DataType expandXType = ge::DT_FLOAT16;
+    ge::DataType expertIdsType = ge::DT_INT32;
+    ge::DataType expandIdxType = ge::DT_INT32;
+    ge::DataType epSendCountsType = ge::DT_INT32;
+    ge::DataType tpSendCountsType = ge::DT_INT32;
+    ge::DataType expertScalesType = ge::DT_FLOAT;
 
     auto contextHolder = gert::InferDataTypeContextFaker()
                     .NodeIoNum(6, 1)
-                    .InputDataTypes({&expand_x_type, &expert_ids_type, &expand_idx_type,
-                                    &ep_send_counts_type, &tp_send_counts_type, &expert_scales_type})
+                    .InputDataTypes({&expandXType, &expertIdsType, &expandIdxType,
+                                    &epSendCountsType, &tpSendCountsType, &expertScalesType})
                     .NodeOutputTd(0, ge::FORMAT_ND, ge::FORMAT_ND)
                     .Build();
 

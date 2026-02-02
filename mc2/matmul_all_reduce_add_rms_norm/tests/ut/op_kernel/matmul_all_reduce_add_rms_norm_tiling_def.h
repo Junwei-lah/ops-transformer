@@ -39,13 +39,13 @@
 #pragma pack(1)
 
 struct AddRMSNormTilingData {
-    uint32_t num_row;
-    uint32_t num_col;
-    uint32_t block_factor;
-    uint32_t row_factor;
-    uint32_t ub_factor;
+    uint32_t numRow;
+    uint32_t numCol;
+    uint32_t blockFactor;
+    uint32_t rowFactor;
+    uint32_t ubFactor;
     float epsilon;
-    float avg_factor;
+    float avgFactor;
 };
 
 #pragma pack()
@@ -60,13 +60,13 @@ struct AddRMSNormTilingData {
 #define GET_TILING_DATA(tilingData, tilingPointer)                            \
     AddRMSNormTilingData tilingData;                                               \
     INIT_TILING_DATA(AddRMSNormTilingData, tilingDataPointer, tilingPointer);  \
-    (tilingData).num_row = tilingDataPointer->num_row;                              \
-    (tilingData).num_col = tilingDataPointer->num_col;                          \
-    (tilingData).block_factor = tilingDataPointer->block_factor;                  \
-    (tilingData).row_factor = tilingDataPointer->row_factor;            \
-    (tilingData).ub_factor = tilingDataPointer->ub_factor;              \
+    (tilingData).numRow = tilingDataPointer->numRow;                              \
+    (tilingData).numCol = tilingDataPointer->numCol;                          \
+    (tilingData).blockFactor = tilingDataPointer->blockFactor;                  \
+    (tilingData).rowFactor = tilingDataPointer->rowFactor;            \
+    (tilingData).ubFactor = tilingDataPointer->ubFactor;              \
     (tilingData).epsilon = tilingDataPointer->epsilon;            \
-    (tilingData).avg_factor = tilingDataPointer->avg_factor;
+    (tilingData).avgFactor = tilingDataPointer->avgFactor;
 #endif
 
 #ifdef __CCE_KT_TEST__
@@ -77,18 +77,18 @@ constexpr uint16_t MAX_TENSOR_CONT = 256;
 constexpr uint16_t MAX_CORE_CONT = 64;
 
 inline void InitMatmulAllReduceAddRmsNormTilingData(uint8_t* tiling,
-                                                    Mc2Tiling::MatmulAllReduceAddRmsNormTilingData* const_data)
+                                                    Mc2Tiling::MatmulAllReduceAddRmsNormTilingData* constData)
 {
-    memcpy(const_data, tiling, sizeof(Mc2Tiling::MatmulAllReduceAddRmsNormTilingData));
+    memcpy(constData, tiling, sizeof(Mc2Tiling::MatmulAllReduceAddRmsNormTilingData));
 }
 
-#define GET_TILING_DATA(tiling_data, tiling_arg)                                                        \
-    MatmulAllReduceAddRmsNormTilingData tiling_data;                                                    \
-    InitMatmulAllReduceAddRmsNormTilingData(tiling_arg, &tiling_data)
+#define GET_TILING_DATA(tilingData, tilingArg)                                                        \
+    MatmulAllReduceAddRmsNormTilingData tilingData;                                                    \
+    InitMatmulAllReduceAddRmsNormTilingData(tilingArg, &tilingData)
 
-#define GET_TILING_DATA_MEMBER(tiling_type, member, var, tiling)            \
-    auto var = ((tiling_type *)((uint8_t*)AscendC::GmAlloc(1024)))->member; \
-    size_t offset##var = (size_t)(&((tiling_type*)0)->member);              \
+#define GET_TILING_DATA_MEMBER(tilingType, member, var, tiling)            \
+    auto var = ((tilingType *)((uint8_t*)AscendC::GmAlloc(1024)))->member; \
+    size_t offset##var = (size_t)(&((tilingType*)0)->member);              \
     InitTilingData<decltype(var)>(tiling + offset##var, &var);
 
 #endif  // FOREACH_MINIMUM_SCALAR_TILING_DEF_H

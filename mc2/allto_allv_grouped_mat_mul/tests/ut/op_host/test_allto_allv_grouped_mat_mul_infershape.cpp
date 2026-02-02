@@ -17,10 +17,10 @@
 namespace AlltoAllvGroupedMatMulUT {
 struct TestParams {
     std::string test_name{};
-    std::vector<std::pair<std::string, std::string>> tiling_params_str_pair{};
-    std::vector<std::pair<std::string, std::vector<int64_t>>> tiling_params_vec_pair{};
-    std::vector<std::pair<size_t, ge::DataType>> tiling_input_dtypes_pair{};
-    std::vector<std::pair<size_t, ge::DataType>> tiling_output_dtypes_pair{};
+    std::vector<std::pair<std::string, std::string>> tilingParamsStrPair{};
+    std::vector<std::pair<std::string, std::vector<int64_t>>> tilingParamsVecPair{};
+    std::vector<std::pair<size_t, ge::DataType>> tilingInputDtypesPair{};
+    std::vector<std::pair<size_t, ge::DataType>> tilingOutputDtypesPair{};
     ge::graphStatus status;
 };
 
@@ -33,40 +33,40 @@ struct TilingParamss {
     uint64_t A{4096};
     uint64_t N1{4096};
     uint64_t N2{4096};
-    uint64_t ep_world_size{8};
+    uint64_t epWorldSize{8};
     uint64_t e{4};
     uint64_t aivCoreNum{40};
     uint64_t aicCoreNum{20};
-    uint64_t gmm_weight_dim1{7168};
-    uint64_t y_dim1{4096};
-    uint64_t mm_weight_dim0{7168};
-    bool trans_gmm_weight{false};
-    bool trans_mm_weight{false};
-    bool permute_out_flag{false};
+    uint64_t gmmWeightDim1{7168};
+    uint64_t yDim1{4096};
+    uint64_t mmWeightDim0{7168};
+    bool transGmmWeight{false};
+    bool transMmWeight{false};
+    bool permuteOutFlag{false};
     std::string group{"group"};
-    std::vector<int64_t> send_counts{128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    std::vector<int64_t> sendCounts{128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
                                      128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
-    std::vector<int64_t> recv_counts{128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    std::vector<int64_t> recvCounts{128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
                                      128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 };
 
 struct TilingShapes {
-    gert::StorageShape gmm_x_shape;
-    gert::StorageShape gmm_weight_shape;
-    gert::StorageShape send_counts_shape;
-    gert::StorageShape recv_counts_shape;
-    gert::StorageShape mm_x_shape;
-    gert::StorageShape mm_weight_shape;
+    gert::StorageShape gmmXShape;
+    gert::StorageShape gmmWeightShape;
+    gert::StorageShape sendCountsShape;
+    gert::StorageShape recvCountsShape;
+    gert::StorageShape mmXShape;
+    gert::StorageShape mmWeightShape;
 
-    gert::StorageShape y_shape;
-    gert::StorageShape mm_y_shape;
-    gert::StorageShape permute_out_shape;
+    gert::StorageShape yShape;
+    gert::StorageShape mmYShape;
+    gert::StorageShape permuteOutShape;
 };
 
 struct TilingDTypes {
-    std::vector<ge::DataType> input_dtypes{ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_INT64,
+    std::vector<ge::DataType> inputDtypes{ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_INT64,
                                            ge::DT_INT64,   ge::DT_FLOAT16, ge::DT_FLOAT16};
-    std::vector<ge::DataType> output_dtypes{ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16};
+    std::vector<ge::DataType> outputDtypes{ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16};
 };
 
 class AlltoAllvGroupedMatMulInfershape : public testing::TestWithParam<TestParams>
@@ -83,78 +83,78 @@ protected:
     }
 };
 
-std::unordered_map<std::string, std::function<void(TilingParamss& tiling_params, const std::string& value_str)>>
-    infershape_params_str_handlers = {
-        {"BSK", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.BSK = std::stoi(value_str); }},
-        {"BS", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.BS = std::stoi(value_str); }},
-        {"K", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.K = std::stoi(value_str); }},
-        {"H1", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.H1 = std::stoi(value_str); }},
-        {"H2", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.H2 = std::stoi(value_str); }},
-        {"A", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.A = std::stoi(value_str); }},
-        {"N1", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.N1 = std::stoi(value_str); }},
-        {"N2", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.N2 = std::stoi(value_str); }},
-        {"ep_world_size", [](TilingParamss& tiling_params,
-                             const std::string& value_str) { tiling_params.ep_world_size = std::stoi(value_str); }},
-        {"e", [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.e = std::stoi(value_str); }},
-        {"gmm_weight_dim1", [](TilingParamss& tiling_params,
-                               const std::string& value_str) { tiling_params.gmm_weight_dim1 = std::stoi(value_str); }},
-        {"y_dim1",
-         [](TilingParamss& tiling_params, const std::string& value_str) { tiling_params.y_dim1 = std::stoi(value_str); }},
-        {"mm_weight_dim0", [](TilingParamss& tiling_params,
-                              const std::string& value_str) { tiling_params.mm_weight_dim0 = std::stoi(value_str); }},
-        {"trans_gmm_weight", [](TilingParamss& tiling_params,
-                                const std::string& value_str) { tiling_params.trans_gmm_weight = value_str == "true"; }},
-        {"trans_mm_weight", [](TilingParamss& tiling_params,
-                               const std::string& value_str) { tiling_params.trans_mm_weight = value_str == "true"; }},
-        {"permute_out_flag", [](TilingParamss& tiling_params, const std::string& value_str) {
-             tiling_params.permute_out_flag = value_str == "true";
+std::unordered_map<std::string, std::function<void(TilingParamss& tilingParams, const std::string& valueStr)>>
+    g_infershapeParamsStrHandlers = {
+        {"BSK", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.BSK = std::stoi(valueStr); }},
+        {"BS", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.BS = std::stoi(valueStr); }},
+        {"K", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.K = std::stoi(valueStr); }},
+        {"H1", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.H1 = std::stoi(valueStr); }},
+        {"H2", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.H2 = std::stoi(valueStr); }},
+        {"A", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.A = std::stoi(valueStr); }},
+        {"N1", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.N1 = std::stoi(valueStr); }},
+        {"N2", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.N2 = std::stoi(valueStr); }},
+        {"epWorldSize", [](TilingParamss& tilingParams,
+                             const std::string& valueStr) { tilingParams.epWorldSize = std::stoi(valueStr); }},
+        {"e", [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.e = std::stoi(valueStr); }},
+        {"gmmWeightDim1", [](TilingParamss& tilingParams,
+                               const std::string& valueStr) { tilingParams.gmmWeightDim1 = std::stoi(valueStr); }},
+        {"yDim1",
+         [](TilingParamss& tilingParams, const std::string& valueStr) { tilingParams.yDim1 = std::stoi(valueStr); }},
+        {"mmWeightDim0", [](TilingParamss& tilingParams,
+                              const std::string& valueStr) { tilingParams.mmWeightDim0 = std::stoi(valueStr); }},
+        {"transGmmWeight", [](TilingParamss& tilingParams,
+                                const std::string& valueStr) { tilingParams.transGmmWeight = valueStr == "true"; }},
+        {"transMmWeight", [](TilingParamss& tilingParams,
+                               const std::string& valueStr) { tilingParams.transMmWeight = valueStr == "true"; }},
+        {"permuteOutFlag", [](TilingParamss& tilingParams, const std::string& valueStr) {
+             tilingParams.permuteOutFlag = valueStr == "true";
          }}};
 
-std::unordered_map<std::string, std::function<void(TilingParamss& tiling_params, const std::vector<int64_t> value_vec)>>
-    infershape_params_vec_handlers = {
-        {"send_counts", [](TilingParamss& tiling_params,
-                           const std::vector<int64_t> value_vec) { tiling_params.send_counts = value_vec; }},
-        {"recv_counts", [](TilingParamss& tiling_params, const std::vector<int64_t> value_vec) {
-             tiling_params.recv_counts = value_vec;
+std::unordered_map<std::string, std::function<void(TilingParamss& tilingParams, const std::vector<int64_t> valueVec)>>
+    g_infershapeParamsVecHandlers = {
+        {"sendCounts", [](TilingParamss& tilingParams,
+                           const std::vector<int64_t> valueVec) { tilingParams.sendCounts = valueVec; }},
+        {"recvCounts", [](TilingParamss& tilingParams, const std::vector<int64_t> valueVec) {
+             tilingParams.recvCounts = valueVec;
          }}};
 
-TEST_P(AlltoAllvGroupedMatMulInfershape, inferdatatype_test)
+TEST_P(AlltoAllvGroupedMatMulInfershape, InferdatatypeTest)
 {
-    auto test_param = GetParam();
-    int64_t input_num{6};
-    int64_t output_num{3};
-    auto tiling_param = TilingParamss{};
-    auto tiling_dtypes = TilingDTypes{};
+    auto testParam = GetParam();
+    int64_t inputNum{6};
+    int64_t outputNum{3};
+    auto tilingParam = TilingParamss{};
+    auto tilingDtypes = TilingDTypes{};
     
-    for (auto& kv : test_param.tiling_input_dtypes_pair) {
-        if (kv.first >= 0 && kv.first < tiling_dtypes.input_dtypes.size()) {
-            tiling_dtypes.input_dtypes[kv.first] = kv.second;
+    for (auto& kv : testParam.tilingInputDtypesPair) {
+        if (kv.first >= 0 && kv.first < tilingDtypes.inputDtypes.size()) {
+            tilingDtypes.inputDtypes[kv.first] = kv.second;
         }
     }
-    for (auto& kv : test_param.tiling_output_dtypes_pair) {
-            if (kv.first >= 0 && kv.first < tiling_dtypes.output_dtypes.size()) {
-                tiling_dtypes.output_dtypes[kv.first] = kv.second;
+    for (auto& kv : testParam.tilingOutputDtypesPair) {
+            if (kv.first >= 0 && kv.first < tilingDtypes.outputDtypes.size()) {
+                tilingDtypes.outputDtypes[kv.first] = kv.second;
         }
     }
     
-    std::vector<void*> input_dtypes_ptrs(input_num);
-    for (int64_t i = 0; i < input_num; i++) {
-        input_dtypes_ptrs[i] = &tiling_dtypes.input_dtypes[i];
+    std::vector<void*> input_dtypes_ptrs(inputNum);
+    for (int64_t i = 0; i < inputNum; i++) {
+        input_dtypes_ptrs[i] = &tilingDtypes.inputDtypes[i];
     }
-    std::vector<void*> output_dtypes_ptrs(output_num);
+    std::vector<void*> output_dtypes_ptrs(outputNum);
 
     auto contextHolder = gert::InferDataTypeContextFaker()
-                .NodeIoNum(input_num, output_num)
+                .NodeIoNum(inputNum, outputNum)
                 .InputDataTypes(input_dtypes_ptrs)
                 .OutputDataTypes(output_dtypes_ptrs)
                 .NodeAttrs({
-                    {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(tiling_param.group)},
-                    {"ep_world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_param.ep_world_size)},
-                    {"send_counts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tiling_param.send_counts)},
-                    {"recv_counts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tiling_param.recv_counts)},
-                    {"trans_gmm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_param.trans_gmm_weight)},
-                    {"trans_mm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_param.trans_mm_weight)},
-                    {"permute_out_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_param.permute_out_flag)}
+                    {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(tilingParam.group)},
+                    {"epWorldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParam.epWorldSize)},
+                    {"sendCounts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tilingParam.sendCounts)},
+                    {"recvCounts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tilingParam.recvCounts)},
+                    {"transGmmWeight", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParam.transGmmWeight)},
+                    {"transMmWeight", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParam.transMmWeight)},
+                    {"permuteOutFlag", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParam.permuteOutFlag)}
                     })
                 .Build();
     /* get infershape func */
@@ -166,29 +166,29 @@ TEST_P(AlltoAllvGroupedMatMulInfershape, inferdatatype_test)
     EXPECT_EQ(contextHolder.GetContext<gert::InferDataTypeContext>()->GetOutputDataType(0), ge::DT_FLOAT16);
 }
 
-TEST_P(AlltoAllvGroupedMatMulInfershape, infershape_test)
+TEST_P(AlltoAllvGroupedMatMulInfershape, infershapeTest)
 {
-    auto test_param = GetParam();
-    auto tiling_params = TilingParamss{};
-    for (auto& kv : test_param.tiling_params_str_pair) {
-        if (infershape_params_str_handlers.count(kv.first) != 0) {
-            infershape_params_str_handlers[kv.first](tiling_params, kv.second);
+    auto testParam = GetParam();
+    auto tilingParams = TilingParamss{};
+    for (auto& kv : testParam.tilingParamsStrPair) {
+        if (g_infershapeParamsStrHandlers.count(kv.first) != 0) {
+            g_infershapeParamsStrHandlers[kv.first](tilingParams, kv.second);
         }
     }
-    for (auto& kv : test_param.tiling_params_vec_pair) {
-        if (infershape_params_vec_handlers.count(kv.first) != 0) {
-            infershape_params_vec_handlers[kv.first](tiling_params, kv.second);
+    for (auto& kv : testParam.tilingParamsVecPair) {
+        if (g_infershapeParamsVecHandlers.count(kv.first) != 0) {
+            g_infershapeParamsVecHandlers[kv.first](tilingParams, kv.second);
         }
     }
     gert::InfershapeContextPara infershapeContextPara(
         "AlltoAllvGroupedMatMul",
         {   
-            {{{tiling_params.BSK, tiling_params.H1}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {{{tiling_params.e, tiling_params.gmm_weight_dim1, tiling_params.N1}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{tilingParams.BSK, tilingParams.H1}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{tilingParams.e, tilingParams.gmmWeightDim1, tilingParams.N1}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {{{tiling_params.BS, tiling_params.H2}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
-            {{{tiling_params.mm_weight_dim0, tiling_params.N2}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
+            {{{tilingParams.BS, tilingParams.H2}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{tilingParams.mmWeightDim0, tilingParams.N2}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND}, 
         },
         {
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
@@ -196,13 +196,13 @@ TEST_P(AlltoAllvGroupedMatMulInfershape, infershape_test)
             {{}, ge::DT_FLOAT16, ge::FORMAT_ND},
         },
         {
-            {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(tiling_params.group)},
-            {"ep_world_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tiling_params.ep_world_size)},
-            {"send_counts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tiling_params.send_counts)},
-            {"recv_counts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tiling_params.recv_counts)},
-            {"trans_gmm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_params.trans_gmm_weight)},
-            {"trans_mm_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_params.trans_gmm_weight)},
-            {"permute_out_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(tiling_params.permute_out_flag)}
+            {"group", Ops::Transformer::AnyValue::CreateFrom<std::string>(tilingParams.group)},
+            {"epWorldSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(tilingParams.epWorldSize)},
+            {"sendCounts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tilingParams.sendCounts)},
+            {"recvCounts", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>(tilingParams.recvCounts)},
+            {"transGmmWeight", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParams.transGmmWeight)},
+            {"transMmWeight", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParams.transGmmWeight)},
+            {"permuteOutFlag", Ops::Transformer::AnyValue::CreateFrom<bool>(tilingParams.permuteOutFlag)}
         });
     Mc2Hcom::MockValues hcomTopologyMockValues {
         {"rankNum", 8}
@@ -213,10 +213,10 @@ TEST_P(AlltoAllvGroupedMatMulInfershape, infershape_test)
 }
 
 
-static TestParams test_params[] = {{"Test_sample", {{"permute_out_flag", "true"}}, {}, {}, {}, ge::GRAPH_SUCCESS}};
+static TestParams testParams[] = {{"Test_sample", {{"permuteOutFlag", "true"}}, {}, {}, {}, ge::GRAPH_SUCCESS}};
 
 INSTANTIATE_TEST_SUITE_P(AlltoAllvGroupedMatMul, AlltoAllvGroupedMatMulInfershape,
-                         testing::ValuesIn(test_params),
+                         testing::ValuesIn(testParams),
                          [](const testing::TestParamInfo<AlltoAllvGroupedMatMulInfershape::ParamType>& info) {
                              return info.param.test_name;
                          });

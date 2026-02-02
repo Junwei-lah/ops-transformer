@@ -24,21 +24,22 @@ using namespace op;
 using namespace std;
 
 namespace MoeUpdateExpert {
-class l2_aclnn_moe_update_expert_test : public testing::Test {
+class L2AclnnMoeUpdateExpertTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
-        cout << "l2_aclnn_moe_update_expert_test SetUp" << endl;
+        cout << "L2AclnnMoeUpdateExpertTest SetUp" << endl;
     }
     static void TearDownTestCase()
     {
         op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-        cout << "l2_aclnn_moe_update_expert_test TearDown" << endl;
+        cout << "L2AclnnMoeUpdateExpertTest TearDown" << endl;
     }
 };
 
-TEST_F(l2_aclnn_moe_update_expert_test, test_moe_update_expert_no_tailor) {
+TEST_F(L2AclnnMoeUpdateExpertTest, TestMoeUpdateExpertNoTailor)
+{
     TensorDesc expertIds = TensorDesc({50, 4}, ACL_INT32, ACL_FORMAT_ND);
     TensorDesc eplbTable = TensorDesc({256, 5}, ACL_INT32, ACL_FORMAT_ND);
 
@@ -52,13 +53,14 @@ TEST_F(l2_aclnn_moe_update_expert_test, test_moe_update_expert_no_tailor) {
     auto ut = OP_API_UT(aclnnMoeUpdateExpert,
                         INPUT(expertIds, eplbTable, nullptr, nullptr, nullptr, localRankId, worldSize, balanceMode),
                         OUTPUT(balancedExpertIds, balancedActiveMask));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(l2_aclnn_moe_update_expert_test, test_moe_update_expert_expert_tailor) {
+TEST_F(L2AclnnMoeUpdateExpertTest, TestMoeUpdateExpertExpertTailor)
+{
     TensorDesc expertIds = TensorDesc({50, 4}, ACL_INT32, ACL_FORMAT_ND);
     TensorDesc eplbTable = TensorDesc({256, 5}, ACL_INT32, ACL_FORMAT_ND);
     TensorDesc expertScales = TensorDesc({50, 4}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -76,9 +78,9 @@ TEST_F(l2_aclnn_moe_update_expert_test, test_moe_update_expert_expert_tailor) {
                         INPUT(expertIds, eplbTable, expertScales, pruningThreshold, activeMask,
                               localRankId, worldSize, balanceMode),
                         OUTPUT(balancedExpertIds, balancedActiveMask));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 } // MoeUpdateExpert

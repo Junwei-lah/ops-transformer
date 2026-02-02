@@ -25,7 +25,7 @@ protected:
 };
 
 //normal: share rank
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_0)
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling0)
 {
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
@@ -66,7 +66,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_0)
 }
 
 // normal: share rank
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_1) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling1)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -105,7 +106,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_1) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_2) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling2)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -144,7 +146,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_2) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_3) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling3)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -183,7 +186,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_3) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_4) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling4)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -223,7 +227,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_4) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_5) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling5)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -262,7 +267,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_5) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_6) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling6)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -302,7 +308,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_6) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_7) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling7)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -341,7 +348,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_7) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_8) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling8)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -380,7 +388,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_8) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_9) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling9)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -419,7 +428,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_9) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_10) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTiling10)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -461,7 +471,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_10) {
 // 背景：4机 每机器8卡  每卡8个专家  由于deepseek 总共256 专家 分层
 // 可选传入默认值   除了quant_mode = 0
 // 只改变环境变量HCCL_INTRA_PCIE_ENABLE和HCCL_INTRA_ROCE_ENABLE
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_quant0_layered) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingA2Quant0Layered)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -499,7 +510,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_quant
     uint64_t expectTilingKey = 0UL;
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_quant0) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingA2Quant0)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -540,7 +552,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_quant
 // A2 test
 // 背景：4机 每机器8卡  每卡8个专家  由于deepseek 总共256 专家
 // 可选传入默认值   除了quant_mode = 0   
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_global_bs) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingA2GlobalBs)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -580,7 +593,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_globa
 }
 // 背景：4机 每机器8卡  每卡8个专家  由于deepseek 总共256 专家
 // 可选传入默认值   除了 quant_mode = 2 global_bs = 512  正常
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_ShapeAndEp_rank_id) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingA2ShapeAndEpRankId)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -621,7 +635,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_Shape
 
 //背景：4机 每机器8卡  每卡8个专家  由于deepseek 总共256 专家
 //可选传入默认值   除了ep_rank_id = 33  quant_mode = 2 同时x的shape{16,7160} 异常
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_moe_expert_num) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingA2MoeExpertNum)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -661,7 +676,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_A2_moe_e
 
 //背景：4机 每机器8卡  每卡8个专家  由于deepseek 总共256 专家
 // 可选传入默认值   除了 quant_mode = 2 同时moe_expert_num = 257  异常
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_ep_world_size_384) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingepWorldSize384)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -701,7 +717,8 @@ TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_ep_world
 }
 
 
-TEST_F(MoeDistributeDispatchTiling, moe_distribute_dispatch_test_tiling_ep_world_size_72) {
+TEST_F(MoeDistributeDispatchTiling, MoeDistributeDispatchTestTilingepWorldSize72)
+{
     struct MoeDistributeDispatchCompileInfo {};
     MoeDistributeDispatchCompileInfo compileInfo;
     uint64_t coreNum = 20;

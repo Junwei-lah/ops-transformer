@@ -24,21 +24,21 @@ struct HcclCombinOpParam {
     uint32_t rankId;
     uint32_t rankDim;
 };
-class grouped_mat_mul_allto_allv_test : public testing::Test
+class GroupedMatMulAlltoAllvTest : public testing::Test
 {
 protected:
     static void SetUpTestCase()
     {
-        std::cout << "grouped_mat_mul_allto_allv_test SetUp\n" << std::endl;
+        std::cout << "GroupedMatMulAlltoAllvTest SetUp\n" << std::endl;
     }
     static void TearDownTestCase()
     {
-        std::cout << "grouped_mat_mul_allto_allv_test TearDown\n" << std::endl;
+        std::cout << "GroupedMatMulAlltoAllvTest TearDown\n" << std::endl;
     }
 };
 
 // shard = 1
-TEST_F(grouped_mat_mul_allto_allv_test, grouped_mat_mul_allto_allv_test_0)
+TEST_F(GroupedMatMulAlltoAllvTest, GroupedMatMulAlltoAllvTest0)
 {
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     std::string group{"group"};
@@ -51,8 +51,8 @@ TEST_F(grouped_mat_mul_allto_allv_test, grouped_mat_mul_allto_allv_test_0)
 
     GmmAlltoAllvCommonTilingInfo commonTilingInfo{4096, 7168, 7168, 1,     4096,  2048,  4096, 4096,
                                                   1,    20,   40,   false, false, false, false};
-    GroupedMatMulAlltoAllvTilingData* tiling_data = reinterpret_cast<GroupedMatMulAlltoAllvTilingData*>(tiling);
-    tiling_data->commonTilingInfo = commonTilingInfo;
+    GroupedMatMulAlltoAllvTilingData* tilingData = reinterpret_cast<GroupedMatMulAlltoAllvTilingData*>(tiling);
+    tilingData->commonTilingInfo = commonTilingInfo;
 
     uint8_t* gmmxGM = (uint8_t*)AscendC::GmAlloc(commonTilingInfo.A * commonTilingInfo.H * sizeof(uint16_t));
     uint8_t* gmmweightGM =
@@ -65,7 +65,7 @@ TEST_F(grouped_mat_mul_allto_allv_test, grouped_mat_mul_allto_allv_test_0)
     uint8_t* mmyOptionalGM = nullptr;
 
     ICPU_SET_TILING_KEY(0);
-    auto grouped_mat_mul_allto_allv_wrapper = [](
+    auto groupedMatMulAlltoAllvWrapper = [](
                                                                  GM_ADDR gmmxGM, GM_ADDR gmmweightGM,
                                                                  GM_ADDR sendCountsTensorOptionalGM,
                                                                  GM_ADDR recvCountsTensorOptionalGM,
@@ -76,7 +76,7 @@ TEST_F(grouped_mat_mul_allto_allv_test, grouped_mat_mul_allto_allv_test_0)
         grouped_mat_mul_allto_allv<false, false, false>(gmmxGM, gmmweightGM, sendCountsTensorOptionalGM,
                 recvCountsTensorOptionalGM, mmxOptionalGM, mmweightOptionalGM, yGM, mmyOptionalGM, workspaceGM, tilingGM);
     };
-    ICPU_RUN_KF(grouped_mat_mul_allto_allv_wrapper, 20, gmmxGM, gmmweightGM, sendCountsTensorOptionalGM,
+    ICPU_RUN_KF(groupedMatMulAlltoAllvWrapper, 20, gmmxGM, gmmweightGM, sendCountsTensorOptionalGM,
                 recvCountsTensorOptionalGM, mmxOptionalGM, mmweightOptionalGM, yGM, mmyOptionalGM, workspace, tiling);
 
     AscendC::GmFree((void*)workspace);

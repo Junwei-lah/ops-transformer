@@ -33,67 +33,67 @@ protected:
     }
 };
 
-TEST_F(MatmulReduceScatterV2AclnnTest, basic)
+TEST_F(MatmulReduceScatterV2AclnnTest, Basic)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc bias = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x1_scale = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x2_scale = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc quant_scale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x1Scale = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Scale = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc quantScale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc output = TensorDesc({16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     auto ut = OP_API_UT(
         aclnnMatmulReduceScatterV2,
-        INPUT(x1, x2, bias, x1_scale, x2_scale, quant_scale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
+        INPUT(x1, x2, bias, x1Scale, x2Scale, quantScale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr)
     );
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, basic2)
+TEST_F(MatmulReduceScatterV2AclnnTest, Basic2)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc bias = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x1_scale = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x2_scale = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc quant_scale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x1Scale = TensorDesc({16, 32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Scale = TensorDesc({32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc quantScale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc output = TensorDesc({16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     auto ut = OP_API_UT(
         aclnnMatmulReduceScatterV2,
-        INPUT(x1, x2, bias, x1_scale, x2_scale, quant_scale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
+        INPUT(x1, x2, bias, x1Scale, x2Scale, quantScale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr)
     );
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, 3scale)
+TEST_F(MatmulReduceScatterV2AclnnTest, 3Scale)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc bias = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x1_scale = TensorDesc({16, 32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x2_scale = TensorDesc({32, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc quant_scale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x1Scale = TensorDesc({16, 32, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x2Scale = TensorDesc({32, 16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc quantScale = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc output = TensorDesc({16, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
     auto ut = OP_API_UT(
         aclnnMatmulReduceScatterV2,
-        INPUT(x1, x2, bias, x1_scale, x2_scale, quant_scale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
+        INPUT(x1, x2, bias, x1Scale, x2Scale, quantScale, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr)
     );
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, empty_tensor)
+TEST_F(MatmulReduceScatterV2AclnnTest, EmptyTensor)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 0}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -105,13 +105,13 @@ TEST_F(MatmulReduceScatterV2AclnnTest, empty_tensor)
         INPUT(x1, x2, bias, nullptr, nullptr, nullptr, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, amaxOut)
     );
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, fp16)
+TEST_F(MatmulReduceScatterV2AclnnTest, Fp16)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 16}, ACL_FLOAT16, ACL_FORMAT_ND);
@@ -122,13 +122,13 @@ TEST_F(MatmulReduceScatterV2AclnnTest, fp16)
         aclnnMatmulReduceScatterV2,
         INPUT(x1, x2, bias, nullptr, nullptr, nullptr, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, 16bit)
+TEST_F(MatmulReduceScatterV2AclnnTest, 16Bit)
 {
     TensorDesc x1 = TensorDesc({16, 256}, ACL_BF16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 16}, ACL_BF16, ACL_FORMAT_ND);
@@ -139,13 +139,13 @@ TEST_F(MatmulReduceScatterV2AclnnTest, 16bit)
         aclnnMatmulReduceScatterV2,
         INPUT(x1, x2, bias, nullptr, nullptr, nullptr, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, 16bit_trans)
+TEST_F(MatmulReduceScatterV2AclnnTest, 16BitTrans)
 {
     TensorDesc x1 = TensorDesc({256, 256}, ACL_BF16, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 256}, ACL_BF16, ACL_FORMAT_ND, {1, 256});
@@ -156,31 +156,31 @@ TEST_F(MatmulReduceScatterV2AclnnTest, 16bit_trans)
         aclnnMatmulReduceScatterV2,
         INPUT(x1, x2, bias, nullptr, nullptr, nullptr, 0, "test_group", "sum", 8, 1, 0, "aicpu"),
         OUTPUT(output, nullptr));
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(MatmulReduceScatterV2AclnnTest, e4m3fn_not_support)
+TEST_F(MatmulReduceScatterV2AclnnTest, E4m3fnNotSupport)
 {
     TensorDesc x1 = TensorDesc({256, 256}, ACL_FLOAT8_E4M3FN, ACL_FORMAT_ND);
     TensorDesc x2 = TensorDesc({256, 256}, ACL_FLOAT8_E4M3FN, ACL_FORMAT_ND);
     TensorDesc bias = TensorDesc({32}, ACL_FLOAT16, ACL_FORMAT_ND);
-    TensorDesc x1_scale = TensorDesc({2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
-    TensorDesc x2_scale = TensorDesc({2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
-    TensorDesc quant_scale = TensorDesc({256}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc x1Scale = TensorDesc({2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    TensorDesc x2Scale = TensorDesc({2, 2}, ACL_FLOAT, ACL_FORMAT_ND);
+    TensorDesc quantScale = TensorDesc({256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc output = TensorDesc({256, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
     TensorDesc amaxOut = TensorDesc({256, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
 
     auto ut = OP_API_UT(
         aclnnMatmulReduceScatterV2,
-        INPUT(x1, x2, nullptr, x1_scale, x2_scale, quant_scale, 0, "test_group", "sum", 8, 1, 549764202624, "aicpu"),
+        INPUT(x1, x2, nullptr, x1Scale, x2Scale, quantScale, 0, "test_group", "sum", 8, 1, 549764202624, "aicpu"),
         OUTPUT(output, amaxOut)
     );
-    uint64_t workspace_size = 0;
+    uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
-    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     EXPECT_NE(aclRet, ACLNN_SUCCESS);
 }
 

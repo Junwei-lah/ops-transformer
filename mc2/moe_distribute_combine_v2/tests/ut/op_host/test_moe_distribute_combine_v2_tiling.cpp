@@ -26,7 +26,8 @@ protected:
     }
 };
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_expert_x_0) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingSharedExpertX0)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -75,7 +76,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_e
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_expert_x_1) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingSharedExpertX1)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -125,7 +127,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_e
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_expert_x_three_dims) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingSharedExpertXThreeDims)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -175,7 +178,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_shared_e
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_0) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTiling0)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -218,7 +222,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_0) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_1) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTiling1)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -261,7 +266,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_1) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_2) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTiling2)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -304,7 +310,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_2) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_3) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTiling3)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -347,7 +354,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_3) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_ep_world_size_384) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingEpWorldSize384)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -390,7 +398,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_ep_world
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_ep_world_size_72) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingEpWorldSize72)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -433,7 +442,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_ep_world
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_x_activate_mask_2dims) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingXActivateMask2dims)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -482,7 +492,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_x_activa
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_elastic_info) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingElasticInfo)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -532,7 +543,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_elastic_
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_moepp) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingMoepp)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -586,7 +598,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_moepp) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_copyExpert_without_OriX) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingCopyExpertWithoutOriX)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -640,7 +653,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_copyExpe
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_constExpert_without_OriX) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingConstExpertWithoutOriX)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 20;
@@ -695,7 +709,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_constExp
 }
 
 //===============================================A2====================================================
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_empty) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgEmpty)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -738,7 +753,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_empty_with_env) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgEmptyWithEnv)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -781,7 +797,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_fullmesh) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgFullmesh)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -824,7 +841,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_fullmesh_with_env) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgFullmeshWithEnv)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -867,7 +885,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_hierarchy) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgHierarchy)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -910,7 +929,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_error) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgError)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -953,7 +973,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_empty_with_env_commint8) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgEmptyWithEnvCommint8)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;
@@ -996,7 +1017,8 @@ TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_comma
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MoeDistributeCombineV2Tiling, moe_distribute_combine_test_tiling_a2_commalg_hierarchy_commint8) {
+TEST_F(MoeDistributeCombineV2Tiling, MoeDistributeCombineTestTilingA2CommalgHierarchyCommint8)
+{
     struct MoeDistributeCombineV2TilingCompileInfo {};
     MoeDistributeCombineV2TilingCompileInfo compileInfo;
     uint64_t coreNum = 48;

@@ -1,12 +1,12 @@
 /**
+ * This program is free software, you can redistribute it and/or modify.
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * This file is a part of the CANN Open Software.
+ * Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <cfloat>
 
@@ -26,22 +26,23 @@ using namespace std;
 
 namespace FFNToAttentionUT {
 
-class aclnn_ffn_to_attention_test : public testing::Test {
- protected:
-  static void SetUpTestCase()
-  {
-      op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
-      cout << "aclnn_ffn_to_attention_test SetUp" << endl;
-  }
+class AclnnFfnToAttentionTest : public testing::Test {
+protected:
+    static void SetUpTestCase()
+    {
+        op::SetPlatformSocVersion(op::SocVersion::ASCEND910_93);
+        cout << "AclnnFfnToAttentionTest SetUp" << endl;
+    }
 
-  static void TearDownTestCase()
-  {
-    op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
-    cout << "aclnn_ffn_to_attention_test TearDown" << endl;
-  }
+    static void TearDownTestCase()
+    {
+      op::SetPlatformSocVersion(op::SocVersion::ASCEND910B);
+      cout << "AclnnFfnToAttentionTest TearDown" << endl;
+    }
 };
 
-TEST_F(aclnn_ffn_to_attention_test, test_ffn_to_attention_attnRank_table) {
+TEST_F(AclnnFfnToAttentionTest, TestFfnToAttentionAttnRankTable)
+{
   TensorDesc x = TensorDesc({1584, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
   TensorDesc sessionIds = TensorDesc({1584}, ACL_INT32, ACL_FORMAT_ND);
   TensorDesc microBatchIds = TensorDesc({1584}, ACL_INT32, ACL_FORMAT_ND);
@@ -59,13 +60,14 @@ TEST_F(aclnn_ffn_to_attention_test, test_ffn_to_attention_attnRank_table) {
   auto ut = OP_API_UT(aclnnFFNToAttention, INPUT(x, sessionIds, microBatchIds, tokenIds, expertOffsets,
   actualTokenNum, attnRankTable, group, worldSize, tokenInfoTableShape, tokenDataShape),
   OUTPUT());
-  uint64_t workspace_size = 0;
+  uint64_t workspaceSize = 0;
   aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
   EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 
-TEST_F(aclnn_ffn_to_attention_test, test_ffn_to_attention_no_attnRank_table) {
+TEST_F(AclnnFfnToAttentionTest, TestFfnToAttentionNoAttnRankTable)
+{
   TensorDesc x = TensorDesc({1584, 7168}, ACL_FLOAT16, ACL_FORMAT_ND);
   TensorDesc sessionIds = TensorDesc({1584}, ACL_INT32, ACL_FORMAT_ND);
   TensorDesc microBatchIds = TensorDesc({1584}, ACL_INT32, ACL_FORMAT_ND);
@@ -83,9 +85,9 @@ TEST_F(aclnn_ffn_to_attention_test, test_ffn_to_attention_no_attnRank_table) {
   auto ut = OP_API_UT(aclnnFFNToAttention, INPUT(x, sessionIds, microBatchIds, tokenIds, expertOffsets,
   actualTokenNum, attnRankTable, group, worldSize, tokenInfoTableShape, tokenDataShape),
   OUTPUT());
-  uint64_t workspace_size = 0;
+  uint64_t workspaceSize = 0;
   aclOpExecutor* executor = nullptr;
-  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspace_size, executor);
+  aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
   EXPECT_EQ(aclRet, ACLNN_SUCCESS);
 }
 

@@ -1,12 +1,12 @@
 /**
+ * This program is free software, you can redistribute it and/or modify.
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * This file is a part of the CANN Open Software.
+ * Licensed under CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <iostream>
 #include <gtest/gtest.h>
@@ -26,7 +26,8 @@ protected:
     }
 };
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_no_rank_table) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingNoRankTable)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -55,7 +56,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_no_rank_table) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTable)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -85,7 +87,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_H_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableHInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -114,7 +117,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_H_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_sessionId_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableSessionIdInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -143,7 +147,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_sessionId_invali
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_mircoBatchIds_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableMircoBatchIdsInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -172,7 +177,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_table_mircoBatchIds_in
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_tokenIds_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableTokenIdsInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -202,7 +208,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_tokenIds_invalid)
 }
 
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_expertNumoffsetIds_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableExpertNumoffsetIdsInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -231,7 +238,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_expertNumoffsetId
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_actualtokenNum_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableActualtokenNumInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -261,7 +269,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_actualtokenNum_in
 }
 
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_Bs_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableBsInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -290,7 +299,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_Bs_invalid) {
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_MircoBatchNum_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableMircoBatchNumInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -319,7 +329,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_MircoBatchNum_inv
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_MircoBatchNumType_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableMircoBatchNumTypeInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",
@@ -348,7 +359,8 @@ TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_MircoBatchNumType
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(FFNToAttentionTiling, ffn_to_attention_tiling_rank_tabl_xformat_invalid) {
+TEST_F(FFNToAttentionTiling, FfnToAttentionTilingRankTableXformatInvalid)
+{
     struct FFNToAttentionCompileInfo {} compileInfo;
 
     gert::TilingContextPara tilingContextPara("FFNToAttention",

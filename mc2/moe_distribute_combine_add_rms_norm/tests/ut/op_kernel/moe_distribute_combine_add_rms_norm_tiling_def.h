@@ -15,18 +15,18 @@
 #include "../../../../../mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_tiling.h"
 
 inline void InitMoeDistributeCombineAddRmsNormTilingData(uint8_t* tiling,
-                                                         MoeDistributeCombineV2TilingData* const_data)
+                                                         MoeDistributeCombineV2TilingData* constData)
 {
-    memcpy(const_data, tiling, sizeof(MoeDistributeCombineV2TilingData));
+    memcpy(constData, tiling, sizeof(MoeDistributeCombineV2TilingData));
 }
 
-#define GET_TILING_DATA(tiling_data, tiling_arg)                                                      \
-        MoeDistributeCombineV2TilingData tiling_data;                                                 \
-        InitMoeDistributeCombineAddRmsNormTilingData(tiling_arg, &tiling_data)
+#define GET_TILING_DATA(tilingData, tilingArg)                                                      \
+        MoeDistributeCombineV2TilingData tilingData;                                                 \
+        InitMoeDistributeCombineAddRmsNormTilingData(tilingArg, &tilingData)
 
-#define GET_TILING_DATA_WITH_STRUCT(MoeDistributeCombineV2TilingData, tiling_data, tiling_arg)        \
-        MoeDistributeCombineV2TilingData tiling_data;                                                 \
-        InitMoeDistributeCombineAddRmsNormTilingData(tiling_arg, &tiling_data)
+#define GET_TILING_DATA_WITH_STRUCT(MoeDistributeCombineV2TilingData, tilingData, tilingArg)        \
+        MoeDistributeCombineV2TilingData tilingData;                                                 \
+        InitMoeDistributeCombineAddRmsNormTilingData(tilingArg, &tilingData)
 
 struct float16_t {
     uint16_t raw;

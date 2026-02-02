@@ -28,7 +28,7 @@ protected:
     }
 };
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_1)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test1)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -54,7 +54,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_1)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_2)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test2)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -80,7 +80,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_2)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_3)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test3)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -106,7 +106,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_3)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_4)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test4)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -132,7 +132,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_4)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_5)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test5)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 24;
@@ -158,7 +158,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_5)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_6)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingFloat16Test6)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;
@@ -184,7 +184,7 @@ TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_float16_6)
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(MatmulReduceScatterTiling, matmul_reduce_scatter_test_tiling_bfloat16)
+TEST_F(MatmulReduceScatterTiling, MatmulReduceScatterTestTilingBfloat16)
 {
     struct MatmulReduceScatterCompileInfo {} compileInfo;
     uint64_t coreNum = 20;

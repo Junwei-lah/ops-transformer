@@ -22,13 +22,13 @@ class MoeDistributeDispatchV2Infershape : public testing::Test {
 // infer shape with bias, success
 TEST_F(MoeDistributeDispatchV2Infershape, inferShape0) 
 {
-    gert::StorageShape expand_x_shape = {{32, 7168}, {}};
-    gert::StorageShape expert_ids_shape = {{32, 8}, {}};
+    gert::StorageShape expandXShape = {{32, 7168}, {}};
+    gert::StorageShape expertIdsShape = {{32, 8}, {}};
 
     gert::InfershapeContextPara infershapeContextPara("MoeDistributeDispatchV2",
         {
-            {expand_x_shape, ge::DT_INT32, ge::FORMAT_ND},
-            {expert_ids_shape, ge::DT_INT32, ge::FORMAT_FRACTAL_NZ}
+            {expandXShape, ge::DT_INT32, ge::FORMAT_ND},
+            {expertIdsShape, ge::DT_INT32, ge::FORMAT_FRACTAL_NZ}
         },
         {
             {{}, ge::DT_INT32, ge::FORMAT_ND},
@@ -67,7 +67,8 @@ TEST_F(MoeDistributeDispatchV2Infershape, inferShape0)
     Mc2ExecuteTestCase(infershapeContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expertOutputShape);
 }
 
-TEST_F(MoeDistributeDispatchV2Infershape, inferDtype0) {
+TEST_F(MoeDistributeDispatchV2Infershape, inferDtype0)
+{
     ge::DataType expandXType = ge::DT_FLOAT16;
     ge::DataType expertIdsType = ge::DT_INT32;
 

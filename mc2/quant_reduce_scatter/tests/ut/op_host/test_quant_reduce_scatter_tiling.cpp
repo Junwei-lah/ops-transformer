@@ -63,7 +63,7 @@ inline std::ostream& operator<<(std::ostream& os, const QuantReduceScatterTestPa
 }
 
 // 构造ut用例：这里可以按照正常用例/异常用例分开声明
-static QuantReduceScatterTestParam test_cases[] = {
+static QuantReduceScatterTestParam g_testCases[] = {
     {"quant_reduce_scatter_critical_case_1",
      {1024, 5120}, ge::DT_FLOAT8_E4M3FN, ge::FORMAT_ND,
      {1024, 80, 2}, ge::DT_FLOAT8_E8M0, ge::FORMAT_ND,
@@ -330,7 +330,7 @@ static void TestExecMultiThread(const QuantReduceScatterTestParam *testCases, si
     }
 }
 
-TEST_P(TestQuantReduceScatterTiling, general_cases)
+TEST_P(TestQuantReduceScatterTiling, GeneralCasesTest)
 {
     auto param = GetParam();
     auto tilingContextPara = BuildTilingContextPara(param);
@@ -339,11 +339,11 @@ TEST_P(TestQuantReduceScatterTiling, general_cases)
                        param.expectTilingData, param.expectWorkspaces, param.mc2TilingDataReservedLen);
 }
 
-TEST_F(TestQuantReduceScatterTiling, general_cases_multi_thread)
+TEST_F(TestQuantReduceScatterTiling, GeneralCasesMultiThreadTest)
 {
-    TestExecMultiThread(test_cases, sizeof(test_cases) / sizeof(QuantReduceScatterTestParam), 3);
+    TestExecMultiThread(g_testCases, sizeof(g_testCases) / sizeof(QuantReduceScatterTestParam), 3);
 }
 
-INSTANTIATE_TEST_CASE_P(QuantReduceScatterTilingUT, TestQuantReduceScatterTiling, testing::ValuesIn(test_cases));
+INSTANTIATE_TEST_CASE_P(QuantReduceScatterTilingUT, TestQuantReduceScatterTiling, testing::ValuesIn(g_testCases));
 
 } // namespace

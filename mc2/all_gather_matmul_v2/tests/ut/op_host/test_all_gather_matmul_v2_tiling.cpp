@@ -18,8 +18,14 @@ namespace {
 
 class AllGatherMatmulV2TilingTest : public testing::Test {
 protected:
-    static void SetUpTestCase() { std::cout << "AllGatherMatmulV2TilingTest SetUp" << std::endl; }
-    static void TearDownTestCase() { std::cout << "AllGatherMatmulV2TilingTest TearDown" << std::endl; }
+    static void SetUpTestCase()
+    {
+        std::cout << "AllGatherMatmulV2TilingTest SetUp" << std::endl;
+    }
+    static void TearDownTestCase()
+    {
+        std::cout << "AllGatherMatmulV2TilingTest TearDown" << std::endl;
+    }
 };
 
 TEST_F(AllGatherMatmulV2TilingTest, all_gather_matmul_4096_8192_1280_e4m3fn_fp32_rank8_david_ID000)
