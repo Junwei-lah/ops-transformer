@@ -138,6 +138,15 @@ static ge::graphStatus QuantReduceScatterTilingFunc(gert::TilingContext *context
     return ge::GRAPH_SUCCESS;
 }
 
-IMPL_OP_OPTILING(QuantReduceScatter).Tiling(QuantReduceScatterTilingFunc);
+struct QuantReduceScatterCompileInfo {};
+ 
+ge::graphStatus TilingParseForQuantReduceScatter(gert::TilingParseContext *context) {
+    (void)context;
+  	return ge::GRAPH_SUCCESS;
+}
+ 
+IMPL_OP_OPTILING(QuantReduceScatter)
+    .Tiling(QuantReduceScatterTilingFunc)
+    .TilingParse<QuantReduceScatterCompileInfo>(TilingParseForQuantReduceScatter);
 
 } // namespace MC2Tiling

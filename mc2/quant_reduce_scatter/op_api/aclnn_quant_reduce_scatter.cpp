@@ -139,7 +139,7 @@ static aclnnStatus CheckParams(const aclTensor* x, const aclTensor* scales, cons
 
 extern "C" aclnnStatus aclnnInnerQuantReduceScatterGetWorkspaceSize(const aclTensor* x, const aclTensor* scales,
                                                                     const char* group, const char* reduceOp,
-                                                                    uint64_t yDtype, aclTensor* output,
+                                                                    uint64_t yDtype, int64_t worldSize, aclTensor* output,
                                                                     uint64_t* workspaceSize, aclOpExecutor** executor);
 extern "C" aclnnStatus aclnnInnerQuantReduceScatter(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
                                                     const aclrtStream stream);
@@ -152,7 +152,9 @@ extern "C" aclnnStatus aclnnQuantReduceScatterGetWorkspaceSize(const aclTensor* 
     aclnnStatus retParam = CheckParams(x, scales, group, output);
     CHECK_RET(retParam == ACLNN_SUCCESS, retParam);
     uint64_t yDtype = static_cast<uint64_t>(output->GetDataType());
-    aclnnStatus ret = aclnnInnerQuantReduceScatterGetWorkspaceSize(x, scales, group, reduceOp, yDtype, output, workspaceSize, executor);
+    int64_t worldSize = -1;
+    aclnnStatus ret = aclnnInnerQuantReduceScatterGetWorkspaceSize(x, scales, group, reduceOp, yDtype, worldSize,
+                                                                   output, workspaceSize, executor);
     OP_LOGD("QuantReduceScatter, aclnnnGetWorkspaceSize ret %d.", ret);
     return ret;
 }

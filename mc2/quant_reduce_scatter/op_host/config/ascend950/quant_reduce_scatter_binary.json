@@ -55,6 +55,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -112,6 +117,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -169,6 +179,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -226,6 +241,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -283,6 +303,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -340,6 +365,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -397,6 +427,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -454,6 +489,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -511,6 +551,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -568,6 +613,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -625,6 +675,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -682,6 +737,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -739,6 +799,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -796,6 +861,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -853,6 +923,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -910,6 +985,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -967,6 +1047,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1024,6 +1109,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1081,6 +1171,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1138,6 +1233,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1195,6 +1295,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1252,6 +1357,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1309,6 +1419,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1366,6 +1481,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1423,6 +1543,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1480,6 +1605,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1537,6 +1667,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1594,6 +1729,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1651,6 +1791,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         },
@@ -1708,6 +1853,11 @@
                     "name": "output_dtype",
                     "dtype": "int",
                     "value": 27
+                },
+                {
+                    "name": "world_size",
+                    "dtype": "int",
+                    "value": -1
                 }
             ]
         }

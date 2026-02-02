@@ -34,6 +34,7 @@ namespace ge {
  * @li reduce_op: An optional string identifying the reduction operation to perform. Default: "sum".
  * @li output_dtype: An optional int identifying the data type of output. The type support 0(float), 1(float16),
  * 27(bfloat16). Default: 27(bfloat16).
+ * @li world_size: A required int identifying the rank size.
  */
 REG_OP(QuantReduceScatter)
     .INPUT(x, TensorType({DT_INT8, DT_HIFLOAT8, DT_FLOAT8_E5M2, DT_FLOAT8_E4M3FN, DT_FLOAT4_E1M2, DT_FLOAT4_E2M1}))
@@ -42,6 +43,7 @@ REG_OP(QuantReduceScatter)
     .REQUIRED_ATTR(group, String)
     .ATTR(reduce_op, String, "sum")
     .ATTR(output_dtype, Int, 27)
+    .REQUIRED_ATTR(world_size, Int)
     .OP_END_FACTORY_REG(QuantReduceScatter)
 } // namespace ge
 
