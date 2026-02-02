@@ -1020,6 +1020,7 @@ bool PromptFlashAttentionTilingV2::CheckPerblockQuantParams(const ContextParamsF
                 "now dequantScaleQuery's dim is %zu, keyAntiquantScale's dim is %zu, valueAntiquantScale's dim is %zu.",
                 layoutStr.c_str(), dequeryDim, dekeyDim, devalueDim),
             return false);
+        if (isMaxWorkspace) return true;
         OP_CHECK_IF((dequantScaleQueryShape->GetStorageShape().GetDim(0) != queryShapeInfo.n) ||
                     (dequantScaleQueryShape->GetStorageShape().GetDim(1) != queryShapeInfo.t / fp8QBlockSize + queryShapeInfo.b) ||
                     (dequantScaleQueryShape->GetStorageShape().GetDim(2) != CeilDivision(queryShapeInfo.d, fp8KVBlockSize)),
@@ -2647,22 +2648,23 @@ bool PromptFlashAttentionTilingV2::CheckNTDLayoutCrossover(ContextParamsForPFATi
  	        return false);
  	}
 
-    if (!enablePFAMLA && !enablePFARope && !enableIFAMLA) { // GQA
+    std::string layoutStr(contextKeyParams.layout);
+    if (!enablePFAMLA && !enablePFARope && !enableIFAMLA && !(enablePerblockQuant && layoutStr == "NTD_TND")) { // GQA
         OP_CHECK_IF((queryShapeInfo.d != 64 && queryShapeInfo.d != 128),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In GQA scenario, when layout is NTD, d size of query must be 64 or 128, but got d = %d.",
             queryShapeInfo.d), return false);
     }
 
     OP_CHECK_IF(enableLeftPadding,
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is NTD, left padding is not supported!"),
+        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is %s, left padding is not supported!", layoutStr.c_str()),
         return false);
     
     OP_CHECK_IF(enableTensorList,
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is NTD, tensorlist is not supported!"),
+        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is %s, tensorlist is not supported!", layoutStr.c_str()),
         return false);
 
     OP_CHECK_IF(enablePseShift,
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is NTD, pse is not supported!"),
+        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When layout is %s, pse is not supported!", layoutStr.c_str()),
         return false);
 
     return true;
