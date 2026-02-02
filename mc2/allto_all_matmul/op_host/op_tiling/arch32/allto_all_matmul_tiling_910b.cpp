@@ -401,6 +401,10 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckAndSetAttrsInfo(AlltoAllMatmulInf
     bool x2TransposeFlag = (isTransX2 != nullptr) ? *isTransX2 : false;
     x2Transpose = x2TransposeFlag;
 
+    const bool *isAlltoallOut = attrs->GetAttrPointer<bool>(ALLTOALLMATMUL_ATTR_ALLTO_ALL_OUT_FLAG_INDEX);
+    bool alltoallOutFlag = (isAlltoallOut != nullptr) ? *isAlltoallOut : false;
+    info.isAlltoallOut = alltoallOutFlag;
+
     return ge::GRAPH_SUCCESS;
 }
 
@@ -419,11 +423,23 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckTensorDataType(AlltoAllMatmulInfo
                     return ge::GRAPH_FAILED);
     auto yDesc = context_->GetOutputDesc(OUTPUT_Y_INDEX);
     OP_TILING_CHECK((yDesc == nullptr), OP_LOGE(opName_, "Output tensor y is nullptr."), return ge::GRAPH_FAILED);
+    auto alltoallOutDesc = context_->GetOutputDesc(ALLTO_ALL_OUT_INDEX);;
+    if (info.isAlltoallOut) {  // 可选参数
+        OP_TILING_CHECK((alltoallOutDesc == nullptr), OP_LOGE(opName_, "Output tensor alltoallout is nullptr."), return ge::GRAPH_FAILED);
+    }
 
     // 获取数据类型并校验一致性与范围
     ge::DataType x1Dtype = x1TensorDesc->GetDataType();
     ge::DataType x2Dtype = x2TensorDesc->GetDataType();
     ge::DataType yDtype = yDesc->GetDataType();
+
+    if (info.isAlltoallOut) {  // 校验alltoallout类型
+        ge::DataType alltoallOutDtype = alltoallOutDesc->GetDataType();
+        OP_TILING_CHECK((alltoallOutDtype != x1Dtype),
+                        OP_LOGE(opName_, "x1Dtype should be same with alltoallOutDtype, but x1Dtype is %s and alltoallOutDtype is %s.", 
+                            Ops::Base::ToString(x1Dtype).c_str(), Ops::Base::ToString(alltoallOutDtype).c_str()),
+                        return ge::GRAPH_FAILED);
+    }
     auto biasTensorDesc = context_->GetOptionalInputDesc(INPUT_BIAS_INDEX);
 
     auto x1ScaleTensorDesc = context_->GetOptionalInputDesc(INPUT_X1_SCALE_INDEX);
@@ -455,7 +471,7 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckTensorDataType(AlltoAllMatmulInfo
         quantType = TILINGKEY_TPL_A4W4;
     }
 
-    // 校验 bias 数据类型（如果存在）
+    // 校验类型组合
     if (biasTensorDesc != nullptr) {
         hasBias = true;
         ge::DataType biasDtype = biasTensorDesc->GetDataType();

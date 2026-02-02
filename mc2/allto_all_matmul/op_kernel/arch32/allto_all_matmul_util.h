@@ -127,6 +127,7 @@ public:
         dequantSize = info.allToAllMatmulInfo.dequantSize;
         quantScaleSize = info.allToAllMatmulInfo.quantScaleSize;
         isSegmentK = info.allToAllMatmulInfo.isSegmentK;
+        isAlltoallOut = info.allToAllMatmulInfo.isAlltoallOut;
         copyTimes = info.allToAllMatmulInfo.segmentsNum;
         copyTensorSize = info.allToAllMatmulInfo.copyTensorSize;
         allToAllSendCoreNum = info.cocTiling.allToAllSendCoreNum;
@@ -291,6 +292,7 @@ public:
     uint64_t quantScaleSize;
 
     bool isSegmentK;
+    bool isAlltoallOut;
 };
 
 __aicore__ inline void SetAndWaitAivSync(uint64_t flagIdx, int32_t pipeDepth = 2)

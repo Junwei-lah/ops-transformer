@@ -31,6 +31,7 @@ struct AlltoAllMatmulInfo {
     uint64_t quantScaleSize;
     bool isSegmentK;
     bool hasBias;
+    bool isAlltoallOut;  // 判断是否需要alltoallout
 };
 
 struct CoCTiling {

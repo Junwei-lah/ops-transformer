@@ -31,13 +31,6 @@ class AllToAllMatmul(BaseApi):
         self.rank = self.dist_task_info.rank
         self.world_size = self.dist_task_info.world_size
 
-    def get_cpp_func_signature_type(self):
-        return """aclnnStatus aclnnAlltoAllMatmulGetWorkspaceSize(\
-               const aclTensor *x1, const aclTensor *x2, const aclTensor *biasOptional,\
-               const aclIntArray* alltoAllAxesOptional, const char* group,\
-               bool transposeX1, bool transposeX2, const aclTensor *output, const aclTensor *alltoAllOutOptional,\
-               uint64_t *workspaceSize, aclOpExecutor **executor)"""
-
     def manual_all_to_all(self, x_splits_from_ranks, x_splits_to_ranks):
         for target_rank in range(self.world_size):
             if target_rank == self.rank:
@@ -60,7 +53,6 @@ class AllToAllMatmul(BaseApi):
                 )
 
     def __call__(self, input_data: InputDataset, with_output: bool = False):
-        rank_id = self.dist_task_info.rank
         world_size = self.dist_task_info.world_size
         x = input_data.kwargs['x']
         weight = input_data.kwargs['weight']
@@ -114,31 +106,12 @@ class AllToAllMatmul(BaseApi):
             '''
         else:
             pass
-   
-    @staticmethod
-    def get_hcomm_info(rank_id):
-        from torch.distributed.distributed_c10d import _get_default_group
-        default_pg = _get_default_group()
-        if torch.__version__ > '2.0.1':
-            backend_obj = getattr(default_pg, "_get_backend", None)
-            hcomm_info = backend_obj(torch.device("npu")).get_hccl_comm_name(rank_id)
-        else:
-            hcomm_info = default_pg.get_hccl_comm_name(rank_id)
-        return hcomm_info
 
     def init_by_input_data(self, input_data: InputDataset):
-        rank_id = self.dist_task_info.rank
-        world_size = self.dist_task_info.world_size
-        device = "npu:" + str(rank_id)
-        
         # 通信域配置
         if self.device == 'pyaclnn' and dist.is_available():
             from torch.distributed.distributed_c10d import _get_default_group
             default_pg = _get_default_group()
-            if torch.__version__ > '2.0.1':
-                hcomm_info = default_pg._get_backend(torch.device("npu")).get_hccl_comm_name(rank_id)
-            else:
-                hcomm_info = default_pg.get_hccl_comm_name(rank_id)
             input_data.kwargs['group'] = default_pg
 
 
@@ -190,7 +163,3 @@ class AclnnAllToAllMatmul(AclnnBaseApi):
         null_void_ptr = ctypes.c_void_p(None)  # 声明一个空指针
         null_tensor_ptr = ctypes.cast(null_void_ptr, AclTensorPtr)  # 把这个空指针类型转换为tensor指针类型
         return null_tensor_ptr
-
-    def __call__(self):
-        self.backend.aclnn_x_get_workspace_size()
-        self.backend.aclnn_x()

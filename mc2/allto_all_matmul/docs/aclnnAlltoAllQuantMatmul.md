@@ -16,35 +16,33 @@
 - 接口功能：完成AlltoAll通信、Permute(保证通信后地址连续)、Quant、Matmul和Dequant计算的融合，**先通信后计算**。
 - 计算公式：假设x1输入shape为(BS, H)
 
-  - **量化场景：**
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
+    - **动态量化场景：**
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        x1_{quant}, x1_{scale} = Quant(permutedOut) \\
+        output_{quant} = x1_{quant} @ x2 \\
+        output = output_{quant} \times x1_{scale} \times x2_{scale} \\
+        output = output + bias
+        $$
+    - **全量化场景：**
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        output_{quant} = x1 @ x2 \\
+        output = output_{quant} \times x1_{scale} \times x2_{scale} \\
+        output = output + bias
+        $$
 
-  $$
-  commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
-  permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
-  output_{quant} = x1 @ x2 \\
-  output = output_{quant} \times x1_{scale} \times x2_{scale} \\
-  output = output + bias
-  $$
-
-  - **伪量化场景：**
-
-  $$
-  commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
-  permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
-  x1_{quant}, x1_{scale} = Quant(permutedOut) \\
-  output_{quant} = x1_{quant} @ x2 \\
-  output = output_{quant} \times x1_{scale} \times x2_{scale} \\
-  output = output + bias
-  $$
-
-  - **动态量化场景：**
-
-  $$
-  commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
-  permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
-  dynQuantX1, dynQuantX1Scale = dynamicQuant(permutedOut) \\
-  output = (dynQuantX1@x2 + bias) \times dynQuantX1Scale \times x2Scale
-  $$
+  - <term>Ascend 950PR/Ascend 950DT</term>：
+    - **动态量化场景：**
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        dynQuantX1, dynQuantX1Scale = dynamicQuant(permutedOut) \\
+        output = (dynQuantX1@x2 + bias) \times dynQuantX1Scale \times x2Scale
+        $$
 
 ## 函数原型
 
@@ -134,7 +132,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <td>biasOptional</td>
     <td>输入</td>
     <td>可选输入，矩阵乘运算后累加的偏置，对应公式中的bias。</td>
-    <td>支持传入空指针场景。根据设备型号对数据类型有不同限制，详细参见<a href="#约束说明">约束说明</a>。</td>
+    <td>根据设备型号对数据类型有不同限制，详细参见<a href="#约束说明">约束说明</a>。</td>
     <td>FLOAT16、BFLOAT16、FLOAT32</td>
     <td>ND</td>
     <td>1维，shape为(N)</td>
@@ -144,7 +142,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <td>x1ScaleOptional</td>
     <td>输入</td>
     <td>可选输入，左矩阵的量化系数。</td>
-    <td>当前仅在A4W4场景下需要配置。</td>
+    <td>当前仅在全量化场景下需要配置。</td>
     <td>FLOAT32</td>
     <td>ND</td>
     <td>1维，shape为(BS / rankSize,)</td>
@@ -422,6 +420,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 参数说明中shape使用的变量BS必须整除rankSize。
+* 该算子的biasOptional对于<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>当前不支持传入nullptr。
 * 该算子输入输出的数据类型和数据维度根据不同设备型号有不同的限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     * 类型约束：
@@ -442,8 +441,8 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
         | INT4 | INT4 | BFLOAT16 | BFLOAT16 |
         | INT4 | INT4 | FLOAT32 | BFLOAT16 |
     * 维度约束：
-      * A16W8时，rankSize * H必须整除32；rankSize * H取值范围：[32, 6144]。
-      * A4W4时，H与N必须为偶数；rankSize * H取值范围：[4, 35000]。
+      * A16W8时，rankSize * H必须整除32；rankSize * H取值范围：[1, 6144]。
+      * A4W4时，H与N必须为偶数；rankSize * H取值范围：[1, 35000]。
   - <term>Ascend 950PR/Ascend 950DT</term>：
     * 类型约束：
       * x1、alltoAllOutOptional的数据类型必须一致。

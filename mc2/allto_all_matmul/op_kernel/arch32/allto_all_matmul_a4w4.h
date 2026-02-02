@@ -386,7 +386,7 @@ __aicore__ inline void AlltoAllMatmulA4W4<TemplateA2AMMFunc>::AlltoAll()
                 }
                 src_offset += allToAllSizePerRankPerLoop;
             }
-            else if (aivIdx == 1 && commIdx > 0 && aicIdx >= allToAllSendCoreNum && aicIdx < usedCoreNum) {
+            else if (isAlltoallOut && aivIdx == 1 && commIdx > 0 && aicIdx >= allToAllSendCoreNum && aicIdx < usedCoreNum) {
                 int32_t blockDst = ((commIdx - 1) % MAX_BLOCK_COUNT) * pingPongBlockSize;
                 int32_t mThisLoop = commIdx == commCount ? m / rankSize - (commIdx - 1) * mPerLoop : mPerLoop;
                 int32_t mThisLoopPerCore = DivCeil(mThisLoop, allToAllRecvCoreNum);
