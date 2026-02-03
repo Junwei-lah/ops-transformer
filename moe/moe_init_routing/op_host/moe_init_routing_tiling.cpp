@@ -124,7 +124,7 @@ ge::graphStatus MoeInitRountingTilingBase::GetPlatformInfo()
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     aicoreParams_.ubSize = ubSizePlatForm;
-    if (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND950) {
+    if (Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         aicoreParams_.ubSize = ubSizePlatForm - SIMT_UB_SIZE_BYTE;
         mrgSortListMaxElement = 2048; // 单次排序大小，在david上设置成2048
     }

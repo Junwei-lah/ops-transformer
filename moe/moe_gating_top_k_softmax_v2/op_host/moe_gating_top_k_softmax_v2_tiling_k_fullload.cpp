@@ -16,9 +16,11 @@
 #include "register/op_def_registry.h"
 #include "tiling_base/tiling_templates_registry.h"
 #include "tiling_base/tiling_type.h"
+#include "tiling_base/tiling_util.h"
 #include "tiling/tiling_api.h"
 #include "moe_gating_top_k_softmax_v2_tiling.h"
 #include "log/log.h"
+
 using namespace Ops::Transformer::OpTiling;
 using namespace AscendC;
 using namespace ge;
@@ -147,7 +149,7 @@ ge::graphStatus MoeGatingTopKSoftmaxV2KFullLoadTiling::DoLibApiTiling()
     uint32_t ubFormerAlignLocal = CeilDiv(ubFormer, ALIGN_NUM) * ALIGN_NUM;
     uint32_t kAlign = CeilDiv(k, ALIGN_NUM) * ALIGN_NUM;
     auto softmaxShape = ge::Shape({tilingData.get_ubFormer()});
-    if (socVersion == platform_ascendc::SocVersion::ASCEND950) {
+    if (Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         SoftMaxFlashV2TilingFunc(softmaxShape, dataTypeSize, dataTypeSize,
                                  GetSoftMaxFlashV2MaxTmpSize(softmaxShape, dataTypeSize, true, true),
                                  tilingData.ubFormerSoftmaxTilingData, true);
@@ -158,7 +160,7 @@ ge::graphStatus MoeGatingTopKSoftmaxV2KFullLoadTiling::DoLibApiTiling()
     }
 
     softmaxShape = ge::Shape({tilingData.get_ubTail()});
-    if (socVersion == platform_ascendc::SocVersion::ASCEND950) {
+    if (Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         SoftMaxFlashV2TilingFunc(softmaxShape, dataTypeSize, dataTypeSize,
                                  GetSoftMaxFlashV2MaxTmpSize(softmaxShape, dataTypeSize, true, true),
                                  tilingData.ubFormerSoftmaxTilingData, true);

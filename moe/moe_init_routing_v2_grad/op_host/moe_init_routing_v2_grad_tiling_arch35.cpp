@@ -17,6 +17,7 @@
 #include "util/platform_util.h"
 #include "util/math_util.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "tiling_base/tiling_util.h"
 
 namespace optiling {
 #define TILINGKEY_REGBASE_DROPLESS 400001
@@ -45,7 +46,7 @@ public:
 protected:
     bool IsCapable() override
     {
-        return socVersion == platform_ascendc::SocVersion::ASCEND950;
+        return Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_);
     }
 
     // 3、计算数据切分TilingData

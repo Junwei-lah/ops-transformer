@@ -549,11 +549,7 @@ ge::graphStatus TilingForGatherPaKvCache(gert::TilingContext *context)
     }
     OP_LOGD(context, "TilingForGatherPaKvCache enter.");
 
-    auto platformInfo = context->GetPlatformInfo();
-    OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+    if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context)) {
         OP_LOGD(context, "Tiling4GatherPaKvCache enter.");
         return Tiling4GatherPaKvCache(context);
     }
@@ -570,11 +566,7 @@ ge::graphStatus TilingPrepareForGatherPaKvCache(gert::TilingParseContext *contex
     }
     OP_LOGD(context, "TilingPrepareForGatherPaKvCache enter");
 
-    auto platformInfo = context->GetPlatformInfo();
-    OP_CHECK_NULL_WITH_CONTEXT(context, platformInfo);
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+    if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context)) {
         return TilingPrepare4GatherPaKvCache(context);
     }
 

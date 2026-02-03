@@ -14,7 +14,7 @@
  */
 
 #pragma once
-
+#include "platform/soc_spec.h"
 #include "register/op_impl_registry.h"
 
 namespace Ops {

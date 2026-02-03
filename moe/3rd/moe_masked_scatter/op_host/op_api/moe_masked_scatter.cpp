@@ -22,6 +22,7 @@
 #include "opdev/op_dfx.h"
 #include "opdev/aicpu/aicpu_task.h"
 #include "opdev/platform.h"
+#include "external/aclnn_kernels/aclnn_platform.h"
 
 using namespace op;
 
@@ -44,7 +45,7 @@ static bool CheckShapeLimit(const aclTensor* self, const aclTensor* mask)
 static bool IsAiCoreSupport(const aclTensor* self, const aclTensor* mask)
 {
     // 只需要判断dtype
-    auto supportList = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950 ?
+    auto supportList = Ops::Transformer::AclnnUtil::IsRegbase() ?
                            AICORE_DTYPE_SUPPORT_LIST_910D :
                            AICORE_DTYPE_SUPPORT_LIST;
     bool result = CheckType(self->GetDataType(), supportList);

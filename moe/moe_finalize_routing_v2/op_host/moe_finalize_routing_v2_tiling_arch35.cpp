@@ -12,7 +12,7 @@
  * \file moe_finalize_routing_v2_tiling_arch35.cpp
  * \brief
  */
-
+#include "tiling_base/tiling_util.h"
 #include "moe_finalize_routing_v2_tiling.h"
 #include "moe_finalize_routing_v2_tiling_arch35.h"
 
@@ -718,7 +718,7 @@ bool MoeFinalizeRoutingV2Regbase::IsHFullLoad()
 
 bool MoeFinalizeRoutingV2Regbase::IsCapable()
 {
-    if (socVersion_ != platform_ascendc::SocVersion::ASCEND950) {
+    if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         return false;
     }
 

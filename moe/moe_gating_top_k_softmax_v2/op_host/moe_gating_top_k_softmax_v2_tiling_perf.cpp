@@ -18,7 +18,9 @@
 #include "register/op_def_registry.h"
 #include "tiling_base/tiling_templates_registry.h"
 #include "tiling_base/tiling_type.h"
+#include "tiling_base/tiling_util.h"
 #include "moe_gating_top_k_softmax_v2_tiling.h"
+
 using namespace Ops::Transformer::OpTiling;
 using namespace AscendC;
 
@@ -88,7 +90,7 @@ private:
 
 bool MoeGatingTopKSoftmaxV2PerfTiling::IsCapable()
 {
-    if (socVersion == platform_ascendc::SocVersion::ASCEND950) {
+    if (Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         return false;
     }
     if ((col <= MAX_COL && col % CONSTANT_EIGHT == 0 && k <= CONSTANT_EIGHT) || (col < CONSTANT_EIGHT)) {

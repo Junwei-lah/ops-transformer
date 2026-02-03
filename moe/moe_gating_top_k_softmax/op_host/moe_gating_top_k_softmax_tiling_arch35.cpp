@@ -20,6 +20,8 @@
 #include "moe_gating_top_k_softmax_tiling_base.h"
 #include "log/log.h"
 #include "../op_kernel/arch35/moe_gating_top_k_softmax_tiling_def.h"
+#include "tiling_base/tiling_util.h"
+
 using namespace Ops::Transformer::OpTiling;
 using namespace AscendC;
 using namespace ge;
@@ -77,7 +79,7 @@ private:
 
 bool MoeGatingTopKSoftmaxRegbaseTiling::IsCapable()
 {
-    if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+    if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         return false;
     }
     return true;

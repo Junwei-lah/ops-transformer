@@ -19,7 +19,7 @@
 
 #include "log/log.h"
 #include "util/math_util.h"
-
+#include "tiling_base/tiling_util.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "platform/platform_info_def.h"
 #include "op_common/op_host/util/platform_util.h"
@@ -643,11 +643,7 @@ void ScatterPaKvCacheTiling::DumpTilingInfo()
 
 ge::graphStatus Tiling4ScatterPaKvCache(gert::TilingContext *context_)
 {
-    auto platformInfo = context_->GetPlatformInfo();
-    OP_CHECK_IF(platformInfo == nullptr, OP_LOGE(context_, "platformInfo is nullptr."), return ge::GRAPH_FAILED);
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    auto socVersion = ascendcPlatform.GetSocVersion();
-    if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+    if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
         ScatterPaKvCacheMembaseTiling tiling(context_);
         return tiling.DoTiling();
     }

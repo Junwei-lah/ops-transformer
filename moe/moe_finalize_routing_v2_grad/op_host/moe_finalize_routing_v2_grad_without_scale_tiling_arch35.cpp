@@ -37,7 +37,7 @@ protected:
 
     bool IsCapable() override
     {
-        if (socVersion_ != platform_ascendc::SocVersion::ASCEND950) {
+        if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
             return false;
         }
         return !isScalesExist_;

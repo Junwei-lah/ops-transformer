@@ -17,6 +17,7 @@
 #include "util/platform_util.h"
 #include "util/math_util.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "tiling_base/tiling_util.h"
 
 namespace optiling {
 #define TILINGKEY_SPLIT_H_DROPLESS 200001
@@ -47,7 +48,7 @@ public:
 protected:
     bool IsCapable() override
     {
-        if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+        if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
             return false;
         }
         this->typeSize = (this->inDtype != ge::DT_FLOAT) ? FP16_BF16_SIZE : sizeof(float);

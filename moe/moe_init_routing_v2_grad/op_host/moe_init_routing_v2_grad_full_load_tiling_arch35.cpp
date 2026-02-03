@@ -17,6 +17,7 @@
 #include "util/platform_util.h"
 #include "util/math_util.h"
 #include "kernel_tiling/kernel_tiling.h"
+#include "tiling_base/tiling_util.h"
 
 namespace optiling {
 #define TILINGKEY_FULL_LOAD_DROPLESS 300001
@@ -47,7 +48,7 @@ public:
 protected:
     bool IsCapable() override
     {
-        if (socVersion != platform_ascendc::SocVersion::ASCEND950) {
+        if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
             return false;
         }
         return true;

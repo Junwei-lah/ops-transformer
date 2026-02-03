@@ -13,7 +13,7 @@
  * \brief
  */
 #include "moe_finalize_routing_v2_tiling.h"
-
+#include "tiling_base/tiling_util.h"
 using namespace std;
 using namespace ge;
 
@@ -75,7 +75,7 @@ protected:
 
     bool IsCapable() override
     {
-        if (socVersion_ == platform_ascendc::SocVersion::ASCEND950) {
+        if (Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
             return false;
         }
         return true;

@@ -13,6 +13,7 @@
  * \brief
  */
 #include "moe_finalize_routing_v2_grad_tiling.h"
+#include "tiling_base/tiling_util.h"
 
 namespace optiling {
 constexpr int64_t TILING_KEY_WITH_SCALE_CUT_H_WITHOUT_BIAS = 20012;
@@ -39,7 +40,7 @@ public:
 protected:
     bool IsCapable() override
     {
-        if (socVersion_ != platform_ascendc::SocVersion::ASCEND950) {
+        if (!Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_)) {
             return false;
         }
         return true;

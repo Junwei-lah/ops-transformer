@@ -18,6 +18,7 @@
 #include "opdev/op_executor.h"
 #include "common/op_api_def.h"
 #include "aclnn_kernels/common/op_error_check.h"
+#include "external/aclnn_kernels/aclnn_platform.h"
 
 using namespace op;
 
@@ -45,7 +46,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGradGetWorkspaceSize(
     const aclTensor* probsOptional, bool paddedMode, const aclIntArray* restoreShapeOptional,
     aclTensor* permutedTokensGradOut, aclTensor* probsGradOut, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
-    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
+    static bool useMoeFinalizeRoutingV2Grad = Ops::Transformer::AclnnUtil::IsRegbase();
     if (!useMoeFinalizeRoutingV2Grad) {
         return aclnnInnerMoeTokenUnpermuteGradGetWorkspaceSize(
             permuteTokens, unpermutedTokensGrad, sortedIndices, probsOptional, paddedMode, restoreShapeOptional,
@@ -71,7 +72,7 @@ aclnnStatus aclnnMoeTokenUnpermuteGradGetWorkspaceSize(
 aclnnStatus aclnnMoeTokenUnpermuteGrad(
     void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
-    static bool useMoeFinalizeRoutingV2Grad = GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND950;
+    static bool useMoeFinalizeRoutingV2Grad = Ops::Transformer::AclnnUtil::IsRegbase();
     if (!useMoeFinalizeRoutingV2Grad) {
         return aclnnInnerMoeTokenUnpermuteGrad(workspace, workspaceSize, executor, stream);
     }
