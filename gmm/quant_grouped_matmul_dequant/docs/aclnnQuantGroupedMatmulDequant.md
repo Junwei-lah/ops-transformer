@@ -151,6 +151,16 @@ aclnnStatus aclnnQuantGroupedMatmulDequant(
       <td>√</td>
     </tr>
       <tr>
+      <td>groupList</td>
+      <td>输入</td>
+      <td>公式中的group。表示moe场景下输入张量x分组的前缀和结果，shape是1维[g]。</td>
+      <td>-</td>
+      <td>INT64</td>
+      <td>ND</td>
+      <td>1</td>
+      <td>√</td>
+    </tr>
+      <tr>
       <td>biasOptional</td>
       <td>输入</td>
       <td>表示计算的偏移量，可选参数，公式中的bias。</td>
@@ -287,7 +297,6 @@ aclnnStatus aclnnQuantGroupedMatmulDequant(
   </tbody>
   </table>
 
-
 ## aclnnFatreluMul
 
 - **参数说明**
@@ -341,6 +350,7 @@ aclnnStatus aclnnQuantGroupedMatmulDequant(
 - 当weightScale数据类型为INT64时，必须要求xScaleOptional数据类型为FLOAT16，且xQuantMode值为pertensor；当xScaleOptional数据类型为FLOAT16时，必须要求weightScale数据类型为INT64，且xQuantMode值为pertensor。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
