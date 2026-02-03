@@ -34,9 +34,6 @@ TEST_P(Arch32TilingTest, param)
     auto param = GetParam();
     struct MatmulAllReduceCompileInfo {};
     MatmulAllReduceCompileInfo compileInfo;
-    std::string soc = "Ascend910B";
-    uint64_t coreNum = 64;
-    uint64_t ubSize = 262144;
     gert::TilingContextPara tilingContextPara(
         "MatmulAllReduce",
         {
@@ -67,7 +64,7 @@ TEST_P(Arch32TilingTest, param)
         },
         param.inputInstance, param.outputInstance,
         &compileInfo,
-        soc, coreNum, ubSize
+        param.soc, param.coreNum, param.ubsize
     );
     Mc2Hcom::MockValues hcomTopologyMockValues {
         {"rankNum", param.ranksize}

@@ -76,6 +76,9 @@ struct MatmulAllReduceTilingUtParam: public MatmulAllReduceHostUtParamBase {
     gert::TilingContextPara::TensorDescription comm_quant_scale_1 = TD_DEFAULT;
     gert::TilingContextPara::TensorDescription comm_quant_scale_2 = TD_DEFAULT;
     gert::TilingContextPara::TensorDescription y = TD_DEFAULT;
+    std::string soc;
+    uint64_t coreNum;
+    uint64_t ubsize;
     uint64_t ranksize;
     uint64_t expectTilingKey;
     std::string expectTilingDataHash;
@@ -116,6 +119,9 @@ struct MatmulAllReduceTilingUtParam: public MatmulAllReduceHostUtParamBase {
         this->outputInstance.emplace_back(
             GetTensor(csvMap, "output_y_shape", "output_y_dtype", "output_y_format",
                 y));
+        this->soc = ReadMap(csvMap, "soc");
+        this->coreNum = stoi(ReadMap(csvMap, "core_num"));
+        this->ubsize = stoi(ReadMap(csvMap, "ubsize"));
         this->ranksize = stoi(ReadMap(csvMap, "ranksize"));
         if(this->expectResult == ge::GRAPH_SUCCESS) {
             this->expectTilingKey = stoi(ReadMap(csvMap, "expectTilingKey"));
