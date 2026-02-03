@@ -1,14 +1,14 @@
 声明：本文使用[Creative Commons License version 4.0](https://creativecommons.org/licenses/by/4.0/legalcode)许可协议，转载、引用或修改等操作请遵循此许可协议。
 
-# NormRopeConcat
+# aclnnNormRopeConcat
 
 ## 产品支持情况
 
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
-|<term>昇腾950 AI处理器</term>|      √     |
+|<term>Ascend 950PR/Ascend 950DT</term>|      √     |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      √     |
-|<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>|      √     |
+|<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      √     |
 |<term>Atlas 200I/500 A2 推理产品</term>|      ×     |
 |<term>Atlas 推理系列产品</term>|      ×     |
 |<term>Atlas 训练系列产品</term>|      ×     |
@@ -24,6 +24,7 @@
     -   特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
 
 -   计算公式（以Query（视频）和EncoderQuery（文本）为例）：
+
 	  $$
     hiddenState_q = \text{Norm}(query, normQueryWeight, normQueryBias, eps) \\
     hiddenState_{eq} = \text{Norm}(encoderQuery, normEncoderQueryWeight, normEncoderQueryBias, eps) \\
@@ -31,34 +32,46 @@
     transposedHiddenState = \text{Transpose}(concatedHiddenState, (0, 2, 1, 3)) \\
     hiddenState = \text{RoPE}(concatedHiddenState, ropeSin, ropeCos)
     $$
+
 - 说明：
     1. 输入输出布局如下：输入`query`的shape为`(B, S, N, D)`，输出`hiddenState`的shape为`(B, N, S, D)`，其中
     B为batch，S为sequenceLen，N为headNum，D为headDim。
-    2. Norm有五种模式(`normType`)：`NONE(0), LAYER_NORM(1), LAYER_NORM_AFFINE(2)，RMS_NORM(3)，RMS_NORM_AFFINE(4)`，其中：
-        当`normType = NONE`时：
+    2. Norm有五种模式(`normType`)：`NONE(0), LAYER_NORM(1), LAYER_NORM_AFFINE(2), RMS_NORM(3), RMS_NORM_AFFINE(4)`，其中：
+        当`normType = NONE`时:
+        
         $$
         hiddenState_q = query
         $$
+        
         当`normType = LAYER_NORM`时
+        
         $$
         queryMean_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}query_{b,s,n} \\
         queryVar_{b,s,n} = \frac{1}{D}\sum_{i=0}^{D}(query-queryMean_{b,s,n})^2 \\
         queryRstd_{b,s,n}=  \frac{1}{\sqrt{queryVar_{b,s,n}+\epsilon}} \\
-        hiddenState_q = (query-queryMean)*queryRstd$$
+        hiddenState_q = (query-queryMean)*queryRstd
+        $$
+
         当`normType = LAYER_NORM_AFFINE`时，在上面的基础上
+
         $$
         hiddenState_q = normQueryWeight*hiddenState_q + normQueryBias
         $$
+
         当`normType = RMS_NORM`时：
+
         $$
         queryMs = \frac{1}{D}\sum_{i=0}^{D}(query_{b,s,n})^2 \\
         queryRms = \frac{1}{\sqrt{queryMs+\epsilon}} \\
         hiddenState_q = query * queryRms
         $$
+
         当`normType = RMS_NORM_AFFINE`时，在上面的基础上
+
         $$
         hiddenState_q = normQueryWeight*hiddenState_q
         $$
+
     3. Concat指在sequence维度上进行拼接，拼接有顺序区别(`concatOrder`)，当`concatOrder=0`时，$hiddenState_q$在$hiddenState_{eq}$前，当`concatOrder=1`时，$hiddenState_q$在$hiddenState_{eq}$后。
     4. RoPE有三种模式(`ropeType`):`NONE(0), INTERLEAVE(1), HALF(2)`，其中当`ropeType=NONE`时直接输出不做变换，其余情况参考如下:
         ```python
@@ -76,7 +89,12 @@
                   out = hidden_states.float() * rope_cos + rotated_x.float()*rope_sin
                   return out.type_as(hidden_states)
         ```
-    5. RoPE的输入`ropeSin`的shape为`(seqRope, D)`，其中$$seqRope <= min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)$$
+    5. RoPE的输入`ropeSin`的shape为`(seqRope, D)`，其中
+    
+    $$
+    seqRope <= min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)
+    $$
+
     6. 当场景为训练时，会输出`queryMean, queryRstd，encoderQueryMean, encoderQueryRstd`供后续反向使用。
 
 
@@ -119,15 +137,15 @@ aclnnStatus aclnnNormRopeConcatGetWorkspaceSize(
   const aclTensor *normAddedQueryRstd,
   const aclTensor *normAddedKeyMean,
   const aclTensor *normAddedKeyRstd,
-  uint64_t *workspaceSize,
-  aclOpExecutor **executor)
+  uint64_t        *workspaceSize,
+  aclOpExecutor   **executor)
 ```
 ```cpp
 aclnnStatus aclnnNormRopeConcat(
-  void *workspace,
-  uint64_t workspaceSize,
-  aclOpExecutor *executor,
-  aclrtStream stream)
+  void            *workspace,
+  uint64_t        workspaceSize,
+  aclOpExecutor   *executor,
+  aclrtStream     stream)
 ```
 
 ## aclnnNormRopeConcatGetWorkspaceSize
