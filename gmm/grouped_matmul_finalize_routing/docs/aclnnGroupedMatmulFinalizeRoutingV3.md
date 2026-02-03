@@ -341,7 +341,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingV3(
   - x2仅支持INT4。当输入为INT32时维度为(e, k, n / 8)，输入转为INT4时维度为(e, k, n)，e取值范围[1,256]，k支持2048，n支持7168。
   - scaleOptional支持INT64。shape支持三维，维度为(e, 1, n)，e、n和w的e、n一致。
   - biasOptional支持FLOAT32。e、n和w的e、n一致。
-  - offsetOptional支持FLOAT32。shape支持二维，维度为(e, n)，e、n和w的e、n一致。
+  - offsetOptional支持FLOAT32。shape支持三维，维度为(e, 1, n)，e、n和w的e、n一致。
   - perTokenScaleOptional支持FLOAT32。支持一维，维度为(m)，m和x的m一致。
   - groupListOptional支持e和w的e一致。
   - sharedInputOptional支持e和w的e一致。
