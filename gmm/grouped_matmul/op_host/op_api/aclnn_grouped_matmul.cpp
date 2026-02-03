@@ -738,9 +738,9 @@ static aclnnStatus IsGmmAntiQuantEmpty(const gmm::GroupedMatmulParams &gmmParams
 
 static aclnnStatus CheckNonQuant(const gmm::GroupedMatmulParams &gmmParams) {
   CHECK_COND(IsGmmQuantEmpty(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
-             "Detected nonquant, but quant inputs is not empty!");
+             "Detected nonquant, but quant inputs are not empty!");
   CHECK_COND(IsGmmAntiQuantEmpty(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
-             "Detected nonquant, but antiquant inputs is not empty!");
+             "Detected nonquant, but antiquant inputs are not empty!");
   return ACLNN_SUCCESS;
 }
 
@@ -800,7 +800,7 @@ static aclnnStatus CheckGroupedMatmulQuant(const gmm::GroupedMatmulParams &gmmPa
                "Check perTokenScale failed!");
   }
   CHECK_COND(IsGmmAntiQuantEmpty(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
-             "Detected quant, but antiquant inputs is not empty!");
+             "Detected quant, but antiquant inputs are not empty!");
   return ACLNN_SUCCESS;
 }
 
@@ -891,7 +891,7 @@ static aclnnStatus CheckGroupedMatmulAntiQuant(const gmm::GroupedMatmulParams &g
              gmm::dTypeToString(gmmParams.xDtype).c_str());
   }
   CHECK_COND(IsGmmQuantEmpty(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
-             "Detected antiquant, but quant inputs is not empty!");
+             "Detected antiquant, but quant inputs are not empty!");
   return ACLNN_SUCCESS;
 }
 static aclnnStatus Check310PlatformForFunction(const gmm::GroupedMatmulParams &gmmParams, const DataType &weightDtype, bool isNoActivation) {
@@ -1072,7 +1072,7 @@ static aclnnStatus CheckA4W4QuantParams(const gmm::GroupedMatmulParams &gmmParam
   }
   CHECK_COND(CheckA4W4ParamsShape(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID, "CheckA4W4ParamsShape failed.");
   CHECK_COND(IsGmmAntiQuantEmpty(gmmParams) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
-             "GMM A4W4: Detected quant, but antiquant inputs is not empty!");
+             "GMM A4W4: Detected quant, but antiquant inputs are not empty!");
   CHECK_COND(gmmParams.groupType == gmm::SPLIT_M && gmmParams.x->Size() == 1 && gmmParams.weight->Size() == 1
              && gmmParams.y->Size() == 1, ACLNN_ERR_PARAM_INVALID,
              "A4W4 only support split m, single x, single weight, single y.");
@@ -1089,7 +1089,7 @@ bool isActivationAllowed(int64_t act_type) {
 bool CheckScaleForInt8Quant(const gmm::GroupedMatmulParams &gmmParams) {
     if (gmmParams.scaleOptional == nullptr || gmmParams.scaleOptional->Size() == 0 ||
         (*gmmParams.scaleOptional)[0] == nullptr) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "When the activation function is enabled, Scale should not be null, but now is null.");
         return false;
     }
@@ -1103,7 +1103,7 @@ bool CheckScaleForInt8Quant(const gmm::GroupedMatmulParams &gmmParams) {
     }
     size_t scaleDimNum = scaleShape.GetDimNum();
     if (scaleDimNum != 2) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "When the activation function is enabled, the dim of Scale should be 2 for perchannel, but actual is %zu.\n", scaleDimNum);
         return false;
     }
@@ -1114,7 +1114,7 @@ bool CheckScaleForInt8Quant(const gmm::GroupedMatmulParams &gmmParams) {
     int64_t scaleNSize = scaleShape.GetDim(scaleDimNum - 1);
     int64_t scaleGroupNum = scaleShape.GetDim(0);
     if (scaleNSize != weightNSize || scaleGroupNum != weightGroupNum) {
-              OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+              OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                      "When the activation function is enabled, the shape of scale should be (%ld, %ld), but actual"
                      " is (%ld, %ld).\n",
                      weightGroupNum, weightNSize, scaleGroupNum, scaleNSize);
@@ -1137,9 +1137,9 @@ bool CheckInt8DynamicKCQuant(const gmm::GroupedMatmulParams &gmmParams) {
     }
     const op::Shape &perTokenScaleShape = (*gmmParams.perTokenScaleOptional)[0]->GetViewShape();
     DataType perTokenScaleDtype = (*gmmParams.perTokenScaleOptional)[0]->GetDataType();
-    
+
     if (perTokenScaleDtype != DataType::DT_FLOAT) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "When the activation function is enabled,"
                 " the dtype of perTokenScale should be float32, but actual is %s.",
                 gmm::dTypeToString(perTokenScaleDtype).c_str());
@@ -1150,12 +1150,12 @@ bool CheckInt8DynamicKCQuant(const gmm::GroupedMatmulParams &gmmParams) {
     size_t perTokenScaleDim = perTokenScaleShape.GetDimNum();
     int64_t perTokenScaleMSize = perTokenScaleShape.GetDim(perTokenScaleDim - 1);
     if (perTokenScaleDim != 1) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "When the activation function is enabled, the dim of perTokenScale should be 1, but actual is %ld.\n", perTokenScaleDim);
         return false;
     }
     if (perTokenScaleMSize != mSize) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                 "When the activation function is enabled and the dim of perTokenScale is 1, the shape of perTokenScale should be (%ld,), but actual"
                 " is (%ld,).\n",
                 mSize, perTokenScaleMSize);
@@ -1169,7 +1169,7 @@ bool CheckIsEnabledActive(const gmm::GroupedMatmulParams &gmmParams) {
     auto weightDtype = (*gmmParams.weight)[0]->GetDataType();
     bool isInt8Input = (xDtype == DataType::DT_INT8 && weightDtype == DataType::DT_INT8);
     if (!isInt8Input) {
-          OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+          OP_LOGE(ACLNN_ERR_PARAM_INVALID,
                   "When the activation function is enabled, the dtype of x and weight should be DT_INT8,"
                   " actual is %s and %s.",
                   op::ToString(xDtype).GetString(),
@@ -1178,7 +1178,7 @@ bool CheckIsEnabledActive(const gmm::GroupedMatmulParams &gmmParams) {
     }
     bool isInt8StaticTCQuant = CheckInt8StaticTCQuant(gmmParams);
     bool isInt8DynamicKCQuant = CheckInt8DynamicKCQuant(gmmParams);
-    bool allowActOnDavid = isInt8Input && (isInt8StaticTCQuant || isInt8DynamicKCQuant) 
+    bool allowActOnDavid = isInt8Input && (isInt8StaticTCQuant || isInt8DynamicKCQuant)
                             && isActivationAllowed(gmmParams.activeType);
     return allowActOnDavid;
 }
