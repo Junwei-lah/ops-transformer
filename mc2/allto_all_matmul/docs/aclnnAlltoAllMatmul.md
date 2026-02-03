@@ -99,8 +99,8 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>biasOptional</td>
     <td>可选输入</td>
     <td>矩阵乘运算后累加的偏置，对应公式中的bias。</td>
-    <td>支持传入空指针场景。</td>
-    <td>x1/x2为FLOAT16时：支持FLOAT16和FLOAT32；x1/x2为BFLOAT16时：支持BFLOAT16和FLOAT32</td>
+    <td>支持传入空指针场景，根据设备型号对数据类型有不同限制，详细参见<a href="#约束说明">约束说明</a>。</td>
+    <td>FLOAT16、BFLOAT16、FLOAT32</td>
     <td>ND</td>
     <td>1维，shape为(N)</td>
     <td>x</td>
@@ -111,9 +111,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>AlltoAll和Pemute数据交换的方向。</td>
     <td>支持配置空或者[-2,-1]，传入空时默认按[-2,-1]处理，表示将输入由(BS, H)转为(BS/rankSize, rankSize*H)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
-    <td>ND</td>
+    <td>-</td>
     <td>1维，shape为(2)</td>
-    <td>x</td>
+    <td>-</td>
     </tr>
     <tr>
     <td>group</td>
@@ -121,9 +121,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>Host侧标识列组的字符串，即通信域名称，通过Hccl接口HcclGetCommName获取commName作为该参数。</td>
     <td>字符串长度要求(0, 128)。</td>
     <td>STRING</td>
-    <td>ND</td>
+    <td>-</td>
     <td>1维</td>
-    <td>x</td>
+    <td>-</td>
     </tr>
     <tr>
     <td>transposeX1</td>
@@ -131,9 +131,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>标识左矩阵是否转置过。</td>
     <td>暂不支持配为True。</td>
     <td>bool</td>
-    <td>ND</td>
-    <td></td>
-    <td></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
     <td>transposeX2</td>
@@ -141,9 +141,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>标识右矩阵是否转置过。</td>
     <td>配置为True时右矩阵Shape为(N, rankSize*H)。</td>
     <td>bool</td>
-    <td>ND</td>
-    <td></td>
-    <td></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
     <td>output</td>
@@ -171,9 +171,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>返回需要在Device侧申请的workspace大小。</td>
     <td></td>
     <td>UINT64</td>
-    <td>ND</td>
-    <td></td>
-    <td></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
     <td>executor</td>
@@ -181,9 +181,9 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>返回op执行器，包含了算子的计算流程。</td>
     <td></td>
     <td>aclOpExecutor*</td>
-    <td>ND</td>
-    <td></td>
-    <td></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     </tbody></table>
 
@@ -269,12 +269,17 @@ aclnnStatus aclnnAlltoAllMatmul(
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 参数说明中shape使用的变量BS必须整除NPU卡数。
+* BS和N的值不得超过2147483647（INT32_MAX）。
 * H*rankSize范围，根据设备型号有不同限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持[1, 35000]。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持[1, 65535]。
-* BS和N的值不得超过2147483647（INT32_MAX）。
-* 仅支持输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持。
-* x1、x2计算输入的数据类型要和output、alltoAllOutOptional计算输出的数据类型一致，传入的x1、x2或者output不为空指针。
+* 空tensor的支持度根据不同设备型号有不同的限制：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何空tensor。
+  - <term>Ascend 950PR/Ascend 950DT</term>：仅支持输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持。
+* x1、x2计算输入的数据类型要和output、alltoAllOutOptional计算输出的数据类型一致，传入的x1、x2与output均不为空指针。
+* biasOptional的数据类型根据不同设备型号有不同的限制：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：x1/x2计算输入的数据类型为FLOAT16时，biasOptional计算输入的数据类型支持FLOAT16；x1/x2计算输入的数据类型为BFLOAT16时，biasOptional计算输入的数据类型支持FLOAT32。
+  - <term>Ascend 950PR/Ascend 950DT</term>：x1/x2计算输入的数据类型为FLOAT16时，biasOptional计算输入的数据类型支持FLOAT16和FLOAT32；x1/x2计算输入的数据类型为BFLOAT16时，biasOptional计算输入的数据类型支持BFLOAT16和FLOAT32。
 * 通算融合算子不支持并发调用，不同的通算融合算子也不支持并发调用。
 * 不支持跨超节点通信，只支持超节点内。
 
