@@ -1382,13 +1382,6 @@ __aicore__ inline void MoeDistributeCombineV2<CombineMC2TypeFunc>::LocalWindowCo
             PipeBarrier<PIPE_V>();
             AscendC::Add(sumFloatBufLocal_, sumFloatBufLocal_, rowTmpFloatLocal_, processLen);
         }
-        if (isPerformanceFlag_) {
-            SyncFunc<AscendC::HardEvent::V_MTE3>();
-            SetAtomicMax<int32_t>();
-            DataCopyExtParams performanceInfoCopyParams{1U, static_cast<uint32_t>(JUMP_WRITE * epWorldSizeOriginal_ * sizeof(int32_t)), 0U, 0U, 0U};
-            DataCopyPad(performanceInfoGM_, performanceInfoTensor_, performanceInfoCopyParams);
-            SetAtomicNone();
-        }
         if constexpr (HasAddRmsNorm) {
             AddRmsNormAddCompute(tokenIndex, tokenOffset, processLen, sumFloatBufLocal_, rowTmpFloatLocal_, sumFloatBufLocal_,
                             expandXCopyParams, copyPadXTypeParams);
@@ -1407,6 +1400,13 @@ __aicore__ inline void MoeDistributeCombineV2<CombineMC2TypeFunc>::LocalWindowCo
             AddRmsNormRmsNormCompute(tokenIndex, tokenOffset, processLen, sumFloatBufLocal_, mulBufLocal_, gammaLocal_,
                                 expandXCopyParams);
         }
+    }
+    if (isPerformanceFlag_) {
+        SyncFunc<AscendC::HardEvent::V_MTE3>();
+        SetAtomicMax<int32_t>();
+        DataCopyExtParams performanceInfoCopyParams{1U, static_cast<uint32_t>(JUMP_WRITE * epWorldSizeOriginal_ * sizeof(int32_t)), 0U, 0U, 0U};
+        DataCopyPad(performanceInfoGM_, performanceInfoTensor_, performanceInfoCopyParams);
+        SetAtomicNone();
     }
 }
 

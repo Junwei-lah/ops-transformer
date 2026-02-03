@@ -1360,10 +1360,6 @@ static ge::graphStatus CheckCombineOrARN(gert::TilingContext* context, MoeDistri
         OP_TILING_CHECK(!CheckOutputTensorDimARN(context, nodeName, config),
             OP_LOGE(nodeName, "param shape of output tensor is invalid"), return ge::GRAPH_FAILED);  
     } else {
-        const gert::StorageShape *performanceInfoStorageShape = context->GetOptionalInputShape(config.performanceInfoIndex);
-        OP_TILING_CHECK(performanceInfoStorageShape != nullptr,
-            OP_LOGE(K_INNER_DEBUG, "This input is not support, performanceInfo should be nullptr."), return ge::GRAPH_FAILED);
-        
         // 校验combine输出的维数与shape
         OP_TILING_CHECK(!CheckOutputTensorDim(context, nodeName, config, expertIdsDim0, expandXDim1),
             OP_LOGE(nodeName, "param shape of output tensor is invalid"), return ge::GRAPH_FAILED);
