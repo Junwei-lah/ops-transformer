@@ -27,7 +27,7 @@
  */
 
 #define FUSED_FLOYD_ATTENTION_KERNEL_PARAM                                                        \
-    (uint8_t *query, uint8_t *key_0, uint8_t *value_0, uint8_t *key_1, uint8_t * value_1, \
+    (uint8_t *query, uint8_t *key_1, uint8_t *value_1, uint8_t *key_2, uint8_t * value_2, \
      uint8_t *attenMask, uint8_t *softmaxMax, uint8_t *softmaxSum, uint8_t *attentionOut,     \
      uint8_t *workspace, uint8_t *tiling)
 
@@ -53,10 +53,10 @@ bool RunFusedFloydAttention(void *func, uint64_t tilingKey, int64_t blockDim, st
     ICPU_SET_TILING_KEY(tilingKey);
     ICPU_RUN_KF(kernelFunc, blockDim,
                 inputs[0]->GetDevData(),      // query
-                inputs[1]->GetDevData(),      // key
-                inputs[2]->GetDevData(),      // value
-                inputs[3]->GetDevData(),      // key1
-                inputs[4]->GetDevData(),      // value1
+                inputs[1]->GetDevData(),      // key1
+                inputs[2]->GetDevData(),      // value1
+                inputs[3]->GetDevData(),      // key2
+                inputs[4]->GetDevData(),      // value2
                 inputs[5]->GetDevData(),      // attenMask
                 outputs[0]->GetDevData(),     // softmaxMax
                 outputs[1]->GetDevData(),     // softmaxSum
@@ -103,10 +103,10 @@ bool FusedFloydAttentionCase::InitParam()
     layoutSoftmax = {mParam.B, mParam.H, mParam.N, mParam.M, 8};
 
     query = Tensor("query", layoutQ, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
-    key = Tensor("key", layoutK, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
-    key1 = Tensor("key1", layoutK1, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
-    value = Tensor("value", layoutV, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
-    value1 = Tensor("value1", layoutV1, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
+    key1 = Tensor("key1", layoutK, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
+    key2 = Tensor("key2", layoutK1, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
+    value1 = Tensor("value1", layoutV, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
+    value2 = Tensor("value2", layoutV1, qkvStr.c_str(), mParam.dtype, ge::FORMAT_ND, Tensor::TensorType::REQUIRED_INPUT);
 
     attenMask = Tensor("attenMask", layoutAttenMask, attenMaskStr.c_str(), ge::DataType::DT_UINT8, ge::FORMAT_ND);
     attenOut = Tensor("attenOut", layoutAttenOut, qkvStr.c_str(), ge::DataType::DT_FLOAT, ge::FORMAT_ND, 

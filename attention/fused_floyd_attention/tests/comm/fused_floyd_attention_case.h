@@ -52,8 +52,8 @@ public:
     Tensor query;
     Tensor key;
     Tensor key1;
-    Tensor value;
     Tensor value1;
+    Tensor value2;
     Tensor attenMask;
     Tensor softmaxMax;
     Tensor softmaxSum;

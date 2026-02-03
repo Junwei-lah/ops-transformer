@@ -80,7 +80,7 @@ using namespace AscendC;
         templateClass<__VA_ARGS__> op;                                                                             \
         REGIST_MATMUL_OBJ(&tPipe, GetSysWorkSpacePtr(), op.bmm1, bmm1tiling, op.bmm1k1, bmm1k1tiling,              \
               op.bmm2, bmm2tiling, op.bmm2v2, bmm2v2tiling);                                                       \
-        op.Init(query, key_0, value_0, key_1, value_1, attenMask, softmaxMax, softmaxSum,          \
+        op.Init(query, key_1, value_1, key_2, value_2, attenMask, softmaxMax, softmaxSum,          \
                 attentionOut, user, tilingData, &tPipe);                                               \
         op.Process();                                                                                              \
     } while (0)
@@ -92,7 +92,7 @@ using namespace AscendC;
         templateClass<__VA_ARGS__> op;                                                                             \
         REGIST_MATMUL_OBJ(&tPipe, GetSysWorkSpacePtr(), op.bmm1, bmm1tiling, op.bmm1Nz, bmm1tiling, op.bmm2,       \
                             bmm2tiling);                                                  \
-        op.Init(query, key_0, value_0, key_1, value_1, attenMask, softmaxMax, softmaxSum,          \
+        op.Init(query, key_1, value_1, key_2, value_2, attenMask, softmaxMax, softmaxSum,          \
                 attentionOut, user, tilingData, &tPipe);                                               \
         op.Process();                                                                                              \
     } while (0)
@@ -104,7 +104,7 @@ using namespace AscendC;
         templateClass<__VA_ARGS__> op;                                                                             \
         REGIST_MATMUL_OBJ(&tPipe, GetSysWorkSpacePtr(), op.bmm1, bmm1tiling, op.bmm2, bmm2tiling, op.bmm2Nz,       \
                             bmm2tiling);                                                                             \
-        op.Init(query, key_0, value_0, key_1, value_1, attenMask, softmaxMax, softmaxSum,          \
+        op.Init(query, key_1, value_1, key_2, value_2, attenMask, softmaxMax, softmaxSum,          \
                 attentionOut, user, tilingData, &tPipe);                                               \
         op.Process();                                                                                              \
     } while (0)
@@ -112,7 +112,7 @@ using namespace AscendC;
 #endif
 
 extern "C" __global__ __aicore__ void
-fused_floyd_attention(__gm__ uint8_t *query, __gm__ uint8_t *key_0, __gm__ uint8_t *value_0, __gm__ uint8_t *key_1, __gm__ uint8_t *value_1, 
+fused_floyd_attention(__gm__ uint8_t *query, __gm__ uint8_t *key_1, __gm__ uint8_t *value_1, __gm__ uint8_t *key_2, __gm__ uint8_t *value_2, 
                       __gm__ uint8_t *attenMask, __gm__ uint8_t *softmaxMax, __gm__ uint8_t *softmaxSum, __gm__ uint8_t *attentionOut,
                       __gm__ uint8_t *workspace, __gm__ uint8_t *tiling)
 {

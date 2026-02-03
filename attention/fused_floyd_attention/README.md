@@ -17,11 +17,11 @@
     注意力的正向计算公式如下：
 
     $$
-    weights = Softmax(attenMask + scale*(einsum(query, key^T) + einsum(query, key1^T)))
+    weights = Softmax(attenMask + scale*(einsum(query, key1^T) + einsum(query, key2^T)))
     $$
     
     $$
-    attention\_out = einsum(weights, value) + einsum(weights, value1)
+    attention\_out = einsum(weights, value1) + einsum(weights, value2)
     $$
     
 
@@ -52,16 +52,16 @@
       <td>ND</td>
     </tr>
     <tr>
-      <td>key</td>
+      <td>key1</td>
       <td>输入</td>
-      <td>公式中的输入key。</td>
+      <td>公式中的输入key1。</td>
       <td>BFLOAT16、FLOAT16</td>
       <td>ND</td>
     </tr>
     <tr>
-      <td>value</td>
+      <td>value1</td>
       <td>输入</td>
-      <td>公式中的输入value。</td>
+      <td>公式中的输入value1。</td>
       <td>BFLOAT16、FLOAT16</td>
       <td>ND</td>
     </tr>
@@ -112,13 +112,13 @@
 ## 约束说明
 
 - 该接口与PyTorch配合使用时，需要保证CANN相关包与PyTorch相关包的版本匹配。
-- 定义query输入shape为[BHNMD]，key_0输入shape为[BHNKD]，key_1输入shape为[BHKMD]，value_0输入shape为[BHNKD]，value_1输入shape为[BHKMD]。
-- 输入query、key_0/key_1、value_0/value_1的B必须相等。
-- 输入query、key_0/key_1、value_0/value_1的D必须相等。
-- 输入query、key_0/key_1、value_0/value_1的input_layout必须一致。
-- 输入query、key_0/key_1、value_0/value_1的数据类型必须一致。
-- 输入key_0/value_0的shape必须一致。
+- 定义query输入shape为[BHNMD]，key_1输入shape为[BHNKD]，key_2输入shape为[BHKMD]，value_1输入shape为[BHNKD]，value_2输入shape为[BHKMD]。
+- 输入query、key_1/key_2、value_1/value_2的B必须相等。
+- 输入query、key_1/key_2、value_1/value_2的D必须相等。
+- 输入query、key_1/key_2、value_1/value_2的input_layout必须一致。
+- 输入query、key_1/key_2、value_1/value_2的数据类型必须一致。
 - 输入key_1/value_1的shape必须一致。
+- 输入key_2/value_2的shape必须一致。
 - 原始N，M，K取值范围[128，3072]，具体值为128的整数倍，D支持数值为32或64；
 
 ## 调用说明

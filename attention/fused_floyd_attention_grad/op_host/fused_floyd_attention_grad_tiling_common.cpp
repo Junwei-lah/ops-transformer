@@ -80,10 +80,10 @@ ge::graphStatus CheckSupportShape(gert::TilingContext *context)
     const gert::StorageShape *dyShape = context->GetInputShape(DY);
     const gert::StorageShape *attentionInShape = context->GetInputShape(ATTENTION_IN);
 
-    OP_CHECK_IF(CheckSameShape(key1Shape, value1Shape), OP_LOGE(context, "key1's shape and value1's shape is different"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckSameShape(key2Shape, value2Shape), OP_LOGE(context, "key2's shape and value2's shape is different"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckSameShape(queryShape, dyShape), OP_LOGE(context, "query's shape and dy's shape is different"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(CheckSameShape(queryShape, attentionInShape), OP_LOGE(context, "query's shape and attentionIn's shape is different"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckSameShape(key1Shape, value1Shape), OP_LOGE(context, "key1's shape and value1's shape is different"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckSameShape(key2Shape, value2Shape), OP_LOGE(context, "key2's shape and value2's shape is different"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckSameShape(queryShape, dyShape), OP_LOGE(context, "query's shape and dy's shape is different"), return ge::GRAPH_FAILED);
+    OP_CHECK_IF(!CheckSameShape(queryShape, attentionInShape), OP_LOGE(context, "query's shape and attentionIn's shape is different"), return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

@@ -5,14 +5,15 @@
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
 |<term>Ascend 950PR/Ascend 950DT</term>|      ×     |
-|<term>Atlas A3 训练系列产品</term>|     √      |
-|<term>Atlas A3 推理系列产品</term>|     ×      |
-|<term>Atlas A2 训练系列产品</term>|     √      |
-|<term>Atlas A2 推理系列产品</term>|     ×      |
+|<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|     √     |
+|<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|     √     |
+|<term>Atlas 200I/500 A2 推理产品</term>|     ×      |
+|<term>Atlas  推理系列产品</term>|     ×     |
+|<term>Atlas  训练系列产品</term>|     ×     |
 
 ## 功能说明
 
-- 算子功能：训练场景下，FloydAttn相较于传统FA主要是计算qk/pv注意力时会额外将seq作为batch轴从而转换为batchMatmul
+- 接口功能：训练场景下，FloydAttn相较于传统FA主要是计算qk/pv注意力时会额外将seq作为batch轴从而转换为batchMatmul
 - 计算公式：
 
     已知注意力的正向计算公式为：
@@ -84,7 +85,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
 
 ## aclnnFusedFloydAttentionGradGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
   
   <table style="undefined;table-layout: fixed; width: 1565px"><colgroup>
       <col style="width: 146px">
@@ -115,7 +116,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型与key1/value1/key2/value2的数据类型一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -125,7 +126,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型与query/value1/key2/value2的数据类型一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,K,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -135,7 +136,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型与query/key1/key2/value2的数据类型一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,K,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -145,7 +146,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型与query/key1/value1/value2的数据类型一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,K,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -155,7 +156,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型与query/key1/value1/key2的数据类型一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,K,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -165,42 +166,37 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>attenMaskOptional</td>
           <td>输入</td>
           <td>Device侧的aclTensor，公式中的atten_mask。</td>
-          <td>
-            <ul>
-                <li>取值为1代表该位不参与计算，为0代表该位参与计算。</li>
-                <li>输入shape类型需为[B,1,M,1,K]。</li>
-            </ul>
-          </td>
+          <td>取值为1代表该位不参与计算，为0代表该位参与计算。</td>
           <td>BOOL、UINT8</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,1,N,1,K]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>softmaxMax</td>
           <td>输入</td>
           <td>Device侧的aclTensor，注意力正向计算的中间输出。</td>
-          <td>输出的shape类型为[B,H,M,N,8]。</td>
+          <td>输出的shape类型为[B,H,N,M,8]。</td>
           <td>FLOAT</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,8]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>softmaxSum</td>
           <td>输入</td>
           <td>Device侧的aclTensor，注意力正向计算的中间输出。</td>
-          <td>输出的shape类型为[B,H,M,N,8]。</td>
+          <td>输出的shape类型为[B,H,N,M,8]。</td>
           <td>FLOAT</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,8]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -210,7 +206,7 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>数据类型和shape类型与query保持一致。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -220,47 +216,47 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>dk1Out</td>
           <td>输出</td>
-          <td>公式中的dK，表示key1的梯度。</td>
+          <td>公式中的dK1，表示key1的梯度。</td>
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,K,D]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>dv1Out</td>
           <td>输出</td>
-          <td>公式中的dV，表示value1的梯度。</td>
+          <td>公式中的dV1，表示value1的梯度。</td>
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,N,K,D]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>dk2Out</td>
           <td>输出</td>
-          <td>公式中的dK，表示key2的梯度。</td>
+          <td>公式中的dK2，表示key2的梯度。</td>
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,K,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
           <td>dv2Out</td>
           <td>输出</td>
-          <td>公式中的dV，表示value2的梯度。</td>
+          <td>公式中的dV2，表示value2的梯度。</td>
           <td>-</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
-          <td>5</td>
+          <td>[B,H,K,M,D]</td>
           <td>√</td>
         </tr>
         <tr>
@@ -378,10 +374,10 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
 - 关于数据shape的约束，其中：
   - B：取值范围为1\~2K。
   - H：取值范围为1\~256。
-  - M：取值范围为1\~1M。
-  - N：取值范围为1\~1M。
-  - K：取值范围为1\~1M。
-  - D：取值范围为32\~256。
+  - N：取值范围为16\~1M且N%16==0。
+  - M：取值范围为128\~1M且M%128==0。
+  - K：取值范围为128\~1M且K%128==0。
+  - D：取值范围为16\~128。
 
 - query与key1的第0/2/4轴需相同。
 - key1与value1 shape需相同。
@@ -394,9 +390,12 @@ aclnnStatus aclnnFusedFloydAttentionGrad(
 调用示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```c++
-#include
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include <cmath>
 #include "acl/acl.h"
-#include "aclnnop/aclnn_flash_attention_score.h"
+#include "aclnnop/aclnn_fused_floyd_attention_grad.h"
 
 #define CHECK_RET(cond, return_expr) \
   do {                               \
