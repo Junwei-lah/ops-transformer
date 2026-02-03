@@ -4,7 +4,7 @@
 
 |产品      | 是否支持 |
 |:----------------------------|:-----------:|
-|<term>Ascend 950PR/Ascend 950DT</term>|      ×     |
+|<term>Ascend 950PR/Ascend 950DT</term>|      √     |
 |<term>Atlas A3 训练系列产品</term>|     √      |
 |<term>Atlas A3 推理系列产品</term>|     ×      |
 |<term>Atlas A2 训练系列产品</term>|     √      |
@@ -14,6 +14,7 @@
 ## 功能说明
 
 - 接口功能：训练场景下，使用FlashAttention算法实现self-attention（自注意力）的计算。增加`sinkInOptional`可选输入。
+  - Ascend 950PR/Ascend 950DT产品暂不支持sinkInOptional参数。
 
 - 计算公式：
   

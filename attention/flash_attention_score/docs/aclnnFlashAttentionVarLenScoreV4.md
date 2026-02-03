@@ -15,6 +15,8 @@
 
 - 接口功能：训练场景下，使用FlashAttention算法实现self-attention（自注意力）的计算。**与[aclnnFlashAttentionVarLenScore](./aclnnFlashAttentionVarLenScore.md)接口的区别是：在输入排布为TND的场景下，原FlashAttentionVarLenScore接口中的softmax相关输出的数据排布为 NTD，FlashAttentionVarLenScoreV4 接口支持传入字符串参数 softmaxOutLayout，用于控制 softmax 相关输出的数据排布是否与输入保持一致（即采用 TND 排布）。**
 
+  - Ascend 950PR/Ascend 950DT产品暂不支持softmaxOutLayout参数。
+
 - 计算公式：
   
     注意力的正向计算公式如下：
