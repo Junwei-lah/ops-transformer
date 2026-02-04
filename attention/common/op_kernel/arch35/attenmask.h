@@ -182,7 +182,7 @@ __aicore__ inline int64_t ComputeOffsetForNoCompress(const RunInfo<isInfer> &run
                 s1Offset = s1Offset % constInfo.s1Size; 
             } else if (hasRope && (dTemplateType == DTemplateType::Aligned576)) {
                 if (constInfo.layoutType == (uint32_t)LayOutTypeEnum::LAYOUT_BNSD) {
-                    s1Offset = s1Offset % constInfo.s1Size;
+                    s1Offset = 0;
                 } else {
                     s1Offset = s1Offset / constInfo.gSize;
                 }

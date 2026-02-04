@@ -821,9 +821,9 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
         - 不支持左padding、tensorlist、pse、page attention、prefix、伪量化、全量化、后量化。
     - Ascend 950PR/Ascend 950DT：
       - 当query的d等于512时：
-        - queryRope配置时要求query的s为1-16、n为32、64、128，d为512，queryRope的shape中b、n、s与query一致，d为64；
+        - queryRope配置时要求query的s为1-16，n为1、2、4、8、16、32、64、128，d为512，queryRope的shape中b、n、s与query一致，d为64；
         - keyRope配置时要求key的n为1，d为512，keyRope的shape中b、n、s与key一致，d为64；
-        - sparse：Q_S等于1时只支持sparse=0且不传mask，Q_S大于1时支持sparse为0且不传mask或sparse为3且传入mask；
+        - sparse：支持sparse=0，sparse为3且传入mask，sparse为4且传入mask；
         - key&value支持ND输入。
         - inputLayout：BSH、BSND、BNSD、TND。
         - 支持actualSeqLengths、actualSeqLengthsKv参数; 当配置Q_S大于1（即MTP）且key&value的normal部分复用同一份数据场景下，仅inputLayout为TND时支持配置actualSeqLengths参数，其他layout不支持。
