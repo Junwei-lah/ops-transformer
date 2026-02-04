@@ -507,7 +507,7 @@ ge::graphStatus SparseFlashAttentionGradBasicTiling::GetBaseShapeInfo()
         *context_->GetAttrs()->GetAttrPointer<float>(static_cast<size_t>(AttrIndex::SCALE_VALUE)));
     tilingData.opInfo.set_selectedBlockCount(selected_block_count);
     tilingData.opInfo.set_selectedBlockSize(selected_block_size);
-    bool deterministic =  *context_->GetAttrs()->GetAttrPointer<bool>(static_cast<size_t>(AttrIndex::DETERMINISTIC));
+    bool deterministic =  (context_->GetDeterministic() == 1);
     tilingData.opInfo.set_deterministic(deterministic);
 
     tmpData.d = tilingData.opInfo.get_D();
