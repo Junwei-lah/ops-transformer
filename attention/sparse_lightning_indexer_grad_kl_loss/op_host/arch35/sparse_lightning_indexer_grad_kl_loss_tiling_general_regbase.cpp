@@ -170,6 +170,9 @@ bool SparseLightningIndexerGradKLLossTilingBaseRegbase::AnalyzeAttrs()
     OP_CHECK_IF(sparseMode != SPARSE_MODE_SIZE_3,
                 OP_LOGE(opName, " The value of sparse_mode is [%d], but currently only supports mode [3].", sparseMode),
                 return false);
+    OP_CHECK_IF(strcmp(inputLayout, "TND") != 0 && strcmp(inputLayout, "BSND") != 0,
+                OP_LOGE(opName, "Layout only support TND or BSND, now layout is %s.", inputLayout),
+                return false); 
     OP_LOGD(context_, "attrs: scaleValue[%f] input_layout[%s] sparse_mode[%ld].",
             scaleValue, inputLayout, sparseMode);
     return true;
@@ -572,10 +575,11 @@ bool SparseLightningIndexerGradKLLossTilingBaseRegbase::AnalyzeLayout()
 
     size_t layoutLen = strlen(inputLayout);
     OP_CHECK_IF(queryShape.GetDimNum() != layoutLen || keyShape.GetDimNum() != layoutLen ||
-        queryIndexShape.GetDimNum() != layoutLen || keyIndexShape.GetDimNum() != layoutLen, OP_LOGE(opName, "Invalid layout[%s].", inputLayout), return false);
+        queryIndexShape.GetDimNum() != layoutLen || keyIndexShape.GetDimNum() != layoutLen, 
+        OP_LOGE(opName, "Invalid data, inputdata shapelen [%d] is not equal to inputLayout [%s] len[%d].", queryShape.GetDimNum(), inputLayout, layoutLen), return false);
     OP_CHECK_IF(!CrossShapeVerify(queryRopeShape, keyRopeShape), OPS_REPORT_VECTOR_INNER_ERR(opName, "CrossShapeVerify Failed"), return false);    
     OP_CHECK_IF(!AnalyzeDimLayout(queryShape, keyShape, queryIndexShape, topKShape, layoutLen, queryRopeShape, keyRopeShape),
-               OP_LOGE(opName, "Layout: %s, Run Failed", inputLayout), return false);
+               OP_LOGE(opName, "Layout %s data analyze failed.", inputLayout), return false);
     OP_CHECK_IF(gSizeQuery == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "gSizeQuery is zero"), return false);
     OP_CHECK_IF(n2Size == 0, OPS_REPORT_VECTOR_INNER_ERR(opName, "n2Size is zero"), return false);
     OP_CHECK_IF(dSizeQuery <= 0,
