@@ -80,6 +80,8 @@ constexpr uint32_t LENGTH_IDX = 2;
 
 constexpr uint32_t FP16_BYTES = 2;
 constexpr uint32_t FP32_BYTES = 4;
+constexpr uint32_t INT64_BYTES = 8;
+constexpr uint32_t INT64_BLOCK_NUM = 32 / sizeof(int64_t);
 
 constexpr uint32_t AICV_RATIO_DEFAULT = 2;
 constexpr uint32_t S1CV_RATIO_DEFAULT = 2;
@@ -2621,7 +2623,8 @@ void FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetWorkspaceSize4Deter(size_t
         workspaceSize += (fBaseParams.s1Inner * S1CV_RATIO_DEFAULT + NUM_TWO * fBaseParams.s2Inner) *
                          fBaseParams.sfmgdInner * fBaseParams.aicNum * FP32_BYTES * NUM_TWO;
         postTilingData_->set_deterWorkSpaceOffset(workspaceSize);
-        workspaceSize += fBaseParams.maxValidBBLen * fBaseParams.aicNum * FP32_BYTES * NUM_TWO;
+        // NUM_THREE: querGmOffset, keyGmOffset and valueGmOffset
+        workspaceSize += fBaseParams.maxValidBBLen * fBaseParams.aicNum * INT64_BLOCK_NUM * NUM_THREE * INT64_BYTES;
     }
 
     if (fBaseParams.splitAxis == SplitAxisEnum::BN2S2 &&
