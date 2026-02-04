@@ -277,9 +277,13 @@ ge::graphStatus PromptFlashAttentionTilingV2::CheckEmptyTensor(ContextParamsForP
             emptyTensor = true;
             return ge::GRAPH_SUCCESS;
     }
-    emptyTensor = ((contextKeyParams.keyInputShape->GetStorageShape().GetShapeSize() == 0) &&
+    if (enableTensorList) {
+        emptyTensor = (contextKeyParams.emptyTensor == 1U);
+    } else {
+        emptyTensor = ((contextKeyParams.keyInputShape->GetStorageShape().GetShapeSize() == 0) &&
         (contextKeyParams.valueInputShape->GetStorageShape().GetShapeSize() == 0)) ||
         (contextKeyParams.emptyTensor == 1U);
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -503,8 +507,8 @@ bool PromptFlashAttentionTilingV2::GetAndCheckShape(ContextParamsForPFATiling& c
     }
     OP_CHECK_IF((b > BLIMIT || b <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
         "batch size of %s should be less than or equal to %u and > 0, but batch size = %ld.", sName.c_str(), BLIMIT, b), return false);
-    OP_CHECK_IF((s <= 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-        "seq size of %s should > 0, but sequence size = %ld.", sName.c_str(), s), return false);
+    OP_CHECK_IF((s < 0), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+        "seq size of %s should >= 0, but sequence size = %ld.", sName.c_str(), s), return false);
     if (s > SLIMIT) {
         OP_LOGW(contextKeyParams.opName, "sequence size of %s should <= 20M, but seq = %ld.", sName.c_str(), s);
     }
