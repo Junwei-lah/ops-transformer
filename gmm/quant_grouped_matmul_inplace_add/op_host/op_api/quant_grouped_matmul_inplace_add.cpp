@@ -23,7 +23,7 @@ aclTensor *QuantGroupedMatmulInplaceAdd(const aclTensor *x1, const aclTensor *x2
                                         int64_t groupListType, int64_t groupSize, aclOpExecutor *executor)
 {
     L0_DFX(QuantGroupedMatmulInplaceAdd, x1, x2, scale1Optional, scale2, groupList, yRef);
-    auto ret = INFER_SHAPE(QuantGroupedMatmulInplaceAdd, OP_INPUT(x1, x2, scale1Optional, scale2, groupList, yRef),
+    auto ret = INFER_SHAPE(QuantGroupedMatmulInplaceAdd, OP_INPUT(x1, x2, scale2, groupList, yRef, scale1Optional),
                            OP_OUTPUT(yRef), OP_ATTR(groupListType, groupSize));
     if (ret != ACLNN_SUCCESS) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "InferShape failed.");
