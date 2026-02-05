@@ -776,8 +776,8 @@ int main() {
   std::vector<int64_t> dOutShape = {1, 16, 512};            // T1, N1, D
   std::vector<int64_t> softmaxMaxShape = {1, 1, 16};        // N2, T1, G
   std::vector<int64_t> softmaxSumShape = {1, 1, 16};        // N2, T1, G
-  std::vector<int32_t> actSeqQLenshape = {1};               // B
-  std::vector<int32_t> actSeqKvLenshape = {1};              // B
+  std::vector<int64_t> actSeqQLenshape = {1};               // B
+  std::vector<int64_t> actSeqKvLenshape = {1};              // B
   std::vector<int64_t> qRopeShape = {1, 16, 64};            // T1, N1, Drope
   std::vector<int64_t> kRopeShape = {2048, 1, 64};          // T2, N2, Drope
 
