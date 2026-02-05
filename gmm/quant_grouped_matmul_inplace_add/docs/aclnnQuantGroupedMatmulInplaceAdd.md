@@ -124,7 +124,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       </td>
       <td>FLOAT32、FLOAT8_E8M0</td>
       <td>ND</td>
-      <td>2-3</td>
+      <td>1-3</td>
       <td>√</td>
     </tr>
     <tr>
