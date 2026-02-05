@@ -120,8 +120,6 @@ public:
     __aicore__ inline void DealInvalidMaskRows(const AttentionCommon::RunInfo &info, const MSplitInfo &mSplitInfo,
                                               LocalTensor<T> &bmm2ResUb, uint32_t startRow, uint32_t dealRowCount,
                                               uint32_t columnCount, uint32_t actualColumnCount);
-    __aicore__ inline void GetConfusionTransposeTiling(int64_t numR, int64_t numC, const uint32_t stackBufferSize,
-                                                       const uint32_t typeSize, ConfusionTransposeTiling &tiling);
 
 protected:
     uint32_t pingpongFlag = 0U;
@@ -952,28 +950,6 @@ __aicore__ inline void FiaBlockVecNonQuantMla<FIAT>::ProcessVec2Inner(const Atte
         DealBmm2ResBaseBlock(info, mSplitInfo, i * mSplitSize + mStartRow, dealSize, headDimAlign, headDim);
         pingpongFlag ^= 1; // pingpong 0 1切换
     }
-}
-
-
-template <typename FIAT>
-__aicore__ inline void FiaBlockVecNonQuantMla<FIAT>::GetConfusionTransposeTiling(
-    int64_t numR, int64_t numC, const uint32_t stackBufferSize, const uint32_t typeSize,
-    ConfusionTransposeTiling &tiling)
-{
-    (void)stackBufferSize;
-    uint32_t blockSize = ONE_BLK_SIZE / typeSize;
-    uint32_t height = numC;
-    uint32_t width = numR;
-    uint32_t highBlock = height / BLOCK_CUBE;
-    uint32_t stride = height * blockSize * typeSize / ONE_BLK_SIZE;
-    uint32_t repeat = width / blockSize;
-
-    tiling.param0 = blockSize;
-    tiling.param1 = height;
-    tiling.param2 = width;
-    tiling.param3 = highBlock;
-    tiling.param4 = stride;
-    tiling.param5 = repeat;
 }
 
 template <typename FIAT>
