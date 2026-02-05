@@ -18,6 +18,7 @@
 
 #include "basic_api/kernel_basic_intf.h"
 #include "adv_api/reduce/sum.h"
+#include "adv_api/reduce/reduce.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "attention_to_ffn_tiling.h"
 #if __has_include("../common/inc/kernel/moe_distribute_base.h")
@@ -37,7 +38,7 @@ constexpr uint32_t WIN_ALIGN = 512; // win offset 512字节对齐
 constexpr uint32_t REP_STRIDE = 8; // 相邻迭代间的地址步长
 constexpr uint32_t STATUS_REP_STRIDE = 8; // 32B / sizeof(int32) = 8
 constexpr uint32_t EXPERT_TABLE_REP_STRIDE = 16; // 64B / sizeof(int32) = 16
-constexpr uint32_t WORKSPACE_ELEMENT_STRIDE = 32;   // 128B / sizeof(int32) = 32
+constexpr uint32_t WORKSPACE_ELEMENT_OFFSET = 128;
 constexpr uint32_t DYNAMIC_QUANT = 2; // 动态量化
 constexpr uint32_t RANK_OFFSET_STRIDE = 2; // RankTable第一个为rankCnt，后面两两组合
 constexpr uint32_t TOKEN_INFO_TABLE_RS = 2; // tokenInfoTable前2位为flag和layer_id
@@ -69,7 +70,6 @@ private:
     __aicore__ inline void ActiveMaskCalCnt();
     __aicore__ inline void SetFlagInAttn();
     __aicore__ inline void FindExpertRank(int32_t expertId);
-    __aicore__ inline void SetFFNStatus();
     __aicore__ inline void SetExpertAndRank(uint32_t tokenIdx, uint32_t tokenId, uint32_t topkId);
     __aicore__ inline void CheckFlagAndSetTableGM(int32_t toRankId, GM_ADDR &toRankAddr, GlobalTensor<int32_t> &tokenInfoTableGMTensor);
     TPipe *tpipe_{nullptr};
@@ -87,6 +87,7 @@ private:
     LocalTensor<float> scalesFp32Tensor_;
     LocalTensor<int8_t> xOutTensor_;
     LocalTensor<int32_t> ffnStatusTensor_;
+    LocalTensor<int32_t> syncStatusWorkspaceTensor_;
     LocalTensor<int32_t> ffnFlagTensor_;
     LocalTensor<float> smoothScalesTensor_;
     LocalTensor<int32_t> expertIdsTensor_;
@@ -99,11 +100,13 @@ private:
     TBuf<> activeMaskBuf_;
     TBuf<> castTempBuf_;
     TBuf<> ffnStatusBuf_;
+    TBuf<> syncStatusWorkspaceBuf_;
     TBuf<> ffnFlagBuf_;
+    TBuf<> attnStatusBuf_;
     TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> xQueue_;  // 非量化使用
     TQue<QuePosition::VECIN, 1> xInQueue_; // 量化使用，量化前的输入
     TQue<QuePosition::VECOUT, 1> xOutQueue_; // 量化使用，量化后的输出
-    GM_ADDR syncStatusWorkspaceGM_;    // 异步场景使用workSpace
+    GM_ADDR syncStatusWorkspaceGM_;    // 异步场景使用workSpace记录发送状态信息
 
     int32_t dstExpertId_{0};
     int32_t toRankId_{0};
@@ -137,7 +140,9 @@ private:
     uint64_t microBatchNum_{0};
     uint64_t axisHS_{0};
     uint64_t hCommuSize_{0};
+    uint64_t ffnNumAlignSize_{0};
     uint64_t layIdsExpRankTableOffset_{0};
+    uint64_t preExpRankTableOffset_{0};
     uint64_t winTokenDataOffset_{0};
     uint64_t winInfoTableOffset_{0};
     uint64_t winOffset_[WIN_OFFSET_CNT]{0, 0};
@@ -145,6 +150,8 @@ private:
     uint32_t axisBsAlignSize_{0};
     uint32_t moeExpertNum_{0};
     uint32_t expertRankTableCnt_{0};
+    uint32_t ffnNumAlignCnt_{0};
+    uint32_t aivWorkspaceOffset_{0};
     uint8_t windowType_{0};
     uint8_t sharedExpertNum_{1};
     __gm__ HcclOpResParam *winContext_{nullptr};
@@ -194,6 +201,11 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::InitByTinglingData(c
     ffnNum_ = worldSize_ - attentionWorkerNum_;
     curBsCnt_ = axisBS_;
     hSize_ = axisH_ * sizeof(XType);
+    expertIdsCnt_ = axisX_ * axisBS_ * axisK_; 
+    expertRankTableCnt_ = expertNum_ * expRankTableM_;
+    ffnNumAlignSize_ = Ceil(ffnNum_ * sizeof(int32_t), UB_ALIGN) * UB_ALIGN;
+    axisBsAlignSize_ = Ceil(axisBS_ * sizeof(bool), UB_ALIGN) * UB_ALIGN;
+    aivWorkspaceOffset_ = Ceil(ffnNum_ * sizeof(int32_t), WORKSPACE_ELEMENT_OFFSET) * WORKSPACE_ELEMENT_OFFSET;
 }
 
 template <TemplateMC2TypeClass>
@@ -216,16 +228,12 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::Init(GM_ADDR x, GM_A
     microBatchId_ = microBatchIdGMTensor_.GetValue(0); // 当前x=1，microBatchId_直接从gm上读取第一个值
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(layerIdGMTensor_);
     layerId_ = layerIdGMTensor_.GetValue(0); // 当前x=1，layerId_直接从gm上读取第一个值
-    expertIdsCnt_ = axisX_ * axisBS_ * axisK_; 
-    expertRankTableCnt_ = expertNum_ * expRankTableM_;
+    layIdsExpRankTableOffset_ = layerId_ * expertRankTableCnt_;
 
     uint32_t expertIdsAlign = Ceil(expertIdsCnt_ * sizeof(int32_t), UB_ALIGN) * UB_ALIGN; // 约束32对齐
-    uint32_t experTableCntAlign = Ceil(expertRankTableCnt_ * sizeof(int32_t), UB_ALIGN) * UB_ALIGN; // 约束32对齐
     tpipe_->InitBuffer(expertIdsBuf_, expertIdsAlign); // 对齐32B
-    tpipe_->InitBuffer(statusBuf_, UB_ALIGN); // 对齐32B
     tpipe_->InitBuffer(ffnFlagBuf_, UB_ALIGN); // 对齐32B
     expertIdsTensor_ = expertIdsBuf_.Get<int32_t>();
-    statusTensor_ = statusBuf_.Get<int32_t>();
     ffnFlagTensor_ = ffnFlagBuf_.Get<int32_t>();
     if constexpr (isQuant) {
         QuantInit(scales);
@@ -235,18 +243,18 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::Init(GM_ADDR x, GM_A
         tpipe_->InitBuffer(xQueue_, BUFFER_NUM, hSize_); // H * 2
     }
     if constexpr (isSync) {
-        tpipe_->InitBuffer(ffnStatusBuf_, UB_ALIGN);
-        ffnStatusTensor_ = ffnStatusBuf_.Get<int32_t>();
-        syncStatusWorkspaceGM_ = workspaceGM;
+ 	  	tpipe_->InitBuffer(ffnStatusBuf_, ffnNumAlignSize_); // ffnNum_
+ 	    ffnStatusTensor_ = ffnStatusBuf_.Get<int32_t>();
+ 	    syncStatusWorkspaceGM_ = workspaceGM;
     }
     if constexpr (isActiveMask) {
-        uint32_t bsAlignBool = Ceil(axisBS_ * sizeof(bool), UB_ALIGN) * UB_ALIGN; // 约束32对齐
-        tpipe_->InitBuffer(activeMaskBuf_, bsAlignBool); // BS
+        tpipe_->InitBuffer(activeMaskBuf_, axisBsAlignSize_); // BS
         if constexpr (!isQuant) {
             uint32_t bsAlignHalf = Ceil(axisBS_ * sizeof(half), UB_ALIGN) * UB_ALIGN; // 约束32对齐
             tpipe_->InitBuffer(castTempBuf_, bsAlignHalf); // BS * 2
             tpipe_->InitBuffer(sumOutBuf_, bsAlignHalf); // BS * 2
         }
+        attnStatusBuf_ = expertIdsBuf_;
     }
 
     winOffset_[0] = 0;
@@ -258,7 +266,6 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::Init(GM_ADDR x, GM_A
 template <TemplateMC2TypeClass>
 __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::ActiveMaskCalCnt()
 {   // 搬运x_active_mask, 当前仅用于计算有效token总数
-    axisBsAlignSize_ = Ceil(axisBS_ * sizeof(bool), UB_ALIGN) * UB_ALIGN;
     LocalTensor<bool> activeMaskTensor = activeMaskBuf_.Get<bool>();
     LocalTensor<half> tempTensor = castTempBuf_.Get<half>();
     LocalTensor<half> sumOutTensor = sumOutBuf_.Get<half>();
@@ -348,18 +355,11 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::QuantProcess(uint32_
 template <TemplateMC2TypeClass>
 __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::FindExpertRank(int32_t expertId)
 {
-    layIdsExpRankTableOffset_ = layerId_ * expertRankTableCnt_;
     uint64_t expRankTableOffset = expertId * expRankTableM_ + layIdsExpRankTableOffset_;
-    DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(expertRankTableGMTensor_[expRankTableOffset]);
-    uint32_t rankCnt = expertRankTableGMTensor_.GetValue(expRankTableOffset); // M 第一个数值是该专家部署在多少卡上
+    // 此前已刷新expertRankTableGM的整个Cache，可直接读取
+    uint32_t rankCnt = expertRankTableGMTensor_.GetValue(expRankTableOffset); // 该专家部署在多少卡上
     uint32_t rankOffset = (sessionId_ % rankCnt) * RANK_OFFSET_STRIDE + 1;       // 第1位为rankCnt, 后面两两组合
-    if (rankOffset > EXPERT_TABLE_REP_STRIDE) {
-        DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(expertRankTableGMTensor_[expRankTableOffset + rankOffset]);
-    }
     toRankId_ = expertRankTableGMTensor_.GetValue(expRankTableOffset + rankOffset); // 拿到当前要发送的卡号
-    if (rankOffset == EXPERT_TABLE_REP_STRIDE) {
-        DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(expertRankTableGMTensor_[expRankTableOffset + rankOffset + 1]);
-    }
     localExpId_ = expertRankTableGMTensor_.GetValue(expRankTableOffset + rankOffset + 1); // 拿到当前要发送的local专家号
 }
 
@@ -390,14 +390,13 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetExpertAndRank(uin
         dstExpertId_ = moeExpertNum_ + (topkId - axisK_);  // 前moeExpertNum_个为路由专家，共享专家排在后面
     }
     FindExpertRank(dstExpertId_); // 查表获取当前要发送的rankId以及localExpId
-
-    if (tokenIdx > 0) {
-        SyncFunc<AscendC::HardEvent::MTE3_S>(); // 等待前面的statusTensor_的搬出
-    }
-    statusTensor_.SetValue(0, localExpId_);
-    if constexpr (isSync) { //异步场景写状态
-        DataCopy(syncStatusGMTensor_[(toRankId_ - ffnStartRankId_) * WORKSPACE_ELEMENT_STRIDE], ffnStatusTensor_, STATUS_REP_STRIDE);
-    }
+    statusTensor_.SetValue(tokenIdx * STATUS_REP_STRIDE, localExpId_);
+    if constexpr (isSync) { // 异步场景记录FFN节点发送状态
+        if (tokenIdx == 0) {
+            SyncFunc<AscendC::HardEvent::V_S>(); // 等待前面ffnStatusTensor_初始化
+        }
+ 	    ffnStatusTensor_.SetValue(toRankId_ - ffnStartRankId_, 1);
+ 	}
 }
 
 template <TemplateMC2TypeClass>
@@ -424,9 +423,6 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::CheckFlagAndSetTable
 template <TemplateMC2TypeClass>
 __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SendTokenToFFNByTokenIdx(uint32_t tokenIdx)
 {
-    dstExpertId_ = 0;
-    toRankId_ = 0;
-    localExpId_ = 0;
     GM_ADDR toRankAddr;
     GlobalTensor<int32_t> tokenInfoTableGMTensor;
     DataCopyParams statusCopyParams = {1U, static_cast<uint16_t>(1 * sizeof(int32_t)), 0U, 0U};
@@ -470,8 +466,7 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SendTokenToFFNByToke
     }
 
     // 当前FFN节点的token Flag位
-    SyncFunc<AscendC::HardEvent::S_MTE3>();
-    DataCopyPad(tokenInfoTableGMTensor[TOKEN_INFO_TABLE_RS + tokenOffset], statusTensor_, statusCopyParams);
+    DataCopyPad(tokenInfoTableGMTensor[TOKEN_INFO_TABLE_RS + tokenOffset], statusTensor_[tokenIdx * STATUS_REP_STRIDE], statusCopyParams);
 }
 
 template <TemplateMC2TypeClass>
@@ -483,34 +478,38 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SendTokenToFFN()
     DataCopyExtParams expertIdsCntParams = {1U, static_cast<uint32_t>(expertIdsCnt_ * sizeof(uint32_t)), 0U, 0U, 0U};
     DataCopyPadExtParams<int32_t> copyPadParams{false, 0U, 0U, 0U};
     DataCopyPad(expertIdsTensor_, expertIdsGMTensor_, expertIdsCntParams, copyPadParams);
+    uint32_t aivWorkspaceStride = aivWorkspaceOffset_ / sizeof(int32_t);
+    if constexpr (isSync) {
+        ffnNumAlignCnt_ = ffnNumAlignSize_ / sizeof(int32_t);
+        syncStatusGMTensor_.SetGlobalBuffer((__gm__ int32_t*)syncStatusWorkspaceGM_);
+        Duplicate<int32_t>(ffnStatusTensor_, static_cast<int32_t>(0), ffnNumAlignCnt_); // 初始化workSpace
+    }
 
     SplitToCore(totalSendNum_, aivNum_, startId, endId, sendNum_);
+    uint32_t statusCnt = sendNum_ > 0 ? sendNum_ : 1;   // buf复用
+    tpipe_->InitBuffer(statusBuf_, statusCnt * UB_ALIGN); // 对齐32B
+ 	statusTensor_ = statusBuf_.Get<int32_t>();
+
     if (startId >= totalSendNum_) {
+        if constexpr (isSync) {
+            SyncFunc<AscendC::HardEvent::V_MTE3>();
+            DataCopy(syncStatusGMTensor_[aivId_ * aivWorkspaceStride], ffnStatusTensor_, ffnNumAlignCnt_);
+        }
         return;
+    }
+
+    // 一次性刷新expertRankTableGM对应的Cache Line
+    for (uint32_t idx = 0; idx < Ceil(expertRankTableCnt_, EXPERT_TABLE_REP_STRIDE); ++idx) {
+        DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
+            expertRankTableGMTensor_[layIdsExpRankTableOffset_ + idx * EXPERT_TABLE_REP_STRIDE]);
     }
 
     for (uint32_t tokenIdx = 0; tokenIdx < sendNum_; ++tokenIdx) {
         SendTokenToFFNByTokenIdx(tokenIdx);
     }
-}
-
-template <TemplateMC2TypeClass>
-__aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetFFNStatus()
-{
-    syncStatusGMTensor_.SetGlobalBuffer((__gm__ int32_t*)syncStatusWorkspaceGM_);
-    Duplicate<int32_t>(ffnStatusTensor_, (int32_t)1, STATUS_REP_STRIDE); //异步场景设置状态
-    uint32_t startId = 0;
-    uint32_t endId = 0;
-    uint32_t sentNum = 0;
-    SplitToCore(ffnNum_, aivNum_, startId, endId, sentNum);
-    if (startId >= ffnNum_) {
-        return;
-    }
-    Duplicate<int32_t>(statusTensor_, (int32_t)0, STATUS_REP_STRIDE); // 初始化workSpace
-    SyncFunc<AscendC::HardEvent::V_MTE3>();
-    for (uint32_t ffnIdx = startId; ffnIdx < endId; ++ffnIdx) {
-        DataCopy(syncStatusGMTensor_[ffnIdx * WORKSPACE_ELEMENT_STRIDE], statusTensor_, STATUS_REP_STRIDE);
-    }
+    if constexpr (isSync) { //异步场景存储token发送状态到workspace
+        DataCopy(syncStatusGMTensor_[aivId_ * aivWorkspaceStride], ffnStatusTensor_, ffnNumAlignCnt_);
+ 	}
 }
 
 template <TemplateMC2TypeClass>
@@ -532,11 +531,25 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetFlagToFFN()
     startFFNId += ffnStartRankId_;
     endFFNId += ffnStartRankId_;
     GM_ADDR toRankAddr;
+    if constexpr (isSync) {
+        uint32_t sentFFNNumAlignSize = Ceil(sentFFNNum * sizeof(int32_t), UB_ALIGN) * UB_ALIGN;
+        DataCopyExtParams syncStatusParams = {static_cast<uint16_t>(aivNum_), static_cast<uint32_t>(sentFFNNum * sizeof(int32_t)), 
+                                              static_cast<uint32_t>(aivWorkspaceOffset_ - sentFFNNum * sizeof(int32_t)), 0U, 0U};
+        DataCopyPadExtParams<int32_t> copyPadParams{false, 0U, 0U, 0U};
+        tpipe_->InitBuffer(syncStatusWorkspaceBuf_, aivNum_ * sentFFNNumAlignSize);
+        syncStatusWorkspaceTensor_ = syncStatusWorkspaceBuf_.Get<int32_t>();
+        DataCopyPad(syncStatusWorkspaceTensor_, syncStatusGMTensor_[startFFNId - ffnStartRankId_], syncStatusParams, copyPadParams);
+        SyncFunc<AscendC::HardEvent::MTE2_V>();
+        LocalTensor<float> syncStatusWorkspaceTensorFloat = syncStatusWorkspaceTensor_.ReinterpretCast<float>();
+ 	    LocalTensor<float> ffnStatusTensorFloat = ffnStatusTensor_.ReinterpretCast<float>();
+        const uint32_t shape[] = {aivNum_, static_cast<uint32_t>(sentFFNNumAlignSize / sizeof(float))};
+        AscendC::ReduceSum<float, AscendC::Pattern::Reduce::RA, true>(ffnStatusTensorFloat, syncStatusWorkspaceTensorFloat, shape, true);
+        SyncFunc<AscendC::HardEvent::V_S>();
+    }
+
     for (uint32_t ffnIdx = startFFNId; ffnIdx < endFFNId; ++ffnIdx) {
         if constexpr (isSync) {
-            DataCopy(ffnStatusTensor_, syncStatusGMTensor_[(ffnIdx - ffnStartRankId_) * WORKSPACE_ELEMENT_STRIDE], STATUS_REP_STRIDE);
-            SyncFunc<AscendC::HardEvent::MTE2_S>();
-            if ((ffnStatusTensor_.GetValue(0) == 0)) {
+            if (ffnStatusTensor_.GetValue(ffnIdx - startFFNId) == 0) {
                 continue;
             }
         }
@@ -577,7 +590,7 @@ __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::SetFlagInAttn()
     GlobalTensor<int32_t> attnTableGMTensor;
     attnTableGMTensor.SetGlobalBuffer((__gm__ int32_t*)attnTokenInfoTableGM);
     DataCopyExtParams dataCopyParams = {1U, static_cast<uint32_t>(sendNum * sizeof(int32_t)), 0U, 0U, 0U};
-    LocalTensor<int32_t> tempTensor = castTempBuf_.Get<int32_t>();
+    LocalTensor<int32_t> tempTensor = attnStatusBuf_.Get<int32_t>();
     Duplicate<int32_t>(tempTensor, (uint32_t)1, sendNum);
     SyncFunc<AscendC::HardEvent::V_MTE3>();
     DataCopyPad(attnTableGMTensor[startId], tempTensor, dataCopyParams);
@@ -587,11 +600,6 @@ template <TemplateMC2TypeClass>
 __aicore__ inline void AttentionToFFN<TemplateMC2TypeFunc>::Process()
 {
     if ASCEND_IS_AIV {
-        if constexpr (isSync) {
-            SetFFNStatus();
-            PipeBarrier<PIPE_ALL>();
-            SyncAll<true>();
-        }
         if constexpr (isActiveMask) {
             ActiveMaskCalCnt();
         }

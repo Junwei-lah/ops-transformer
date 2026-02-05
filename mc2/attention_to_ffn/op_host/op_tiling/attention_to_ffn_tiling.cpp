@@ -64,8 +64,8 @@ constexpr uint32_t ATTR_FFN_START_RANK_INDEX = 8;
  
 constexpr uint32_t INDEX_TWO = 2;
 constexpr uint32_t SYSTEM_NEED_WORKSPACE = 16 * 1024 * 1024;
-constexpr uint64_t MB_SIZE = 1024 * 1024;
 constexpr uint32_t WORKSPACE_ELEMENT_OFFSET = 128;
+constexpr uint64_t MB_SIZE = 1024 * 1024;
 constexpr uint32_t OP_TYPE_ALL_TO_ALL = 8;
 const char* ATTN_FFN_INNER_DEBUG = "AttentionToFFN Tiling Debug";
 
@@ -540,8 +540,10 @@ static ge::graphStatus SetWorkSpace(gert::TilingContext *context, AttentionToFFN
     OP_TILING_CHECK(workSpaces == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "workSpaces is nullptr."),
         return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
+    uint32_t aivNum = ascendcPlatform.GetCoreNumAiv();
     uint32_t ffnNum = tilingData->attentionToFFNInfo.worldSize - tilingData->attentionToFFNInfo.attentionWorkerNum;
-    workSpaces[0] = ascendcPlatform.GetLibApiWorkSpaceSize() + static_cast<size_t>(ffnNum * WORKSPACE_ELEMENT_OFFSET);
+    uint32_t ffnNumAlignSize = (ffnNum * sizeof(int32_t) + WORKSPACE_ELEMENT_OFFSET - 1) / WORKSPACE_ELEMENT_OFFSET * WORKSPACE_ELEMENT_OFFSET;
+    workSpaces[0] = ascendcPlatform.GetLibApiWorkSpaceSize() + static_cast<size_t>(ffnNumAlignSize * aivNum);
     return ge::GRAPH_SUCCESS;
 }
  
