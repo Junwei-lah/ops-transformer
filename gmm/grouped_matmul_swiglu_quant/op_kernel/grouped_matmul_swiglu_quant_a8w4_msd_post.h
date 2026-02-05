@@ -67,6 +67,8 @@ private:
     GlobalTensor<half> mmOutGM1;
     GlobalTensor<half> mmOutGM2;
     GlobalTensor<half> mmOutGM;
+    LocalTensor<float> mmLocal_fp32;
+    LocalTensor<half> mmLocal_fp16;
     TQue<QuePosition::VECIN, 1> weightAuxiliaryMatrixInQueue;
     TQue<QuePosition::VECIN, 1> mmOutQueue;
     TQue<QuePosition::VECOUT, 1> quantOutQueue;
@@ -104,33 +106,31 @@ __aicore__ inline void GMMA8W4PostProcess::customDataCopyIn(uint32_t outLoopIdx,
                                                             VecConfig &vecConfig,
                                                             WorkSpaceSplitConfig &workspaceSplitConfig)
 {
-    LocalTensor<half> _inMMLocal_0 = mmOutQueue.DeQue<half>();
+    mmLocal_fp16 = mmOutQueue.DeQue<half>();
+    mmLocal_fp32 = mmLocal_fp16.ReinterpretCast<float>();
     const int64_t processNum = 2 * vecConfig.innerLoopNum * gmmSwiglu->tokenLen;
     DataCopyExtParams copyParams_0{1, static_cast<uint32_t>(processNum * sizeof(half)), 0, 0, 0};
     DataCopyPadExtParams<half> padParams_0{false, 0, 0, 0};
-    DataCopyPad(_inMMLocal_0[processNum], mmOutGM[vecConfig.curOffset * DOUBLE_ROW], copyParams_0, padParams_0);
+    DataCopyPad(mmLocal_fp16[processNum], mmOutGM[vecConfig.curOffset * DOUBLE_ROW], copyParams_0, padParams_0);
 
-    mmOutQueue.EnQue(_inMMLocal_0);
-
-    LocalTensor<half> _inMMLocal_1 = mmOutQueue.DeQue<half>();
+    mmOutQueue.EnQue(mmLocal_fp16);
+    mmLocal_fp16 = mmOutQueue.DeQue<half>();
     // 1. fp16 -> fp32
-    Cast(_inMMLocal_1.ReinterpretCast<float>(), _inMMLocal_1[processNum], RoundMode::CAST_NONE, processNum);
-
-    mmOutQueue.EnQue(_inMMLocal_1);
-    LocalTensor<float> _inMMLocal_2 = mmOutQueue.DeQue<float>();
+    Cast(mmLocal_fp32, mmLocal_fp16[processNum], RoundMode::CAST_NONE, processNum);
+    PipeBarrier<PIPE_V>();
     int32_t eventIdSToV = static_cast<int32_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
     // 2. high_4bit * 16 + low_4bit
     for (uint32_t i = 0; i < vecConfig.innerLoopNum; i++) {
-        Muls(_inMMLocal_2[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen], _inMMLocal_2[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen],
+        Muls(mmLocal_fp32[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen], mmLocal_fp32[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen],
              DEFAULT_MUL_SCALE, gmmSwiglu->tokenLen);
         PipeBarrier<PIPE_V>();
-        Add(_inMMLocal_2[i * gmmSwiglu->tokenLen], _inMMLocal_2[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen],
-            _inMMLocal_2[(DOUBLE_ROW * i + 1) * gmmSwiglu->tokenLen], gmmSwiglu->tokenLen);
+        Add(mmLocal_fp32[i * gmmSwiglu->tokenLen], mmLocal_fp32[(DOUBLE_ROW * i) * gmmSwiglu->tokenLen],
+            mmLocal_fp32[(DOUBLE_ROW * i + 1) * gmmSwiglu->tokenLen], gmmSwiglu->tokenLen);
         PipeBarrier<PIPE_V>();
         vecConfig.curIdx++;
     }
     vecConfig.curOffset = vecConfig.curIdx * gmmSwiglu->tokenLen;
-    mmOutQueue.EnQue(_inMMLocal_2);
+    PipeBarrier<PIPE_V>();
 }
 
 __aicore__ inline void GMMA8W4PostProcess::VectorCompute(uint32_t loopIdx, VecConfig &vecConfig,
@@ -149,55 +149,49 @@ __aicore__ inline void GMMA8W4PostProcess::VectorCompute(uint32_t loopIdx, VecCo
 __aicore__ inline void GMMA8W4PostProcess::MergeAuxiliaryMatrix(uint32_t loopIdx, VecConfig &vecConfig)
 {
     // perChanelScale * perTokenScale
-    LocalTensor<float> mmLocal = mmOutQueue.DeQue<float>();
+    mmLocal_fp32 = mmOutQueue.DeQue<float>();
     LocalTensor<float> weightAuxiliaryMatrixLocal = weightAuxiliaryMatrixInQueue.DeQue<float>();
-    Add(mmLocal[loopIdx * gmmSwiglu->tokenLen], mmLocal[loopIdx * gmmSwiglu->tokenLen], weightAuxiliaryMatrixLocal,
+    Add(mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen], mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen], weightAuxiliaryMatrixLocal,
         gmmSwiglu->tokenLen);
     vecConfig.nextUpadteInterVal--;
-    mmOutQueue.EnQue(mmLocal);
+    PipeBarrier<PIPE_V>();
     weightAuxiliaryMatrixInQueue.EnQue(weightAuxiliaryMatrixLocal);
 }
 
 __aicore__ inline void GMMA8W4PostProcess::MulPertokenScale(uint32_t loopIdx, VecConfig &vecConfig,
                                                             WorkSpaceSplitConfig &workspaceSplitConfig)
 {
-    LocalTensor<float> mmLocal = mmOutQueue.DeQue<float>();
+    float scale = perTokenScaleGM.GetValue(loopIdx + workspaceSplitConfig.leftMatrixStartIndex + vecConfig.startIdx);
     int32_t eventIdSToV = static_cast<int32_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
     SetFlag<HardEvent::S_V>(eventIdSToV);
     WaitFlag<HardEvent::S_V>(eventIdSToV);
-    float scale = perTokenScaleGM.GetValue(loopIdx + workspaceSplitConfig.leftMatrixStartIndex + vecConfig.startIdx);
-    SetFlag<HardEvent::S_V>(eventIdSToV);
-    WaitFlag<HardEvent::S_V>(eventIdSToV);
-    Muls(mmLocal[loopIdx * gmmSwiglu->tokenLen], mmLocal[loopIdx * gmmSwiglu->tokenLen], scale, gmmSwiglu->tokenLen);
-    SetFlag<HardEvent::S_V>(eventIdSToV);
-    WaitFlag<HardEvent::S_V>(eventIdSToV);
+    Muls(mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen], mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen], scale, gmmSwiglu->tokenLen);
+    PipeBarrier<PIPE_V>();
 }
 
 __aicore__ inline void GMMA8W4PostProcess::Swiglu(uint32_t loopIdx, VecConfig &vecConfig)
 {
     // 高阶API swiglu
-    LocalTensor<float> _inMMLocal = mmOutQueue.DeQue<float>();
     float beta = 1.0f;
     LocalTensor<float> workspaceLocal = reduceWorkspace.Get<float>();
     LocalTensor<float> src0Local =
-        _inMMLocal[loopIdx * gmmSwiglu->tokenLen + gmmSwiglu->tokenLen / SWIGLU_REDUCE_FACTOR];
-    LocalTensor<float> src1Local = _inMMLocal[loopIdx * gmmSwiglu->tokenLen];
+        mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen + gmmSwiglu->tokenLen / SWIGLU_REDUCE_FACTOR];
+    LocalTensor<float> src1Local = mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen];
 
     SwiGLU<float, false>(workspaceLocal, src0Local, src1Local, beta, gmmSwiglu->tokenLen / SWIGLU_REDUCE_FACTOR);
     PipeBarrier<PIPE_V>();
     DataCopyParams repeatParams{1, static_cast<uint16_t>((gmmSwiglu->tokenLen / SWIGLU_REDUCE_FACTOR) / ALIGN_8_ELE), 0,
                                 0};
-    DataCopy(_inMMLocal[loopIdx * gmmSwiglu->tokenLen], workspaceLocal, repeatParams);
+    DataCopy(mmLocal_fp32[loopIdx * gmmSwiglu->tokenLen], workspaceLocal, repeatParams);
 
-    mmOutQueue.EnQue(_inMMLocal);
+    PipeBarrier<PIPE_V>();
 }
 
 __aicore__ inline void GMMA8W4PostProcess::Quant(uint32_t loopIdx, VecConfig &vecConfig)
 {
-    LocalTensor<float> _inMMLocal = mmOutQueue.DeQue<float>();
     uint64_t preOffset = loopIdx * gmmSwiglu->tokenLen;
     uint64_t halfTokenLen = gmmSwiglu->tokenLen / BISECT;
-    Abs(_inMMLocal[preOffset + gmmSwiglu->tokenLen / BISECT], _inMMLocal[preOffset], halfTokenLen);
+    Abs(mmLocal_fp32[preOffset + gmmSwiglu->tokenLen / BISECT], mmLocal_fp32[preOffset], halfTokenLen);
     PipeBarrier<PIPE_V>();
     // reduceMax
     LocalTensor<float> workLocal = reduceWorkspace.Get<float>(halfTokenLen);
@@ -205,7 +199,7 @@ __aicore__ inline void GMMA8W4PostProcess::Quant(uint32_t loopIdx, VecConfig &ve
         reduceWorkspace.GetWithOffset<float>(FLOAT_UB_BLOCK_UNIT_SIZE, halfTokenLen * sizeof(float));
     LocalTensor<float> reduceTmpLocal = reduceWorkspace.GetWithOffset<float>(
         FLOAT_UB_BLOCK_UNIT_SIZE, halfTokenLen * sizeof(float) + UB_BLOCK_UNIT_SIZE);
-    ReduceMaxTemplate(reduceResLocal, workLocal, _inMMLocal[preOffset + gmmSwiglu->tokenLen / BISECT], reduceTmpLocal,
+    ReduceMaxTemplate(reduceResLocal, workLocal, mmLocal_fp32[preOffset + gmmSwiglu->tokenLen / BISECT], reduceTmpLocal,
                       static_cast<uint32_t>(halfTokenLen));
     int32_t eventIdVToS = static_cast<int32_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
     SetFlag<HardEvent::V_S>(eventIdVToS);
@@ -217,15 +211,15 @@ __aicore__ inline void GMMA8W4PostProcess::Quant(uint32_t loopIdx, VecConfig &ve
     int32_t eventIdSToV = static_cast<int32_t>(GetTPipePtr()->FetchEventID(HardEvent::S_V));
     SetFlag<HardEvent::S_V>(eventIdSToV);
     WaitFlag<HardEvent::S_V>(eventIdSToV);
-    Muls(_inMMLocal[preOffset], _inMMLocal[preOffset], quantScale, halfTokenLen);
+    Muls(mmLocal_fp32[preOffset], mmLocal_fp32[preOffset], quantScale, halfTokenLen);
     PipeBarrier<PIPE_V>();
     LocalTensor<int8_t> quantLocal = quantOutQueue.DeQue<int8_t>();
     int32_t dstTempOffset = static_cast<int32_t>(preOffset / BISECT);
     int32_t srcTempOffset = static_cast<int32_t>(preOffset);
     int32_t tempCount = static_cast<int32_t>(halfTokenLen);
     LocalTensor<int8_t> castSpace = reduceWorkspace.Get<int8_t>(UB_BLOCK_UNIT_SIZE);
-    CastFp32ToInt8Template(quantLocal, _inMMLocal, castSpace, dstTempOffset, srcTempOffset, tempCount);
-    mmOutQueue.EnQue(_inMMLocal);
+    CastFp32ToInt8Template(quantLocal, mmLocal_fp32, castSpace, dstTempOffset, srcTempOffset, tempCount);
+    mmOutQueue.EnQue(mmLocal_fp32);
     quantOutQueue.EnQue(quantLocal);
 }
 
@@ -324,11 +318,11 @@ __aicore__ inline void GMMA8W4PostProcess::Process(WorkSpaceSplitConfig &workspa
         if (blockIdx < vecConfig.usedCoreNum) {
             mmOutGM = (workspaceSplitLoopIdx % 2 == 0 ? mmOutGM1 : mmOutGM2);
             LocalTensor<float> weightAuxiliaryMatrixLocal = weightAuxiliaryMatrixInQueue.AllocTensor<float>();
-            LocalTensor<half> mmLocal = mmOutQueue.AllocTensor<half>();
+            LocalTensor<half> mmLocal_fp32 = mmOutQueue.AllocTensor<half>();
             LocalTensor<float> quantScaleLocal = quantScaleOutQueue.AllocTensor<float>();
             LocalTensor<int8_t> quantLocal = quantOutQueue.AllocTensor<int8_t>();
 
-            mmOutQueue.EnQue(mmLocal);
+            mmOutQueue.EnQue(mmLocal_fp32);
             quantScaleOutQueue.EnQue(quantScaleLocal);
             quantOutQueue.EnQue(quantLocal);
             weightAuxiliaryMatrixInQueue.EnQue(weightAuxiliaryMatrixLocal);
@@ -354,12 +348,12 @@ __aicore__ inline void GMMA8W4PostProcess::Process(WorkSpaceSplitConfig &workspa
                 customDataCopyOut(vecConfig, workspaceSplitConfig);
             }
             weightAuxiliaryMatrixLocal = weightAuxiliaryMatrixInQueue.DeQue<float>();
-            mmLocal = mmOutQueue.DeQue<half>();
+            mmLocal_fp32 = mmOutQueue.DeQue<half>();
             quantScaleLocal = quantScaleOutQueue.DeQue<float>();
             quantLocal = quantOutQueue.DeQue<int8_t>();
 
             weightAuxiliaryMatrixInQueue.FreeTensor(weightAuxiliaryMatrixLocal);
-            mmOutQueue.FreeTensor(mmLocal);
+            mmOutQueue.FreeTensor(mmLocal_fp32);
             quantScaleOutQueue.FreeTensor(quantScaleLocal);
             quantOutQueue.FreeTensor(quantLocal);
         }
