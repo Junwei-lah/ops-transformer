@@ -12,7 +12,7 @@
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
 | <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
 | <term>Atlas 推理系列产品</term>                             |    ×     |
-| <term>Atlas 训练系列产品</term>       
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
@@ -286,7 +286,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <td>输入probsOptional非空，且paddedMode为false时，topK_num大于experts_num。</td>
     </tr>
     <tr>
-    <td>输入probsOptional非空，且paddedMode为false时，196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256 / (6 * tokenTypeLen + 12) < 1。</td>
+    <td>输入probsOptional非空，且paddedMode为false时，(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) < 1。</td>
     </tr>
     <tr>
     <td>输入probsOptional非空，且paddedMode为true时，capacity大于tokens_num。</td>

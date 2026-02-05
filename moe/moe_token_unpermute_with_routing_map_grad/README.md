@@ -163,7 +163,7 @@
 
 - 当输入probsOptional非空，且paddedMode为false时
     - 要求topK_num <= 512且topK_num <= experts_num。
-    - 要求experts_num满足196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256 / (6 * tokenTypeLen + 12) >= 1，其中probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
+    - 要求experts_num满足(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) >= 1，其中probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
 - 当输入probsOptional非空，且paddedMode为true时
     - 要求capacity <= tokens_num。
     - 要求hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，需要小于等于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，需要小于等于4149248。
