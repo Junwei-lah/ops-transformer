@@ -118,6 +118,7 @@ private:
     bool hasBias_ = false;
     bool weightNzFlag_ = false;
     bool weightNoL2Cache_ = false;
+    bool kZero = false;
 
     uint64_t m_ = 0;
     uint64_t k_ = 0;

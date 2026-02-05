@@ -1202,10 +1202,7 @@ static aclnnStatus CheckFunctionParams(const gmm::GroupedMatmulParams &gmmParams
       return gmm::AclnnGroupedMatmulWeightQuant91095Checker(gmmParams).CheckGroupedMatmulWeightQuant91095();
     } else {
       CHECK_COND(isNoActivation, ACLNN_ERR_PARAM_INVALID, "When input is No-Quant, activation is not supported on this platforms."
- 	                " activeType[%ld] is not supported.", gmmParams.activeType);
-      CHECK_RET(
-          gmm::AclnnGroupedMatmulNoQuantDAV3510Checker(gmmParams).CheckGroupedMatmulFunctionParamsNoQuantDAV3510() ==
-              ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
+ 	                  " activeType[%ld] is not supported.", gmmParams.activeType);
     }
   }
   if (gmmParams.xDtype == DataType::DT_INT8 && weightDtype == DataType::DT_INT4) {
@@ -1819,14 +1816,21 @@ static aclnnStatus TransWeightToNz(gmm::GroupedMatmulParams &gmmParams, aclOpExe
 }
 
 static aclnnStatus CheckZeroShape(gmm::GroupedMatmulParams &params, uint64_t *workspaceSize) {
-    bool isEmpty = true;
+    bool isEmptyX = true;
+    bool isEmptyWeight =true;
     for (size_t i = 0; i < params.x->Size(); ++i) {
         if (!((*params.x)[i]->IsEmpty())) {
-            isEmpty = false;
+            isEmptyX = false;
             break;
         }
     }
-    if (isEmpty) {
+    for (size_t i = 0; i < params.weight->Size(); ++i) {
+        if (!((*params.weight)[i]->IsEmpty())) {
+            isEmptyWeight = false;
+            break;
+        }
+    }
+    if (isEmptyX || isEmptyWeight) {
         *workspaceSize = 0UL;
         return ACLNN_ERR_PARAM_INVALID;
     }
@@ -2201,6 +2205,37 @@ static aclnnStatus CheckTransposeStatus(const aclTensorList *x, const aclTensorL
   return ACLNN_SUCCESS;
 }
 
+static aclnnStatus CheckEmptyTensor(const aclTensorList *x, const aclTensorList *weight)
+{
+  // all M or N be zero, get true
+  bool zeroM = true;
+  bool zeroN = true;
+  // exist one K be zero, get true
+  bool zeroK = false;
+  // current view_shape transpose is always false false
+  for (size_t i = 0; i < x->Size(); ++i) {
+    CHECK_COND((*x)[i] != nullptr, ACLNN_ERR_PARAM_INVALID,
+               "GroupedMatmul x tensor should not be null");
+    auto xShape = (*x)[i]->GetViewShape();
+    CHECK_COND(xShape.GetDimNum() >= gmm::MIN_FM_DIM, ACLNN_ERR_PARAM_INVALID,
+               "GroupedMatmul x dim num should larger than 2, but actual %d.", xShape.GetDimNum());
+    zeroM = zeroM && (xShape.GetDim(xShape.GetDimNum() - 2) == 0);
+    zeroK = zeroK || (xShape.GetDim(xShape.GetDimNum() - 1) == 0);
+  }
+  for (size_t i = 0; i < weight->Size(); ++i) {
+    CHECK_COND((*weight)[i] != nullptr, ACLNN_ERR_PARAM_INVALID,
+               "GroupedMatmul weight tensor should not be null");
+    auto wShape = (*weight)[i]->GetViewShape();
+    CHECK_COND(wShape.GetDimNum() >= gmm::MIN_FM_DIM, ACLNN_ERR_PARAM_INVALID,
+               "GroupedMatmul weight dim num should larger than 2, but actual %d.", wShape.GetDimNum());
+    zeroN = zeroN && (wShape.GetDim(wShape.GetDimNum() - 1) == 0);
+  }
+  // if all M or N is zero, do not need to check K
+  CHECK_COND(zeroM || zeroN || !zeroK, ACLNN_ERR_PARAM_INVALID,
+             " GroupedMatmul does not support input K being 0 unless all M/N is 0");
+  return ACLNN_SUCCESS;
+}
+
 static aclnnStatus aclnnGroupedMatmulGetWorkspaceSizeCommon(const aclTensorList *x, const aclTensorList *weight,
   const aclTensorList *biasOptional, const aclTensorList *scaleOptional, const aclTensorList *offsetOptional,
   const aclTensorList *antiquantScaleOptional, const aclTensorList *antiquantOffsetOptional,
@@ -2220,6 +2255,8 @@ static aclnnStatus aclnnGroupedMatmulGetWorkspaceSizeCommon(const aclTensorList 
   bool isSingleWeight = (weight->Size() == 1 && groupType != gmm::NO_SPLIT);
   bool transposeX = false;
   bool transposeWeight = false;
+  CHECK_COND(CheckEmptyTensor(x, weight) == ACLNN_SUCCESS,
+             ACLNN_ERR_PARAM_INVALID, "CheckEmptyTensor failed!");
   CHECK_COND(CheckTransposeStatus(x, weight, transposeX, transposeWeight, groupType) == ACLNN_SUCCESS,
              ACLNN_ERR_PARAM_INVALID, "CheckTransposeStatus failed!");
   gmm::GroupedMatmulParams gmmParams{x, weight, biasOptional, groupListOptional, groupTensorOptional, scaleOptional,

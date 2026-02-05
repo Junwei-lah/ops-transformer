@@ -282,12 +282,8 @@ public:
         if (params.gmmParams.groupType == SPLIT_M && params.gmmParams.groupNum == 1) {
             tailSplit_ = Get<M_VALUE>(problemShape_) == params.gmmParams.matmulTiling->M;
         }
-        // Group along m-axis: skip current group and continue when m=0c
-        if (params.gmmParams.groupType == SPLIT_M && Get<M_VALUE>(problemShape_) <= 0) {
-            return false;
-        }
-        // Group by k-axis: executed by AIV when k=0
-        if (params.gmmParams.groupType == SPLIT_K && Get<K_VALUE>(problemShape_) <= 0) {
+        // when any group has 0 size: skip current group and continue
+        if (Get<M_VALUE>(problemShape_) <= 0 || Get<K_VALUE>(problemShape_) <= 0 || Get<N_VALUE>(problemShape_) <= 0) {
             return false;
         }
         InitGlobalBuffer(params, groupIdx);

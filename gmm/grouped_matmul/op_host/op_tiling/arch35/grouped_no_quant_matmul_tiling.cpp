@@ -271,11 +271,13 @@ bool GroupedNoQuantMatmulTiling::CalMatMulTiling(const gert::TilingContext *cont
                                                  const GMMCompileInfo *compileInfoPtr)
 {
     if (groupNum_ < 1U || groupNum_ > MAX_TENSOR) {
-        OP_LOGE(context->GetNodeName(), "GMM no quant groupNum_ cannot less than 1 or larger than 1024");
+        OP_LOGE(context->GetNodeName(), "GMM no quant group num cannot less than 1 or larger than 1024.");
         return false;
     }
+    OP_CHECK_IF(kZero, OP_LOGE(context->GetNodeName(), "GMM no quant case does not support input K is 0."),
+                return false);
     OP_CHECK_IF(!CalBaseMMTiling(context, compileInfoPtr),
-                OP_LOGE(context->GetNodeName(), "Unable to calculate BaseMMTiling"), return false);
+                OP_LOGE(context->GetNodeName(), "Unable to calculate BaseMMTiling."), return false);
     if (groupNum_ == 1U) {
         FormulateBasicBlock(compileInfoPtr, usedCoreNum_);
         CalcTailBasicBlock(compileInfoPtr);
@@ -410,6 +412,7 @@ bool GroupedNoQuantMatmulTiling::SplitMSingleXSingleWeightSingleY(const gert::Sh
     m_ = static_cast<uint64_t>(m);
     k_ = static_cast<uint64_t>(k);
     n_ = static_cast<uint64_t>(n);
+    kZero = kZero || (k == 0);
     weightNoL2Cache_ = true;
     return true;
 }
@@ -434,6 +437,7 @@ bool GroupedNoQuantMatmulTiling::SplitMSingleXSeparatedWeight(const gert::Tiling
     }
     m_ = static_cast<uint64_t>(m);
     k_ = static_cast<uint64_t>(k);
+    kZero = kZero || (k == 0);
     weightNoL2Cache_ = isSingleY_;
     return true;
 }
@@ -453,6 +457,7 @@ bool GroupedNoQuantMatmulTiling::SeparatedXSeparatedWeight(const gert::TilingCon
         groupNum_ += 1U;
         int64_t m = xShape.GetDim(0);
         int64_t k = xShape.GetDim(xKDim_);
+        kZero = kZero || (k == 0);
         int64_t n = wShape.GetDim(weightNDim_) * nzFactor_;
         m_ = std::max(m_, static_cast<uint64_t>(m));
         k_ = std::max(k_, static_cast<uint64_t>(k));
@@ -476,6 +481,7 @@ bool GroupedNoQuantMatmulTiling::SeparatedXSingleWeight(const gert::TilingContex
         groupNum_ += 1U;
         int64_t m = xShape.GetDim(0);
         int64_t k = xShape.GetDim(xKDim_);
+        kZero = kZero || (k == 0);
         m_ = std::max(m_, static_cast<uint64_t>(m));
         k_ = std::max(k_, static_cast<uint64_t>(k));
     }
@@ -503,6 +509,7 @@ bool GroupedNoQuantMatmulTiling::SplitKSingleXSingleWeightSingleY(const gert::Ti
     m_ = static_cast<uint64_t>(m);
     n_ = static_cast<uint64_t>(n);
     k_ = static_cast<uint64_t>(k);
+    kZero = kZero || (k == 0);
     return true;
 }
 
