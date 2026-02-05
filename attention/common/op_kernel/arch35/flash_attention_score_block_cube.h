@@ -200,8 +200,8 @@ private:
     __aicore__ inline bool IsGS1Merge(ConstInfo<isInfer, hasRope> &constInfo);
     TPipe *tPipe;
     /* =====================GM变量==================== */
-    __gm__ uint8_t *currentKey;    // pageattention需要
-    __gm__ uint8_t *currentValue;  // pageattention需要
+    __gm__ uint8_t *currentKey; // pageattention需要
+    __gm__ uint8_t *currentValue; // pageattention需要
     __gm__ uint8_t *blocktablePtr; // pageattention需要
     GlobalTensor<int32_t> blockTableGm; // pageattention需要
     static constexpr GmFormat Q_FORMAT = GetQueryGmFormat<layout>();
@@ -424,7 +424,7 @@ __aicore__ inline void FABlockCube<TEMPLATE_ARGS>::InitGmTensor(CVSharedParams<i
             this->keyRopeGm.offsetCalculator.Init(sharedParams->bSize, sharedParams->n2Size, sharedParams->s2Size,
                 sharedParams->dSizeRope);
         }
-    } else {  // GM_KV_TND
+    } else { // GM_KV_TND
         GlobalTensor<int64_t> actualSeqKVLen;
         actualSeqKVLen.SetGlobalBuffer(actualSeqKvlenAddr);
         if constexpr (isInfer) {

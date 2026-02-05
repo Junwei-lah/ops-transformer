@@ -517,8 +517,8 @@ uint64_t FiaTilingNonQuantMla::CalcNormalWorkspaceSize(uint32_t coreNum, int64_t
     workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mm1ResSize * V1_RES_ELEM_SIZE;
     workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mm2ResSize * MM2_RES_ELEM_SIZE;
     workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mm2ResSize * V2_RES_ELEM_SIZE;
-    workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mBaseSize * N_UPDATE_ELEM_SIZE; //aMla nUpdate, mBaseSize=128
-    workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mBaseSize * SOFTMAX_SUM_ELEM_SIZE; //aMla softmaxSum, mBaseSize=128
+    workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mBaseSize * N_UPDATE_ELEM_SIZE; // aMla nUpdate, mBaseSize=128
+    workspaceSize += PRE_LOAD_NUM_MLA * coreNum * mBaseSize * SOFTMAX_SUM_ELEM_SIZE; // aMla softmaxSum, mBaseSize=128
     return workspaceSize;
 }
 

@@ -153,11 +153,13 @@ void FiaTilingNonQuant::GenTilingKey()
     uint8_t kvLayoutVal = 0;
     
     const std::map<TilingKeyLayout, uint8_t> kvLayoutMap = {
-        {TilingKeyLayout::BNSD, 0U}, {TilingKeyLayout::BSH_BSND, 1U}, {TilingKeyLayout::NZ, 2U}, {TilingKeyLayout::TND, 3U}, {TilingKeyLayout::NTD, 5U}
+        {TilingKeyLayout::BNSD, 0U}, {TilingKeyLayout::BSH_BSND, 1U}, {TilingKeyLayout::NZ, 2U},
+        {TilingKeyLayout::TND, 3U}, {TilingKeyLayout::NTD, 5U}
     };
 
     const std::map<TilingKeyLayout, uint8_t> qLayoutMap = {
-        {TilingKeyLayout::BNSD, 0U}, {TilingKeyLayout::BSH_BSND, 1U}, {TilingKeyLayout::TND, 3U}, {TilingKeyLayout::NTD, 5U}
+        {TilingKeyLayout::BNSD, 0U}, {TilingKeyLayout::BSH_BSND, 1U}, {TilingKeyLayout::TND, 3U},
+        {TilingKeyLayout::NTD, 5U}
     };
 
     const std::map<ge::DataType, uint8_t> typeMap = {
