@@ -54,7 +54,7 @@ dense_lightning_indexer_grad_kl_loss(__gm__ uint8_t *query, __gm__ uint8_t *key,
     __gm__ uint8_t *user = GetUserWorkspace(workspace);
 
     DLI_OP_IMPL(DenseLightningIndexerGradKLLossBase, optiling::DenseLightningIndexerGradKLLossTilingData,
-                DTYPE_QUERY, DTYPE_KEY, DTYPE_QUERY,
+                DTYPE_QUERY, DTYPE_KEY, DTYPE_WEIGHT, DTYPE_QUERY,
                 static_cast<DLILayout>(LayoutT_QT), static_cast<DLILayout>(LayoutT_KT),
                 DLISparseMode::RightDown, HasRope, Deterministic);
 }

@@ -54,6 +54,7 @@ static constexpr uint32_t NQUERYINDEX_SIZE_64 = 64;
 static constexpr uint32_t N2_SIZE_1 = 1;
 static constexpr uint32_t D_SIZE_128 = 128;
 static constexpr uint32_t DROPE_SIZE_64 = 64;
+static constexpr uint8_t SCHEDULE_MODE_ALL_CORE = 1; // 全核启动
 
 struct AiCoreParams {
     uint64_t ubSize = 0;

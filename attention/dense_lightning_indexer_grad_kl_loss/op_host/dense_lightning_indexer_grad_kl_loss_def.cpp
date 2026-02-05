@@ -15,93 +15,101 @@
 #include "register/op_def_registry.h"
 
 namespace ops {
+
+static const std::vector<ge::DataType> qkDtype = {
+    ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT16, ge::DT_BF16
+};
+static const std::vector<ge::DataType> weightDtype = {
+    ge::DT_FLOAT16, ge::DT_BF16, ge::DT_FLOAT, ge::DT_FLOAT
+};
+
 class DenseLightningIndexerGradKLLoss : public OpDef {
 public:
     explicit DenseLightningIndexerGradKLLoss(const char* name) : OpDef(name)
     {
         this->Input("query")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("key")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("query_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("key_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("weight")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(weightDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("softmax_max")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_FLOAT})
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("softmax_sum")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_FLOAT})
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("softmax_max_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_FLOAT})
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("softmax_sum_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_FLOAT})
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("query_rope")
             .ParamType(OPTIONAL)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("key_rope")
             .ParamType(OPTIONAL)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("actual_seq_lengths_query")
             .ParamType(OPTIONAL)
-            .DataType({ge::DT_INT64, ge::DT_INT64})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_INT64})
+            .FormatList({ge::FORMAT_ND})
             .ValueDepend(OPTIONAL)
             .AutoContiguous();
         this->Input("actual_seq_lengths_key")
             .ParamType(OPTIONAL)
-            .DataType({ge::DT_INT64, ge::DT_INT64})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
+            .DataTypeList({ge::DT_INT64})
+            .FormatList({ge::FORMAT_ND})
             .ValueDepend(OPTIONAL)
             .AutoContiguous();
         this->Output("d_query_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND});
         this->Output("d_key_index")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataType(qkDtype)
+            .FormatList({ge::FORMAT_ND});
         this->Output("d_weight")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataType(weightDtype)
+            .FormatList({ge::FORMAT_ND});
         this->Output("loss")
             .ParamType(REQUIRED)
-            .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
+            .DataTypeList({ge::DT_FLOAT})
+            .FormatList({ge::FORMAT_ND});
         this->Attr("scale_value").AttrType(REQUIRED).Float(1.0);
         this->Attr("layout").AttrType(OPTIONAL).String("TND");         // BSND, TND
         this->Attr("sparse_mode").AttrType(OPTIONAL).Int(3);            // 3:默认值，只计算下三角

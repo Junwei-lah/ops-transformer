@@ -38,6 +38,7 @@ public:
     using T = float;
     using Q_T = typename DLIT::inputQT;
     using KV_T = typename DLIT::inputKT;
+    using W_T = typename DLIT::inputWT;
     using OUT_T = typename DLIT::outputT;
     using Q_ROPE_T = Q_T;
     using K_ROPE_T = KV_T;
@@ -94,7 +95,8 @@ private:
     DLIKLLossVector2Service<DLIT> vector2Service;
 
     // input GM
-    GlobalTensor<Q_T> queryGm, queryIndexGm, weightGm;
+    GlobalTensor<Q_T> queryGm, queryIndexGm;
+    GlobalTensor<W_T> weightGm;
     GlobalTensor<KV_T> keyGm, keyIndexGm;
     GlobalTensor<Q_ROPE_T> queryRopeGm;
     GlobalTensor<K_ROPE_T> keyRopeGm;
@@ -102,7 +104,8 @@ private:
     GlobalTensor<int64_t> actualSeqLengthsQueryGm, actualSeqLengthsKeyGm;
 
     // output GM
-    GlobalTensor<OUT_T> dQueryIndexGm, dKeyIndexGm, dWeightGm;
+    GlobalTensor<OUT_T> dQueryIndexGm, dKeyIndexGm;
+    GlobalTensor<W_T> dWeightGm;
     GlobalTensor<T> lossGm;
 
     // workspace
@@ -204,8 +207,10 @@ __aicore__ inline void DenseLightningIndexerGradKLLossBase<DLIT>::InitWorkspace(
     sySyncGm.SetGlobalBuffer((__gm__ T *)(workspace + offset + coreTotalOffset));
     offset += psySyncSize * 2;
 
-    dWeightGmFloat.SetGlobalBuffer((__gm__ T *)(workspace + offset + coreTotalOffset));
-    offset += dWeightFloatSzie;
+    if constexpr (!IsSameType<W_T, float>::value) {
+        dWeightGmFloat.SetGlobalBuffer((__gm__ T *)(workspace + offset + coreTotalOffset));
+        offset += dWeightFloatSzie;
+    }
 
     dQueryIndexGmFloat.SetGlobalBuffer((__gm__ T *)(workspace + offset + coreTotalOffset));
     offset += dQueryIndexFloatSzie;
@@ -395,7 +400,7 @@ __aicore__ inline void DenseLightningIndexerGradKLLossBase<DLIT>::Init(
     keyGm.SetGlobalBuffer((__gm__ KV_T *)key);
     queryIndexGm.SetGlobalBuffer((__gm__ Q_T *)queryIndex);
     keyIndexGm.SetGlobalBuffer((__gm__ KV_T *)keyIndex);
-    weightGm.SetGlobalBuffer((__gm__ Q_T *)weight);
+    weightGm.SetGlobalBuffer((__gm__ W_T *)weight);
     softmaxMaxGm.SetGlobalBuffer((__gm__ T *)softmaxMax);
     softmaxSumGm.SetGlobalBuffer((__gm__ T *)softmaxSum);
     softmaxMaxIndexGm.SetGlobalBuffer((__gm__ T *)softmaxMaxIndex);
@@ -418,7 +423,7 @@ __aicore__ inline void DenseLightningIndexerGradKLLossBase<DLIT>::Init(
     // init output GlobalTensor
     dQueryIndexGm.SetGlobalBuffer((__gm__ OUT_T *)dQueryIndex);
     dKeyIndexGm.SetGlobalBuffer((__gm__ OUT_T *)dKeyIndex);
-    dWeightGm.SetGlobalBuffer((__gm__ OUT_T *)dWeight);
+    dWeightGm.SetGlobalBuffer((__gm__ W_T *)dWeight);
     lossGm.SetGlobalBuffer((__gm__ T *)loss);
     lossGm.SetValue(0, 0.0F);
     AscendC::DataCacheCleanAndInvalid<T, AscendC::CacheLine::SINGLE_CACHE_LINE, AscendC::DcciDst::CACHELINE_OUT>(lossGm);
@@ -564,7 +569,7 @@ __aicore__ inline void DenseLightningIndexerGradKLLossBase<DLIT>::Process()
     }
     if ASCEND_IS_AIV {
         vector2Service.InitParams(constInfo, tilingData);
-        vector2Service.InitVector2GM(dWeightGmFloat, dWeightGm, dKeyIndexGmFloat, dKeyIndexGm, dQueryIndexGmFloat, dQueryIndexGm, actualSeqLengthsKeyGm);
+        vector2Service.InitVector2GM(dKeyIndexGmFloat, dKeyIndexGm);
         vector2Service.InitBuffers(pipe);
     }
     SyncAll<false>();

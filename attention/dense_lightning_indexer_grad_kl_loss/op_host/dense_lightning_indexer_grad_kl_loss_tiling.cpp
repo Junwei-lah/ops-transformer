@@ -78,10 +78,6 @@ bool DenseLightningIndexerGradKLLossTilingBase::AnalyzeAttrs()
 
 bool DenseLightningIndexerGradKLLossTilingBase::AnalyzeDtype()
 {
-    // 对8个必须输入的参数进行参数类型判断
-    bool same16 = false; // 判断输入为fp16或者部分16的是否一致
-    bool same32 = false; // 判断输入为int32或者fp32的类型是否正确
-
     // 以下5个保持一致
     auto queryDtype = context_->GetInputDesc(QUERY_INPUT_INDEX)->GetDataType();
     auto keyDtype = context_->GetInputDesc(KEY_INPUT_INDEX)->GetDataType();
@@ -89,14 +85,14 @@ bool DenseLightningIndexerGradKLLossTilingBase::AnalyzeDtype()
     auto keyIndexDtype = context_->GetInputDesc(KEY_INDEX_INPUT_INDEX)->GetDataType();
     auto weightsDtype = context_->GetInputDesc(WEIGHT_INPUT_INDEX)->GetDataType();
     if (queryDtype == ge::DT_FLOAT16 && keyDtype == ge::DT_FLOAT16 && queryIndexDtype == ge::DT_FLOAT16 && 
-                            keyIndexDtype == ge::DT_FLOAT16 && weightsDtype == ge::DT_FLOAT16) {
-        same16 = true;
+        keyIndexDtype == ge::DT_FLOAT16 && (weightsDtype == ge::DT_FLOAT16 || weightsDtype == ge::DT_FLOAT)) {
+        OP_LOGD(opName, "q/k/weight inputDtype is fp16.");
     } else if (queryDtype == ge::DT_BF16 && keyDtype == ge::DT_BF16 && queryIndexDtype == ge::DT_BF16 && 
-                            keyIndexDtype == ge::DT_BF16 && weightsDtype == ge::DT_BF16) {
-        same16 = true;
+               keyIndexDtype == ge::DT_BF16 && (weightsDtype == ge::DT_BF16 || weightsDtype == ge::DT_FLOAT)) {
+        OP_LOGD(opName, "q/k/weight inputDtype is bf16.");
     } else {
         OP_LOGE(opName, "q/k/weight inputDtype is not same.");
-        same16 = false;
+        return false;
     }
 
     // 以下4个为32类型
@@ -106,14 +102,9 @@ bool DenseLightningIndexerGradKLLossTilingBase::AnalyzeDtype()
     auto softmaxSumIndexDtype = context_->GetInputDesc(SOFTMAX_SUM_INDEX_INPUT_INDEX)->GetDataType();
     if (softmaxMaxDtype == ge::DT_FLOAT && softmaxSumDtype == ge::DT_FLOAT && softmaxMaxIndexDtype == ge::DT_FLOAT &&
         softmaxSumIndexDtype == ge::DT_FLOAT) {
-        same32 = true;
+        OP_LOGD(opName, "softmax inputDtype is fp32.");
     } else {
         OP_LOGE(opName, "softmax inputDtype is not same.");
-        same32 = false;
-    }
-    
-    // 所有类型不满足返回false
-    if(same16 == false || same32 == false) {
         return false;
     }
 
@@ -787,6 +778,7 @@ ge::graphStatus DenseLightningIndexerGradKLLossTilingBase::DoOpTiling()
     int64_t totalSize = CalcTotalSize();
     SetMultiCoreParamsRegbase(totalSize, static_cast<int64_t>(aicNum));
     context_->SetBlockDim(dliGradkllossMultiCoreParams_->get_coreNum()); // 使用的核数确定
+    context_->SetScheduleMode(SCHEDULE_MODE_ALL_CORE);
 
     std::vector<int64_t> shapeVec = {1,2048};
     ge::Shape srcShape(shapeVec);
@@ -799,7 +791,6 @@ ge::graphStatus DenseLightningIndexerGradKLLossTilingBase::DoOpTiling()
 
 ge::graphStatus DenseLightningIndexerGradKLLossTilingBase::GetWorkspaceSize()
 {
-    // TODO: Dense场景可能要调整下
     size_t *workspaces = context_->GetWorkspaceSizes(1);
     int64_t pSize = 2048 * 576 * 2; // 2代表half大小
     int64_t sySize = 2048 * 128 * 2; // 使用DB
@@ -808,10 +799,13 @@ ge::graphStatus DenseLightningIndexerGradKLLossTilingBase::GetWorkspaceSize()
     int64_t reluGradSize = gSizeQueryIndex * S1_BASE_STEP * S2_BASE_STEP * sizeof(float);
     int64_t psySyncSize = AIC_AIV_RATIO * S1_VEC_SIZE_8 * S2_BASE_STEP * 2 * sizeof(float);
 
-    // TODO: n1IndexSIze = n2IndexSize * gSizeQueryIndex
     int64_t dWeightFloatSzie = S1_BASE_STEP * n2IndexSize * gSizeQueryIndex * sizeof(float);
-    int64_t dQueryIndexFloatSzie = S1_BASE_STEP * gSizeQueryIndex * dSizeQueryIndex * sizeof(float);
+    auto weightsDtype = context_->GetInputDesc(WEIGHT_INPUT_INDEX)->GetDataType();
+    if (weightsDtype == ge::DT_FLOAT) {
+        dWeightFloatSzie = 0;
+    }
 
+    int64_t dQueryIndexFloatSzie = S1_BASE_STEP * gSizeQueryIndex * dSizeQueryIndex * sizeof(float);
     int64_t dKeyIndexGmSize = 0;
     if (tilingKeyLayout == LayoutType::LAYOUT_TND) {
         dKeyIndexGmSize = accumS2 * n2IndexSize * dSizeQueryIndex * sizeof(float); //batch

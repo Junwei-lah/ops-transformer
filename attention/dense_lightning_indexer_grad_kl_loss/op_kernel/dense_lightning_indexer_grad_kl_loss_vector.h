@@ -35,6 +35,7 @@ public:
     using T = float;
     using Q_T = typename DLIT::inputQT;
     using KV_T = typename DLIT::inputKT;
+    using W_T = typename DLIT::inputWT;
     using OUT_T = typename DLIT::outputT;
     using Q_ROPE_T = Q_T;
     using K_ROPE_T = KV_T;
@@ -54,10 +55,10 @@ public:
     __aicore__ inline void InitVector1GM(const GlobalTensor<T> &softmaxMax, const GlobalTensor<T> &softmaxSum,
                                          const GlobalTensor<T> &softmaxMaxIndex, const GlobalTensor<T> &softmaxSumIndex,
                                          const GlobalTensor<MM12_OUT_T> &bmm1Res,
-                                         const GlobalTensor<MM12_OUT_T> &bmm2Res, const GlobalTensor<Q_T> &weight,
+                                         const GlobalTensor<MM12_OUT_T> &bmm2Res, const GlobalTensor<W_T> &weight,
                                          const GlobalTensor<T> pSync, const GlobalTensor<T> sySync,
                                          const GlobalTensor<T> &loss, const GlobalTensor<T> &dWeightFloat, const GlobalTensor<T> &reluGm,
-                                         const GlobalTensor<KV_T> &reluGradRes, const GlobalTensor<OUT_T>& dWeight,
+                                         const GlobalTensor<KV_T> &reluGradRes, const GlobalTensor<W_T>& dWeight,
                                          const GlobalTensor<MM4_OUT_T>& dQueryIndexFloat, const GlobalTensor<OUT_T>& dQueryIndex);
     __aicore__ inline void AllocEventID();
     __aicore__ inline void ProcessVector1(DLIGradKLLossRunInfo &runInfo);
@@ -92,7 +93,7 @@ private:
     GlobalTensor<KV_T> keyGm;
     GlobalTensor<KV_T> keyIndexGm;
     GlobalTensor<KV_T> keyRopeGm;
-    GlobalTensor<Q_T> weightGm;
+    GlobalTensor<W_T> weightGm;
     GlobalTensor<T> softmaxMaxGm; 
     GlobalTensor<T> softmaxSumGm;
     GlobalTensor<T> softmaxMaxIndexGm; 
@@ -100,11 +101,10 @@ private:
     GlobalTensor<int64_t> actualSeqLengthsQGm;
     GlobalTensor<int64_t> actualSeqLengthsKVGm;
     GlobalTensor<T> lossGm;
-    GlobalTensor<OUT_T> dWeightGm;
     GlobalTensor<T> dWeightGmFloat;
     GlobalTensor<OUT_T> dKeyIndexGm;
 
-    GlobalTensor<OUT_T> dWeightGmOut;
+    GlobalTensor<W_T> dWeightGmOut;
     GlobalTensor<MM4_OUT_T> dQueryIndexGmIn;
     GlobalTensor<OUT_T> dQueryIndexGmOut;
 
@@ -198,14 +198,14 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::InitVector1GM(const GlobalT
                                                                    const GlobalTensor<T> &softmaxSumIndex,
                                                                    const GlobalTensor<MM12_OUT_T> &bmm1Res,
                                                                    const GlobalTensor<MM12_OUT_T> &bmm2Res,
-                                                                   const GlobalTensor<Q_T> &weight,
+                                                                   const GlobalTensor<W_T> &weight,
                                                                    const GlobalTensor<T> pSync,
                                                                    const GlobalTensor<T> sySync,
                                                                    const GlobalTensor<T> &loss,
                                                                    const GlobalTensor<T> &dWeightFloat,
                                                                    const GlobalTensor<T> &reluGm,
                                                                    const GlobalTensor<KV_T> &reluGradRes, 
-                                                                   const GlobalTensor<OUT_T>& dWeight,
+                                                                   const GlobalTensor<W_T>& dWeight,
                                                                    const GlobalTensor<MM4_OUT_T>& dQueryIndexFloat, 
                                                                    const GlobalTensor<OUT_T>& dQueryIndex)
 {
@@ -442,28 +442,34 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::PreloadWeight(DLIGradKLLoss
                                                                    uint32_t curS1InnerSize,
                                                                    uint32_t pingpongFlag)
 {
-    event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>());
-    
     uint32_t weightSize = curS1InnerSize * constInfo.n1IndexSize;
     uint32_t weightGmOffset = runInfo.weightTensorOffset + s1InnerIdx * S1_VEC_SIZE_8 * constInfo.n1IndexSize;
     // weight 可以常驻, 所以直接搬运, 减少搬运切片
-    AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
-    if (weightSize % C0_SIZE != 0) {
-        uint32_t padNum = (weightSize + C0_SIZE - 1 ) / C0_SIZE * C0_SIZE - weightSize;
-        DataCopyExtParams copyParams = {1, static_cast<uint32_t>(weightSize * sizeof(Q_T)), 0, 0, 0};
-        DataCopyPadExtParams<KV_T> copyPadParams = {true, 0, (uint8_t)(padNum), 0.0};
-        AscendC::DataCopyPad(weightHalfUb_[pingpongFlag], weightGm[weightGmOffset], copyParams, copyPadParams);
+    if constexpr (IsSameType<W_T, float>::value) {
+        // n1Index最小为8, 一定对齐搬运
+        AscendC::DataCopy(weightUb_[pingpongFlag], weightGm[weightGmOffset], weightSize);
     } else {
-        AscendC::DataCopy(weightHalfUb_[pingpongFlag], weightGm[weightGmOffset], weightSize);
+        event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>());
+
+        AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
+        if (weightSize % C0_SIZE != 0) {
+            uint32_t padNum = (weightSize + C0_SIZE - 1 ) / C0_SIZE * C0_SIZE - weightSize;
+            DataCopyExtParams copyParams = {1, static_cast<uint32_t>(weightSize * sizeof(Q_T)), 0, 0, 0};
+            DataCopyPadExtParams<KV_T> copyPadParams = {true, 0, (uint8_t)(padNum), 0.0};
+            AscendC::DataCopyPad(weightHalfUb_[pingpongFlag], weightGm[weightGmOffset], copyParams, copyPadParams);
+        } else {
+            AscendC::DataCopy(weightHalfUb_[pingpongFlag], weightGm[weightGmOffset], weightSize);
+        }
+        AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
+
+        AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
+        AscendC::Cast(weightUb_[pingpongFlag], weightHalfUb_[pingpongFlag], AscendC::RoundMode::CAST_NONE, weightSize);
+        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
+
+        PipeBarrier<PIPE_V>();
+        GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
     }
-    AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
-
-    AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
-    AscendC::Cast(weightUb_[pingpongFlag], weightHalfUb_[pingpongFlag], AscendC::RoundMode::CAST_NONE, weightSize);
-    AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
-
-    PipeBarrier<PIPE_V>();
-    GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
+    
 }
 
 template <typename DLIT> 
@@ -833,9 +839,16 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::VectorDwDqDk(DLIGradKLLossR
             AscendC::SetAtomicAdd<float>();
         }
         
-        int64_t dWeightGmOffset = constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize +
-                                (runInfo.s1InnerIdxV1V2 * S1_VEC_SIZE_8 + rowIdx) * constInfo.n1IndexSize;
-        DataCopyPad(dWeightGmFloat[dWeightGmOffset], reduceSumResTensor_, dataCopyDwParams);
+        if constexpr (!IsSameType<W_T, float>::value) {
+            int64_t dWeightGmOffset = constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize +
+                                      (runInfo.s1InnerIdxV1V2 * S1_VEC_SIZE_8 + rowIdx) * constInfo.n1IndexSize;
+            DataCopyPad(dWeightGmFloat[dWeightGmOffset], reduceSumResTensor_, dataCopyDwParams);
+        } else {
+            int64_t dWeightGmOffset = runInfo.accumS1Idx * constInfo.n1IndexSize +
+                                      constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize +
+                                      (runInfo.s1InnerIdxV1V2 * S1_VEC_SIZE_8 + rowIdx) * constInfo.n1IndexSize;
+            DataCopyPad(dWeightGmOut[dWeightGmOffset], reduceSumResTensor_, dataCopyDwParams);
+        }
         if (runInfo.s2Idx > 0) {
             SetAtomicNone();
         }
@@ -903,28 +916,30 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::CastOutWeightGrad(DLIGradKL
         return;
     }
     
-    // cast dw
-    int64_t dwGMOutOffset = runInfo.accumS1Idx * constInfo.n1IndexSize +
-                            constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize;
-    int64_t dwGMInOffset = constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize;
-    int64_t dWeightCount = runInfo.curS1SizeVec * constInfo.n1IndexSize;
-    DataCopy(ubInPing_, dWeightGmFloat[dwGMInOffset], dWeightCount);
-    SetFlag<HardEvent::MTE2_V>(EVENT_ID0);
-    WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
+    if constexpr (!IsSameType<W_T, float>::value) {
+        // cast dw
+        int64_t dwGMOutOffset = runInfo.accumS1Idx * constInfo.n1IndexSize +
+                                constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize;
+        int64_t dwGMInOffset = constInfo.subBlockIdx * runInfo.curS1Size / AIC_AIV_RATIO * constInfo.n1IndexSize;
+        int64_t dWeightCount = runInfo.curS1SizeVec * constInfo.n1IndexSize;
+        DataCopy(ubInPing_, dWeightGmFloat[dwGMInOffset], dWeightCount);
+        SetFlag<HardEvent::MTE2_V>(EVENT_ID0);
+        WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
 
-    Cast(ubOutPing_, ubInPing_, RoundMode::CAST_ROUND, dWeightCount);
-    SetFlag<HardEvent::V_MTE3>(EVENT_ID0);
-    WaitFlag<HardEvent::V_MTE3>(EVENT_ID0);
+        Cast(ubOutPing_, ubInPing_, RoundMode::CAST_ROUND, dWeightCount);
+        SetFlag<HardEvent::V_MTE3>(EVENT_ID0);
+        WaitFlag<HardEvent::V_MTE3>(EVENT_ID0);
 
-    if (dWeightCount % C0_SIZE != 0) {
-        DataCopyExtParams copyParams = {1, static_cast<uint32_t>(dWeightCount * sizeof(Q_T)), 0, 0, 0};
-        AscendC::DataCopyPad(dWeightGmOut[dwGMOutOffset], ubOutPing_, copyParams);
-    } else {
-        DataCopy(dWeightGmOut[dwGMOutOffset], ubOutPing_, dWeightCount);
+        if ((dWeightCount * sizeof(W_T)) % VEC_ALIGN_SIZE != 0) {
+            DataCopyExtParams copyParams = {1, static_cast<uint32_t>(dWeightCount * sizeof(W_T)), 0, 0, 0};
+            AscendC::DataCopyPad(dWeightGmOut[dwGMOutOffset], ubOutPing_, copyParams);
+        } else {
+            DataCopy(dWeightGmOut[dwGMOutOffset], ubOutPing_, dWeightCount);
+        }
+        
+        SetFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
+        WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
     }
-    
-    SetFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
-    WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
 }
 
 template <typename DLIT> 

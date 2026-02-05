@@ -42,6 +42,7 @@ static constexpr uint32_t S1_BASE_STEP = 128;
 static constexpr uint32_t S2_BASE_STEP = 1024;
 static constexpr uint32_t CUBE_BASE_BLOCK = 128;
 static constexpr uint32_t C0_SIZE = 16;
+static constexpr uint32_t VEC_ALIGN_SIZE = 32;
 static constexpr uint32_t CUBE_MATRIX_SIZE = 256;
 static constexpr uint32_t S1_VEC_SIZE_8 = 8;
 static constexpr uint32_t DOUBLE_BUFFER = 2;
@@ -83,7 +84,7 @@ struct MMParam {
 /** @name 模版类型定义
  *  @{
  */
-template <typename InputQT, typename InputKT, typename OutT,
+template <typename InputQT, typename InputKT, typename InputWT, typename OutT,
 	      DLILayout LayoutQT = DLILayout::TND,
           DLILayout LayoutKT = DLILayout::TND,
           DLISparseMode SparseMode = DLISparseMode::RightDown,
@@ -92,6 +93,7 @@ template <typename InputQT, typename InputKT, typename OutT,
 struct DLIType {
     using inputQT = InputQT;
     using inputKT = InputKT;
+    using inputWT = InputWT;
     using outputT = OutT;
     static constexpr DLILayout inputQLayout = LayoutQT;
     static constexpr DLILayout inputKLayout = LayoutKT;
