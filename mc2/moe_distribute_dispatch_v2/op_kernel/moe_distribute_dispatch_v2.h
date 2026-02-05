@@ -81,6 +81,7 @@ private:
         LocalTensor<uint32_t> &gatherTmpTensor, LocalTensor<float> &statusSumOutTensor);
     __aicore__ inline void PerformanceInfoPerRank(uint64_t timeoutCheckStart);
     __aicore__ inline void PerformanceInfoCopyOut();
+    __aicore__ inline void RunPosRecord();
     __aicore__ inline GM_ADDR GetWindAddrByRankId(uint8_t ctxIdx, const int32_t rankId)
     {
         uint32_t curRankId = ((ctxIdx == COMM_EP_IDX) ? epRankIdOriginal_ : tpRankId_);
@@ -1193,13 +1194,21 @@ __aicore__ inline void MoeDistributeDispatchV2<TemplateMC2TypeFunc>::GetCumSum(L
 }
 
 template <TemplateMC2TypeClass>
-__aicore__ inline void MoeDistributeDispatchV2<TemplateMC2TypeFunc>::LocalWindowCopy()
+__aicore__ inline void MoeDistributeDispatchV2<TemplateMC2TypeFunc>::RunPosRecord()
 {
+    TBuf<> runPosBuf;
+    tpipe_->InitBuffer(runPosBuf, UB_ALIGN);
     DataCopyParams dataStateParams{1U, sizeof(uint32_t), 0U, 0U};
-    dataStateLocalTensor_ = gatherMaskOutBuf_.Get<uint32_t>();
+    dataStateLocalTensor_ = runPosBuf.Get<uint32_t>();
     dataStateLocalTensor_.SetValue(0, FLAG_AFTER_WAIT);
     SyncFunc<AscendC::HardEvent::S_MTE3>();
     DataCopyPad(selfDataStatusGMTensor_[1], dataStateLocalTensor_, dataStateParams);
+}
+
+template <TemplateMC2TypeClass>
+__aicore__ inline void MoeDistributeDispatchV2<TemplateMC2TypeFunc>::LocalWindowCopy()
+{
+    RunPosRecord();    // 维测打点
     LocalTensor<int32_t> outCountLocal;
     if (startExpertId_ >= rscvStatusNum_) { // 分核已与前面的waitDispatch里保持一致
         return;

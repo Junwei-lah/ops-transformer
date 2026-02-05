@@ -20,6 +20,7 @@
 #include "adv_api/reduce/sum.h"
 #include "kernel_tiling/kernel_tiling.h"
 #include "moe_distribute_dispatch_v2_tiling.h"
+#include "moe_distribute_v2_base.h"
 #include "check_winsize.h"
 #if __has_include( "../common/inc/kernel/moe_distribute_base.h")
 #include "../common/inc/kernel/moe_distribute_base.h"
@@ -31,7 +32,6 @@
 namespace MoeDistributeDispatchV2FullMeshImpl {
 constexpr uint8_t BUFFER_NUM = 2;        // 多buf
 constexpr uint32_t STATE_OFFSET = 32U;  // 状态空间偏移地址
-constexpr uint32_t UB_ALIGN = 32U;       // UB按32字节对齐
 constexpr uint32_t BITS_PER_BYTE = 8U;
 constexpr uint8_t COMM_NUM = 2;  // 通信域大小
 constexpr uint8_t COMM_EP_IDX = 0;
@@ -50,6 +50,9 @@ constexpr uint32_t SFFVALUE_SIZE = 64U;
 constexpr uint32_t SIZE_ALIGN_256 = 256U;
 constexpr uint32_t RANK_LIST_NUM = 2U;
 constexpr uint32_t ELASTIC_INFO_OFFSET = 4U;
+constexpr uint32_t RUNPOS_CALCUMSUM = 2U;
+constexpr uint32_t RUNPOS_CUMSUMFLAG = 3U;
+constexpr uint32_t RUNPOS_ARRIVECNT = 4U;
 constexpr uint8_t EP_WORLD_SIZE_IDX = 1;
 constexpr uint8_t SHARE_RANK_NUM_IDX = 2;
 constexpr uint8_t MOE_NUM_IDX = 3;
@@ -64,6 +67,7 @@ constexpr AscendC::CumSumConfig cumSumConfig{true, true, false};
 
 using namespace AscendC;
 using namespace Mc2Kernel;
+using namespace MoeDistributeV2Base;
 template <TemplateMC2TypeFullmeshClass>
 class MoeDistributeDispatchV2FullMesh {
 public:
@@ -97,6 +101,7 @@ private:
     __aicore__ inline void WaitCumSumFlag();
     __aicore__ inline void CalAndSendCnt();
     __aicore__ inline void WaitTokenNumAndCopy();
+    __aicore__ inline void RunPosRecord(const uint32_t runPos);
     __aicore__ inline void LocalWindowCopy();
     __aicore__ inline void SetValidExpertInfo(uint32_t expInfoSize, uint32_t &validNum);
     __aicore__ inline uint32_t CheckDataArriveWithFlag(uint32_t srcExpDataIdx, int32_t beginIdx, int32_t copyCnt);
@@ -138,6 +143,7 @@ private:
     GlobalTensor<int32_t> elasticInfoGMTensor_;
     GlobalTensor<int32_t> performanceInfoGMTensor_;
     GlobalTensor<float> selfRankWinInGMTensor_;
+    GlobalTensor<uint32_t> selfDataStatusGMTensor_;
 
     LocalTensor<int32_t> statusTensor_;
     LocalTensor<float> workLocalTensor_;
@@ -171,6 +177,7 @@ private:
     LocalTensor<uint8_t> flagCompResultU8_;
     LocalTensor<uint64_t> flagCompResultLtU64_;
     LocalTensor<uint32_t> flagRecvGatherMask_;
+    LocalTensor<uint32_t> dataStateLocalTensor_;
     LocalTensor<ExpandXOutType> xTmpTensor_;
 
     LocalTensor<float> flagGatherOutTensor_;
@@ -191,6 +198,7 @@ private:
     GM_ADDR statusSpaceGM_;
     GM_ADDR windowGM_;
     GM_ADDR recvCntWorkspaceGM_;
+    GM_ADDR statusDataSpaceGM_;
     
     // tiling侧已确保数据上限，相乘不会越界，因此统一采用uint32_t进行处理
     uint32_t axisBS_{0};
@@ -260,10 +268,12 @@ private:
     uint32_t aivUsedAllToAll_{0};
     uint32_t maxSize_{0};
     uint32_t expertIdsSize_{0};
+    uint32_t globalBS_{0};
     __gm__ HcclOpParam *winContext_[COMM_NUM]{nullptr, nullptr};
 
     DataCopyExtParams expandXCopyParams_;
     DataCopyExtParams hCopyParams_;
+    DataCopyParams dataStateParams_{1U, sizeof(uint32_t), 0U, 0U};
 
     MoeDistributeDispatchV2Quant<TemplateMC2TypeFullmeshFunc> quantInst_;
 };
@@ -300,10 +310,10 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
     hasElasticInfoFlag_ = tilingData->moeDistributeDispatchV2Info.hasElasticInfo;
     isPerformanceFlag_ = tilingData->moeDistributeDispatchV2Info.isPerformance;
     epRankId_ = tilingData->moeDistributeDispatchV2Info.epRankId;
+    globalBS_ = tilingData->moeDistributeDispatchV2Info.globalBs;
     epWorldSize_ = tilingData->moeDistributeDispatchV2Info.epWorldSize;
     sharedExpertRankNum_ = tilingData->moeDistributeDispatchV2Info.sharedExpertRankNum;
     moeExpertNum_ = tilingData->moeDistributeDispatchV2Info.moeExpertNum;
-    axisMaxBS_ = tilingData->moeDistributeDispatchV2Info.globalBs / epWorldSizeOriginal_;
     sharedExpertNum_ = tilingData->moeDistributeDispatchV2Info.sharedExpertNum;
     expertTokenNumsType_ = tilingData->moeDistributeDispatchV2Info.expertTokenNumsType;
     zeroComputeExpertNum_ = tilingData->moeDistributeDispatchV2Info.zeroComputeExpertNum;
@@ -315,6 +325,7 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
     scaleInBytes_ = tilingData->moeDistributeDispatchV2Info.scalesCol * \
                     tilingData->moeDistributeDispatchV2Info.scalesTypeSize;
     scalesCount_ = tilingData->moeDistributeDispatchV2Info.scalesCount;
+    axisMaxBS_ = globalBS_ / epWorldSizeOriginal_;
 }
 
 template <TemplateMC2TypeFullmeshClass>
@@ -361,18 +372,11 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
 template <TemplateMC2TypeFullmeshClass>
 __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFunc>::SetDataStatus()
 {
-    GlobalTensor<int32_t> selfDataStatusTensor;
-    GM_ADDR statusDataSpaceGM = GetStatusDataSpaceGm(winContext_[COMM_EP_IDX]);
-    selfDataStatusTensor.SetGlobalBuffer((__gm__ int32_t*)(statusDataSpaceGM + FLAG_FIELD_OFFSET + aivId_ * WIN_ADDR_ALIGN));
-    DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(selfDataStatusTensor);
-    dataState_ = selfDataStatusTensor(0);
-    if (dataState_ == 0) {
-        selfDataStatusTensor(0) = 1;
-    } else {
-        selfDataStatusTensor(0) = 0;
-    }
-    DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(selfDataStatusTensor);
-    PipeBarrier<PIPE_ALL>();
+    statusDataSpaceGM_ = GetStatusDataSpaceGm(winContext_[COMM_EP_IDX]);
+    selfDataStatusGMTensor_.SetGlobalBuffer((__gm__ uint32_t*)(statusDataSpaceGM_ + FLAG_FIELD_OFFSET + aivId_ * WIN_ADDR_ALIGN));
+    TBuf<> dataStateBuf;
+    tpipe_->InitBuffer(dataStateBuf, UB_ALIGN);
+    dataState_ = InitWinState(selfDataStatusGMTensor_, winContext_[COMM_EP_IDX], epRankIdOriginal_, moeExpertNum_, epWorldSizeOriginal_, globalBS_, dataStateBuf);
     uint64_t hSizeAlignCombine = Ceil(axisH_ * sizeof(XType), WIN_ADDR_ALIGN) * WIN_ADDR_ALIGN;
     winDataSizeOffset_ = dataState_ * (totalWinSize_ / BUFFER_NUM)
                          + axisMaxBS_ * (axisK_ + sharedExpertNum_) * hSizeAlignCombine;
@@ -426,6 +430,7 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
     selfRankWinInGMTensor_.SetGlobalBuffer((__gm__ float*)(selfRankWinInGM));
     windowGM_ = GetWindAddrByRankId(epRankIdOriginal_);
     hCopyParams_ = {1U, static_cast<uint32_t>(axisH_ * sizeof(XType)), 0U, 0U, 0U};
+    dataStateParams_ = {1U, sizeof(uint32_t), 0U, 0U};
     expandXCopyParams_ = {1U, static_cast<uint32_t>(axisH_ * sizeof(ExpandXOutType)), 0U, 0U, 0U};
     MaxSizeCal();
 }
@@ -851,7 +856,7 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
         SyncFunc<AscendC::HardEvent::V_S>();
         sumOfFlag = statusSumOutTensor_.GetValue(0);
     }
-
+    RunPosRecord(RUNPOS_CALCUMSUM); // 维测打点
     if (isPerformanceFlag_) {
         SyncFunc<AscendC::HardEvent::S_MTE3>();
         SetAtomicMax<int32_t>();
@@ -991,6 +996,7 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
             break;
         }
     }
+    RunPosRecord(RUNPOS_CUMSUMFLAG); // 维测打点
     // Clean flag for next round
     Duplicate<float>(statusCleanFp32Tensor_, (float)0, AIV_STATE_SIZE / sizeof(float));
     SyncFunc<AscendC::HardEvent::S_MTE3>();
@@ -1142,6 +1148,17 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
 }
 
 template <TemplateMC2TypeFullmeshClass>
+__aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFunc>::RunPosRecord(const uint32_t runPos)
+{
+    TBuf<> runPosBuf;
+    tpipe_->InitBuffer(runPosBuf, UB_ALIGN);
+    dataStateLocalTensor_ = runPosBuf.Get<uint32_t>();
+    dataStateLocalTensor_.SetValue(0, runPos);
+    SyncFunc<AscendC::HardEvent::S_MTE3>();
+    DataCopyPad(selfDataStatusGMTensor_[1], dataStateLocalTensor_, dataStateParams_);    // 维测打点
+}
+
+template <TemplateMC2TypeFullmeshClass>
 __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFunc>::LocalWindowCopy()
 {
     // 分核负责源专家数量
@@ -1188,6 +1205,7 @@ __aicore__ inline void MoeDistributeDispatchV2FullMesh<TemplateMC2TypeFullmeshFu
     flagRecvGatherMask_.SetValue(0, 1);
     SyncFunc<AscendC::HardEvent::S_V>();
     WaitAndFormatOutput(tBuf, validNum);
+    RunPosRecord(RUNPOS_ARRIVECNT); // 维测打点
 }
 
 template <TemplateMC2TypeFullmeshClass>
