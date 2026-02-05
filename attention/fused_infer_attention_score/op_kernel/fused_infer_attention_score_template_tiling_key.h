@@ -3015,7 +3015,7 @@ ASCENDC_TPL_SEL(
         ASCENDC_TPL_UINT_SEL(PFAMask, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(PFAMatMulType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_BOOL_SEL(enableKVPrefix, false), //未使用
-        ASCENDC_TPL_TILING_STRUCT_SEL(PFAFullQuantTilingData)
+        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreSimplifiedTilingData)
     ),
 #endif
 
@@ -3034,7 +3034,7 @@ ASCENDC_TPL_SEL(
         ASCENDC_TPL_UINT_SEL(PFAMask, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(PFAMatMulType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_BOOL_SEL(enableKVPrefix, false), //未使用
-        ASCENDC_TPL_TILING_STRUCT_SEL(PFAFullQuantTilingData)
+        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreSimplifiedTilingData)
     ),
     // mla fullquant
     ASCENDC_TPL_ARGS_SEL(
@@ -3069,7 +3069,7 @@ ASCENDC_TPL_SEL(
         ASCENDC_TPL_UINT_SEL(PFAMask, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(PFAMatMulType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_BOOL_SEL(enableKVPrefix, false), //未使用
-        ASCENDC_TPL_TILING_STRUCT_SEL(PFAFullQuantTilingData)
+        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreSimplifiedTilingData)
     ),
 #endif
 #if (ORIG_DTYPE_QUERY == DT_HIFLOAT8 && ORIG_DTYPE_KEY == DT_HIFLOAT8 && ORIG_DTYPE_ATTENTION_OUT == DT_BF16)
@@ -3087,7 +3087,7 @@ ASCENDC_TPL_SEL(
         ASCENDC_TPL_UINT_SEL(PFAMask, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_UINT_SEL(PFAMatMulType, ASCENDC_TPL_UI_LIST, 0),
         ASCENDC_TPL_BOOL_SEL(enableKVPrefix, false), //未使用
-        ASCENDC_TPL_TILING_STRUCT_SEL(PFAFullQuantTilingData)
+        ASCENDC_TPL_TILING_STRUCT_SEL(FlashAttentionScoreSimplifiedTilingData)
     ),
 #endif
 // 空tensor，必须要有一个使得列表不为空，否则会报无法推导模板参数的错误

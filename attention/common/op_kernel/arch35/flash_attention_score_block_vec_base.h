@@ -821,7 +821,8 @@ __aicore__ inline void FABlockVecBase<TEMPLATE_BASE_ARGS>::ProcessVec2OnUb(
         if constexpr (isFp8) {
             if constexpr (isInfer) {
                 if constexpr (useDn) {
-                    deSCalePreVValue = this->deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
+                    uint32_t deScaleKvOffset = (runInfo.deScaleKvOffset - 1 < 0) ? 0 : runInfo.deScaleKvOffset - 1;
+                    deSCalePreVValue = this->deScaleVGm.GetValue(deScaleKvOffset);
                 } else {
                     if constexpr (isMlaFullQuant) {
                         deSCalePreVValue = this->deScaleVGm.GetValue(0);
