@@ -23,7 +23,8 @@
 using namespace matmul;
 
 TEMPLATE_INTF
-__aicore__ inline void InitQueryLeftPaddingSize(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope>& constInfo, int64_t& actualS1Size)
+__aicore__ inline void InitQueryLeftPaddingSize(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer,
+    hasRope>& constInfo, int64_t& actualS1Size)
 {
     if (!constInfo.isQHasLeftPadding) {
         runParam.queryLeftPaddingSize = 0;
@@ -37,7 +38,8 @@ __aicore__ inline void InitQueryLeftPaddingSize(RunParamStr<isInfer>& runParam, 
 }
 
 TEMPLATE_INTF
-__aicore__ inline void InitKVLeftPaddingSize(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope>& constInfo, int64_t& actualS2Size)
+__aicore__ inline void InitKVLeftPaddingSize(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer,
+    hasRope>& constInfo, int64_t& actualS2Size)
 {
     if (!constInfo.isKVHasLeftPadding) {
         runParam.kvLeftPaddingSize = 0;
@@ -84,15 +86,18 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
             actualS1Size = constInfo.gS1;
         }
     } else {
-        if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) && layout == LayOutTypeEnum::LAYOUT_BSH) {
+        if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) &&
+            layout == LayOutTypeEnum::LAYOUT_BSH) {
             runParam.actualSeqLengthOfMlaPerBatch = ((constInfo.actualSeqLenSize == actualSeqMin) ?
                 actualSeqQlenAddr[0] : actualSeqQlenAddr[bIdx]);
             actualS1Size = runParam.actualSeqLengthOfMlaPerBatch * constInfo.gSize;
-        } else if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) && layout == LayOutTypeEnum::LAYOUT_TND) {
+        } else if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) &&
+            layout == LayOutTypeEnum::LAYOUT_TND) {
             runParam.actualSeqLengthOfMlaPerBatch = ((bIdx == 0) ? actualSeqQlenAddr[0] :
                 actualSeqQlenAddr[bIdx] - actualSeqQlenAddr[bIdx - 1]);
             actualS1Size = runParam.actualSeqLengthOfMlaPerBatch * constInfo.gSize;
-        } else if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) && layout == LayOutTypeEnum::LAYOUT_BNSD) {
+        } else if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) &&
+            layout == LayOutTypeEnum::LAYOUT_BNSD) {
             actualS1Size = constInfo.gS1;
             runParam.actualSeqLengthOfMlaPerBatch = (constInfo.actualSeqLenSize == actualSeqMin) ?
                 actualSeqQlenAddr[0] : actualSeqQlenAddr[bIdx];
@@ -138,10 +143,11 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
                                     runParam.actualS2Size + constInfo.actualKVPrefixSize + runParam.preTokensPerBatch :
                                     runParam.actualS1Size;
     } else {
-        if constexpr ((hasRope && (dTemplateType == DTemplateType::Aligned576)) && layout != LayOutTypeEnum::LAYOUT_BNSD) {
-            runParam.actualS1Size = (runParam.actualS1Size > runParam.actualS2Size * constInfo.gSize + runParam.preTokensPerBatch) ?
-                                        runParam.actualS2Size * constInfo.gSize + runParam.preTokensPerBatch :
-                                        runParam.actualS1Size;
+        if constexpr ((hasRope && (dTemplateType == DTemplateType::Aligned576)) &&
+            layout != LayOutTypeEnum::LAYOUT_BNSD) {
+            runParam.actualS1Size = (runParam.actualS1Size > runParam.actualS2Size * constInfo.gSize +
+                                     runParam.preTokensPerBatch) ? runParam.actualS2Size * constInfo.gSize +
+                                     runParam.preTokensPerBatch : runParam.actualS1Size;
         } else {
             runParam.actualS1Size = (runParam.actualS1Size > runParam.actualS2Size + runParam.preTokensPerBatch) ?
                                         runParam.actualS2Size + runParam.preTokensPerBatch :
@@ -168,7 +174,8 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
     // 推理的TND场景的mask和pse都是padding过的
     runParam.b1SSOffset = runParam.boIdx * constInfo.s1S2;
     // 推理的mask的sequence length可能大于qk的sequence length
-    runParam.b1SSAttenMaskOffset = runParam.boIdx * (uint64_t)attenMaskInfo.attenMaskS1Size * (uint64_t)attenMaskInfo.attenMaskS2Size;
+    runParam.b1SSAttenMaskOffset = runParam.boIdx * (uint64_t)attenMaskInfo.attenMaskS1Size *
+        (uint64_t)attenMaskInfo.attenMaskS2Size;
     if constexpr (hasRope) {
         if constexpr (layout == LayOutTypeEnum::LAYOUT_BSH) {
             runParam.qRopeBOffset = bIdx * constInfo.s1Size * constInfo.n2GDR +
@@ -183,8 +190,8 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
 }
 
 TEMPLATE_INTF
-__aicore__ inline void GetKeyCoreOffsetParam(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope> &constInfo, 
-    int32_t bIdx, __gm__ int64_t *actualSeqKvlenAddr)
+__aicore__ inline void GetKeyCoreOffsetParam(RunParamStr<isInfer>& runParam,
+    const ConstInfo<isInfer, hasRope> &constInfo, int32_t bIdx, __gm__ int64_t *actualSeqKvlenAddr)
 {
     uint64_t keyInnerOffsetSize = 0;
     if constexpr (layout == LayOutTypeEnum::LAYOUT_BSH) {
@@ -284,8 +291,8 @@ __aicore__ inline void GetValueCoreOffsetParam(RunParamStr<isInfer>& runParam, c
 }
 
 TEMPLATE_INTF
-__aicore__ inline void GetKeyRopeCoreOffsetParam(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope> &constInfo, 
-    int32_t bIdx, __gm__ int64_t *actualSeqKvlenAddr)
+__aicore__ inline void GetKeyRopeCoreOffsetParam(RunParamStr<isInfer>& runParam,
+    const ConstInfo<isInfer, hasRope> &constInfo, int32_t bIdx, __gm__ int64_t *actualSeqKvlenAddr)
 {
     uint64_t kRopeInnerOffsetSize = 0;
     if constexpr (layout == LayOutTypeEnum::LAYOUT_BSH) {
@@ -322,8 +329,8 @@ __aicore__ inline void ComputeParamBatch(RunParamStr<isInfer>& runParam, const C
 }
 
 TEMPLATE_INTF
-__aicore__ inline void ComputeS1LoopInfo(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope> &constInfo, bool lastBN, 
-    int64_t nextGs1Idx)
+__aicore__ inline void ComputeS1LoopInfo(RunParamStr<isInfer>& runParam, const ConstInfo<isInfer, hasRope> &constInfo,
+    bool lastBN, int64_t nextGs1Idx)
 {
     constexpr int32_t s1BaseSize = static_cast<int32_t>(s1TemplateType);
     int32_t s1LoopTimes = CeilDiv(runParam.actualS1Size, s1BaseSize);
@@ -352,8 +359,10 @@ __aicore__ inline void ComputeSouterParam(RunParamStr<isInfer>& runParam, const 
         runParam.halfS1RealSize = runParam.s1RealSize <= 16 ? runParam.s1RealSize : runParam.s1RealSizeAlign32 / 2;
     } else {
         runParam.halfS1RealSize = (runParam.s1RealSize + 1) >> 1;
-        if (constInfo.s1Size > 1 && constInfo.isGqa && (layout == LayOutTypeEnum::LAYOUT_BSH || layout == LayOutTypeEnum::LAYOUT_TND)) {
-            runParam.halfS1RealSize = (runParam.halfS1RealSize + constInfo.gSize - 1) / constInfo.gSize * constInfo.gSize;
+        if (constInfo.s1Size > 1 && constInfo.isGqa && (layout == LayOutTypeEnum::LAYOUT_BSH ||
+            layout == LayOutTypeEnum::LAYOUT_TND)) {
+            runParam.halfS1RealSize = (runParam.halfS1RealSize + constInfo.gSize - 1) / constInfo.gSize *
+                constInfo.gSize;
         }
     }
     runParam.firstHalfS1RealSize = runParam.halfS1RealSize;
