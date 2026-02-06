@@ -124,7 +124,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduce(
           <td>antiquantOffset</td>
           <td>输入</td>
           <td>对x2进行伪量化计算的offset参数，即计算公式中的antiquantOffset。</td>
-          <td><ul><li>支持传入空指针，非空时shape与antiquantScale一致。</li><li>当x2的数据格式为FLOAT8_E5M2、FLOAT8_E4M3FN或者HIFLOAT8时，不支持该参数，填空指针。</li></ul></td>
+          <td><ul><li>支持传入空指针，非空时shape与antiquantScale一致。</li><li>当x2的数据格式为FLOAT8_E4M3FN或者HIFLOAT8时，不支持该参数，填空指针。</li></ul></td>
           <td>BFLOAT16、FLOAT16</td>
           <td>ND</td>
           <td>1-2</td>
@@ -313,7 +313,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduce(
 - 当输入x1的shape为(b, s, k)时，x3（非空场景）与输出output的shape为(b, s, n)；当输入x1的shape为(m, k)时，x3（非空场景）与输出output的shape为(m, n)。
 - bias若非空，shape大小与output最后一维大小相等。antiquantScale在pertensor场景下shape为(1)，在perchannel场景下shape为(1,n)/(n)，在pergroup场景shape为(ceil(k,antiquantGroupSize), n)。antiquantOffset若非空，其shape与antiquantScale一致。
 - x1和x2，x3（非空场景）、antiquantScale、antiquantOffset（非空场景）、output、bias（非空场景）的数据类型和数据格式需要在支持的范围之内。
-- x1，antiquantScale，antiquantOffset（非空场景），x3（非空场景）、bias（非空场景）output的数据类型相同。antiquantGroupSize取值满足取值范围且为32倍数。
+- x1，antiquantScale，antiquantOffset（非空场景），x3（非空场景）、bias（非空场景）、output的数据类型相同。antiquantGroupSize取值满足取值范围且为32倍数。
 - pergroup场景下，x2转置时，antiquantScale和antiquantOffset需要一起转置，保持连续性。
 - 在长序列场景，随着b/s或者m的增大，可能出现OOM或者计算超时。
 - 仅支持hccs链路all mesh组网。
@@ -321,17 +321,124 @@ aclnnStatus aclnnWeightQuantMatmulAllReduce(
     - <term>Ascend 950PR/Ascend 950DT</term>：支持1、2、4、8、16、32、64卡。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
   - 一个模型中的通算融合MC2算子，仅支持相同通信域。
-  - 输入x2的数据类型支持INT8、INT4，数据格式支持ND（当前版本仅支持二维输入）和`FRACTAL_NZ`格式（当前版本仅支持四维输入）。当x2的数据格式为`FRACTAL_NZ`时，配合aclnnCalculateMatmulWeightSizeV2和aclnnTransMatmulWeight完成输入ND到NZ的转换，非连续的tensor仅支持transpose场景。
-  - 输入bias的数据类型与x1保持一致。
-  - 输入x3的数据类型支持BFLOAT16、FLOAT16。
-  - 输出output的数据类型支持BFLOAT16、FLOAT16。
+  - 输入x2的数据格式支持ND（当前版本仅支持二维输入）和`FRACTAL_NZ`格式（当前版本仅支持四维输入）。当x2的数据格式为`FRACTAL_NZ`时，配合aclnnCalculateMatmulWeightSizeV2和aclnnTransMatmulWeight完成输入ND到NZ的转换，非连续的tensor仅支持transpose场景。
 - <term>Ascend 950PR/Ascend 950DT</term>：
-  - 输入x2的数据类型支持INT8、INT4、`FLOAT8_E5M2`、`FLOAT8_E4M3FN`、HIFLOAT8。数据格式支持ND（仅支持2D输入）。当前版本，当数据类型为INT8时，要求N、K为32对齐；当数据类型为INT4时，要求N、K为64对齐；pergroup场景下数据类型不支持`FLOAT8_E5M2`、`FLOAT8_E4M3FN`、HIFLOAT8。
-  - 对于输入bias，当x2为`FLOAT8_E5M2`、`FLOAT8_E4M3FN`、HIFLOAT8，且x1为BFLOAT16时，bias数据类型支持BFLOAT16、FLOAT32；其他场景下，数据类型与x1保持一致。
-  - 输入x3的数据类型支持BFLOAT16、FLOAT16、FLOAT32。
-  - 输出output的数据类型支持BFLOAT16、FLOAT16、FLOAT32。
+  - 输入x2的数据格式支持ND（仅支持2D输入）。当前版本，当数据类型为INT8时，要求N、K为32对齐；当数据类型为INT4时，要求N、K为64对齐。
 - 空tensor支持度：
   - 仅支持k为0的场景，输出为bias + x3，不支持bs/m/n为0的空tensor输入。
+
+输入和输出支持以下数据类型组合：
+- Atlas A2 训练系列产品/Atlas A2 推理系列产品
+  <table style="undefined;table-layout: fixed; width: 600px">
+    <col style="width: 90px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 100px">
+    <col style="width: 100px">
+    <thead>
+      <tr>
+        <th>x1</th>
+        <th>x2</th>
+        <th>bias</th>
+         <th>antiquantScale</th>
+        <th>antiquantOffset</th>       
+        <th>x3</th>
+        <th>output</th>
+        <th>限制</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>BFLOAT16</td>
+        <td>INT8、INT4</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td>FLOAT16</td>
+        <td>INT8、INT4</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>-</td>
+      </tr>
+    </tbody>
+  </table>
+  
+- Ascend 950PR/Ascend 950DT
+  <table style="undefined;table-layout: fixed; width: 600px">
+    <col style="width: 90px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 125px">
+    <col style="width: 100px">
+    <col style="width: 100px">
+    <thead>
+      <tr>
+        <th>x1</th>
+        <th>x2</th>
+        <th>bias</th>
+        <th>antiquantScale</th>
+        <th>antiquantOffset</th>
+        <th>x3</th>
+        <th>output</th>
+        <th>限制</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>BFLOAT16</td>
+        <td>INT8、INT4</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td>BFLOAT16</td>
+        <td>FLOAT8_E4M3FN、HIFLOAT8</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>null、BFLOAT16</td>
+        <td>BFLOAT16</td>
+        <td>pergroup场景不支持</td>
+      </tr>
+      <tr>
+        <td>FLOAT16</td>
+        <td>INT8、INT4</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td>FLOAT16</td>
+        <td>FLOAT8_E4M3FN、HIFLOAT8</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>null、FLOAT16</td>
+        <td>FLOAT16</td>
+        <td>pergroup场景不支持</td>
+      </tr>
+    </tbody>
+  </table>
 
 ## 调用示例
 
