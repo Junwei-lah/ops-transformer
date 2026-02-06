@@ -14,7 +14,7 @@
 #include "mc2_infer_shape_case_executor.h"
 #include "base/registry/op_impl_space_registry_v2.h"
 
-namespace matmul_all_reduce_ut {
+namespace MatmulAllReduceUT {
 
 class InferShapeTest : public testing::TestWithParam<MatmulAllReduceInferShapeUtParam> {
 protected:

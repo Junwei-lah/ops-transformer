@@ -17,7 +17,7 @@
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/op_api_ut.h"
 
-namespace matmul_all_reduce_ut {
+namespace MatmulAllReduceUT {
 
 struct MatmulAllReduceApiUtParam {
     std::string case_name;

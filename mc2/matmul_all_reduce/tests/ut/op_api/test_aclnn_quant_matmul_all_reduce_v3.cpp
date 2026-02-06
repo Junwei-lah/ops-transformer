@@ -16,7 +16,7 @@
 #include "matmul_all_reduce_api_ut_param.h"
 #include "../../../op_api/aclnn_quant_matmul_all_reduce_v3.h"
 
-namespace matmul_all_reduce_ut {
+namespace MatmulAllReduceUT {
 
 class AclnnQuantMatmulAllReduceV3Test : public testing::TestWithParam<MatmulAllReduceApiUtParam> {
 protected:

@@ -19,7 +19,7 @@
 #include "infer_shape_context_faker.h"
 #include "mc2_csv_case_loader.h"
 
-namespace matmul_all_reduce_ut {
+namespace MatmulAllReduceUT {
 
 struct MatmulAllReduceHostUtParamBase {
     std::string case_name;
@@ -43,11 +43,11 @@ struct MatmulAllReduceHostUtParamBase {
         this->reduce_op = ReadMap(csvMap, "reduce_op");
         this->is_trans_a = stoi(ReadMap(csvMap, "is_trans_a"));
         this->is_trans_b = stoi(ReadMap(csvMap, "is_trans_b"));
-        this->comm_turn = stoi(ReadMap(csvMap, "comm_turn"));
-        this->antiquant_group_size = stoi(ReadMap(csvMap, "antiquant_group_size"));
-        this->group_size = stoi(ReadMap(csvMap, "group_size"));
+        this->comm_turn = stoll(ReadMap(csvMap, "comm_turn"));
+        this->antiquant_group_size = stoll(ReadMap(csvMap, "antiquant_group_size"));
+        this->group_size = stoll(ReadMap(csvMap, "group_size"));
         GetDataType(csvMap, "y_dtype", y_dtype);
-        this->comm_quant_mode = stoi(ReadMap(csvMap, "comm_quant_mode"));
+        this->comm_quant_mode = stoll(ReadMap(csvMap, "comm_quant_mode"));
         this->expectResult = ReadMap(csvMap, "expectResult") == "SUCCESS" ? ge::GRAPH_SUCCESS : ge::GRAPH_FAILED;
     }
 };
@@ -120,11 +120,11 @@ struct MatmulAllReduceTilingUtParam: public MatmulAllReduceHostUtParamBase {
             GetTensor(csvMap, "output_y_shape", "output_y_dtype", "output_y_format",
                 y));
         this->soc = ReadMap(csvMap, "soc");
-        this->coreNum = stoi(ReadMap(csvMap, "core_num"));
-        this->ubsize = stoi(ReadMap(csvMap, "ubsize"));
-        this->ranksize = stoi(ReadMap(csvMap, "ranksize"));
+        this->coreNum = stoull(ReadMap(csvMap, "core_num"));
+        this->ubsize = stoull(ReadMap(csvMap, "ubsize"));
+        this->ranksize = stoull(ReadMap(csvMap, "ranksize"));
         if(this->expectResult == ge::GRAPH_SUCCESS) {
-            this->expectTilingKey = stoi(ReadMap(csvMap, "expectTilingKey"));
+            this->expectTilingKey = stoull(ReadMap(csvMap, "expectTilingKey"));
             this->expectTilingDataHash = ReadMap(csvMap, "expectTilingDataHash");
         }
     }
@@ -180,7 +180,7 @@ struct MatmulAllReduceInferShapeUtParam: public MatmulAllReduceHostUtParamBase {
             GetTensor(csvMap, "comm_quant_scale_2_shape", "comm_quant_scale_2_dtype", "comm_quant_scale_2_format",
                 comm_quant_scale_2));
         this->outputInstance.emplace_back(1);
-        this->ranksize = stoi(ReadMap(csvMap, "ranksize"));
+        this->ranksize = stoull(ReadMap(csvMap, "ranksize"));
         if(this->expectResult == ge::GRAPH_SUCCESS) {
             this->expectOutputShape = {GetShapeArr(ReadMap(csvMap, "expectOutputShape"))};
         }

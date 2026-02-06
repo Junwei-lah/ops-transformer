@@ -8,32 +8,29 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include <string>
-#include <vector>
 #include <gtest/gtest.h>
 #include "../matmul_all_reduce_host_ut_param.h"
 #include "mc2_tiling_case_executor.h"
 
-namespace matmul_all_reduce_ut {
+namespace MatmulAllReduceUT {
 
-class Arch20TilingTest : public testing::TestWithParam<MatmulAllReduceTilingUtParam> {
+class MatmulAllReduceArch20TilingTest : public testing::TestWithParam<MatmulAllReduceTilingUtParam> {
 protected:
     static void SetUpTestCase()
     {
-        std::cout << "MatmulAllReduce Arch20TilingTest SetUp" << std::endl;
+        std::cout << "MatmulAllReduceArch20TilingTest SetUp" << std::endl;
     }
 
     static void TearDownTestCase()
     {
-        std::cout << "MatmulAllReduce Arch20TilingTest TearDown" << std::endl;
+        std::cout << "MatmulAllReduceArch20TilingTest TearDown" << std::endl;
     }
 };
 
-TEST_P(Arch20TilingTest, param)
+TEST_P(MatmulAllReduceArch20TilingTest, param)
 {
     auto param = GetParam();
-    struct MatmulAllReduceCompileInfo {};
-    MatmulAllReduceCompileInfo compileInfo;
+    struct MatmulAllReduceCompileInfo {} compileInfo;
     gert::TilingContextPara tilingContextPara(
         "MatmulAllReduce",
         {
@@ -75,9 +72,9 @@ TEST_P(Arch20TilingTest, param)
 
 INSTANTIATE_TEST_SUITE_P(
     MatmulAllReduce,
-    Arch20TilingTest,
+    MatmulAllReduceArch20TilingTest,
     testing::ValuesIn(GetCasesFromCsv<MatmulAllReduceTilingUtParam>(ReplaceFileExtension2Csv(__FILE__))),
     GetCaseInfoString<MatmulAllReduceTilingUtParam>
 );
 
-} // namespace matmul_all_reduce_ut
+} // namespace MatmulAllReduceUT
