@@ -1224,7 +1224,7 @@ ge::graphStatus CheckFAIAvailability(gert::TilingContext *context)
     return ge::GRAPH_SUCCESS;
 }
 
-static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, FAInferContext& faInfo)
+static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, FAInferContext& faInfo, uint32_t aicoreNum)
 {
     auto qDataType = context->GetInputDesc(QUERY_INDEX)->GetDataType();
     auto tempQ = context->GetInputShape(QUERY_INDEX);
@@ -1312,7 +1312,12 @@ static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, F
                 minKVSeqlen = kvSeqlen;
             }
         }
-        if ((faInfo.embeddingSize <= 128) && (faInfo.batch <= 8) && (maxQSeqlen * (faInfo.numHeads / faInfo.kvHeads) <= 128) && (maxQSeqlen <= 16) && (minKVSeqlen >= 1024) && (minQSeqlen > 0)) {
+        uint32_t numTasks = faInfo.batch * faInfo.kvHeads;
+        bool isLongSeq = (numTasks <= 0.8 * aicoreNum) && (minKVSeqlen >= aicoreNum * 512);
+        bool isShortSeq = (numTasks <= 0.4 * aicoreNum) && (minKVSeqlen >= 1024);
+        if ((!faInfo.lseFlag) && (faInfo.pagedCacheFlag) && !(faInfo.maskType == MaskType::SWA_MASK) && (!faInfo.learnableSinkFlag) && !(faInfo.innerPrecise == 1) &&
+            (faInfo.embeddingSize <= 128) && (maxQSeqlen * (faInfo.numHeads / faInfo.kvHeads) <= 128) && (maxQSeqlen <= 16) && (minKVSeqlen >= 1024) && (minQSeqlen > 0) && 
+            (isLongSeq || isShortSeq)) {
             faInfo.flashDecodeFlag = true; 
         }
     } else {
@@ -1380,10 +1385,6 @@ static ge::graphStatus TilingProcess4SplitFuse(gert::TilingContext *context)
     OP_CHECK_IF(CheckFAIAvailability(context) != ge::GRAPH_SUCCESS,
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Split fuse condition check failed"),
         return ge::GRAPH_FAILED);
-    FAInferTilingData faiTilingData;
-    FAInferContext faiContext;
-    ConvertContextToParamsFAI(context, faiContext);
-    FAInferTiling fai_tiling(faiContext);
     auto platformInfoPtr = context->GetPlatformInfo();
     OP_CHECK_IF(platformInfoPtr == nullptr,
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "PlatformInfoPtr is null"),
@@ -1392,7 +1393,12 @@ static ge::graphStatus TilingProcess4SplitFuse(gert::TilingContext *context)
     constexpr uint32_t BATCH_MODE_SCHEDULE = 1;
     context->SetScheduleMode(BATCH_MODE_SCHEDULE);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-    fai_tiling.SetCoreNum(ascendcPlatform.GetCoreNumAic());
+    uint32_t aicoreNum = ascendcPlatform.GetCoreNumAic();
+    FAInferTilingData faiTilingData;
+    FAInferContext faiContext;
+    ConvertContextToParamsFAI(context, faiContext, aicoreNum);
+    FAInferTiling fai_tiling(faiContext);
+    fai_tiling.SetCoreNum(aicoreNum);
     auto ret = fai_tiling.DoTiling(faiTilingData);
     OP_CHECK_IF(ret != ge::GRAPH_SUCCESS,
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Do fai tiling went wrong"),
