@@ -1,5 +1,7 @@
 # aclnnQuantGroupedMatmulInplaceAdd
 
+[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/gmm/quant_grouped_matmul_inplace_add)
+
 ## 产品支持情况
 
 |产品      | 是否支持 |
@@ -7,6 +9,9 @@
 |<term>Ascend 950PR/Ascend 950DT</term>|      √     |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      ×     |
 |<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|      ×     |
+|<term>Atlas 200I/500 A2 推理产品</term>|      ×     |
+|<term>Atlas 推理系列产品</term>|      ×     |
+|<term>Atlas 训练系列产品</term>|      ×     |
 
 ## 功能说明
 
@@ -51,6 +56,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAddGetWorkspaceSize(
     uint64_t        *workspaceSize, 
     aclOpExecutor   **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
     void          *workspace, 
@@ -61,7 +67,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
 
 ## aclnnQuantGroupedMatmulInplaceAddGetWorkspaceSize
 
-- **参数说明：**
+- **参数说明**
   <table style="undefined;table-layout: fixed;width: 1567px"><colgroup>
   <col style="width: 170px">
   <col style="width: 120px">
@@ -89,11 +95,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>x1</td>
       <td>输入</td>
       <td>Device侧的aclTensor，公式中的输入x1。</td>
-      <td>
-        <ul>
-          <li>支持M轴为0的空Tensor输入。</li>
-        </ul>
-      </td>
+      <td>-</td>
       <td>FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8</td>
       <td>ND</td>
       <td>2(K，M)</td>
@@ -103,11 +105,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>x2</td>
       <td>输入</td>
       <td>Device侧的aclTensor，公式中的输入x2。</td>
-      <td>
-      <ul>
-          <li>支持N轴为0的空Tensor输入。</li>
-        </ul>
-      </td>
+      <td>-</td>
       <td>FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8</td>
       <td>ND</td>
       <td>2(K，N)</td>
@@ -124,7 +122,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       </td>
       <td>FLOAT32、FLOAT8_E8M0</td>
       <td>ND</td>
-      <td>1-3</td>
+      <td>2-3</td>
       <td>√</td>
     </tr>
     <tr>
@@ -160,7 +158,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
       <td>yRef</td>
       <td>输入输出</td>
       <td>Device侧的aclTensor，对应公式中的输入输出y。</td>
-      <td>当x1的M轴或者x2的N轴为0时，yRef为空Tensor。</td>
+      <td>-</td>
       <td>FLOAT32</td>
       <td>ND</td>
       <td>3(g，M，N)</td>
@@ -218,7 +216,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
     </tr>
   <tbody></table>
 
-- **返回值：**
+- **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -250,7 +248,7 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
 
 ## aclnnQuantGroupedMatmulInplaceAdd
 
-- **参数说明：**
+- **参数说明**
   <table>
     <thead>
       <tr><th>参数名</th><th>输入/输出</th><th>描述</th></tr>
@@ -263,11 +261,12 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
     </tbody>
   </table>
 
-- **返回值：**
+- **返回值**
 
   返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
   - 确定性说明：aclnnQuantGroupedMatmulInplaceAdd默认确定性实现。
   - x1和x2的每一维大小在32字节对齐后都应小于int32的最大值2147483647，且内轴大小需小于2097152。
     - 动态量化（T-C量化）场景支持的输入类型为：
@@ -291,7 +290,9 @@ aclnnStatus aclnnQuantGroupedMatmulInplaceAdd(
         |scale1Optional| 3维tensor，shape为((K / 64) + g, M, 2)，scale\_i起始地址偏移为((K\_0 + K\_1 + ...+ K\_{i-1})/ 64 + g\_i) \* M \* 2，即scale_0的起始地址偏移为0，scale_1的起始地址偏移为(K\_0 / 64 + 1) \* M \* 2， scale_2的起始地址偏移为((K\_0 + K\_1) / 64 + 2) \* M \* 2, 依此类推|
         |scale2| 3维tensor，shape为((K / 64) + g, N, 2), 起始地址偏移与scale1Optional同理|
   - groupList第1维最大支持1024，即最多支持1024个group。
+
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```c++
@@ -489,4 +490,3 @@ int main()
     return 0;
 }
 ```
-
