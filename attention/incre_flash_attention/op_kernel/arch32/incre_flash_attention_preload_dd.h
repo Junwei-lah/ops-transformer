@@ -746,7 +746,7 @@ __aicore__ inline void IncreFlashAttentionAttenPreloadDD<IFAT>::InitAllZeroOutpu
         InitAllZeroInt8Output(bIdx, n2Idx);
     } else {
         if constexpr (LAYOUT_T == LAYOUT::BNSD) {
-            uint64_t attenOutOffset = bIdx *kvHeadNum * gSize * qSeqSize * headDim +           //B轴偏移
+            uint64_t attenOutOffset = bIdx * kvHeadNum * gSize * qSeqSize * headDim +           //B轴偏移
                                       n2Idx * gSize * qSeqSize * headDim;     //N2轴偏移
             matmul::InitOutput<OUT_T>(attentionOutGm[attenOutOffset], gSize * qSeqSize * headDim, 0);
         } else if constexpr (LAYOUT_T == LAYOUT::BSND || LAYOUT_T == LAYOUT::BSH || LAYOUT_T == LAYOUT::TND) {

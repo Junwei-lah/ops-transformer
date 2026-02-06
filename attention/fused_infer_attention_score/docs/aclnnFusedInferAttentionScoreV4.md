@@ -16,7 +16,7 @@
 
 ## 功能说明
 
-- 接口功能：适配decode & prefill场景的FlashAttention算子，既可以支持prefill计算场景（PromptFlashAttention），也可支持decode计算场景（IncreFlashAttention）。相比于FusedInferAttentionScoreV3，本接口新增dequantScaleQueryOptional、queryQuantMode参数。
+- 接口功能：适配decode & prefill场景的FlashAttention算子，既可以支持prefill计算场景（PromptFlashAttention），也可支持decode计算场景（IncreFlashAttention）。相比于FusedInferAttentionScoreV3，本接口新增dequantScaleQueryOptional、learnableSinkOptional、queryQuantMode参数。
 
     **说明：** 
     decode场景下特有KV Cache：KV Cache是大模型推理性能优化的一个常用技术。采样时，Transformer模型会以给定的prompt/context作为初始输入进行推理（可以并行处理），随后逐一生成额外的token来继续完善生成的序列（体现了模型的自回归性质）。在采样过程中，Transformer会执行自注意力操作，为此需要给当前序列中的每个项目（无论是prompt/context还是生成的token）提取键值（KV）向量。这些向量存储在一个矩阵中，通常被称为kv缓存（KV Cache）。
@@ -1600,7 +1600,7 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
             <td>-</td>
         </tr>
         <tr>
-            <td rowspan="11">全量化</td>
+            <td rowspan="12">全量化</td>
             <td>query</td>
             <td>INT8，且qs范围为1~16</td>
             <td>-</td>
@@ -1629,6 +1629,11 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
             <td>keyRope</td>
             <td>BFLOAT16，仅支持shape为五维</td>
             <td>shape为五维时，各维度约束为[blockNum, N, D/16, blockSize, 16]</td>
+        </tr>
+        <tr>
+            <td>dequantScaleQueryOptional</td>
+            <td>FLOAT32; 需与keyAntiquantScaleOptional, valueAntiquantScaleOptional同时存在</td>
+            <td>无D维度，其余维度需要与入参query的shape保持一致</td>
         </tr>
         <tr>
             <td>keyAntiquantScaleOptional</td>
@@ -1679,9 +1684,6 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
         </tr>
         <tr>
             <td colspan="4">不支持左padding、tensorlist、pse、prefix、伪量化、后量化</td>
-        </tr>
-        <tr>
-            <td colspan="4">BNSD_NBSD、BSND_NBSD、BSH_NBSD、TND_NTD场景，不支持开启SoftMaxLse</td>
         </tr>
         <tr>
             <td rowspan="5">query d=128</td>

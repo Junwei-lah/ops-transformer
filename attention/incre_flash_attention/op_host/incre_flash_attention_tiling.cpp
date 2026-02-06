@@ -903,13 +903,13 @@ ge::graphStatus IFATiling::ProcessOptionalTensors()
 {
     if ((ProcessActualSeqLen() != ge::GRAPH_SUCCESS) ||
         (ProcessPseShift() != ge::GRAPH_SUCCESS) ||
-        (ProcessAttenMask() != ge::GRAPH_SUCCESS) ||
         (ProcessQuant1() != ge::GRAPH_SUCCESS) ||
         (ProcessQuant2() != ge::GRAPH_SUCCESS) ||
         (ProcessDequant1() != ge::GRAPH_SUCCESS) ||
         (ProcessDequant2() != ge::GRAPH_SUCCESS) ||
         (ProcessQuant() != ge::GRAPH_SUCCESS) ||
         (ProcessAntiQuant() != ge::GRAPH_SUCCESS) ||
+        (ProcessAttenMask() != ge::GRAPH_SUCCESS) ||
         (ProcessBlockTable() != ge::GRAPH_SUCCESS) ||
         (ProcessKVPaddingSize() != ge::GRAPH_SUCCESS) ||
         (ProcessMlaRope() != ge::GRAPH_SUCCESS) ||
@@ -3221,6 +3221,7 @@ void IFATiling::FillTilingBaseParamsMla()
     tilingDataMla_.baseParams.set_attenMaskFlag(attenMaskFlag_ ? 1 : 0);
     tilingDataMla_.baseParams.set_attenMaskSize(attenMaskSize_);
     tilingDataMla_.baseParams.set_outputLayout(static_cast<uint32_t>(outputLayout_));
+    tilingDataMla_.baseParams.set_softmaxLseFlag(softmaxLseFlag_ ? 1 : 0);
 }
 
 // for flash decode

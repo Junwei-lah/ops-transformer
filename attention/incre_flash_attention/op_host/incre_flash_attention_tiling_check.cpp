@@ -1779,10 +1779,6 @@ ge::graphStatus IFATiling::CheckDefaultMisc(std::string scene) const
         OP_LOGE(ifaContext_->opName, "SysPrefix is not supported in %s.", scene.c_str()),
         return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF(softmaxLseFlag_,
-        OP_LOGE(ifaContext_->opName, "SoftmaxLse output is not supported in %s.", scene.c_str()),
-        return ge::GRAPH_FAILED);
-
     OP_CHECK_IF(outputType_ == ge::DT_INT8,
         OP_LOGE(ifaContext_->opName, "PostQuant is not supported in %s.", scene.c_str()),
         return ge::GRAPH_FAILED);
