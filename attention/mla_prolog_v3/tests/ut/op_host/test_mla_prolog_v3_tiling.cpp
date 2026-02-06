@@ -1924,8 +1924,54 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test34) {
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-// 全量化pertile场景异常case：krCacheOut is not an empty tensor
+//全量化pertile场景正常case：krCache dtype设置为bf16
 TEST_F(MlaPrologV3, MlaPrologV3_tiling_test35) {
+    optiling::MlaPrologCompileInfo compileInfo = {48};
+    gert::TilingContextPara tilingContextPara("MlaPrologV3",
+    {
+        {{{8,7168}, {8,7168}}, ge::DT_INT8, ge::FORMAT_ND},//token_x 0
+        {{{7168,1536}, {7168, 1536}}, ge::DT_INT8, ge::FORMAT_FRACTAL_NZ},//weight_dq 1
+        {{{1536,24576}, {1536, 24576}}, ge::DT_INT8, ge::FORMAT_FRACTAL_NZ},//weight_uq_qr 2
+        {{{128, 128, 512}, {128, 128, 512}}, ge::DT_BF16, ge::FORMAT_ND},//weight_uk 3
+        {{{7168, 512 + 64}, {7168, 512 + 64}}, ge::DT_INT8, ge::FORMAT_FRACTAL_NZ},//weight_dkv_kr 4
+        {{{1536}, {1536}}, ge::DT_BF16, ge::FORMAT_ND},//rmsnorm_gamma_cq 5
+        {{{512}, {512}}, ge::DT_BF16, ge::FORMAT_ND},//rmsnorm_gamma_ckv 6
+        {{{8,1,64}, {8,1,64}}, ge::DT_BF16, ge::FORMAT_ND},//rope_sin 7
+        {{{8,1,64}, {8,1,64}}, ge::DT_BF16, ge::FORMAT_ND},//rope_cos 8
+        {{{1,16,1,656}, {1,16,1,656}}, ge::DT_INT8, ge::FORMAT_ND},//kv_cache 9
+        {{{0}, {0}}, ge::DT_BF16, ge::FORMAT_ND},//kr_cache 10
+        {{{8,1}, {8,1}}, ge::DT_INT64, ge::FORMAT_ND},//cache_index 11
+        {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},//dequant_scale_x 12
+        {{{1,1536}, {1,1536}}, ge::DT_FLOAT, ge::FORMAT_ND},//dequant_scale_w_dq 13
+        {{{1,24576}, {1,24576}}, ge::DT_FLOAT, ge::FORMAT_ND},//dequant_scale_w_uq_qr 14
+        {{{1,576}, {1,576}}, ge::DT_FLOAT, ge::FORMAT_ND},//dequant_scale_w_dkv_kr 15
+        {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},//quant_scale_ckv 16
+        {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},//quant_scale_ckr 17
+        {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},//smooth_scales_cq 18
+        {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},//actual_seq_len 19
+        {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},//k_nope_clip_alpha 20
+    },
+    {
+        {"rmsnorm_epsilon_cq", Ops::Transformer::AnyValue::CreateFrom<float>(0.0022971812167027)},
+        {"rmsnorm_epsilon_ckv", Ops::Transformer::AnyValue::CreateFrom<float>(0.00235037235057241)},
+        {"cache_mode", Ops::Transformer::AnyValue::CreateFrom<std::string>("PA_BSND")},
+        {"query_norm_flag", Ops::Transformer::AnyValue::CreateFrom<bool>(false)},
+        {"weight_quant_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(2)},
+        {"kv_cache_quant_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(3)},
+        {"query_quant_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+        {"ckvkr_repo_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(1)},
+        {"quant_scale_repo_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(1)},
+        {"tile_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(128)}, // 128 : set value of tile size
+        {"qc_qr_scale", Ops::Transformer::AnyValue::CreateFrom<float>(1.0f)},
+        {"kc_scale", Ops::Transformer::AnyValue::CreateFrom<float>(1.0f)},
+    },
+    &compileInfo,"Ascend910_B3", MlaPrologV3_tiling_A2SocInfo, 4096);
+    int64_t expectTilingKey = 1836449;
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey);
+}
+
+// 全量化pertile场景异常case：krCacheOut is not an empty tensor
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test36) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -1980,7 +2026,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test35) {
 }
 
 // 全量化pertile场景异常case：The ckvkrRepoMode expected 1, but got 0.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test36) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test37) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2035,7 +2081,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test36) {
 }
 
 // 全量化pertile场景异常case：The quantScaleRepoMode expected 1, but got 0.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test37) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test38) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2090,7 +2136,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test37) {
 }
 
 // 全量化pertile场景异常case：The queryQuantMode expected 0, but got 1.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test38) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test39) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2145,7 +2191,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test38) {
 }
 
 // 全量化pertile场景异常case：Not support both cacheMode {PA_NZ, PA_BLK_BSND, PA_BLK_NZ} and pertile effective.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test39) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test40) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2200,7 +2246,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test39) {
 }
 
 // 全量化pertile场景异常case：weightQuantMode must be within {0, 3}, actually is 10.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test40) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test41) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2255,7 +2301,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test40) {
 }
 
 // 全量化pertile场景异常case：krCache[1] is not an empty tensor
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test41) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test42) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2309,7 +2355,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test41) {
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey);
 }
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景正常case
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test42) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test43) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2364,7 +2410,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test42) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景异常case：tokenx expected dtype DT_BFLOAT8_E4M3FN, but got DT_BF16
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test43) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test44) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2419,7 +2465,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test43) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景异常case：TokenX shape dim num allows only 3, got 2.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test44) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test45) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2474,7 +2520,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test44) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景异常case：He allows only 7168, got 999.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test45) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test46) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2529,7 +2575,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test45) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景异常case：BlockSize allows only [16, 128], but got 32
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test46) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test47) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2584,7 +2630,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test46) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景异常case：tokenx datatype only supports [DT_BFLOAT16, DT_BFLOAT8_E4M3FN ], but got DT_INT8.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test47) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test48) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2639,7 +2685,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test47) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景正常case，cache_mode：PA_BSND
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test48) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test49) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2694,7 +2740,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test48) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景正常case，cache_mode：PA_NZ
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test49) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test50) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2749,7 +2795,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test49) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case：Only support cacheMode {PA_BSND, PA_NZ}, actually is BSND
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test50) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test51) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2804,7 +2850,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test50) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，The queryQuantMode expected 1, but got 0.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test51) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test52) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2859,7 +2905,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test51) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，When weightQuantMode == 0, kvQuantMode must be within {0}, actually is 1.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test52) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test53) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2914,7 +2960,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test52) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，When weightQuantMode == 3, kvQuantMode must be within {0, 1}, actually is 2.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test53) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test54) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -2969,7 +3015,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test53) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，weightQuantMode must be within {0, 3}, actually is 2.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test54) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test55) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3024,7 +3070,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test54) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，tokenX dim num supports only [2, 3], but got 5.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test55) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test56) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3079,7 +3125,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test55) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，ropeSin expected shape [33, 64], but got [1, 33, 64].
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test56) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test57) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3134,7 +3180,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test56) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，ropeCos dim num supports only [2, 3], but got 4.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test57) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test58) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3189,7 +3235,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test57) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，cacheIndex expected shape [33], but got [1, 33].
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test58) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test59) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3244,7 +3290,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test58) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，dequantScaleX expected shape [33,224], but got [1, 33, 224].
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test59) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test60) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3299,7 +3345,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test59) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，query输入维度为5
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test60) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test61) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3354,7 +3400,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test60) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，query_rope输入维度为5
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test61) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test62) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3409,7 +3455,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test61) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景异常case，dequant_scale_q_nope输入维度为4
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test62) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test63) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3464,7 +3510,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test62) {
 }
 
 // 91095的NO_QUANT场景正常case，BS合轴; cacheMode = PA_BSND; T = 2
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test63) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test64) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3519,7 +3565,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test63) {
 }
 
 // 91095的NO_QUANT场景正常case，BS合轴; cacheMode = PA_NZ; T = 128
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test64) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test65) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3574,7 +3620,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test64) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景正常case，BS合轴; cacheMode = PA_NZ; T = 2
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test65) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test66) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3629,7 +3675,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test65) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_NO_QUANT场景正常case，BS合轴; cacheMode = PA_BSND; T = 31
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test66) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test67) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3684,7 +3730,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test66) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景正常case，BS合轴; cacheMode = PA_BSND; T = 33
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test67) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test68) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3739,7 +3785,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test67) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR场景正常case，BS合轴; cacheMode = PA_NZ; T = 128
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test68) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test69) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3794,7 +3840,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test68) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR, query_norm_flag = true场景正常case，cache_mode：PA_BSND
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test69) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test70) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3849,7 +3895,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test69) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR, query_norm_flag = true场景异常case，cache_mode：PA_BSND, query_norm dtype must be DT_FLOAT8_E4M3FN, actually is DT_BF16
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test70) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test71) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3904,7 +3950,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test70) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TENSOR, query_norm_flag = true场景异常case，cache_mode：PA_BSND, dequant_scale_q_norm dtype must be DT_FLOAT8_E8M0, actually is DT_BF16
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test71) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test72) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -3959,7 +4005,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test71) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景正常case，cache_mode：PA_BSND
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test72) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test73) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4014,7 +4060,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test72) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，Only support cacheMode PA_BSND, actually is PA_NZ
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test73) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test74) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4069,7 +4115,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test73) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，When weightQuantMode == 3, kvQuantMode must be within {0, 1, 3}, actually is 2.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test74) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test75) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4124,7 +4170,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test74) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，The ckvkrRepoMode expected 1, but got 0. The quantScaleRepoMode expected 1, but got 0.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test75) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test76) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4179,7 +4225,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test75) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，The queryQuantMode expected 0, but got 1.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test76) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test77) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4234,7 +4280,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test76) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，DtileSize allows only 656, got 512.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test77) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test78) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4289,7 +4335,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test77) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，krCache dim num supports only [1, 4], but got 3.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test78) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test79) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {
@@ -4344,7 +4390,7 @@ TEST_F(MlaPrologV3, MlaPrologV3_tiling_test78) {
 }
 
 // 91095的MXFP8_FULL_QUANT_KV_QUANT_PER_TILE场景异常case，When weightQuantMode == 0, kvQuantMode must be within {0}, actually is 3.
-TEST_F(MlaPrologV3, MlaPrologV3_tiling_test79) {
+TEST_F(MlaPrologV3, MlaPrologV3_tiling_test80) {
     optiling::MlaPrologCompileInfo compileInfo = {48};
     gert::TilingContextPara tilingContextPara("MlaPrologV3",
     {

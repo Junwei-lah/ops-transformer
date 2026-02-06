@@ -312,10 +312,8 @@ ASCENDC_TPL_SEL(
 
 #if MLA_PROLOG_VERSION == -1 || MLA_PROLOG_VERSION == 3
 // -------------------------- 半量化kv pertile量化 --------------------------
-#if ORIG_DTYPE_TOKEN_X == -1 || ORIG_DTYPE_WEIGHT_UQ_QR == -1 || ORIG_DTYPE_KV_CACHE == -1 ||                 \
-    ORIG_DTYPE_KR_CACHE == -1 ||                                                                              \
-    (ORIG_DTYPE_TOKEN_X == DT_BF16 && ORIG_DTYPE_WEIGHT_UQ_QR == DT_INT8 && ORIG_DTYPE_KV_CACHE == DT_INT8 && \
-        ORIG_DTYPE_KR_CACHE == DT_BF16)
+#if ORIG_DTYPE_TOKEN_X == -1 || ORIG_DTYPE_WEIGHT_UQ_QR == -1 || ORIG_DTYPE_KV_CACHE == -1 || \
+        (ORIG_DTYPE_TOKEN_X == DT_BF16 && ORIG_DTYPE_WEIGHT_UQ_QR == DT_INT8 && ORIG_DTYPE_KV_CACHE == DT_INT8)
     ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_UINT_SEL(CACHE_MODE, ASCENDC_TPL_UI_LIST, 1),
         ASCENDC_TPL_UINT_SEL(SCENARIO, ASCENDC_TPL_UI_LIST, 2),
         ASCENDC_TPL_UINT_SEL(QUANT_MODE, ASCENDC_TPL_UI_LIST, 5), ASCENDC_TPL_BOOL_SEL(ENABLE_DEQUANT_OPTIONAL, 0, 1),
@@ -339,9 +337,9 @@ ASCENDC_TPL_SEL(
 
 // -------------------------- 全量化kv pertile量化 --------------------------
 #if ORIG_DTYPE_TOKEN_X == -1 || ORIG_DTYPE_WEIGHT_UQ_QR == -1 || ORIG_DTYPE_KV_CACHE == -1 ||                 \
-    ORIG_DTYPE_KR_CACHE == -1 || ORIG_DTYPE_QUERY == -1 ||                                                    \
+    ORIG_DTYPE_QUERY == -1 ||                                                                                 \
     (ORIG_DTYPE_TOKEN_X == DT_INT8 && ORIG_DTYPE_WEIGHT_UQ_QR == DT_INT8 && ORIG_DTYPE_KV_CACHE == DT_INT8 && \
-        ORIG_DTYPE_KR_CACHE == DT_BF16 && ORIG_DTYPE_QUERY == DT_BF16)
+        ORIG_DTYPE_QUERY == DT_BF16)
     ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_UINT_SEL(CACHE_MODE, ASCENDC_TPL_UI_LIST, 0, 1),
         ASCENDC_TPL_UINT_SEL(SCENARIO, ASCENDC_TPL_UI_LIST, 2),
         ASCENDC_TPL_UINT_SEL(QUANT_MODE, ASCENDC_TPL_UI_LIST, 6), ASCENDC_TPL_BOOL_SEL(ENABLE_DEQUANT_OPTIONAL, 0, 1),
