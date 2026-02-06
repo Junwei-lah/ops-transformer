@@ -13,6 +13,7 @@
  * \brief
  */
 
+#include "all_gather_matmul_v2_tiling_key.h"
 #include "lib/matmul_intf.h"
 #include "basic_api/kernel_basic_intf.h"
 #include "all_gather_matmul_aiv_mode.h"
@@ -21,7 +22,8 @@
 using namespace AllGatherMatmulAIVModeImpl;
 using namespace AscendC;
 
-extern "C" __global__ __aicore__ void all_gather_matmul_v2(GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR scaleInv1,
+template<bool TPL_ISBIAS, bool TPL_IS_TRANSPOSE_A, bool TPL_IS_TRANSPOSE_B>
+__global__ __aicore__ void all_gather_matmul_v2(GM_ADDR aGM, GM_ADDR bGM, GM_ADDR biasGM, GM_ADDR scaleInv1,
                                                            GM_ADDR scaleInv2, GM_ADDR scale, GM_ADDR cGM,
                                                            GM_ADDR gatherOut, GM_ADDR amax, GM_ADDR workspaceGM,
                                                            GM_ADDR tilingGM)
@@ -29,20 +31,14 @@ extern "C" __global__ __aicore__ void all_gather_matmul_v2(GM_ADDR aGM, GM_ADDR 
 //aiv算子模板
 
     #define INVOKE_ALLGATHERMATMUL_AIV_MODE_OP_IMPL(templateClass, ...)                                              \
-    do {                                                                                                    \
-        GET_TILING_DATA_WITH_STRUCT(AllGatherMatmulAIVModeTilingData, tilingData, tilingGM);          \
-        templateClass<DTYPE_X1, DTYPE_X2, DTYPE_BIAS, DTYPE_X2_SCALE, DTYPE_Y, __VA_ARGS__> op;                             \
-        op.Init(aGM, bGM, biasGM, scaleInv1, scaleInv2, cGM, gatherOut, workspaceGM, tilingGM);                        \
-        op.Process();                                                                                       \
-    } while (0)
+        do {                                                                                                    \
+            GET_TILING_DATA_WITH_STRUCT(AllGatherMatmulAIVModeTilingData, tilingData, tilingGM);          \
+            templateClass<DTYPE_X1, DTYPE_X2, DTYPE_BIAS, DTYPE_X2_SCALE, DTYPE_Y, __VA_ARGS__> op;                             \
+            op.Init(aGM, bGM, biasGM, scaleInv1, scaleInv2, cGM, gatherOut, workspaceGM, tilingGM);                        \
+            op.Process();                                                                                       \
+        } while (0)
 
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
     REGISTER_TILING_DEFAULT(AllGatherMatmulAIVModeTilingData);
-    if (TILING_KEY_IS(10000)) {
-        //aivMode，非transB
-        INVOKE_ALLGATHERMATMUL_AIV_MODE_OP_IMPL(AllGatherMatmulAIVMode, FORMAT_X2 == FORMAT_FRACTAL_NZ, false, false);
-    } else if (TILING_KEY_IS(10010)) {
-        //aivMode，transB
-        INVOKE_ALLGATHERMATMUL_AIV_MODE_OP_IMPL(AllGatherMatmulAIVMode, FORMAT_X2 == FORMAT_FRACTAL_NZ, false, true);
-    }
+    INVOKE_ALLGATHERMATMUL_AIV_MODE_OP_IMPL(AllGatherMatmulAIVMode, FORMAT_X2 == FORMAT_FRACTAL_NZ, false, TPL_IS_TRANSPOSE_B);
 }

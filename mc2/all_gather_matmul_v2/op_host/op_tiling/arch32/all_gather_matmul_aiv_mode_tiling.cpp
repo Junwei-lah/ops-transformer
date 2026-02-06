@@ -22,9 +22,11 @@
 #include "tiling_func.h"
 #include "all_gather_matmul_tiling_v2.h"
 #include "../../../op_kernel/all_gather_matmul_aiv_mode_tiling.h"
+#include "../../../op_kernel/all_gather_matmul_v2_tiling_key.h"
 
 using namespace AscendC;
 using namespace ge;
+using namespace Mc2Tiling;
 
 namespace {
 const char *K_INNER_DEBUG = "AllGatherMatmulAIVMode Tiling Debug";
@@ -83,6 +85,13 @@ int32_t GetValueFromMKNConditionMapAllGather(int32_t m, int32_t k, int32_t n, in
     }
   }
   return value;
+}
+
+static void GetTilingKey(uint64_t &tilingKey, const AllGatherMatmulAIVModeInfo &info, const gert::TilingContext *context)
+{
+    const gert::StorageShape *matrix_bias = context->GetOptionalInputShape(BIAS_INDEX);
+    bool isBias = (matrix_bias == nullptr) ? false : true;
+    tilingKey = GET_TPL_TILING_KEY(isBias, info.isTransposeX1, info.isTransposeX2);
 }
 
 void SetTilingParam(CoCTiling &cocTilingData, const std::map<int *, TilingValue> &TilingParamMap) {
@@ -496,7 +505,7 @@ ge::graphStatus AllGatherMatmulTilingAIVModeFunc(gert::TilingContext *context)
     }
 
     uint64_t tilingKey = INIT_TILINGKEY;
-    tilingKey += info.isTransposeX2 ? TILINGKEY_TRANS_B : 0;
+    GetTilingKey(tilingKey, info, context);
     context->SetTilingKey(tilingKey);
     OP_LOGI(nodeName, "The tilingKey is %lu", tilingKey);
 
