@@ -479,18 +479,18 @@ protected:
     TaskInfo taskInfo{};
 private:    
     // ================================FD Local Buffer区====================================
-    TBuf<> fdSumBuf1;    // 1.5k: 16*24*4
-    TBuf<> fdSumBuf2;    // 1.5k: 16*24*4
-    TBuf<> fdMaxBuf1;    // 1.5k: 16*24*4
-    TBuf<> fdMaxBuf2;    // 1.5k: 16*24*4
-    TBuf<> fdLseExpBuf;  // 1.5k: 16*24*4
-    TBuf<> fdMm2ResBuf1; // 32k: 16*512*4
-    TBuf<> fdMm2ResBuf2; // 32k: 16*512*4
-    TBuf<> fdReduceBuf;  // 32k: 16*512*4
-    TBuf<> fdOutputBuf;  // 32k: 16*512*4
+    TBuf<> fdSumBuf1;
+    TBuf<> fdSumBuf2;
+    TBuf<> fdMaxBuf1;
+    TBuf<> fdMaxBuf2;
+    TBuf<> fdLseExpBuf;
+    TBuf<> fdMm2ResBuf1;
+    TBuf<> fdMm2ResBuf2;
+    TBuf<> fdReduceBuf;
+    TBuf<> fdOutputBuf;
 
-    TBuf<> fdLseMaxUbBuf; // 64B: 16*4
-    TBuf<> fdLseSumUbBuf; // 64B: 16*4
+    TBuf<> fdLseMaxUbBuf;
+    TBuf<> fdLseSumUbBuf;
 };
 
 template <typename IFAT> __aicore__ inline 
