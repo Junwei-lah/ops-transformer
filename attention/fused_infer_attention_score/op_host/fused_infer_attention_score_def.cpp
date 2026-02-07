@@ -504,7 +504,7 @@ public:
             .AutoContiguous();
         this->Input("learnable_sink")
             .ParamType(OPTIONAL)
-            .DataTypeList({ge::DT_BF16})
+            .DataTypeList({ge::DT_BF16, ge::DT_FLOAT16})
             .FormatList({ge::FORMAT_ND})
             .AutoContiguous();
         this->Input("q_start_idx")

@@ -297,6 +297,10 @@ ge::graphStatus FiaTilingCheck::CheckFeatureLearnableSink() const
         OP_LOGE(opName_, "learnable_sink enable, sink shape(%u) must be same equal queryN(%u)!", sinkDim, fiaInfo_.n1Size),
         return ge::GRAPH_FAILED);
 
+    OP_CHECK_IF((opParamInfo_.learnableSink.desc->GetDataType() != ge::DT_BF16),
+            OP_LOGE(opName_, "When learnable_sink enable, sink dtype must be bf16!"),
+            return ge::GRAPH_FAILED);
+            
     return ge::GRAPH_SUCCESS;
 }
 

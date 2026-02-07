@@ -1017,7 +1017,7 @@ bool CheckSpecConditions(const gert::TilingContext *context)
         (qDataType == ge::DT_FLOAT16) && (innerPrecise == 1) && !isPageAttention;
     bool nonMhaConditions = !isMha && (innerPrecise == 0);
     bool specConditionFlag = false;
-    if (isLayoutSupported && !isLearnableSink && !isRopeSplitMla && sparseModeSupported &&
+    if (isLayoutSupported && !isRopeSplitMla && sparseModeSupported &&
         (nonMhaConditions || mhaConditions)) {
         int64_t tempQD = tempQ->GetStorageShape().GetDim(DIM_2);
         if (!isPageAttention) {
