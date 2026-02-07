@@ -786,7 +786,9 @@ __aicore__ inline void FiaKernelNonQuant<FIAT, CubeBlockType, VecBlockType, FdBl
 
     // 对整个batch的结果置0
     if constexpr (POST_QUANT) { // out int8
-        vectorService.DealZeroActSeqLenWithPostQuant(bIdx, n2Idx);
+        if ASCEND_IS_AIV {
+            vectorService.DealZeroActSeqLenWithPostQuant(bIdx, n2Idx);
+        }
     } else {
         if (constInfo.outputLayout == FIA_LAYOUT::BSND || constInfo.outputLayout == FIA_LAYOUT::BSH) {
             OffsetCalculator<GmFormat::BSNGD> offsetCalculator;

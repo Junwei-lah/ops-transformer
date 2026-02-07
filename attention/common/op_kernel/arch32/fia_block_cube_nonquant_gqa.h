@@ -398,6 +398,41 @@ public:
 #endif
 };
 
+template <typename FIAT, typename Config=void>
+class FiaBlockCubeNonQuantGqaDummy {
+    using T = float;
+    using Q_T = typename FIAT::queryType;
+    using KV_T = typename FIAT::kvType;
+
+    static constexpr bool ANTIQUANT = !IsSameType<Q_T, KV_T>::value;
+    static constexpr bool QUANT = (IsSameType<Q_T, KV_T>::value && IsSameType<KV_T, int8_t>::value);
+    using MM_OUT_T = typename AscendC::Conditional<(ANTIQUANT || QUANT), int32_t, T>::type;
+
+public:
+    __aicore__ inline void InitParams(const ConstInfo &constInfo);
+    __aicore__ inline void Init(
+        __gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *pseShift,
+        __gm__ uint8_t *attenMask, __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths,
+        __gm__ uint8_t *deqScale1, __gm__ uint8_t *quantScale1, __gm__ uint8_t *deqScale2, __gm__ uint8_t *quantScale2,
+        __gm__ uint8_t *quantOffset2, __gm__ uint8_t *antiquantScale, __gm__ uint8_t *antiquantOffset,
+        __gm__ uint8_t *blockTable, __gm__ uint8_t *queryPaddingSize, __gm__ uint8_t *kvPaddingSize,
+        __gm__ uint8_t *keyAntiquantScale, __gm__ uint8_t *keyAntiquantOffset, __gm__ uint8_t *valueAntiquantScale,
+        __gm__ uint8_t *valueAntiquantOffset, __gm__ uint8_t *keySharedPrefix, __gm__ uint8_t *valueSharedPrefix,
+        __gm__ uint8_t *actualSharedPrefixLen, __gm__ uint8_t *queryRope, __gm__ uint8_t *keyRope,
+        __gm__ uint8_t *keyRopeAntiquantScale, __gm__ uint8_t *attentionOut, __gm__ uint8_t *softmaxLse);
+    __aicore__ inline void InitMm1GlobalTensor(const GlobalTensor<MM_OUT_T>& mm1ResGm);
+    __aicore__ inline void InitMm2GlobalTensor(const GlobalTensor<KV_T>& vec1ResGm, const GlobalTensor<MM_OUT_T>& mm2ResGm);
+
+    __aicore__ inline void InitBuffers(TPipe *pipe);
+    __aicore__ inline void AllocEventID();
+    __aicore__ inline void FreeEventID();
+
+    template <CubeFormat OutFormat=CubeFormat::ND, CubeFormat BFormat=CubeFormat::ND>
+        __aicore__ inline void ComputeMm1(const RunInfo &info);
+    template <CubeFormat OutFormat=CubeFormat::ND, CubeFormat AFormat=CubeFormat::ND>
+        __aicore__ inline void ComputeMm2(const RunInfo &info);
+};
+
 template <typename FIAT, typename Config>
 __aicore__ inline void FiaBlockCubeNonQuantGqa<FIAT, Config>::InitParams(const ConstInfo &constInfo)
 {

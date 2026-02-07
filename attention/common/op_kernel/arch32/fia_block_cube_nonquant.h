@@ -224,6 +224,42 @@ private:
     FaGmTensor<KV_T, KV_FORMAT> valuePrefixGmTensor;
 };
 
+
+template <typename FIAT> class FiaBlockCubeNonQuantDummy {
+public:
+    using T = float;
+    using Q_T = typename FIAT::queryType;
+    using KV_T = typename FIAT::kvType;
+    using OUT_T = typename FIAT::outputType;
+
+    static constexpr bool ANTIQUANT = !IsSameType<Q_T, KV_T>::value;
+    static constexpr bool QUANT = (IsSameType<Q_T, KV_T>::value && IsSameType<KV_T, int8_t>::value);
+    using pseShiftType = typename AscendC::Conditional<AscendC::IsSameType<Q_T, int8_t>::value, half, Q_T>::type;
+    static constexpr bool POST_QUANT = IsSameType<OUT_T, int8_t>::value;
+    using MM_OUT_T = typename AscendC::Conditional<(ANTIQUANT || QUANT), int32_t, T>::type;
+    __aicore__ inline FiaBlockCubeNonQuantDummy(){};
+    __aicore__ inline void InitParams(const ConstInfo &constInfo);
+    __aicore__ inline void Init(
+        __gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *pseShift, __gm__ uint8_t *attenMask,
+        __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths, __gm__ uint8_t *deqScale1, 
+        __gm__ uint8_t *quantScale1, __gm__ uint8_t *deqScale2, __gm__ uint8_t *quantScale2, __gm__ uint8_t *quantOffset2,
+        __gm__ uint8_t *antiquantScale, __gm__ uint8_t *antiquantOffset, __gm__ uint8_t *blockTable,
+        __gm__ uint8_t *queryPaddingSize, __gm__ uint8_t *kvPaddingSize, __gm__ uint8_t *keyAntiquantScale,
+        __gm__ uint8_t *keyAntiquantOffset, __gm__ uint8_t *valueAntiquantScale, __gm__ uint8_t *valueAntiquantOffset,
+        __gm__ uint8_t *keySharedPrefix, __gm__ uint8_t *valueSharedPrefix, __gm__ uint8_t *actualSharedPrefixLen,
+        __gm__ uint8_t *queryRope, __gm__ uint8_t *keyRope, __gm__ uint8_t *keyRopeAntiquantScale,
+        __gm__ uint8_t *attentionOut, __gm__ uint8_t *softmaxLse);
+    __aicore__ inline void InitMm1GlobalTensor(GlobalTensor<MM_OUT_T> mm1ResGm);
+    __aicore__ inline void InitMm2GlobalTensor(GlobalTensor<KV_T> vec1ResGm, GlobalTensor<MM_OUT_T> mm2ResGm);
+    __aicore__ inline void ComputeMm1(const RunInfo &info);
+    __aicore__ inline void ComputeMm2(const RunInfo &info);
+
+    __aicore__ inline void InitBuffers(TPipe *pipe);
+    __aicore__ inline void AllocEventID();
+    __aicore__ inline void FreeEventID();
+
+};
+
 template <typename FIAT>
 __aicore__ inline void FiaBlockCubeNonQuant<FIAT>::InitKeyGm(uint32_t bIdx)
 {

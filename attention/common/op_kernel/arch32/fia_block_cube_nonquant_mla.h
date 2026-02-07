@@ -197,6 +197,36 @@ private:
     uint32_t cL0BufIter = 0;
 };
 
+template <typename FIAT> 
+class FiaBlockCubeNonQuantMlaDummy {
+public:
+    using T = float;
+    using KV_T = typename FIAT::kvType;
+    using MM_OUT_T = T;
+
+    __aicore__ inline FiaBlockCubeNonQuantMlaDummy(){};
+    __aicore__ inline void InitParams(const AttentionCommon::ConstInfo &constInfo);
+    __aicore__ inline void Init(
+        __gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *pseShift,
+        __gm__ uint8_t *attenMask, __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths,
+        __gm__ uint8_t *deqScale1, __gm__ uint8_t *quantScale1, __gm__ uint8_t *deqScale2, __gm__ uint8_t *quantScale2,
+        __gm__ uint8_t *quantOffset2, __gm__ uint8_t *antiquantScale, __gm__ uint8_t *antiquantOffset,
+        __gm__ uint8_t *blockTable, __gm__ uint8_t *queryPaddingSize, __gm__ uint8_t *kvPaddingSize,
+        __gm__ uint8_t *keyAntiquantScale, __gm__ uint8_t *keyAntiquantOffset, __gm__ uint8_t *valueAntiquantScale,
+        __gm__ uint8_t *valueAntiquantOffset, __gm__ uint8_t *keySharedPrefix, __gm__ uint8_t *valueSharedPrefix,
+        __gm__ uint8_t *actualSharedPrefixLen, __gm__ uint8_t *queryRope, __gm__ uint8_t *keyRope,
+        __gm__ uint8_t *keyRopeAntiquantScale, __gm__ uint8_t *attentionOut, __gm__ uint8_t *softmaxLse);
+    __aicore__ inline void InitMm1GlobalTensor(GlobalTensor<MM_OUT_T> mm1ResGm);
+    __aicore__ inline void InitMm2GlobalTensor(GlobalTensor<KV_T> vec1ResGm,
+                                               GlobalTensor<MM_OUT_T> mm2ResGm);
+    __aicore__ inline void InitBuffers(TPipe *pipe);
+
+    __aicore__ inline void AllocEventID();
+    __aicore__ inline void FreeEventID();
+    __aicore__ inline void ComputeMm1(const AttentionCommon::RunInfo &info);
+    __aicore__ inline void ComputeMm2(const AttentionCommon::RunInfo &info);
+};
+
 template <typename FIAT> __aicore__ inline void FiaBlockCubeNonQuantMla<FIAT>::InitParams(const ConstInfo &constInfo)
 {
     this->constInfo = constInfo;

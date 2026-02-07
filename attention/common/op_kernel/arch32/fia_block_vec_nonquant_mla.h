@@ -75,6 +75,7 @@ public:
     __aicore__ inline void AllocEventID();
     __aicore__ inline void FreeEventID();
 
+protected:
     // ================================Vector1==========================================
     __aicore__ inline void ProcessVec1SingleBuf(const AttentionCommon::RunInfo &info, const MSplitInfo &mSplitInfo);
     __aicore__ inline void CopySoftmaxLseToGmByLayout(const AttentionCommon::RunInfo &info, LocalTensor<T> &lseSrc,
@@ -121,7 +122,6 @@ public:
                                               LocalTensor<T> &bmm2ResUb, uint32_t startRow, uint32_t dealRowCount,
                                               uint32_t columnCount, uint32_t actualColumnCount);
 
-protected:
     uint32_t pingpongFlag = 0U;
     GlobalTensor<int32_t> mm2ResInt32Gm;
     GlobalTensor<MM1_OUT_T> mm1ResGm; // 存放S
@@ -211,6 +211,41 @@ private:
     uint32_t attenMaskSizeAlign = 0U;
 
     const FusedInferAttentionScoreTilingData *__restrict tilingData = nullptr;
+};
+
+
+template <typename FIAT> 
+class FiaBlockVecNonQuantMlaDummy {
+public:
+    using T = float;
+    using KV_T = typename FIAT::kvType;
+    using OUT_T = typename FIAT::outputType;
+    using UPDATE_T = T;
+    using MM1_OUT_T = float;
+    using MM2_OUT_T = float;
+
+    __aicore__ inline FiaBlockVecNonQuantMlaDummy (){};
+    __aicore__ inline void ProcessVec1L(const AttentionCommon::RunInfo &info);
+    __aicore__ inline void ProcessVec2L(const AttentionCommon::RunInfo &info);
+    __aicore__ inline void InitBuffers(TPipe *pipe);
+    __aicore__ inline void Init(
+        __gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *pseShift,
+        __gm__ uint8_t *attenMask, __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths,
+        __gm__ uint8_t *deqScale1, __gm__ uint8_t *quantScale1, __gm__ uint8_t *deqScale2, __gm__ uint8_t *quantScale2,
+        __gm__ uint8_t *quantOffset2, __gm__ uint8_t *antiquantScale, __gm__ uint8_t *antiquantOffset,
+        __gm__ uint8_t *blockTable, __gm__ uint8_t *queryPaddingSize, __gm__ uint8_t *kvPaddingSize,
+        __gm__ uint8_t *keyAntiquantScale, __gm__ uint8_t *keyAntiquantOffset, __gm__ uint8_t *valueAntiquantScale,
+        __gm__ uint8_t *valueAntiquantOffset, __gm__ uint8_t *keySharedPrefix, __gm__ uint8_t *valueSharedPrefix,
+        __gm__ uint8_t *actualSharedPrefixLen, __gm__ uint8_t *queryRope, __gm__ uint8_t *keyRope,
+        __gm__ uint8_t *keyRopeAntiquantScale, __gm__ uint8_t *attentionOut, __gm__ uint8_t *softmaxLse,
+            const FusedInferAttentionScoreTilingData *__restrict tilingData);
+    __aicore__ inline void InitParams(const struct AttentionCommon::ConstInfo &constInfo);
+    __aicore__ inline void InitVec1GlobalTensor(GlobalTensor<MM1_OUT_T> mm1ResGm, GlobalTensor<KV_T> vec1ResGm, GlobalTensor<int32_t> mm2ResInt32Gm);
+    __aicore__ inline void InitVec2GlobalTensor(GlobalTensor<UPDATE_T> vec2ResGm,
+                                                GlobalTensor<MM2_OUT_T> mm2ResGm);
+    __aicore__ inline void InitFlashDecodeGlobalTensor(GlobalTensor<T> accumOutGm, GlobalTensor<T> lseMaxFdGm, GlobalTensor<T> lseSumFdGm);
+    __aicore__ inline void AllocEventID();
+    __aicore__ inline void FreeEventID();
 };
 
 template <typename FIAT> __aicore__ inline void FiaBlockVecNonQuantMla<FIAT>::Init(

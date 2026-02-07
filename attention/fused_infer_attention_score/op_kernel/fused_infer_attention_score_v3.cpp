@@ -42,24 +42,25 @@
 
 using namespace AscendC;
 
-#define INVOKE_FIA_OP_GENERAL_IMPL(templateClass, CubeBlockType, VecBlockType, FdBlockType, ...)                       \
-    do {                                                                                                               \
-        using CubeBlockTypeT = CubeBlockType<FIAType<__VA_ARGS__>>;                                                    \
-        using VecBlockTypeT = VecBlockType<FIAType<__VA_ARGS__>>;                                                      \
-        using FdBlockTypeT = FdBlockType<FIAType<__VA_ARGS__>>;                                                        \
-                                                                                                                       \
-        templateClass<FIAType<__VA_ARGS__>, CubeBlockTypeT, VecBlockTypeT, FdBlockTypeT> op;                           \
-        FIA_COPY_TILING_DATA(FusedInferAttentionScoreTilingData, tiling);                                              \
-        op.Init(query, key, value, pseShift, attenMask, actualSeqLengthsQ, actualSeqLengths, deqScale1, quantScale1,   \
-                deqScale2, quantScale2, quantOffset2, antiquantScale, antiquantOffset, blockTable, queryPaddingSize,   \
-                kvPaddingSize, keyAntiquantScale, keyAntiquantOffset, valueAntiquantScale, valueAntiquantOffset,       \
-                keySharedPrefix, valueSharedPrefix, actualSharedPrefixLen, queryRope, keyRope, keyRopeAntiquantScale,  \
-                learnableSink, attentionOut, softmaxLse, user, tiling_data, tiling, &tPipe);                           \
-        op.Process();                                                                                                  \
+#define INVOKE_FIA_OP_GENERAL_IMPL(templateClass, CubeBlockType, VecBlockType, FdBlockType, ...)                         \
+    do {                                                                                                                 \
+        using CubeBlockTypeT = typename std::conditional<g_coreType == AscendC::AIC,                                     \
+                               CubeBlockType<FIAType<__VA_ARGS__>>, CubeBlockType##Dummy<FIAType<__VA_ARGS__>>>::type;   \
+        using VecBlockTypeT = typename std::conditional<g_coreType == AscendC::AIC,                                      \
+                              VecBlockType##Dummy<FIAType<__VA_ARGS__>>, VecBlockType<FIAType<__VA_ARGS__>>>::type;      \
+        using FdBlockTypeT = FdBlockType<FIAType<__VA_ARGS__>>;                                                          \
+        templateClass<FIAType<__VA_ARGS__>, CubeBlockTypeT, VecBlockTypeT, FdBlockTypeT> op;                             \
+        FIA_COPY_TILING_DATA(FusedInferAttentionScoreTilingData, tiling);                                                \
+        op.Init(query, key, value, pseShift, attenMask, actualSeqLengthsQ, actualSeqLengths, deqScale1, quantScale1,     \
+                deqScale2, quantScale2, quantOffset2, antiquantScale, antiquantOffset, blockTable, queryPaddingSize,     \
+                kvPaddingSize, keyAntiquantScale, keyAntiquantOffset, valueAntiquantScale, valueAntiquantOffset,         \
+                keySharedPrefix, valueSharedPrefix, actualSharedPrefixLen, queryRope, keyRope, keyRopeAntiquantScale,    \
+                learnableSink, attentionOut, softmaxLse, user, tiling_data, tiling, &tPipe);                             \
+        op.Process();                                                                                                    \
     } while (0)
 
-#define FIA_COPY_TILING_DATA(tilingDataStruct, tiling)                                                                 \
-    GET_TILING_DATA_WITH_STRUCT(tilingDataStruct, tiling_data_in, tiling);                                             \
+#define FIA_COPY_TILING_DATA(tilingDataStruct, tiling)                                                                   \
+    GET_TILING_DATA_WITH_STRUCT(tilingDataStruct, tiling_data_in, tiling);                                               \
     const tilingDataStruct *__restrict tiling_data = &tiling_data_in;
 
 extern "C" __global__ __aicore__ void fused_infer_attention(
