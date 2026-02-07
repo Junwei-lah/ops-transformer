@@ -56,7 +56,7 @@ public:
     using CType = CType_;
     using BiasType = BiasType_;
     using TileCopy = AscendC::Std::conditional_t<AscendC::Std::is_same_v<TileCopy_, void>,
-                                                 Tile::TileCopy<Arch::Ascend910B, Tile::CopyWithParams>, TileCopy_>;
+                                                 Tile::TileCopy<Arch::DAV2201, Tile::CopyWithParams>, TileCopy_>;
 
 public:
     static_assert(IsF16F16F16<AType, BType, CType>() || IsF16F16F32<AType, BType, CType>() ||

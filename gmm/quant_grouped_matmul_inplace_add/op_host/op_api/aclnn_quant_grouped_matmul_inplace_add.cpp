@@ -211,13 +211,13 @@ static aclnnStatus CheckParams(QGmmInPlaceAdd::QuantGroupedMatmulInplaceAddParam
     gmmParams.transposeX = true;
     gmmParams.transposeWeight = false;
     if (params.x1->GetDataType() == DataType::DT_HIFLOAT8 && params.x2->GetDataType() == DataType::DT_HIFLOAT8) {
-        auto checkerTC = QGmmInPlaceAdd::AclnnQuantGroupedMatmulInplaceAdd91095Checker<aclTensor>(gmmParams);
+        auto checkerTC = QGmmInPlaceAdd::AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<aclTensor>(gmmParams);
         checkerTC.SetInputName("x1", "x2", "scale1Optional", "scale2", "groupList");
-        CHECK_RET(checkerTC.CheckQuantGroupedMatmulInplaceAdd91095() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
+        CHECK_RET(checkerTC.CheckQuantGroupedMatmulInplaceAddDAV3510() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
     } else {
-        auto checker = gmm::AclnnGroupedMatmul91095Checker<aclTensor>(gmmParams);
+        auto checker = gmm::AclnnGroupedMatmulDAV3510Checker<aclTensor>(gmmParams);
         checker.SetInputName("x1", "x2", "scale1Optional", "scale2", "groupList");
-        CHECK_RET(checker.CheckGroupedMatmul91095() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
+        CHECK_RET(checker.CheckGroupedMatmulDAV3510() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
     }
     return ACLNN_SUCCESS;
 }

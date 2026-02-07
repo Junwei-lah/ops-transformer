@@ -54,6 +54,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_autotiling_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -114,6 +115,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_autotiling_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -174,6 +176,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_pergroup_antiqunt_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -234,6 +237,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_pergroup_antiqunt_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -294,6 +298,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_perchannel_antiqunt_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -354,6 +359,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_perchannel_antiqunt_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -414,6 +420,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_msd_vec_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -474,6 +481,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_vec_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -534,6 +542,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_msd_api_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -594,6 +603,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_api_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -654,6 +664,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_api_withoffset_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -716,6 +727,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -776,6 +788,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -836,6 +849,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -896,6 +910,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -956,6 +971,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1016,6 +1032,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1076,6 +1093,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1136,6 +1154,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1196,6 +1215,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1256,6 +1276,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1316,6 +1337,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1376,6 +1398,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1439,6 +1462,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1499,6 +1523,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1559,6 +1584,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_msd_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1619,6 +1645,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_msd_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1679,6 +1706,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1739,6 +1767,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1800,6 +1829,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_msd_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1860,6 +1890,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_msd_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1920,6 +1951,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -1980,6 +2012,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_transw_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2042,6 +2075,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2102,6 +2136,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2162,6 +2197,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2222,6 +2258,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2282,6 +2319,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv_static)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2342,6 +2380,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv_static)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2402,6 +2441,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv_sparse)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2462,6 +2502,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv_sparse)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2526,6 +2567,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_fixed_axis)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2589,6 +2631,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2650,6 +2693,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4obf16_notrans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2711,6 +2755,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_trans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2772,6 +2817,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4obf16_trans_1aic2aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2834,6 +2880,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2895,6 +2942,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -2956,6 +3004,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_static_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3017,6 +3066,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_static_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3079,6 +3129,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_sparse_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3140,6 +3191,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_sparse_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3205,6 +3257,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_notrans_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3266,6 +3319,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_transw_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3327,6 +3381,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_notrans_1aic_sparse)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3388,6 +3443,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_transw_1aic_sparse)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3450,6 +3506,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_notrans_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3511,6 +3568,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_notrans_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3572,6 +3630,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_notrans_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3633,6 +3692,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_transw_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3694,6 +3754,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_transw_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3755,6 +3816,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_transw_1aic)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3816,6 +3878,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_transx_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3877,6 +3940,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_transx_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3938,6 +4002,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_transx_1aic1aiv)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -3999,6 +4064,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_notrans)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4048,6 +4114,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_wtrans)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4097,6 +4164,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_pertensor)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4146,6 +4214,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_illegal_dtype)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4192,6 +4261,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_weightnz_illegal_wshape)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4240,6 +4310,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_A8W8O8)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4301,6 +4372,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_illegal_group_num_size)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4347,6 +4419,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_weightnz_tc_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4396,6 +4469,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_weightnz_kc_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4445,6 +4519,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_tc_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4490,6 +4565,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_kc_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4535,6 +4611,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_illegal_tt_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4580,6 +4657,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_illegal_acttype_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4625,6 +4703,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_illegal_xdtype_case)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,//ASCEND950
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info
@@ -4670,6 +4749,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_activation_tc_case_n_equal_1)
         65536,//l0ASize
         65536,//l0BSize
         platform_ascendc::SocVersion::ASCEND950,
+        NpuArch::DAV_3510,
     };
     gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
                                                 { // input info

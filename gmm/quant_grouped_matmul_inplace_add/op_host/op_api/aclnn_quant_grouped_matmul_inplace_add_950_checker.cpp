@@ -13,7 +13,7 @@
 using namespace QGmmInPlaceAdd;
 
 namespace QGmmInPlaceAdd {
-template class AclnnQuantGroupedMatmulInplaceAdd91095Checker<aclTensor>;
+template class AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<aclTensor>;
 }
 
 namespace {
@@ -47,11 +47,11 @@ size_t GetInputTensorSize(const aclTensor *input)
 } // namespace
 
 template <typename T>
-void AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::SetInputName(const std::string &xName,
-                                                                    const std::string &weightName,
-                                                                    const std::string &perTokenScaleName,
-                                                                    const std::string &scaleName,
-                                                                    const std::string &groupTensorName)
+void AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::SetInputName(const std::string &xName,
+                                                                      const std::string &weightName,
+                                                                      const std::string &perTokenScaleName,
+                                                                      const std::string &scaleName,
+                                                                      const std::string &groupTensorName)
 {
     this->xName_ = xName;
     this->weightName_ = weightName;
@@ -61,7 +61,7 @@ void AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::SetInputName(const std::s
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckTensorListSizeForEachInput() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::CheckTensorListSizeForEachInput() const
 {
     CHECK_COND(GetInputTensorSize(gmmParams_.scaleOptional) == GetInputTensorSize(gmmParams_.x),
                ACLNN_ERR_PARAM_INVALID,
@@ -78,7 +78,7 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckTensorListSiz
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckGeneralQuantShape() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::CheckGeneralQuantShape() const
 {
     CHECK_RET(CheckTensorListSizeForEachInput() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID);
     auto groupNum = gmmParams_.groupTensorOptional->GetViewShape().GetDim(0);
@@ -119,7 +119,7 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckGeneralQuantS
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckQuantCasesFormat() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::CheckQuantCasesFormat() const
 {
     for (size_t i = 0; i < GetInputTensorSize(gmmParams_.x); i++) {
         CHECK_COND(!op::IsPrivateFormat(GetInputTensor(gmmParams_.x, i)->GetStorageFormat()), ACLNN_ERR_PARAM_INVALID,
@@ -137,7 +137,7 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckQuantCasesFor
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::IsGmmInplaceAddTCQuantMode() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::IsGmmInplaceAddTCQuantMode() const
 {
     auto groupNum = gmmParams_.groupTensorOptional->GetViewShape().GetDim(0);
     for (size_t i = 0; i < GetInputTensorSize(gmmParams_.weight); ++i) {
@@ -186,7 +186,7 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::IsGmmInplaceAddTCQ
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckHif8QuantParams() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::CheckHif8QuantParams() const
 {
     CHECK_COND(gmmParams_.biasOptional == nullptr, ACLNN_ERR_PARAM_INVALID, "Hifloat8 case does not support bias.");
     CHECK_COND(gmmParams_.perTokenScaleOptional != nullptr, ACLNN_ERR_PARAM_NULLPTR,
@@ -205,7 +205,7 @@ aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckHif8QuantPara
 }
 
 template <typename T>
-aclnnStatus AclnnQuantGroupedMatmulInplaceAdd91095Checker<T>::CheckQuantGroupedMatmulInplaceAdd91095() const
+aclnnStatus AclnnQuantGroupedMatmulInplaceAddDAV3510Checker<T>::CheckQuantGroupedMatmulInplaceAddDAV3510() const
 {
     DataType xDtype = gmmParams_.xDtype;
     CHECK_COND(gmmParams_.weight != nullptr, ACLNN_ERR_PARAM_NULLPTR, "In quant case, weight should not be nullptr.");

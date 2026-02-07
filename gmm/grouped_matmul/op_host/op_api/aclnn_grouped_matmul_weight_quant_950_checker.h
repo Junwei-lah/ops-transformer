@@ -15,11 +15,12 @@
 #include "aclnn_grouped_matmul_util.h"
 
 namespace gmm {
-class AclnnGroupedMatmulWeightQuant91095Checker {
+class AclnnGroupedMatmulWeightQuantDAV3510Checker {
 public:
-    explicit AclnnGroupedMatmulWeightQuant91095Checker(const GroupedMatmulParams &gmmParams) : gmmParams_(gmmParams){};
-    ~AclnnGroupedMatmulWeightQuant91095Checker(){};
-    aclnnStatus CheckGroupedMatmulWeightQuant91095();
+    explicit AclnnGroupedMatmulWeightQuantDAV3510Checker(const GroupedMatmulParams &gmmParams)
+        : gmmParams_(gmmParams){};
+    ~AclnnGroupedMatmulWeightQuantDAV3510Checker(){};
+    aclnnStatus CheckGroupedMatmulWeightQuantDAV3510();
 
 private:
     aclnnStatus CheckGroupTypeScenario() const;

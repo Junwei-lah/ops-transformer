@@ -238,7 +238,7 @@ static ge::graphStatus TilingCheck4GroupedMatmulAdd(const gert::TilingContext* c
 
 static ge::graphStatus Tiling4GroupedMatmulAdd(gert::TilingContext* context)
 {
-    if (IsAdvancedSocVersion(context)) {
+    if (IsAdvancedNpuArch(context)) {
         GroupedMatmulAddNoQuantTiling gmmAddTiling;
         OP_CHECK_IF(!gmmAddTiling.SetTiling(context),
                      OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "SetTiling failed."), return ge::GRAPH_FAILED);
@@ -300,7 +300,7 @@ static ge::graphStatus Tiling4GroupedMatmulAdd(gert::TilingContext* context)
 
 static ge::graphStatus TilingPrepare4GroupedMatmulAdd(gert::TilingParseContext* context)
 {
-    if (IsAdvancedSocVersion(context)) {
+    if (IsAdvancedNpuArch(context)) {
       return gmm_add_advanced::InitCompileInfo(context);
     }
     (void)context;

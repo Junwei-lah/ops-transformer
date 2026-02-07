@@ -25,9 +25,9 @@ constexpr static uint8_t FIX_PIPE_UNIT_FLAG = 3;
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910B architecture with specific traits and layouts
+ * @brief Copy struct for DAV2201 architecture with specific traits and layouts
  *
- * This struct is specialized for the Ascend910B architecture and is used to
+ * This struct is specialized for the DAV2201 architecture and is used to
  * copy data from a source tensor to a destination tensor. It is enabled when the source
  * tensor is in CO1 position and the destination tensor is in GM position, and the output
  * type is either CubeFormat::ND or CubeFormat::ND_ALIGN
@@ -38,14 +38,14 @@ constexpr static uint8_t FIX_PIPE_UNIT_FLAG = 3;
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNDOrAlign<OutputType>()>
 > {
     /**
      * @brief Copy data from source tensor to destination tensor
      *
      * This function copies data from the source tensor to the destination tensor
-     * using the specified coordinates. It is specialized for the Ascend910B architecture
+     * using the specified coordinates. It is specialized for the DAV2201 architecture
      *
      * @param [in] Coord: the type of the coordinates
      * @param [in] dstND: the destination tensor
@@ -86,21 +86,21 @@ struct Copy<
         auto offset = dstND.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief This struct for Ascend910B architecture with specific traits and layout
+ * @brief This struct for DAV2201 architecture with specific traits and layout
  * @param [in] OutputType: the type of the output tensor
  * @param [in] DstTrait: the traits of the destination tensor
  * @param [in] SrcTrait: the traits of the source tensor
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNz<OutputType>()>
 > {
     /**
@@ -143,16 +143,16 @@ struct Copy<
         auto offset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend950 architecture with specific traits
+ * @brief Copy struct for DAV3510 architecture with specific traits
  *
- * This struct is specialized for Ascend950 architecture and is used to
+ * This struct is specialized for DAV3510 architecture and is used to
  * copy data from a source tensor to a destination tensor with specific traits
  * The traits define the position and format of the tensors
  *
@@ -162,7 +162,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNDOrAlign<OutputType>()>
 > {
     /**
@@ -206,16 +206,16 @@ struct Copy<
         auto offset = dstND.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend950 architecture with specific traits
+ * @brief Copy struct for DAV3510 architecture with specific traits
  *
- * This struct is specialized for Ascend950 architecture and is used to
+ * This struct is specialized for DAV3510 architecture and is used to
  * copy data from a source tensor to a destination tensor with specific traits
  *
  * @param [in] OutputType: the type of the output tensor
@@ -224,7 +224,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyEnUnitFlagWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNz<OutputType>()>
 > {
     /**
@@ -267,7 +267,7 @@ struct Copy<
         auto dstOffset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(dstTensor[dstOffset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };

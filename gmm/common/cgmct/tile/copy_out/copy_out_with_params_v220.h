@@ -23,7 +23,7 @@ namespace Gemm {
 namespace Tile {
 /**
  * @struct Copy
- * @brief Copy struct for implementing data copy operations on the Ascend910B architecture
+ * @brief Copy struct for implementing data copy operations on the DAV2201 architecture
  *
  * This struct is only valid under the following conditions:
  * output position is GM, output format is either CubeFormat::ND or CubeFormat::ND_ALIGN, and non-quantization scenario
@@ -33,7 +33,7 @@ namespace Tile {
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910B, CopyWithParams, void, OutputType, InputType,
+    Arch::DAV2201, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNDOrAlign<OutputType>() &&       // GM ND/ND_ALIGN
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -83,14 +83,14 @@ public:
         }
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dst[dstOffset], src, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for implementing data copy operations on the Ascend910B architecture
+ * @brief Copy struct for implementing data copy operations on the DAV2201 architecture
  *
  * This struct is only valid under the following conditions:
  * output position is GM, output format is CubeFormat::NZ, and non-quantization scenario
@@ -100,7 +100,7 @@ public:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910B, CopyWithParams, void, OutputType, InputType,
+    Arch::DAV2201, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>()  && IsNz<OutputType>() &&             // GM NZ
         !IsQuantSenario<typename OutputType::T, typename InputType::T>() // no quant
@@ -150,14 +150,14 @@ public:
         }
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(gm[dstOffset], src, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for implementing data copy operations on the Ascend910B architecture
+ * @brief Copy struct for implementing data copy operations on the DAV2201 architecture
  *
  * This struct is only valid under the following conditions: output position is GM,
  * output format is either CubeFormat::ND or CubeFormat::ND_ALIGN,
@@ -168,7 +168,7 @@ public:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910B, CopyWithParams, void, OutputType, InputType,
+    Arch::DAV2201, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNDOrAlign<OutputType>() &&      // GM ND/ND_ALIGN
         IsQuantSenario<typename OutputType::T, typename InputType::T>() // quant
@@ -201,7 +201,7 @@ public:
         CopyOutNZ2ND(dst, src, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgKc != 0 ? orgKc : orgN,
                      quantTensor);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 
@@ -228,7 +228,7 @@ public:
         CopyOutNZ2ND(gm, src, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgKc != 0 ? orgKc : orgN,
                      quantScalar);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 
@@ -329,7 +329,7 @@ private:
  */
 template <class OutputType, class InputType>
 struct Copy<
-    Arch::Ascend910B, CopyWithParams, void, OutputType, InputType,
+    Arch::DAV2201, CopyWithParams, void, OutputType, InputType,
     AscendC::Std::enable_if_t<
         PosIsGM<OutputType::pos>() && IsNz<OutputType>() &&             // GM NZ
         IsQuantSenario<typename OutputType::T, typename InputType::T>() // quant
@@ -361,7 +361,7 @@ public:
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 2201)
         CopyOutNZ2NZ(gm, src, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgM, quantTensor);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 
@@ -387,7 +387,7 @@ public:
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 2201)
         CopyOutNZ2NZ(gm, src, curRow, curCol, l0CTileHeight, l0CTileWidth, baseM, baseN, orgM, quantScalar);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 

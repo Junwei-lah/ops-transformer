@@ -21,21 +21,20 @@
 #include "platform/platform_infos_def.h"
 #include "err/ops_err.h"
 namespace optiling {
-const std::initializer_list<platform_ascendc::SocVersion> AdvancedSocVersion = {
-    platform_ascendc::SocVersion::ASCEND950};
+const std::initializer_list<NpuArch> AdvancedNpuArch = {NpuArch::DAV_3510};
 
 template <typename T>
 inline typename std::enable_if<
     std::is_same<T, gert::TilingParseContext>::value || std::is_same<T, gert::TilingContext>::value, bool>::type
-IsAdvancedSocVersion(T *context)
+IsAdvancedNpuArch(T *context)
 {
     OP_CHECK_IF(context == nullptr, OP_LOGE(context->GetNodeName(), "context is null"), return ge::GRAPH_FAILED);
     fe::PlatFormInfos *platformInfo = context->GetPlatformInfo();
     OP_CHECK_IF(platformInfo == nullptr, OP_LOGE(context->GetNodeName(), "platformInfoPtr is null"),
                 return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    platform_ascendc::SocVersion socVersion = ascendcPlatform.GetSocVersion();
-    return std::find(AdvancedSocVersion.begin(), AdvancedSocVersion.end(), socVersion) != AdvancedSocVersion.end();
+    NpuArch npuArch = ascendcPlatform.GetCurNpuArch();
+    return std::find(AdvancedNpuArch.begin(), AdvancedNpuArch.end(), npuArch) != AdvancedNpuArch.end();
 }
 } // namespace optiling
 #endif // __OP_HOST_GROUPED_MATMUL_ADD_PLATFORM_COMMON_H__

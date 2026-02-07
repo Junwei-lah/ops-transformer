@@ -23,17 +23,17 @@ using namespace gmm_dsq;
 
 class GmmDsqHandlerFactory {
 private:
-    std::unordered_map<SocVersion, std::unique_ptr<GroupedMatmulSwigluQuantHandler>> handlers_;
+    std::unordered_map<NpuArch, std::unique_ptr<GroupedMatmulSwigluQuantHandler>> handlers_;
 
 public:
-    void registerHandler(SocVersion version, std::unique_ptr<GroupedMatmulSwigluQuantHandler> handler)
+    void registerHandler(NpuArch npuArch, std::unique_ptr<GroupedMatmulSwigluQuantHandler> handler)
     {
-        handlers_[version] = std::move(handler);
+        handlers_[npuArch] = std::move(handler);
     }
 
-    GroupedMatmulSwigluQuantHandler *getHandler(SocVersion version)
+    GroupedMatmulSwigluQuantHandler *getHandler(NpuArch npuArch)
     {
-        auto it = handlers_.find(version);
+        auto it = handlers_.find(npuArch);
         return it != handlers_.end() ? it->second.get() : nullptr;
     }
 };
@@ -42,16 +42,13 @@ static aclnnStatus aclnnGroupedMatmulSwigluQuantGetWorkspaceSizeCommon(const cha
     GroupedMatmulSwigluQuantParamsBase &params, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
     GmmDsqHandlerFactory factory;
-    auto version = GetCurrentPlatformInfo().GetSocVersion();
-
-    factory.registerHandler(SocVersion::ASCEND910B,
+    auto npuArch = op::GetCurrentPlatformInfo().GetCurNpuArch();
+    factory.registerHandler(NpuArch::DAV_2201,
         std::make_unique<gmm_dsq_base::GroupedMatmulSwigluQuantBaseHandler>());
-    factory.registerHandler(SocVersion::ASCEND910_93,
-        std::make_unique<gmm_dsq_base::GroupedMatmulSwigluQuantBaseHandler>());
-    factory.registerHandler(SocVersion::ASCEND950,
+    factory.registerHandler(NpuArch::DAV_3510,
         std::make_unique<gmmSwigluQuantV2::GroupedMatmulSwigluQuantBaseHandler>());
 
-    if (auto *handler = factory.getHandler(version)) {
+    if (auto *handler = factory.getHandler(npuArch)) {
         handler->Initialize(interfaceName, params, workspaceSize, executor);
         return handler->Process();
     } else {

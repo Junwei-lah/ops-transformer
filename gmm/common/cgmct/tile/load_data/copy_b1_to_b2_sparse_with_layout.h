@@ -24,14 +24,14 @@ namespace Gemm {
 namespace Tile {
 /**
  * @struct Copy
- * @brief Define a Copy struct for performing sparse data copy operations on the Ascend910B architecture
+ * @brief Define a Copy struct for performing sparse data copy operations on the DAV2201 architecture
  * @param [in] BType: the base type
  * @param [in] DstTrait: the destination tensor traits
  * @param [in] SrcTrait: the source tensor traits
  */
 template <class BType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopySparseWithLayout, BType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopySparseWithLayout, BType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<SrcTrait::tPos == AscendC::TPosition::B1 && DstTrait::tPos == AscendC::TPosition::B2>> {
 public:
     using DstTensor = AscendC::LocalTensor<DstTrait>;
@@ -57,7 +57,7 @@ public:
             ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Matrix B only support transpose."); });
         }
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 

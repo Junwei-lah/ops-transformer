@@ -16,11 +16,11 @@
 
 namespace gmm {
 template<typename T>
-class AclnnGroupedMatmul91095Checker {
+class AclnnGroupedMatmulDAV3510Checker {
 public:
-    explicit AclnnGroupedMatmul91095Checker(const GroupedMatmulParamsBase<T> &gmmParams) : gmmParams_(gmmParams){};
-    ~AclnnGroupedMatmul91095Checker(){};
-    aclnnStatus CheckGroupedMatmul91095() const;
+    explicit AclnnGroupedMatmulDAV3510Checker(const GroupedMatmulParamsBase<T> &gmmParams) : gmmParams_(gmmParams){};
+    ~AclnnGroupedMatmulDAV3510Checker(){};
+    aclnnStatus CheckGroupedMatmulDAV3510() const;
     bool IsPerTileQuantMode() const;
     void SetInputName(const std::string& xName, const std::string& weightName, const std::string& perTokenScaleName,
                         const std::string& scaleName, const std::string& groupTensorName);

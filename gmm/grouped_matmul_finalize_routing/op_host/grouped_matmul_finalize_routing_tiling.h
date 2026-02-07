@@ -34,6 +34,7 @@ struct GroupedMatmulFinalizeRoutingCompileInfo {
     platform_ascendc::SocVersion socVersion;
     bool supportL0c2out = false;
     bool supportL12BtBf16 = false;
+    NpuArch npuArch;
 };
 
 BEGIN_TILING_DATA_DEF(GroupMatmulFRTilingData)

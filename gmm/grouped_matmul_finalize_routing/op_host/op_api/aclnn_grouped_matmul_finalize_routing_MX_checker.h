@@ -45,10 +45,10 @@ static const std::initializer_list<op::DataType> LOGIT_TYPE_SUPPORT_LIST = {op::
 static const std::initializer_list<op::DataType> OUT_TYPE_SUPPORT_LIST = {op::DataType::DT_FLOAT};
 
 
-class AclnnGroupedMatmulFinalizeRouting91095Checker {
+class AclnnGroupedMatmulFinalizeRoutingDAV3510Checker {
 public:
-    explicit AclnnGroupedMatmulFinalizeRouting91095Checker() {};
-    ~AclnnGroupedMatmulFinalizeRouting91095Checker() {};
+    explicit AclnnGroupedMatmulFinalizeRoutingDAV3510Checker() {};
+    ~AclnnGroupedMatmulFinalizeRoutingDAV3510Checker() {};
     aclnnStatus CheckParams(GroupedMatmulParams &gmmParams)
     {
         gmmParams_ = gmmParams;

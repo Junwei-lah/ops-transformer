@@ -42,7 +42,7 @@ static ge::graphStatus GroupedMatmulFinalizeRoutingTilingFunc(gert::TilingContex
     OP_CHECK_IF(compileInfoPtr == nullptr,
             OPS_REPORT_CUBE_INNER_ERR("GroupedMatmulFinalizeRouting", "CompileInfo is null"),
             return ge::GRAPH_FAILED);
-    if (compileInfoPtr->socVersion == platform_ascendc::SocVersion::ASCEND950) {
+    if (compileInfoPtr->npuArch== NpuArch::DAV_3510) {
         std::vector<int32_t> tilingRegisterList = {1};
         OP_LOGD("GroupedMatmulFinalizeRoutingTilingFunc", "Using the tiling strategy of A5");
         return Ops::Transformer::OpTiling::TilingRegistry::GetInstance().DoTilingImpl(context, tilingRegisterList);
@@ -75,6 +75,7 @@ static ge::graphStatus TilingPrepareForGroupedMatmulFinalizeRouting(gert::Tiling
     compileInfoPtr->supportL12BtBf16 = (dataMoveL12Bt.find("bf16") != std::string::npos);
     compileInfoPtr->aicNum = ascendcPlatform.GetCoreNumAic();
     compileInfoPtr->socVersion = ascendcPlatform.GetSocVersion();
+    compileInfoPtr->npuArch = ascendcPlatform.GetCurNpuArch();
     compileInfoPtr->btSize = compileInfoPtr->supportL0c2out ? 1024UL : 0UL; // 1024 is btSize
     compileInfoPtr->btSize = compileInfoPtr->supportL12BtBf16 ? 4096UL : compileInfoPtr->btSize; // 4096 is btSize
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, compileInfoPtr->ubSize);

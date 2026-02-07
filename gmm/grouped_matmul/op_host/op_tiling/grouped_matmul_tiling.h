@@ -106,6 +106,7 @@ struct GMMCompileInfo {
     uint64_t l0ASize;
     uint64_t l0BSize;
     platform_ascendc::SocVersion socVersion;
+    NpuArch npuArch;
 };
 
 class GMMTiling {

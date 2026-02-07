@@ -23,9 +23,9 @@ namespace Gemm {
 namespace Tile {
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910B architecture with specific tensor traits
+ * @brief Copy struct for DAV2201 architecture with specific tensor traits
  *
- * This struct is specialized for the Ascend910B architecture and handles copying of tensor
+ * This struct is specialized for the DAV2201 architecture and handles copying of tensor
  * with specific traits. It supports copying from CO1 to GM position with CubeFormat::ND or CubeFormat::ND_ALIGN format
  *
  * @param [in] OutputType: the type of the output tensor
@@ -34,7 +34,7 @@ namespace Tile {
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNDOrAlign<OutputType>()>
 > {
     /**
@@ -77,16 +77,16 @@ struct Copy<
         auto dstOffset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dstTensor[dstOffset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend910B architecture with specific tensor traits
+ * @brief Copy struct for DAV2201 architecture with specific tensor traits
  *
- * This struct is specialized for the Ascend910B architecture and handles copying of tensor
+ * This struct is specialized for the DAV2201 architecture and handles copying of tensor
  * with specific traits. It supports copying from CO1 to GM position with CubeFormat::NZ format
  *
  * @param [in] OutputType: the type of the output tensor
@@ -95,7 +95,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNz<OutputType>()>
 > {
     /**
@@ -137,16 +137,16 @@ struct Copy<
         auto dstOff = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(dstTensor[dstOff], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend950 architecture with specific tensor traits
+ * @brief Copy struct for DAV3510 architecture with specific tensor traits
  *
- * This struct is specialized for the Ascend950 architecture and CopyWithLayout,
+ * This struct is specialized for the DAV3510 architecture and CopyWithLayout,
  * and it handles copying data from a local tensor (CO1) to a global tensor (GM)
  * It supports specific cube formats(ND or ND_ALIGN)
  *
@@ -156,7 +156,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNDOrAlign<DstTrait>()>
 > {
     /**
@@ -206,16 +206,16 @@ struct Copy<
         auto dstOff = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_ROW_MAJOR>(dstTensor[dstOff], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend950 architecture with specific tensor traits
+ * @brief Copy struct for DAV3510 architecture with specific tensor traits
  *
- * This struct is specialized for the Ascend950 architecture and CopyWithLayout,
+ * This struct is specialized for the DAV3510 architecture and CopyWithLayout,
  * and it handles copying data from a local tensor (CO1) to a global tensor (GM)
  * It supports specific cube formats(NZ)
  *
@@ -225,7 +225,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsCO1<SrcTrait::tPos>() && PosIsGM<DstTrait::tPos>() && IsNz<DstTrait>()>
 > {
     /**
@@ -268,16 +268,16 @@ struct Copy<
         auto offset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, AscendC::CFG_NZ>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };
 
 /**
  * @struct Copy
- * @brief Copy struct for Ascend950 architecture with specific tensor traits
+ * @brief Copy struct for DAV3510 architecture with specific tensor traits
  *
- * This struct is specialized for the Ascend950 architecture and CopyWithLayout
+ * This struct is specialized for the DAV3510 architecture and CopyWithLayout
  * when source tensor position is L0C, destination tensor position is UB
  * and output format is CubeFormat::ND
  *
@@ -287,7 +287,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<
         PosIsL0C<SrcTrait::tPos>() && PosIsUB<DstTrait::tPos>() && IsNDOrAlign<DstTrait>()>
 > {
@@ -338,7 +338,7 @@ struct Copy<
         auto offset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, cfgUb>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };
@@ -347,7 +347,7 @@ struct Copy<
  * @struct Copy
  * @brief Copy struct for implementing CO1 to UB copy operations
  *
- * This struct is specialized for the Ascend950 architecture and CopyWithLayout
+ * This struct is specialized for the DAV3510 architecture and CopyWithLayout
  * when source tensor position is L0C, destination tensor position is UB
  * and output format is CubeFormat::NZ
  *
@@ -357,7 +357,7 @@ struct Copy<
  */
 template <class OutputType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyWithLayout, OutputType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyWithLayout, OutputType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<PosIsL0C<SrcTrait::tPos>() && PosIsUB<DstTrait::tPos>() && IsNz<DstTrait>()>
 > {
     using DstTensor = AscendC::LocalTensor<DstTrait>;
@@ -407,7 +407,7 @@ struct Copy<
         auto offset = dst.GetTensorTrait().GetLayout()(coord);
         AscendC::Fixpipe<DstT, SrcT, cfgUb>(dstTensor[offset], srcTensor, params);
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 };

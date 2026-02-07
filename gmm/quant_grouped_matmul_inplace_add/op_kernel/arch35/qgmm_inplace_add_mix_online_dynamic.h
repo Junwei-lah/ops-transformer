@@ -49,7 +49,7 @@ __aicore__ inline void QGmmInplaceAddMixAswt(GM_ADDR x1, GM_ADDR x2, GM_ADDR sca
     using BlockMmad =
         Block::BlockMmadBuilder<AType, LayoutA, BType, LayoutB, CType, LayoutC, float, layout::RowMajor, L1TileShape,
                                 L0TileShape, BlockScheduler, MatmulMultiBlock<>,
-                                Tile::TileCopy<Arch::Ascend950, Tile::CopyInAndCopyOutSplitMWithParams>>;
+                                Tile::TileCopy<Arch::DAV3510, Tile::CopyInAndCopyOutSplitMWithParams>>;
     // 定义BlockEpilogue类型
     using BlockEpilogue = Block::BlockEpilogueDequant<L0TileShape, DTYPE_Y, DTYPE_Y, DTYPE_SCALE2, float, void, false>;
     // 定义shape的形状，tuple保存 m n k batch

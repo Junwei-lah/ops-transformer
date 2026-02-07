@@ -306,7 +306,7 @@ struct MatmulL0COutputWithLayout {
 // Antiquant in ub with single communication single computation
 struct UbAntiquantWithScSc {
     using ScheduleType = KernelMixWithWeightPrologue;
-    using ArchTag = Cgmct::Gemm::Arch::Ascend950;
+    using ArchTag = Cgmct::Gemm::Arch::DAV3510;
 };
 } // namespace Gemm
 } // namespace Cgmct

@@ -73,7 +73,7 @@ public:
 
     using BlockMmadOp =
         Block::BlockMmad<BlockMatmulPolicy, L1TileShape, L0TileShape, AMatmulType, BMatmulType, CMatmulType,
-                         BiasMatmulType, Tile::TileCopy<Arch::Ascend950, Tile::CopyWithParams>>;
+                         BiasMatmulType, Tile::TileCopy<Arch::DAV3510, Tile::CopyWithParams>>;
 
     static constexpr int64_t l1M = GetIntegralConstant<0, L1TileShape>();
     static constexpr int64_t l1N = GetIntegralConstant<1, L1TileShape>();

@@ -24,7 +24,7 @@ namespace Gemm {
 namespace Tile {
 /**
  * @struct Copy
- * @brief Template structure for copying data from B1 to B2 with layout for Ascend910B
+ * @brief Template structure for copying data from B1 to B2 with layout for DAV2201
  *
  * This template structure provides the functionality to copy data from B1 to B2 with specific layout configuration
  * It supports different architectures and provides optimized load operations based on the architectures and data layout
@@ -35,14 +35,14 @@ namespace Tile {
  */
 template <class BType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend910B, CopyWithLayout, BType, DstTrait, SrcTrait,
+    Arch::DAV2201, CopyWithLayout, BType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<SrcTrait::tPos == AscendC::TPosition::B1 && DstTrait::tPos == AscendC::TPosition::B2>> {
 public:
     using DstTensor = AscendC::LocalTensor<DstTrait>;
     using SrcTensor = AscendC::LocalTensor<SrcTrait>;
 
     /**
-     * @brief Operator to perform the copy operation for Ascend910B
+     * @brief Operator to perform the copy operation for DAV2201
      *
      * This operator performs the copy operation from B1 to B2 based on the provided coordinates
      * It checks the architecture and performs the appropriate load operation
@@ -62,14 +62,14 @@ public:
             NoneTransposeLoadB2(l0B, l1B, coord);
         }
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend910B"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV2201"); });
 #endif
     }
 
 private:
 #if defined(__NPU_ARCH__) && (__NPU_ARCH__ == 2201)
     /**
-     * @brief Load data from B1 to B2 with transpose for Ascend910B
+     * @brief Load data from B1 to B2 with transpose for DAV2201
      *
      * This function performs the load operation from B1 to B2 with transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData2dParams`
@@ -137,7 +137,7 @@ private:
     }
 
     /**
-     * @brief Load data from B1 to B2 without transpose for Ascend910B
+     * @brief Load data from B1 to B2 without transpose for DAV2201
      *
      * This function performs the load operation from B1 to B2 without transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData3DParamsV2Pro`
@@ -176,7 +176,7 @@ private:
     }
 
     /**
-     * @brief Set the Fmatrix for loading data for Ascend910B
+     * @brief Set the Fmatrix for loading data for DAV2201
      *
      * This function sets the Fmatrix for loading data based on the provided parameters
      *
@@ -194,10 +194,10 @@ private:
 
 /**
  * @struct Copy
- * @brief Template structure for copying data from B1 to B2 with layout for Ascend950
+ * @brief Template structure for copying data from B1 to B2 with layout for DAV3510
  *
  * This template structure provides the functionality to copy data from B1 to B2 with specific layout configuration
- * for the Ascend950 architecture
+ * for the DAV3510 architecture
  *
  * @param [in] BType: the data type to be copied
  * @param [in] DstTrait: the trait of destination tensor
@@ -205,14 +205,14 @@ private:
  */
 template <class BType, class DstTrait, class SrcTrait>
 struct Copy<
-    Arch::Ascend950, CopyWithLayout, BType, DstTrait, SrcTrait,
+    Arch::DAV3510, CopyWithLayout, BType, DstTrait, SrcTrait,
     AscendC::Std::enable_if_t<SrcTrait::tPos == AscendC::TPosition::B1 && DstTrait::tPos == AscendC::TPosition::B2>> {
 public:
     using DstTensor = AscendC::LocalTensor<DstTrait>;
     using SrcTensor = AscendC::LocalTensor<SrcTrait>;
 
     /**
-     * @brief Operator to perform the copy operation for Ascend950
+     * @brief Operator to perform the copy operation for DAV3510
      *
      * This operator performs the copy operation from B1 to B2 based on the provided coordinates
      * It checks the architecture and performs the appropriate load operation
@@ -232,7 +232,7 @@ public:
             NoneTransposeLoadB2(l0B, l1B, coord);
         }
 #else
-        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support Ascend950"); });
+        ASCENDC_ASSERT(false, { KERNEL_LOG(KERNEL_ERROR, "Only support DAV3510"); });
 #endif
     }
 
@@ -241,7 +241,7 @@ private:
     constexpr static int32_t C0_SIZE = AscendC::AuxGetC0Size<typename BType::T>();
 
     /**
-     * @brief Load data from B1 to B2 with transpose for Ascend950
+     * @brief Load data from B1 to B2 with transpose for DAV3510
      *
      * This function performs the load operation from B1 to B2 with transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData2DParamsV2`
@@ -278,7 +278,7 @@ private:
     }
 
     /**
-     * @brief Load data from B1 to B2 without transpose for Ascend950
+     * @brief Load data from B1 to B2 without transpose for DAV3510
      *
      * This function performs the load operation from B1 to B2 without transpose
      * It calculates the necessary parameters and performs the load operation using `LoadData2DParamsV2`
