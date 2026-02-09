@@ -35,6 +35,7 @@ constexpr uint64_t PERTILE_TILELEN = 128;
 constexpr uint64_t DOUBLE_BUFFER = 2;
 constexpr uint64_t QUANT_MODE_FP8 = 2;
 constexpr uint32_t ALIGN_DATA_SIZE = 32;
+constexpr uint64_t CCU_ALLTOALL_MAX_DATACNT = 200 * 1024 * 1024;
 
 static const std::initializer_list<std::tuple<int, int, int>> MXFP_GROUPSIZE_SUPPORT_LIST = {
     std::make_tuple(0, 0, 32), std::make_tuple(1, 1, 32)};
@@ -136,6 +137,7 @@ ge::graphStatus QuantMatmulAllReduceTilingA5::DoOpTiling()
     GE_ASSERT_GRAPH_SUCCESS(CheckInput());
     DoRCSTiling();
     DoSplitMTiling();
+    DoCommFp8ReTiling();
     GE_ASSERT_GRAPH_SUCCESS(DoQuantTiling());
     if (MutableRCSTilingData().isInputCommQuantScale == 1) {
         isCommInt8Enable_ = true;
@@ -147,6 +149,32 @@ ge::graphStatus QuantMatmulAllReduceTilingA5::DoOpTiling()
         GE_ASSERT_GRAPH_SUCCESS(GetDynamicQuantTempBuffSize());
     }
     return ge::GRAPH_SUCCESS;
+}
+
+void QuantMatmulAllReduceTilingA5::DoCommFp8ReTiling()
+{
+    auto &&param = MutableRCSTilingData();
+    if (param.isInputCommQuantScale == QUANT_MODE_FP8) {
+        uint64_t maxDataCnt = CCU_ALLTOALL_MAX_DATACNT * rankSize_; // CCU限制的AlltoAll单次通信最大数据量
+        if (((tileMValue_ * param.rankN) > maxDataCnt) || ((tailMValue_ * param.rankN) > maxDataCnt)) {
+            OP_LOGD(opName_, "Comm DataCnt Exeeds CCU Limit.");
+            param.tailM = maxDataCnt / param.rankN;
+            param.tailCnt = param.rankM / param.tailM;
+            tileMValue_ = param.rankM % param.tailM;
+            if (tileMValue_ == 0) {
+                tileMValue_ = param.tailM;
+                param.tileCnt = param.tailCnt;
+                param.tailCnt = 0;
+                param.tailM = 0;
+                tailMValue_ = 0;
+            } else {
+                param.tileCnt = 1;
+                tailMValue_ = param.tailM;
+            }
+            OP_LOGD(opName_, "TileCnt Enter CommFp8. tileM=%u, tailM=%u, tileCnt=%u, tailCnt=%u.", tileMValue_,
+                    param.tailM, param.tileCnt, param.tailCnt);
+        }
+    }
 }
 
 ge::graphStatus QuantMatmulAllReduceTilingA5::GetDynamicQuantTempBuffSize()

@@ -55,6 +55,8 @@ protected:
 
     void PrintExtendMatmulTiling(bool isTail) override;
 
+    void DoCommFp8ReTiling();
+
     ge::graphStatus DoQuantTiling();
 
     ge::graphStatus SetMc2Hcomm();
