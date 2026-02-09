@@ -1,15 +1,21 @@
 # aclnnBatchMatMulReduceScatterAlltoAll
 
+[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/mc2/batch_mat_mul_reduce_scatter_allto_all)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
-- **算子功能**：BatchMatMulReduceScatterAllToAll是通算融合算子，实现BatchMatMul计算与ReduceScatter、AllToAll集合通信并行的算子。
+- **接口功能**：BatchMatMulReduceScatterAllToAll是通算融合算子，实现BatchMatMul计算与ReduceScatter、AllToAll集合通信并行的算子。
 
 - **计算公式**：大体计算流程为：BatchMatMul计算-->转置（yShardType等于0时需要）-->ReduceScatter集合通信-->Add-->AllToAll集合通信。计算逻辑如下，其中y为输出
 
@@ -17,16 +23,13 @@ $$
 temp1 = BatchMatMul(x，weight)
 $$
 
-
 $$
 temp2 = ReduceScatter(temp1)
 $$
 
-
 $$
 temp3 = Add(temp2, bias)
 $$
-
 
 $$
 y = AllToAll(temp3)
@@ -63,12 +66,12 @@ aclnnStatus aclnnBatchMatMulReduceScatterAlltoAll(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
-    <col style="width: 120px">
-    <col style="width: 120px">
+    <table style="undefined;table-layout: fixed; width: 1010px"><colgroup>
+    <col style="width: 185px">
+    <col style="width: 111px">
+    <col style="width: 429px">
     <col style="width: 160px">
-    <col style="width: 150px">
-    <col style="width: 80px">
+    <col style="width: 125px">
     </colgroup>
     <thead>
     <tr>
@@ -160,14 +163,14 @@ aclnnStatus aclnnBatchMatMulReduceScatterAlltoAll(
 
 - **返回值**
 
-    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
     第一段接口完成入参校验，出现以下场景时报错：
 
     <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
-    <col style="width: 305px">
-    <col style="width: 119px">
-    <col style="width: 725px">
+    <col style="width: 282px">
+    <col style="width: 120px">
+    <col style="width: 747px">
     </colgroup>
     <thead>
     <tr>
@@ -229,7 +232,7 @@ aclnnStatus aclnnBatchMatMulReduceScatterAlltoAll(
 
 - **返回值**
 
-    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+返回aclnnStatus状态码，具体参见aclnn返回码。
 
 ## 约束说明
 
@@ -266,6 +269,7 @@ aclnnStatus aclnnBatchMatMulReduceScatterAlltoAll(
 示例代码如下，仅供参考，具体编译和执行过程请参考编译与运行样例。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+
 ```Cpp
 #include <thread>
 #include <iostream>

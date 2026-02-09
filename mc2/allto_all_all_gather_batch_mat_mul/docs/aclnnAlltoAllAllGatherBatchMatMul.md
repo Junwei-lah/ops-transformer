@@ -1,33 +1,37 @@
 # aclnnAlltoAllAllGatherBatchMatMul
 
+[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/mc2/allto_all_all_gather_batch_mat_mul)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
 
 - **算子功能**：完成AllToAll、AllGather集合通信与BatchMatMul计算融合、并行。
 
 - **计算公式**：
+
 计算逻辑如下，其中y1、y2、y3为输出
 
 $$
 x1 = AllToAll(x)
 $$
 
-
 $$
 y2 = AllGather(x1)
 $$
 
-
 $$
 y3 = BatchMatMul(y2, weight, bias)
 $$
-
 
 $$
 y1 = 激活函数(y3)
@@ -185,14 +189,14 @@ aclnnStatus aclnnAlltoAllAllGatherBatchMatMul(
 
 - **返回值**
 
-    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
-    第一段接口完成入参校验，出现以下场景时报错：
+    第一阶段接口完成入参校验，出现以下场景报错：
 
-    <table style="undefined;table-layout: fixed; width: 1576px"> <colgroup>
-    <col style="width: 170px">
-    <col style="width: 170px">
-    <col style="width: 400px">
+    <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
+    <col style="width: 282px">
+    <col style="width: 120px">
+    <col style="width: 747px">
     </colgroup>
     <thead>
     <tr>
@@ -217,43 +221,44 @@ aclnnStatus aclnnAlltoAllAllGatherBatchMatMul(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1576px"> <colgroup>
-    <col style="width: 170px">
-    <col style="width: 170px">
-    <col style="width: 800px">
+    <table style="undefined;table-layout: fixed; width: 1150px"><colgroup>
+    <col style="width: 168px">
+    <col style="width: 128px">
+    <col style="width: 854px">
     </colgroup>
     <thead>
     <tr>
-    <th>参数名</th>
-    <th>输入/输出</th>
-    <th>描述</th>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
     </tr></thead>
     <tbody>
     <tr>
-    <td>workspace</td>
-    <td>输入</td>
-    <td>在Device侧申请的workspace内存地址。</td>
+        <td>workspace</td>
+        <td>输入</td>
+        <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
-    <td>输入</td>
-    <td>在Device侧申请的workspace大小，由第一段接口aclnnAlltoAllAllGatherBatchMatMulGetWorkspaceSize获取。</td>
+        <td>workspaceSize</td>
+        <td>输入</td>
+        <td>在Device侧申请的workspace大小，由第一段接口aclnnAlltoAllAllGatherBatchMatMulGetWorkspaceSize获取。</td>
     </tr>
     <tr>
-    <td>executor</td>
-    <td>输入</td>
-    <td>op执行器，包含了算子计算流程。</td>
+        <td>executor</td>
+        <td>输入</td>
+        <td>op执行器，包含了算子计算流程。</td>
     </tr>
     <tr>
-    <td>stream</td>
-    <td>输入</td>
-    <td>指定执行任务的Stream。</td>
+        <td>stream</td>
+        <td>输入</td>
+        <td>指定执行任务的Stream。</td>
     </tr>
-    </tbody></table>
+    </tbody>
+    </table>
 
 - **返回值**
 
-    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  返回aclnnStatus状态码，具体参见aclnn返回码。
 
 ## 约束说明
 
@@ -295,6 +300,7 @@ aclnnStatus aclnnAlltoAllAllGatherBatchMatMul(
 示例代码如下，仅供参考，具体编译和执行过程请参考编译与运行样例。
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+
 ```Cpp
 #include <thread>
 #include <iostream>
