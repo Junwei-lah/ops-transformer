@@ -450,12 +450,8 @@ __aicore__ inline void LoopSOuterOffsetInit(RunParamStr<isInfer>& runParam, cons
                 runParam.cubeSOuterOffset * constInfo.dSize;
             if (constInfo.transposeLayout == static_cast<uint32_t>(TransposeLayoutEnum::BNSD_NBSD)) {
                 attentionOutSeqOffset = seqOffset * constInfo.dSizeV;
-                int64_t curGIdx = runParam.cubeSOuterOffset / constInfo.s1Size;
-                int64_t curS1Idx = runParam.cubeSOuterOffset % (uint32_t)s1TemplateType;
-                if (constInfo.subBlockIdx == 1) {
-                    curGIdx = (curGIdx + runParam.halfS1RealSize / constInfo.s1Size) % constInfo.gSize;
-                    curS1Idx = (curGIdx + runParam.halfS1RealSize) % constInfo.s1Size;
-                }
+                int64_t curGIdx = runParam.sOuterOffset / constInfo.s1Size;
+                int64_t curS1Idx = runParam.sOuterOffset % constInfo.s1Size;
                 runParam.attentionOutOffset = attentionOutSeqOffset + // b
                     curGIdx * constInfo.t1Size * constInfo.dSizeV + // g
                     curS1Idx * constInfo.dSizeV; // s1

@@ -649,7 +649,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <td>numHeads</td>
         <td>输入</td>
         <td>query的head个数。</td>
-        <td>在BNSD、BSND、BNSD_BSND、TND场景下，需要与shape中的query的N轴shape值相同，否则执行异常。</td>
+        <td>在BNSD、BSND、BNSD_BSND、BSND_BNSD、BNSD_NBSD、BSND_NBSD、TND场景下，需要与shape中的query的N轴shape值相同，否则执行异常。</td>
         <td>INT64</td>
         <td>-</td>
         <td>-</td>
@@ -706,9 +706,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <td>标识输入query、key、value的数据排布格式。</td>
         <td>
         <ul>
-            <li>当前支持BSH、BSND、BNSD、BNSD_BSND（输入为BNSD时，输出格式为BSND，仅支持Q_S大于1）、TND（TND相关场景综合约束见<a href="#约束说明">约束说明</a>）。不特意指定时建议传入"BSH"。</li>
+            <li>当前支持BSH、BSND、BNSD、BNSD_BSND（输入为BNSD时，输出格式为BSND）、BSND_BNSD（输入为BSND时，输出格式为BNSD）、BSH_BNSD（输入为BSH时，输出格式为BNSD）、BNSD_NBSD（输入为BNSD时，输出格式为NBSD）、BSND_NBSD（输入为BSND时，输出格式为NBSD）、BSH_NBSD（输入为BSH时，输出格式为NBSD）、TND（TND相关场景综合约束见<a href="#约束说明">约束说明</a>）。不特意指定时建议传入"BSH"。</li>
             <li>注意排布格式带下划线时，下划线左边表示输入query的layout，下划线右边表示输出output的格式。</li>
             <li>query、key、value数据排布格式支持从多种维度解读，其中B（Batch）表示输入样本批量大小、S（Seq-Length）表示输入样本序列长度、H（Hidden-Size）表示隐藏层的大小、N（Head-Num）表示多头数、D（Head-Dim）表示隐藏层最小的单元尺寸，且满足D=H/N、T表示所有Batch输入样本序列长度的累加和。</li>
+            <li>inputLayout=BSH_BNSD、BSND_BNSD仅支持Q_D=K_D=V_D都等于64或128，或Q_D=K_D等于192，V_D等于128<br></li>
         </ul>
         </td>
         <td>CHAR</td>
@@ -723,7 +724,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <td>
         <ul>
             <li>用户不特意指定时建议传入0，表示key/value和query的head个数相等。</li>
-            <li>需要满足numHeads整除numKeyValueHeads，numHeads与numKeyValueHeads的比值不能大于64。在BNSD、BSND、BNSD_BSND、TND场景下，还需要与shape中的key/value的N轴shape值相同，否则执行异常</li>
+            <li>需要满足numHeads整除numKeyValueHeads，numHeads与numKeyValueHeads的比值不能大于64。在BNSD、BSND、BNSD_BSND、BSND_BNSD、BNSD_NBSD、BSND_NBSD、TND场景下，还需要与shape中的key/value的N轴shape值相同，否则执行异常</li>
         </ul>
         </td>
         <td>INT64</td>
@@ -1028,6 +1029,15 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         - query，attentionOut所有tensor的shapeSize不为0，若有lse且lse不为空，并且key，value中所有tensor的shapeSize为0，属于空Tensor。
         - attentionOut和lse都为空时，属于空Tensor。
         - 属于空Tensor时，跳过校验流程；否则，走正常校验流程。
+    -  BNSD_BSND场景下的综合限制：
+        - 不支持decode mla场景;
+        - gqa非量化场景仅支持D=64或D=128。
+    -  BSH_BNSD、BSND_BNSD场景下的综合限制：
+        - 不支持decode mla场景;
+        - 不支持左padding、tensorlist、pse、prefix。
+        - gqa非量化场景仅支持D=64或D=128。
+    -  BSH_NBSD、BSND_NBSD、BNSD_NBSD场景下的综合限制：
+        - 仅支持decode mla场景;
     -  TND、TND_NTD、NTD_TND场景下query，key，value输入的综合限制：
         - 仅支持TND;
         - 不支持左padding、tensorlist、pseType=0、prefix。
@@ -1868,7 +1878,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </tr>
         <tr>
             <td>inputLayout</td>
-            <td>支持BSH、BSND、BNSD、TND</td>
+            <td>支持BSH、BSND、BNSD、BSH_NBSD、BSND_NBSD、BNSD_NBSD、TND</td>
             <td>-</td>
         </tr>
         <tr>
@@ -1936,7 +1946,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             <td rowspan="6">query d=128</td>
             <td>非量化</td>
             <td>inputLayout</td>
-            <td>BSH、BSND、TND、BNSD、BNSD_BSND</td>
+            <td>BSH、BSND、TND、BNSD、BNSD_BSND、BSH_BNSD、BSND_BNSD</td>
             <td>-</td>
         </tr>
         <tr>

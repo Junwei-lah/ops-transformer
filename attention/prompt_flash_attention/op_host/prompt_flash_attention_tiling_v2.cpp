@@ -106,6 +106,8 @@ constexpr uint32_t NLIMIT = 256;      // n <= 256
 constexpr uint32_t SLIMIT = 20971520; // s, kvs <= 20MB
 constexpr uint32_t DLIMIT = 512;      // D <= 512
 constexpr uint32_t HLIMIT = 65535;    // warning: H <= 65536
+constexpr uint32_t GLIMIT_64 = 64;
+constexpr uint32_t GLIMIT_128 = 128;
 
 constexpr uint32_t MLA_QKD_SIZE = 192;
 constexpr uint32_t MLA_VD_SIZE = 128; // typical scene for PFA MLA, can be deleted after subsequent generalization.
@@ -835,23 +837,25 @@ bool PromptFlashAttentionTilingV2::SetAndCheckHeadNumRatio(ContextParamsForPFATi
     }
 
     if (enableKVAntiquant || enablePerblockQuant || enablePertensorQuant) {	 
-        if (nQ > 256) {
+        if (nQ > NLIMIT) {
             OP_LOGE(contextKeyParams.opName, "the numheads of input query cannot be larger than 256, but numheads = %d", nQ);	 
              return false;
         }
-        if (nQ / nKV > 64) { // G cannot be greater than 64.	 
+        if (nQ / nKV > GLIMIT_64) { // G cannot be greater than 64.	 
             OP_LOGE(contextKeyParams.opName, "In antiquant and fullquant scenario, the G(numHeads / numKeyValueHeads) connot be larger than 64, but G = %d", nQ / nKV);	 
             return false; 
         } 
           
      } else if (enableIFAMLA || enablePFAMLA || enableIFAMLAFullQuant) { 
-        if ((enableIFAMLA || enableIFAMLAFullQuant) && (nQ / nKV > 128)) { // G cannot be greater than 128. 
+        if ((enableIFAMLA || enableIFAMLAFullQuant) && (nQ / nKV > GLIMIT_128)) { // G cannot be greater than 128. 
             OP_LOGE(contextKeyParams.opName, "In mla decode (non quant and fullquant) scenario, the G(numHeads / numKeyValueHeads) connot be larger than 128, but G = %d", nQ / nKV); 
             return false; 
         } 
      } else { 
-        if ((nQ / nKV > 64) && (queryShapeInfo.d != 64 && queryShapeInfo.d != 128)) { 
-            OP_LOGE(contextKeyParams.opName, "In gqa non quant scenario, when dSize is not 64 or 128, the G(numHeads / numKeyValueHeads) connot be larger than 64, but dSize = %d", queryShapeInfo.d); 
+        if ((nQ / nKV > GLIMIT_64 || nQ > NLIMIT) && CHECK_D_LIMITED_SCENARIO(queryShapeInfo.d)) {
+            OP_LOGE(contextKeyParams.opName, "In gqa non quant scenario, when dSize is not 64 or 128, the G(numHeads / numKeyValueHeads) "
+                "connot be larger than %d or the numHeads cannot be larger than %d, but numHeads = %d, numKeyValueHeads = %d.",
+                GLIMIT_64, NLIMIT, nQ, nKV); 
             return false; 
         } 
     }
@@ -2662,7 +2666,7 @@ bool PromptFlashAttentionTilingV2::CheckNTDLayoutCrossover(ContextParamsForPFATi
 
     std::string layoutStr(contextKeyParams.layout);
     if (!enablePFAMLA && !enablePFARope && !enableIFAMLA && !(enablePerblockQuant && layoutStr == "NTD_TND")) { // GQA
-        OP_CHECK_IF((queryShapeInfo.d != 64 && queryShapeInfo.d != 128),
+        OP_CHECK_IF((CHECK_D_LIMITED_SCENARIO(queryShapeInfo.d)),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In GQA scenario, when layout is NTD, d size of query must be 64 or 128, but got d = %d.",
             queryShapeInfo.d), return false);
     }
@@ -2694,7 +2698,7 @@ bool PromptFlashAttentionTilingV2::CheckTransposeLayoutCrossover(ContextParamsFo
             layoutStr.c_str()), return false);
     }
     if (!enablePFAMLA && !enablePFARope && !enableIFAMLA && !enablePertensorQuant && !enablePerblockQuant) { // GQA
-        OP_CHECK_IF((queryShapeInfo.d != 64 && queryShapeInfo.d !=128),
+        OP_CHECK_IF((CHECK_D_LIMITED_SCENARIO(queryShapeInfo.d)),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In GQA scenario, when layout is %s, d size of query must be 64 or 128, but got d = %d.",
             layoutStr.c_str(), queryShapeInfo.d), return false);
     }

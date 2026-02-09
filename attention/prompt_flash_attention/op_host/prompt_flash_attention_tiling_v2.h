@@ -29,6 +29,8 @@
 
 namespace optiling {
 namespace v2 {
+#define CHECK_D_LIMITED_SCENARIO(dSize) ((dSize) != 64 && (dSize) != 128)
+
 struct PFAShapeInfo {
     uint32_t b = 0;
     uint32_t n = 0;
