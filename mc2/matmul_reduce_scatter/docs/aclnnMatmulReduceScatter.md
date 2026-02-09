@@ -1,23 +1,29 @@
 # aclnnMatmulReduceScatter
 
+[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/mc2/matmul_reduce_scatter)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    ×     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 **说明：** 使用该接口时，请确保驱动固件包和CANN包都为配套的8.0.RC2版本或者配套的更高版本，否则将会引发报错，比如Bus Error等。
 
 ## 功能说明
 
-算子功能：完成mm + reduce_scatter_base计算。
+- 接口功能：完成mm + reduce_scatter_base计算。
 
-计算公式：
+- 计算公式：
 
-$$
-output=reduce_scatter(x1@x2+bias)
-$$
+    $$
+    output=reduce_scatter(x1@x2+bias)
+    $$
 
 ## 函数原型
 
@@ -47,123 +53,164 @@ aclnnStatus aclnnMatmulReduceScatter(
 
 ## aclnnMatmulReduceScatterGetWorkspaceSize
 
-- **参数说明**
+-   **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
+    <table style="undefined;table-layout: fixed; width: 1567px"><colgroup>
+    <col style="width: 170px">
     <col style="width: 120px">
-    <col style="width: 120px">
-    <col style="width: 160px">
-    <col style="width: 150px">
-    <col style="width: 80px">
+    <col style="width: 300px">
+    <col style="width: 330px">
+    <col style="width: 212px">
+    <col style="width: 100px">
+    <col style="width: 190px">
+    <col style="width: 145px">
     </colgroup>
     <thead>
     <tr>
-    <th>参数名</th>
-    <th>输入/输出</th>
-    <th>描述</th>
-    <th>数据类型</th>
-    <th>数据格式</th>
+      <th>参数名</th>
+      <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度(shape)</th>
+        <th>非连续Tensor</th>
     </tr></thead>
     <tbody>
     <tr>
-    <td>x1</td>
-    <td>输入</td>
-    <td>即计算公式中的x1，数据类型与x2保持一致。当前版本仅支持二维输入，且仅支持不转置场景。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>x1</td>
+        <td>输入</td>
+        <td>即计算公式中的x1。</td>
+        <td><ul><li>支持空Tensor。</li><li>与x2的数据类型保持一致。</li><li>当前版本仅支持二维shape输入，且仅支持不转置场景。</li></ul></td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
     </tr>
     <tr>
-    <td>x2</td>
-    <td>输入</td>
-    <td>即计算公式中的x2，数据类型与x1保持一致。支持通过转置构造的非连续的Tensor，当前版本仅支持二维输入。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>x2</td>
+        <td>输入</td>
+        <td>即计算公式中的x2。</td>
+        <td><ul><li>支持空Tensor。</li><li>与x1的数据类型保持一致。</li><li>当前版本仅支持二维输入，支持转置/不转置场景。</li><li>仅支持两根轴转置情况下的非连续Tensor，其他场景的<a href="../../../docs/zh/context/非连续的Tensor.md">[非连续的Tensor]</a>不支持。</li></ul></td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>bias</td>
-    <td>输入</td>
-    <td><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：暂不支持bias输入为非0的场景。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>bias</td>
+        <td>输入</td>
+        <td>即计算公式中的bias。</td>
+        <td><ul><li>支持传入空指针场景。</li><li>当前版本仅支持一维输入。</li></ul></td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>1</td>
+        <td>×</td>
     </tr>
     <tr>
-    <td>group</td>
-    <td>输入</td>
-    <td>Host侧标识通信域的字符串，即通信域名称，通过Hccl接口HcclGetCommName获取commName作为该参数。</td>
-    <td>STRING</td>
-    <td>ND</td>
+        <td>group</td>
+        <td>输入</td>
+        <td>通信域名称。</td>
+        <td>通过Hccl提供的接口“extern HcclResult HcclGetCommName(HcclComm comm, char* commName);”获取，其中commName即为group。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>reduceOp</td>
-    <td>输入</td>
-    <td>Host侧的reduce操作类型，当前版本仅支持“sum”。</td>
-    <td>STRING</td>
-    <td>ND</td>
+        <td>reduceOp</td>
+        <td>输入</td>
+        <td>reduce操作类型。</td>
+        <td>当前版本仅支持“sum”。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>commTurn</td>
-    <td>输入</td>
-    <td>Host侧整型，通信数据切分数（总数据量/单次通信量），当前版本仅支持输入0。</td>
-    <td>INT64</td>
-    <td>ND</td>
+        <td>commTurn</td>
+        <td>输入</td>
+        <td>通信数据切分数，即总数据量/单次通信量。</td>
+        <td>当前版本仅支持输入0。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>streamMode</td>
-    <td>输入</td>
-    <td>Host侧整型，流模式的枚举，当前只支持枚举值1。</td>
-    <td>INT64</td>
-    <td>ND</td>
+        <td>streamMode</td>
+        <td>输入</td>
+        <td>流模式的枚举。</td>
+        <td>当前只支持枚举值1。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>output</td>
-    <td>输出</td>
-    <td>mm计算+reducescatter通信的结果，数据类型与x1保持一致。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>output</td>
+        <td>输出</td>
+        <td>AllGather通信与MatMul计算的结果，即计算公式中的output。</td>
+        <td><ul><li>不支持空Tensor。</li><li>与x1的数据类型保持一致。</li></ul></td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
-    <td>输出</td>
-    <td>返回需要在Device侧申请的workspace大小。</td>
-    <td>UINT64</td>
-    <td>ND</td>
+        <td>workspaceSize</td>
+        <td>输出</td>
+        <td>返回需要在Device侧申请的workspace大小。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>executor</td>
-    <td>输出</td>
-    <td>返回Op执行器，包含了算子的计算流程。</td>
-    <td>aclOpExecutor*</td>
-    <td>ND</td>
+        <td>executor</td>
+        <td>输出</td>
+        <td>返回op执行器，包含了算子计算流程。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     </tbody></table>
 
-- **返回值**
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+        - bias：暂不支持输入为非0的场景。
+    - <term>Ascend 950PR/Ascend 950DT</term>：
+        - bias：支持输入为非0的场景。
 
-    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
+-   **返回值**
+
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
     第一段接口完成入参校验，出现以下场景时报错：
 
-    <table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
-    <col style="width: 250px">
-    <col style="width: 130px">
-    <col style="width: 800px">
+    <table style="undefined;table-layout: fixed; width: 1166px"> <colgroup>
+    <col style="width: 267px">
+    <col style="width: 124px">
+    <col style="width: 775px">
     </colgroup>
     <thead>
     <tr>
-    <th>返回值</th>
-    <th>错误码</th>
-    <th>描述</th>
+        <th>返回值</th>
+        <th>错误码</th>
+        <th>描述</th>
     </tr></thead>
     <tbody>
     <tr>
-    <td>ACLNN_ERR_PARAM_NULLPTR</td>
-    <td>161001</td>
-    <td>1. 传入的x1、x2或output是空指针。</td>
+        <td>ACLNN_ERR_PARAM_NULLPTR</td>
+        <td>161001</td>
+        <td>传入的x1、x2或output是空指针。</td>
     </tr>
     <tr>
         <td rowspan="3">ACLNN_ERR_PARAM_INVALID</td>
         <td rowspan="3">161002</td>
-        <td>x1、x2、bias或output的数据类型不符合约束要求。</td>
+        <td>x1、x2、bias或output的数据类型不在支持的范围之内。</td>
     </tr>
     <tr>
         <td>streamMode不在合法范围内。</td>
@@ -173,16 +220,13 @@ aclnnStatus aclnnMatmulReduceScatter(
     </tr>
     </tbody></table>
 
-
 ## aclnnMatmulReduceScatter
 
-- **参数说明**
-
-    <table style="undefined;table-layout: fixed; width: 1180px"> <colgroup>
-    <col style="width: 250px">
-    <col style="width: 130px">
-    <col style="width: 800px">
-    </colgroup>
+-   **参数说明**
+    <table style="undefined;table-layout: fixed; width: 1166px"> <colgroup>
+    <col style="width: 173px">
+    <col style="width: 133px">
+    <col style="width: 860px">
     <thead>
     <tr>
     <th>参数名</th>
@@ -191,30 +235,31 @@ aclnnStatus aclnnMatmulReduceScatter(
     </tr></thead>
     <tbody>
     <tr>
-    <td>workspace</td>
-    <td>输入</td>
-    <td>在Device侧申请的workspace内存地址。</td>
+        <td>workspace</td>
+        <td>输入</td>
+        <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
-    <td>输入</td>
-    <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMatmulReduceScatterGetWorkspaceSize</code>获取。</td>
+        <td>workspaceSize</td>
+        <td>输入</td>
+        <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMatmulReduceScatterGetWorkspaceSize</code>获取。</td>
     </tr>
     <tr>
-    <td>executor</td>
-    <td>输入</td>
-    <td>op执行器，包含了算子计算流程。</td>
+        <td>executor</td>
+        <td>输入</td>
+        <td>op执行器，包含了算子计算流程。</td>
     </tr>
     <tr>
-    <td>stream</td>
-    <td>输入</td>
-    <td>指定执行任务的Stream。</td>
+        <td>stream</td>
+        <td>输入</td>
+        <td>指定执行任务的stream。</td>
     </tr>
     </tbody></table>
 
-- **返回值**
+-   **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+
 
 ## 约束说明
 
@@ -233,13 +278,17 @@ aclnnStatus aclnnMatmulReduceScatter(
 - 输出为2维，其shape为(m/rank_size, n), rank_size为卡数。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡，并且仅支持hccs链路all mesh组网。
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持2、4、8、16、32卡，并且仅支持hccs链路double ring组网。
+- <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16、32、64卡，并且仅支持hccs链路all mesh组网。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：一个模型中的通算融合MC2算子，仅支持相同通信域。
 
 ## 调用示例
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
+说明：本示例代码调用了部分HCCL集合通信库接口：HcclGetCommName、HcclCommInitAll、HcclCommDestroy, 请参考[ <<HCCL API (C)>>](https://hiascend.com/document/redirect/CannCommunityHcclCppApi)。
+
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+
     ```Cpp
     #include <thread>
     #include <iostream>
@@ -259,7 +308,7 @@ aclnnStatus aclnnMatmulReduceScatter(
             printf(message, ##__VA_ARGS__); \
         } while(0)
 
-    constexpr int DEV_NUM = 8;
+    constexpr int DEV_NUM = 2;
 
     int64_t GetShapeSize(const std::vector<int64_t> &shape)
     {
@@ -292,12 +341,13 @@ aclnnStatus aclnnMatmulReduceScatter(
         int rankId;
         HcclComm hcclComm;
         aclrtStream stream;
+        aclrtContext context;
       };
 
     int launchOneThread_MmReduceScatter(Args &args)
     {
-        int ret = aclrtSetDevice(args.rankId);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtSetDevice failed. ret = %d \n", ret); return ret);
+        int ret = aclrtSetCurrentContext(args.context);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtSetCurrentContext failed. ret = %d \n", ret); return ret);
 
         char hcomName[128] = {0};
         ret = HcclGetCommName(args.hcclComm, hcomName);
@@ -385,10 +435,14 @@ aclnnStatus aclnnMatmulReduceScatter(
         if (workspaceSize > 0) {
             aclrtFree(workspaceAddr);
         }
+        ret = HcclCommDestroy(args.hcclComm);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclCommDestroy failed. ret = %d \n", ret); return ret);
         ret = aclrtDestroyStream(args.stream);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtDestroyStream failed. ret = %d \n", ret); return ret);
         ret = aclrtResetDevice(args.rankId);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtResetDevice failed. ret = %d \n", ret); return ret);
+        ret = aclrtDestroyContext(args.context);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtDestroyContext failed. ret = %d \n", ret); return ret);
         return 0;
     }
 
@@ -398,9 +452,12 @@ aclnnStatus aclnnMatmulReduceScatter(
         int ret = aclInit(nullptr);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclInit failed. ret = %d \n", ret); return ret);
         aclrtStream stream[DEV_NUM];
+        aclrtContext context[DEV_NUM];
         for (uint32_t rankId = 0; rankId < DEV_NUM; rankId++) {
             ret = aclrtSetDevice(rankId);
             CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtSetDevice failed. ret = %d \n", ret); return ret);
+            ret = aclrtCreateContext(&context[rankId], rankId);
+            CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtCreateContext failed. ERROR: %d\n", ret); return ret);
             ret = aclrtCreateStream(&stream[rankId]);
             CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclrtCreateStream failed. ret = %d \n", ret); return ret);
         }
@@ -419,15 +476,12 @@ aclnnStatus aclnnMatmulReduceScatter(
         for (uint32_t rankId = 0; rankId < DEV_NUM; rankId++) {
             args[rankId].rankId = rankId;
             args[rankId].hcclComm = comms[rankId];
+            args[rankId].context = context[rankId];
             args[rankId].stream = stream[rankId];
-            threads[rankId].reset(new(std::nothrow) std::thread(&launchOneThread_MmReduceScatter, std::ref(args [rankId])));
+            threads[rankId].reset(new(std::nothrow) std::thread(&launchOneThread_MmReduceScatter, std::ref(args[rankId])));
         }
         for (uint32_t rankId = 0; rankId < DEV_NUM; rankId++) {
             threads[rankId]->join();
-        }
-        for (int i = 0; i < DEV_NUM; i++) {
-            auto hcclRet = HcclCommDestroy(comms[i]);
-            CHECK_RET(hcclRet == HCCL_SUCCESS, LOG_PRINT("[ERROR] HcclCommDestroy failed. ret = %d \n", ret); return -1);
         }
         aclFinalize();
         return 0;
