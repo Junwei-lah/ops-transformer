@@ -27,7 +27,7 @@
       - x、weight、y都为单tensor非量化场景支持x，weight输入都为float32类型。
       - 量化、伪量化场景，支持weight转置，支持weight为单tensor。
       - 对于[aclnnGroupedMatmulGetWorkspaceSize](aclnnGroupedMatmul.md)接口支持的特性，该接口不支持x为单tensor，weight/y为多tensor场景。
-    - <term>Ascend 950PR/Ascend 950DT AI处理器</term>：
+    - <term>Ascend 950PR/Ascend 950DT</term>：
       - 伪量化场景，支持weight转置，支持x，weight，y均为单tensor。
       - 对于[aclnnGroupedMatmulGetWorkspaceSize](aclnnGroupedMatmul.md)接口支持的特性，该接口不支持x为单tensor，weight/y为多tensor场景。
 
@@ -258,7 +258,7 @@ aclnnStatus aclnnGroupedMatmulV3(
     - y支持FLOAT16、BFLOAT16、INT8、FLOAT32
     - groupType不支持n轴分组
     - 输入参数x、weight，输出参数y支持最多128个tensor。
-  - <term>Ascend 950PR/Ascend 950DT AI处理器</term>：
+  - <term>Ascend 950PR/Ascend 950DT</term>：
     - x支持FLOAT16、BFLOAT16、FLOAT32
     - weight支持FLOAT16、BFLOAT16、FLOAT32、INT8
     - biasOptional支持FLOAT16、BFLOAT16、FLOAT32
@@ -388,7 +388,7 @@ aclnnStatus aclnnGroupedMatmulV3(
 
   - x和weight中每一组tensor的最后一维大小都应小于65536。$x_i$的最后一维指当x不转置时$x_i$的K轴或当x转置时$x_i$的M轴。$weight_i$的最后一维指当weight不转置时$weight_i$的N轴或当weight转置时$weight_i$的K轴。
 
-- <term>Ascend 950PR/Ascend 950DT AI处理器</term>：
+- <term>Ascend 950PR/Ascend 950DT</term>：
 
   <details>
     <summary><term>非量化量化场景约束</term></summary>
