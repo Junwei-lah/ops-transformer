@@ -61,7 +61,7 @@
 |[aclnnFusedInferAttentionScoreV2](../../attention/fused_infer_attention_score/docs/aclnnFusedInferAttentionScoreV2.md)|适配增量&全量推理场景的FlashAttention算子。|默认确定性实现|
 |[aclnnFusedInferAttentionScoreV3](../../attention/fused_infer_attention_score/docs/aclnnFusedInferAttentionScoreV3.md)|适配增量&全量推理场景的FlashAttention算子。|默认确定性实现|
 |[aclnnFusedInferAttentionScoreV4](../../attention/fused_infer_attention_score/docs/aclnnFusedInferAttentionScoreV4.md)|适配Decode & Prefill场景的FlashAttention算子。|默认确定性实现|
-|[aclnnFusedInferAttentionScoreVX](../../attention/fused_infer_attention_score/docs/aclnnFusedInferAttentionScoreVX.md)|适配增量&全量推理场景的FlashAttention算子。|默认确定性实现|
+|[aclnnFusedInferAttentionScoreV5](../../attention/fused_infer_attention_score/docs/aclnnFusedInferAttentionScoreV5.md)|适配增量&全量推理场景的FlashAttention算子。|默认确定性实现|
 |[aclnnGatherPaKvCache](../../attention/gather_pa_kv_cache/docs/aclnnGatherPaKvCache.md)|根据blockTables中的blockId值、seqLens中key/value的seqLen从keyCache/valueCache中将内存不连续的token搬运、拼接成连续的key/value序列。|默认确定性实现|
 |[aclnnGroupedMatmul](../../gmm/grouped_matmul/docs/aclnnGroupedMatmul.md)|实现分组矩阵乘计算，每组矩阵乘的维度大小可以不同。|默认确定性实现|
 |[aclnnGroupedMatmulV2](../../gmm/grouped_matmul/docs/aclnnGroupedMatmulV2.md)|实现分组矩阵乘计算，每组矩阵乘的维度大小可以不同。|默认确定性实现|
