@@ -102,7 +102,6 @@ int main() {
     std::vector<int64_t> xShape = {M, K / 8};
     std::vector<std::vector<int64_t>> weightShape = {{E, N / 64 , K / 16, 16, 8}};
     std::vector<std::vector<int64_t>> weightScaleShape = {{E, N}};
-    std::vector<std::vector<int64_t>> weightAssistMatrixShape = {{E, N}};
     std::vector<int64_t> xScaleShape = {M};
     std::vector<int64_t> groupListShape = {E};
     std::vector<int64_t> outputShape = {M, N / 2};
@@ -111,7 +110,6 @@ int main() {
     void* xDeviceAddr = nullptr;
     void* weightDeviceAddr[1];
     void* weightScaleDeviceAddr[1];
-    void* weightAssistMatrixDeviceAddr[1];
     void* xScaleDeviceAddr = nullptr;
     void* groupListDeviceAddr = nullptr;
     void* outputDeviceAddr = nullptr;
@@ -120,17 +118,15 @@ int main() {
     aclTensor* x = nullptr;
     aclTensorList* weight = nullptr;
     aclTensorList* weightScale = nullptr;
-    aclTensorList* weightAssistMatrix = nullptr;
     aclTensor* xScale = nullptr;
     aclTensor* groupList = nullptr;
     aclTensor* output = nullptr;
     aclTensor* outputScale = nullptr;
 
-    std::vector<int32_t> xHostData(M * K / 8, 1);
-    std::vector<int32_t> weightHostData(E * N * K / 8, 1);
-    std::vector<uint64_t> weightScaleHostData(E * N, 1);
-    std::vector<float> weightAssistMatrixHostData(E * N, 1);
-    std::vector<float> xScaleHostData(M, 1);
+    std::vector<int32_t> xHostData(M * K / 8, 286331253);
+    std::vector<int32_t> weightHostData(E * N * K / 8, 286331253);
+    std::vector<uint64_t> weightScaleHostData(E * N, 0x3f000000);
+    std::vector<float> xScaleHostData(M, 0.00314);
     std::vector<int64_t> groupListHostData = {1, 2, 2, 3};
     std::vector<int8_t> outputHostData(M * N / 2, 0);
     std::vector<float> outputScaleHostData(M, 0);
@@ -143,9 +139,6 @@ int main() {
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     // 创建weightScale aclTensorList
     ret = CreateAclTensorList(weightScaleHostData, weightScaleShape, weightScaleDeviceAddr, aclDataType::ACL_UINT64,  aclFormat::ACL_FORMAT_ND, &weightScale);
-    CHECK_RET(ret == ACL_SUCCESS, return ret);
-    // 创建weightAssistMatrix aclTensorList
-    ret = CreateAclTensorList(weightAssistMatrixHostData, weightAssistMatrixShape, weightAssistMatrixDeviceAddr, aclDataType::ACL_FLOAT,  aclFormat::ACL_FORMAT_ND, &weightAssistMatrix);
     CHECK_RET(ret == ACL_SUCCESS, return ret);
     // 创建xScale aclTensor
     ret = CreateAclTensor(xScaleHostData, xScaleShape, &xScaleDeviceAddr, aclDataType::ACL_FLOAT, aclFormat::ACL_FORMAT_ND, &xScale);
@@ -178,7 +171,7 @@ int main() {
     // 3. 调用CANN算子库API
     // 调用aclnnGroupedMatmulSwigluQuantWeightNzV2第一段接口
     ret = aclnnGroupedMatmulSwigluQuantWeightNzV2GetWorkspaceSize(
-        x, weight, weightScale, weightAssistMatrix, bias, xScale, smoothScale, groupList, dequantMode, dequantDtype,
+        x, weight, weightScale, nullptr, bias, xScale, smoothScale, groupList, dequantMode, dequantDtype,
         quantMode, groupListType, tuningConfig, output, outputScale, &workspaceSize, &executor);
     CHECK_RET(ret == ACL_SUCCESS, 
     LOG_PRINT("aclnnGroupedMatmulSwigluQuantWeightNzV2GetWorkspaceSize failed. ERROR: %d\n", ret); return ret);
@@ -217,7 +210,6 @@ int main() {
     aclDestroyTensor(x);
     aclDestroyTensorList(weight);
     aclDestroyTensorList(weightScale);
-    aclDestroyTensorList(weightAssistMatrix);
     aclDestroyTensor(xScale);
     aclDestroyTensor(groupList);
     aclDestroyTensor(output);
@@ -230,7 +222,6 @@ int main() {
     for (int64_t i = 0; i < 1; i++) {
         aclrtFree(weightDeviceAddr[i]);
         aclrtFree(weightScaleDeviceAddr[i]);
-        aclrtFree(weightAssistMatrixDeviceAddr[i]);
     }
     aclrtFree(weightDeviceAddr);
     aclrtFree(weightScaleDeviceAddr);

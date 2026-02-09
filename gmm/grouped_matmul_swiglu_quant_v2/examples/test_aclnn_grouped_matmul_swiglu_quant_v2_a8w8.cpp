@@ -125,8 +125,8 @@ int main() {
 
     std::vector<int8_t> xHostData(M * K, 1);
     std::vector<int8_t> weightHostData(E * N * K, 1);
-    std::vector<float> weightScaleHostData(E * N, 1);
-    std::vector<float> xScaleHostData(M, 1);
+    std::vector<float> weightScaleHostData(E * N, 0.5f);
+    std::vector<float> xScaleHostData(M, 0.0314f);
     std::vector<int64_t> groupListHostData = {1, 2, 2, 3};
     std::vector<int8_t> outputHostData(M * N / 2, 0);
     std::vector<float> outputScaleHostData(M, 0);

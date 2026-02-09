@@ -86,6 +86,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2GetWorkspaceSize(const aclTensor *x,
         .SetDequantAttr(dequantMode, dequantDtype)
         .SetQuantAttr(quantMode, static_cast<int64_t> (output->GetDataType()))
         .SetTransposeAttr(false).SetBias(bias)
+        .SetScenario()
         .SetTuningConfig(tuningConfigOptional).Build();
 
     // 调用公共接口
@@ -114,8 +115,8 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2GetWorkspaceSize(const aclTen
     auto viewShape = w->GetViewShape();
     aclTensor *weightNZ = const_cast<aclTensor *>(w);
     CHECK_COND((storgeShape.GetDimNum() == WEIGHT_NZ_DIM_LIMIT), ACLNN_ERR_PARAM_INVALID,
-               "aclnnGroupedMatmulSwigluQuantWeightNzV2, The dimnum of storageShape for second input (weight) \
-             must be 5. \n But StorageShape got %s , and dimNum is %lu.",
+               "aclnnGroupedMatmulSwigluQuantWeightNzV2, The dimnum of storageShape for second input (weight)"
+             "must be 5. \n But StorageShape got %s , and dimNum is %lu.",
                op::ToString(storgeShape).GetString(), storgeShape.GetDimNum());
     // weight的StorageFormat无条件视为NZ
     weightNZ->SetStorageFormat(op::Format::FORMAT_FRACTAL_NZ);
@@ -133,6 +134,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2GetWorkspaceSize(const aclTen
         .SetGroupList(groupList).SetGroupListType(groupListType)
         .SetWeightAssistMatrix(weightAssistMatrix)
         .SetDequantAttr(dequantMode, dequantDtype)
+        .SetScenario()
         .SetTuningConfig(tuningConfigOptional).Build();
 
     // 调用公共接口

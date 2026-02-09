@@ -52,6 +52,8 @@ struct GroupedMatmulSwigluQuantParamsBase {
     int64_t quantDtype = 0;
     int64_t groupListType = 0;
     bool transposeWeight = false;
+    bool isA8W4 = false;
+    bool isA4W4 = false;
 };
 
 class GroupedMatmulSwigluQuantParamsBuilder {
@@ -127,6 +129,23 @@ public:
     GroupedMatmulSwigluQuantParamsBuilder &SetTransposeAttr(bool transposeWeight)
     {
         p_.transposeWeight = transposeWeight;
+        return *this;
+    }
+
+    GroupedMatmulSwigluQuantParamsBuilder &SetScenario()
+    {
+        p_.isA8W4 = ((this->p_.x->GetDataType() == DataType::DT_INT8 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT4) ||
+                    (this->p_.x->GetDataType() == DataType::DT_INT8 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT32));
+        p_.isA4W4 = ((this->p_.x->GetDataType() == DataType::DT_INT4 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT4) ||
+                    (this->p_.x->GetDataType() == DataType::DT_INT4 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT32) ||
+                    (this->p_.x->GetDataType() == DataType::DT_INT32 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT4) ||
+                    (this->p_.x->GetDataType() == DataType::DT_INT32 &&
+                    ((*this->p_.weight)[0])->GetDataType() == DataType::DT_INT32));
         return *this;
     }
 
@@ -298,11 +317,11 @@ protected:
                     "Contiguous weightScale failed.");
 
         gmmDsqParams_.x = l0op::Contiguous(gmmDsqParams_.x, l0Executor_);
-        CHECK_COND(gmmDsqParams_.x  != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous groupList failed.");
+        CHECK_COND(gmmDsqParams_.x != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous groupList failed.");
         gmmDsqParams_.xScale = l0op::Contiguous(gmmDsqParams_.xScale, l0Executor_);
-        CHECK_COND(gmmDsqParams_.xScale  != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous xScale failed.");
+        CHECK_COND(gmmDsqParams_.xScale != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous xScale failed.");
         gmmDsqParams_.groupList = l0op::Contiguous(gmmDsqParams_.groupList, l0Executor_);
-        CHECK_COND(gmmDsqParams_.groupList  != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous groupList failed.");
+        CHECK_COND(gmmDsqParams_.groupList != nullptr, ACLNN_ERR_INNER_NULLPTR, "Contiguous groupList failed.");
 
         return ACLNN_SUCCESS;
     }

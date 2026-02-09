@@ -127,10 +127,10 @@ int main() {
     aclTensor* outputScale = nullptr;
 
     std::vector<int8_t> xHostData(M * K, 1);
-    std::vector<int32_t> weightHostData(E * N * K / 8, 1);
-    std::vector<uint64_t> weightScaleHostData(E * N, 1);
-    std::vector<float> weightAssistMatrixHostData(E * N, 1);
-    std::vector<float> xScaleHostData(M, 1);
+    std::vector<int32_t> weightHostData(E * N * K / 8, 286331253);
+    std::vector<uint64_t> weightScaleHostData(E * N, 1028443340);
+    std::vector<float> weightAssistMatrixHostData(E * N, 8 * K);
+    std::vector<float> xScaleHostData(M, 0.0314);
     std::vector<int64_t> groupListHostData = {1, 2, 2, 3};
     std::vector<int8_t> outputHostData(M * N / 2, 0);
     std::vector<float> outputScaleHostData(M, 0);
