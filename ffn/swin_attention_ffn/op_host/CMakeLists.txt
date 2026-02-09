@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (BUILD_OPEN_PROJECT)
-    target_sources(op_host_aclnn PRIVATE
+    target_sources(op_host_aclnnExc PRIVATE
         swin_attention_ffn_def.cpp
     )
     if (BUILD_OPS_RTY_KERNEL) # 回黄kernel
@@ -20,8 +20,8 @@ if (BUILD_OPEN_PROJECT)
                         -Werror
         )
     else() # custom
-        add_modules_sources(OPTYPE swin_attention_ffn ACLNNTYPE aclnn)
+        add_modules_sources(OPTYPE swin_attention_ffn ACLNNTYPE aclnn_exclude)
     endif()
 else() # 回黄host
-    add_modules_sources(OPTYPE swin_attention_ffn ACLNNTYPE aclnn)  
+    add_modules_sources(OPTYPE swin_attention_ffn ACLNNTYPE aclnn_exclude)  
 endif()
