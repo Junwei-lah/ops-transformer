@@ -1439,11 +1439,14 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td>blockSize</td>
                 <td>
                     <ul>
-                        <li>在使能PagedAttention场景下，blockSize需要传入非0值, 且blocksize最大不超过512。</li>
-                        <li>Q_S=1 key、value输入类型为FLOAT16/BFLOAT16时需要16对齐；</br>
+                        <li>在使能PagedAttention，并且非量化场景下，blockSize需要传入非0值, 需要16对齐，且blocksize最大不超过1024。</li>
+                        <li>在使能PagedAttention，并且全量化场景下，blockSize需要传入非0值, 且blocksize最大不超过512。</li>
+                        <li>在使能PagedAttention，并且全量化场景下，Q_S=1时：</li>
+                            key、value输入类型为FLOAT16/BFLOAT16时需要16对齐；</br>
                             key、value 输入类型为INT8/HIFLOAT8/FLOAT8_E4M3FN时需要32对齐；</br>
-                            key、value输入类型为FLOAT4_E2M1/INT4（INT32）时需要64对齐</br></li>
-                        <li>Q_S>1 blockSize最小为128, 最大为512，且要求是128的倍数</li>
+                            key、value输入类型为FLOAT4_E2M1/INT4（INT32）时需要64对齐；</br>
+                        <li>在使能PagedAttention，并且全量化场景下，Q_S>1时：</li>
+                            blockSize最小为128, 最大为512，且要求是128的倍数。</br>
                     </ul>
                 </td>
                 <td>blockSize是用户自定义的参数，该参数的取值会影响PagedAttention的性能，通常情况下，PagedAttention可以提高吞吐量，但会带来性能上的下降。</td>
@@ -1460,9 +1463,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td>
                     <ul>
                         <li>支持key、value dtype为FLOAT16/BFLOAT16/INT8/INT4(INT32)/HIFLOAT8/FLOAT8_E4M3FN/FLOAT4_E2M1</li>
-                        <li>当query的inputLayout为BNSD、TND时，kv cache排布支持BnBsH（blocknum, blocksize, H）、BnNBsD（blocknum, KV_N,
-                            blocksize, D）和NZ（blocknum，KV_N，D/16，blocksize，16）三种格式；</li>
-                        <li>当query的inputLayout为BSH、BSND时，kv cache排布只支持BnBsH和NZ两种格式</li>
+                        <li>在非量化场景下，当query的inputLayout为BNSD、TND、BSH、BSND时，kv cache排布支持BnBsH（blocknum, blocksize, H）、BnNBsD（blocknum,  KV_N, blocksize, D）和NZ（blocknum，KV_N，D/16，blocksize，16）三种格式；</li>
+                        <li>在全量化场景下，当query的inputLayout为BNSD、TND时，kv cache排布支持BnBsH（blocknum, blocksize, H）、BnNBsD（blocknum, KV_N,
+ 	                        blocksize, D）和NZ（blocknum，KV_N，D/16，blocksize，16）三种格式；</li>
+                        <li>在全量化场景下，当query的inputLayout为BSH、BSND时，kv cache排布只支持BnBsH和NZ两种格式</li>
                         <li>伪量化场景下，当kv cache为五维时，kv cache排布为（blocknum，KV_N，D/16，blocksize，16）；同时，当key、value dtype为INT32时，kv
                             cache排布为（blocknum，KV_N，D/2，blocksize，2）</li>
                         <li>Q_S>1时，支持query和kv cache全部为INT8/HIFLOAT8/FLOAT8_E4M3FN</li>
