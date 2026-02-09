@@ -97,19 +97,19 @@ ge::graphStatus AttentionUpdateTiling::CheckInputDtype()
         if (i == 0UL || i == sp_) {
             continue;
         }
-        auto current_dtype = context_->GetInputDesc(i)->GetDataType();
+        auto currentDtype = context_->GetInputDesc(i)->GetDataType();
         if (i >= sp_) {
-            if (goType_ != current_dtype) {
+            if (goType_ != currentDtype) {
                 OP_LOGE(context_->GetNodeName(),
-                        "before Go dtype %s is not equal to current Go dtype %s which is in %ld tensor",
-                        Ops::Base::ToString(goType_).c_str(), Ops::Base::ToString(current_dtype).c_str(), i);
+                        "before Go dtype %s is not equal to current Go dtype %s which is in %lu tensor",
+                        Ops::Base::ToString(goType_).c_str(), Ops::Base::ToString(currentDtype).c_str(), i);
                 return ge::GRAPH_FAILED;
             }
         } else {
-            if (lseType_ != current_dtype) {
+            if (lseType_ != currentDtype) {
                 OP_LOGE(context_->GetNodeName(),
-                        "before lse dtype %s is not equal to current lse dtype %s which is in %ld tensor",
-                        Ops::Base::ToString(lseType_).c_str(), Ops::Base::ToString(current_dtype).c_str(), i);
+                        "before lse dtype %s is not equal to current lse dtype %s which is in %lu tensor",
+                        Ops::Base::ToString(lseType_).c_str(), Ops::Base::ToString(currentDtype).c_str(), i);
                 return ge::GRAPH_FAILED;
             }
         }
@@ -120,38 +120,38 @@ ge::graphStatus AttentionUpdateTiling::CheckInputDtype()
 // 检查输入数据维度，以及go和lse的第一维是否一致，以及go的第二维是否是8的倍数，且在[8,512]范围
 ge::graphStatus AttentionUpdateTiling::CheckInputDim()
 {
-    uint64_t dim_num = 0;
+    uint64_t dimNum = 0;
     OP_CHECK_IF(!(d_ >= D_MIN && d_ <= D_MAX && d_ % D_DIVIDE_8 == 0),
                 OP_LOGE(context_->GetNodeName(),
-                        "Go hDim need in [8,512], and can be divided by 8,but at input index 0,invalid go hDim %ld",
+                        "Go hDim need in [8,512], and can be divided by 8,but at input index 0,invalid go hDim %lu",
                         d_),
                 return ge::GRAPH_FAILED);
     for (uint64_t i = 0; i < ALL_TO_SP_MULTIPLIER * sp_; i++) {
-        dim_num = context_->GetInputShape(i)->GetOriginShape().GetDimNum();
-        uint64_t current_bsh_size = context_->GetInputShape(i)->GetOriginShape().GetDim(DIM_0);
+        dimNum = context_->GetInputShape(i)->GetOriginShape().GetDimNum();
+        uint64_t currentBshSize = context_->GetInputShape(i)->GetOriginShape().GetDim(DIM_0);
         if (i >= sp_) {
-            uint64_t current_d = context_->GetInputShape(i)->GetOriginShape().GetDim(DIM_1);
-            OP_CHECK_IF(!(dim_num == GO_DIM_NUM),
+            uint64_t currentD = context_->GetInputShape(i)->GetOriginShape().GetDim(DIM_1);
+            OP_CHECK_IF(!(dimNum == GO_DIM_NUM),
                         OP_LOGE(context_->GetNodeName(),
-                                "Go dim need equal to 2,but at input index %ld, invalid go dim num: %ld", i, dim_num),
+                                "Go dim need equal to 2,but at input index %lu, invalid go dim num: %lu", i, dimNum),
                         return ge::GRAPH_FAILED);
-            OP_CHECK_IF(!(current_d == d_),
+            OP_CHECK_IF(!(currentD == d_),
                         OP_LOGE(context_->GetNodeName(),
-                                "Go hDim need equal to before %ld, but at input index %ld, invalid go hDim %ld", d_, i,
-                                current_d),
+                                "Go hDim need equal to before %lu, but at input index %lu, invalid go hDim %lu", d_, i,
+                                currentD),
                         return ge::GRAPH_FAILED);
         } else {
-            OP_CHECK_IF(!(dim_num == LSE_DIM_NUM),
+            OP_CHECK_IF(!(dimNum == LSE_DIM_NUM),
                         OP_LOGE(context_->GetNodeName(),
-                                "Lse dim need equal to 1,but at input index %ld,invalid lse dim num: %ld", i, dim_num),
+                                "Lse dim need equal to 1,but at input index %lu,invalid lse dim num: %lu", i, dimNum),
                         return ge::GRAPH_FAILED);
         }
         OP_CHECK_IF(
-            !(bshSize_ == current_bsh_size),
+            !(bshSize_ == currentBshSize),
             OP_LOGE(context_->GetNodeName(),
-                    "Before bshSize need equal to current, and before bshSize is %ld, but at input index %ld, invalid "
-                    "bshSize: %ld",
-                    bshSize_, i, current_bsh_size),
+                    "Before bshSize need equal to current, and before bshSize is %lu, but at input index %lu, invalid "
+                    "bshSize: %lu",
+                    bshSize_, i, currentBshSize),
             return ge::GRAPH_FAILED);
     }
     return ge::GRAPH_SUCCESS;
@@ -168,12 +168,12 @@ ge::graphStatus AttentionUpdateTiling::CheckInputParams()
     }
     // 检查参数update_type
     OP_CHECK_IF(!(updateType_ == 0 || updateType_ == 1),
-                OP_LOGE(context_->GetNodeName(), "Update_type should be 0 or 1,but got %ld", updateType_),
+                OP_LOGE(context_->GetNodeName(), "Update_type should be 0 or 1,but got %lu", updateType_),
                 return ge::GRAPH_FAILED);
 
     // 检查参数sp
     OP_CHECK_IF(!(sp_ >= 1 && sp_ <= ATTR_SP_MAX),
-                OP_LOGE(context_->GetNodeName(), "Sp need in [1,16],but got %ld", sp_), return ge::GRAPH_FAILED);
+                OP_LOGE(context_->GetNodeName(), "Sp need in [1,16],but got %lu", sp_), return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
