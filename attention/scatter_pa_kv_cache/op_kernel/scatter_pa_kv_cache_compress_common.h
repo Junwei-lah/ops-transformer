@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -9,19 +9,19 @@
  */
 
 /*!
- * \file scatter_pa_kv_cache_base.h
+ * \file scatter_pa_kv_cache_compress_common.h
  * \brief
  */
-#ifndef ASCEND_SCATTER_PA_KV_CACHE_BASE_H
-#define ASCEND_SCATTER_PA_KV_CACHE_BASE_H
+#ifndef ASCEND_SCATTER_PA_KV_CACHE_COMPRESS_COMMON_H
+#define ASCEND_SCATTER_PA_KV_CACHE_COMPRESS_COMMON_H
 
 #include "kernel_operator.h"
 #include "scatter_pa_kv_cache_common.h"
 
 namespace ScatterPaKvCache {
-class ScatterPaKvCacheBase {
+class ScatterPaKvCacheCompressCommon {
 public:
-    __aicore__ inline ScatterPaKvCacheBase()
+    __aicore__ inline ScatterPaKvCacheCompressCommon()
     {
     }
 
@@ -120,54 +120,6 @@ public:
         AscendC::WaitFlag<AscendC::HardEvent::MTE2_MTE3>(eventID);
         DataCopy(dst[cacheStart], ubAddr, copyParamsOut);
         AscendC::SetFlag<AscendC::HardEvent::MTE3_MTE2>(eventID);
-    }
-
-    template <typename T1, bool NCT = false>
-    __aicore__ inline void
-    CopyToCache(uint32_t index, uint32_t tokenSize, uint32_t loop, uint32_t tail, AscendC::GlobalTensor<T1> &src,
-                AscendC::GlobalTensor<T1> &dst, AscendC::GlobalTensor<int32_t> &slotInput, const int32_t &maxUbUsed,
-                AscendC::TQueBind<AscendC::QuePosition::VECIN, AscendC::QuePosition::VECOUT, BUFFER_NUM> &queBind)
-    {
-        int64_t slotValue = (int64_t)(slotInput.GetValue(index + startTaskId_));
-        if (slotValue < 0) {
-            return;
-        }
-        uint64_t cacheStart = static_cast<uint64_t>(slotValue) * tokenSize;
-        AscendC::DataCopyParams copyParams = {1, static_cast<uint16_t>(maxUbUsed / BLOCK_SIZE), 0, 0};
-        uint64_t start = static_cast<uint64_t>(tokenSize) * (index + startTaskId_);
-        if (NCT) {
-            start = static_cast<uint64_t>(strideK_) * (index + startTaskId_);
-        }
-        for (uint32_t j = 0; j < loop; j++) {
-            auto bindLocal = queBind.AllocTensor<T1>();
-            DataCopy(bindLocal, src[start], copyParams);
-            queBind.EnQue(bindLocal);
-            bindLocal = queBind.DeQue<T1>();
-            DataCopy(dst[cacheStart], bindLocal, copyParams);
-            queBind.FreeTensor(bindLocal);
-            start += (maxUbUsed / sizeof(T1));
-            cacheStart += static_cast<uint64_t>(maxUbUsed / sizeof(T1));
-        }
-        if (tail > 0) {
-            AscendC::DataCopyExtParams copyParam = {1, tail, 0, 0, 0};
-            AscendC::DataCopyPadExtParams<T1> padParams = {false, 0, 0, 0};
-            auto bindLocal = queBind.AllocTensor<T1>();
-            DataCopyPad(bindLocal, src[start], copyParam, padParams);
-            queBind.EnQue(bindLocal);
-            bindLocal = queBind.DeQue<T1>();
-            DataCopyPad(dst[cacheStart], bindLocal, copyParam);
-            queBind.FreeTensor(bindLocal);
-        }
-    }
-
-    template <typename T>
-    __aicore__ inline void
-    PrepareCopy(uint32_t tokenSize, uint32_t &loop, uint32_t &tail, const int32_t &maxUbUsed,
-                AscendC::TQueBind<AscendC::QuePosition::VECIN, AscendC::QuePosition::VECOUT, BUFFER_NUM> &queBind)
-    {
-        loop = (tokenSize * sizeof(T)) / maxUbUsed;
-        tail = (tokenSize * sizeof(T)) % maxUbUsed;
-        pipe_->InitBuffer(queBind, BUFFER_NUM, maxUbUsed);
     }
 
     template <typename T>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 #ifndef ASCEND_SCATTER_PA_KV_CACHE_COMPRESS_ROPE_H
 #define ASCEND_SCATTER_PA_KV_CACHE_COMPRESS_ROPE_H
 
-#include "scatter_pa_kv_cache_base.h"
+#include "scatter_pa_kv_cache_compress_common.h"
 #include "kernel_operator.h"
 
 namespace ScatterPaKvCache {
 template <typename T>
-class ScatterPaKvCacheCompressRope : public ScatterPaKvCacheBase {
+class ScatterPaKvCacheCompressRope : public ScatterPaKvCacheCompressCommon {
 public:
     __aicore__ inline ScatterPaKvCacheCompressRope()
     {

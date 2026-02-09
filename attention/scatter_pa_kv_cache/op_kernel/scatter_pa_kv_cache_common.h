@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 #ifndef ASCEND_SCATTER_PA_KV_CACHE_COMMON_H
 #define ASCEND_SCATTER_PA_KV_CACHE_COMMON_H
 
-#include "platform/platform_infos_def.h"
+#include "op_kernel/platform_util.h"
 
 namespace ScatterPaKvCache {
-constexpr int32_t BLOCK_SIZE = 32;
+constexpr int32_t BLOCK_SIZE = Ops::Base::GetUbBlockSize();
 constexpr int32_t BUFFER_NUM = 2;
 constexpr uint32_t SCALAR_INPUT_PARAMETERS = 4; // 算子输入input3~7是四个int32类型的参数
 constexpr uint32_t COPY_NUM = 512;              // 用于设置计算rope压缩均值前的搬运大小

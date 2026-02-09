@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -57,12 +57,12 @@ TILING_DATA_FIELD_DEF(int64_t, numBlocks);
 TILING_DATA_FIELD_DEF(int64_t, blockSize);
 TILING_DATA_FIELD_DEF(int64_t, seqLen);
 TILING_DATA_FIELD_DEF(int64_t, numHead);
-TILING_DATA_FIELD_DEF(uint64_t, numTokens);
-TILING_DATA_FIELD_DEF(uint64_t, ubSize);
-TILING_DATA_FIELD_DEF(uint64_t, kStride);
-TILING_DATA_FIELD_DEF(uint64_t, vStride);
-TILING_DATA_FIELD_DEF(uint64_t, kOffset);
-TILING_DATA_FIELD_DEF(uint64_t, vOffset);
+TILING_DATA_FIELD_DEF(int64_t, numTokens);
+TILING_DATA_FIELD_DEF(int64_t, ubSize);
+TILING_DATA_FIELD_DEF(int64_t, kStride);
+TILING_DATA_FIELD_DEF(int64_t, vStride);
+TILING_DATA_FIELD_DEF(int64_t, kOffset);
+TILING_DATA_FIELD_DEF(int64_t, vOffset);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(ScatterPaKvCache, ScatterPaKvCacheTilingData)
@@ -164,31 +164,30 @@ private:
 
 struct ScatterPaKvCacheMembaseParams {
     platform_ascendc::SocVersion socVersion;
-    uint64_t numTokens{0};
-    uint64_t numHead{0};
-    uint64_t kHeadSize{0};
-    uint64_t vHeadSize{0};
-    uint64_t blockSize{0};
-    uint64_t typeByteK{0};
-    uint64_t typeByteV{0};
-    uint64_t typeByteSlot{0};
-    uint64_t numBatchs{0};
-    uint64_t blockFactor{0};
-    uint64_t tailBlockFactor{0};
-    uint64_t cacheMode{0};
-    uint64_t kStride{0};
-    uint64_t vStride{0};
-    uint64_t kOffset{0};
-    uint64_t vOffset{0};
+    int64_t numTokens{0};
+    int64_t numHead{0};
+    int64_t kHeadSize{0};
+    int64_t vHeadSize{0};
+    int64_t blockSize{0};
+    int64_t typeByteK{0};
+    int64_t typeByteV{0};
+    int64_t typeByteSlot{0};
+    int64_t numBatchs{0};
+    int64_t blockFactor{0};
+    int64_t tailBlockFactor{0};
+    int64_t kStride{0};
+    int64_t vStride{0};
+    int64_t kOffset{0};
+    int64_t vOffset{0};
 
-    uint64_t tilingKey{0};
+    int64_t tilingKey{0};
     uint64_t workspaceSize{0};
 
     uint64_t sysWorkspaceSize{0};
-    uint64_t usedCoreNum{0};
+    int64_t usedCoreNum{0};
     uint64_t ubSize{0};
 
-    uint64_t templateType{0}; // 0: normal, 1: nz, 2: alibi, 3: rope, 4:siso, 5:omni
+    int64_t templateType{0}; // 1: normal, 2: nz, 3: alibi, 4: rope, 5:siso, 6:omni, 7:normal_nct, 8:siso_nct
 };
 
 class ScatterPaKvCacheMembaseTiling : public TilingBaseClass {
@@ -207,21 +206,25 @@ protected:
     ge::graphStatus GetWorkspaceSize() override;
     ge::graphStatus PostTiling() override;
     void DumpTilingInfo() override;
+
+private:
+    ge::graphStatus GetInputDtypeSiso();
+    ge::graphStatus GetInputDtypeKv();
     ge::graphStatus GetInputDtype();
-    ge::graphStatus GetIndexDtype();
-    ge::graphStatus CheckInputDimNumUpdate();
+    ge::graphStatus CheckInputDimNumSiso();
+    ge::graphStatus CheckInputDimNumNorm();
+    ge::graphStatus CheckInputDimNumNz();
     ge::graphStatus CheckInputDimNumCompress();
     ge::graphStatus CheckInputDimNum();
-    ge::graphStatus CheckInputDimUpdate();
-    ge::graphStatus CheckInputDimCompress();
-    ge::graphStatus CheckInputDim();
+    ge::graphStatus CheckInputShapeSiso();
+    ge::graphStatus CheckInputShapeNorm();
+    ge::graphStatus CheckInputShapeNz();
+    ge::graphStatus CheckInputShapeCompress();
+    ge::graphStatus CheckInputShape();
     ge::graphStatus GetTemplateType();
-    ge::graphStatus DoNormOpTiling();
+    ge::graphStatus DoNoCompressOpTiling();
     ge::graphStatus DoCompressAlibiOpTiling();
     ge::graphStatus DoCompressRopeAndOmniOpTiling();
-    ge::graphStatus DoNzOpTiling();
-    ge::graphStatus DoSisoOpTiling();
-
 private:
     ScatterPaKvCacheMembaseParams params_;
     ScatterPaKvCacheTilingData tilingData_;
@@ -233,6 +236,8 @@ private:
     gert::Shape compressLensShape_;
     gert::Shape compressSeqOffsetShape_;
     gert::Shape seqLensShape_;
+    ge::DataType inputKeyDtype_;
+    ge::DataType inputValueDtype_;
 };
 
 } // namespace optiling
