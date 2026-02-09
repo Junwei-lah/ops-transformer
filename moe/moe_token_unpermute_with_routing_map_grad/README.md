@@ -30,7 +30,7 @@
   probsGradExpertOrder = \sum_{j=0}^{hidden\_size}(permutedProbsGrad_{i,j})
   $$
 
-    - paddedMode为false时
+    - dropAndPad为false时
   
   $$
   probsGradOut = masked\_scatter(routingMapOptional^T,probsGradExpertOrder)
@@ -44,7 +44,7 @@
   permutedTokensGradOut = permutedProbs.unsqueeze(-1) * permutedTokensGrad
   $$
 
-    - paddedMode为true时
+    - dropAndPad为true时
   
   $$
   probsGradOut[permuteTokenId[i], outIndex[i]/capacity] = probsGradExpertOrder[outIndex[i]]
@@ -65,8 +65,8 @@
   $$
 
   1. hidden_size指unpermutedTokensGrad的第1维大小。
-  2. paddedMode等于true时，每个专家固定能够处理capacity个token。输入routingMapOptional的第1维是experts_num，即专家个数，输入outIndex的第0维是experts_num * capacity，根据这两个维度可以算出capacity。
-  3. paddedMode等于false时，每个token固定被topK_num个专家处理。输入unpermutedTokensGrad的第0维是tokens_num，即token的个数，输入outIndex的第0维是tokens_num * capacity，根据这两个维度可以算出topK_num。
+  2. dropAndPad等于true时，每个专家固定能够处理capacity个token。输入routingMapOptional的第1维是experts_num，即专家个数，输入outIndex的第0维是experts_num * capacity，根据这两个维度可以算出capacity。
+  3. dropAndPad等于false时，每个token固定被topK_num个专家处理。输入unpermutedTokensGrad的第0维是tokens_num，即token的个数，输入outIndex的第0维是tokens_num * capacity，根据这两个维度可以算出topK_num。
 
 ## 参数说明
 
@@ -129,9 +129,9 @@
         <td>ND</td>
       </tr>
       <tr>
-        <td>paddedMode</td>
+        <td>dropAndPad</td>
         <td>属性</td>
-        <td>host侧的BOOL。true表示开启paddedMode，false表示关闭paddedMode。</td>
+        <td>host侧的BOOL。true表示开启dropAndPad，false表示关闭dropAndPad。</td>
         <td>BOOL</td>
         <td>-</td>
       </tr>
@@ -161,10 +161,10 @@
 
 ## 约束说明
 
-- 当输入probsOptional非空，且paddedMode为false时
+- 当输入probsOptional非空，且dropAndPad为false时
     - 要求topK_num <= 512且topK_num <= experts_num。
     - 要求experts_num满足(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) >= 1，其中probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
-- 当输入probsOptional非空，且paddedMode为true时
+- 当输入probsOptional非空，且dropAndPad为true时
     - 要求capacity <= tokens_num。
     - 要求hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，需要小于等于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，需要小于等于4149248。
 

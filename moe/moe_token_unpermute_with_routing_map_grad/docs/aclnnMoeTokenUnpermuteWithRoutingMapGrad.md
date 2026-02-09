@@ -33,7 +33,7 @@
   probsGradExpertOrder = \sum_{j=0}^{hidden\_size}(permutedProbsGrad_{i,j})
   $$
 
-    - paddedMode为false时
+    - dropAndPad为false时
   
   $$
   probsGradOut = masked\_scatter(routingMapOptional^T,probsGradExpertOrder)
@@ -47,7 +47,7 @@
   permutedTokensGradOut = permutedProbs.unsqueeze(-1) * permutedTokensGrad
   $$
 
-    - paddedMode为true时
+    - dropAndPad为true时
   
   $$
   probsGradOut[permuteTokenId[i], outIndex[i]/capacity] = probsGradExpertOrder[outIndex[i]]
@@ -68,8 +68,8 @@
   $$
 
   1. hidden_size指unpermutedTokensGrad的第1维大小。
-  2. paddedMode等于true时，每个专家固定能够处理capacity个token。输入routingMapOptional的第1维是experts_num，即专家个数，输入outIndex的第0维是experts_num * capacity，根据这两个维度可以算出capacity。
-  3. paddedMode等于false时，每个token固定被topK_num个专家处理。输入unpermutedTokensGrad的第0维是tokens_num，即token的个数，输入outIndex的第0维是tokens_num * capacity，根据这两个维度可以算出topK_num。
+  2. dropAndPad等于true时，每个专家固定能够处理capacity个token。输入routingMapOptional的第1维是experts_num，即专家个数，输入outIndex的第0维是experts_num * capacity，根据这两个维度可以算出capacity。
+  3. dropAndPad等于false时，每个token固定被topK_num个专家处理。输入unpermutedTokensGrad的第0维是tokens_num，即token的个数，输入outIndex的第0维是tokens_num * capacity，根据这两个维度可以算出topK_num。
 
 
 ## 函数原型
@@ -139,10 +139,10 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <td>outIndex</td>
     <td>输入</td>
     <td>计算公式中的outIndex，代表输出位置索引。</td>
-    <td><ul><li>paddedMode为false时，取值范围为[0,tokens_num*topK_num-1]。</li><li>paddedMode为true时，取值范围为[0,experts_num*capacity-1]。</li></ul></td>
+    <td><ul><li>dropAndPad为false时，取值范围为[0,tokens_num*topK_num-1]。</li><li>dropAndPad为true时，取值范围为[0,experts_num*capacity-1]。</li></ul></td>
     <td>INT32</td>
     <td>ND</td>
-    <td><ul><li>paddedMode为false时，shape为(tokens_num*topK_num)。</li><li>paddedMode为true时，shape为(experts_num*capacity)。</li></ul></td>
+    <td><ul><li>dropAndPad为false时，shape为(tokens_num*topK_num)。</li><li>dropAndPad为true时，shape为(experts_num*capacity)。</li></ul></td>
     <td>√</td>
     </tr>
     <tr>
@@ -172,7 +172,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <td>数据类型与unpermutedTokensGrad相同。</td>
     <td>BFLOAT16、FLOAT16、FLOAT</td>
     <td>ND</td>
-    <td><ul><li>paddedMode为false时，shape为(tokens_num*topK_num,hidden_size)。</li><li>paddedMode为true时，shape为(experts_num*capacity,hidden_size)。</li></ul></td>
+    <td><ul><li>dropAndPad为false时，shape为(tokens_num*topK_num,hidden_size)。</li><li>dropAndPad为true时，shape为(experts_num*capacity,hidden_size)。</li></ul></td>
     <td>√</td>
     </tr>
     <tr>
@@ -186,9 +186,9 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <td>√</td>
     </tr>
     <tr>
-    <td>paddedMode</td>
+    <td>dropAndPad</td>
     <td>属性</td>
-    <td>true表示开启paddedMode，false表示关闭paddedMode。</td>
+    <td>true表示开启dropAndPad，false表示关闭dropAndPad。</td>
     <td>-</td>
     <td>BOOL</td>
     <td>-</td>
@@ -198,7 +198,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <tr>
     <td>restoreShapeOptional</td>
     <td>属性</td>
-    <td>INT64类型的aclIntArray。paddedMode为true时代表unpermutedTokensGrad的shape。</td>
+    <td>INT64类型的aclIntArray。dropAndPad为true时代表unpermutedTokensGrad的shape。</td>
     <td>-</td>
     <td>INT64</td>
     <td>-</td>
@@ -212,7 +212,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <td>数据类型与unpermutedTokensGrad相同。</td>
     <td>BFLOAT16、FLOAT16、FLOAT</td>
     <td>ND</td>
-    <td><ul><li>paddedMode为false时，shape为(tokens_num*topK_num,hidden_size)。</li><li>paddedMode为true时，shape为(experts_num*capacity,hidden_size)。</li></ul></td>
+    <td><ul><li>dropAndPad为false时，shape为(tokens_num*topK_num,hidden_size)。</li><li>dropAndPad为true时，shape为(experts_num*capacity,hidden_size)。</li></ul></td>
     <td>×</td>
     </tr>
     <tr>
@@ -280,19 +280,19 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
     <tr>
     <td rowspan="8"> ACLNN_ERR_INNER_TILING_ERROR </td>
     <td rowspan="8"> 561002 </td>
-    <td>输入probsOptional非空，且paddedMode为false时，topK_num > 512。</td>
+    <td>输入probsOptional非空，且dropAndPad为false时，topK_num > 512。</td>
     </tr>
     <tr>
-    <td>输入probsOptional非空，且paddedMode为false时，topK_num大于experts_num。</td>
+    <td>输入probsOptional非空，且dropAndPad为false时，topK_num大于experts_num。</td>
     </tr>
     <tr>
-    <td>输入probsOptional非空，且paddedMode为false时，(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) < 1。</td>
+    <td>输入probsOptional非空，且dropAndPad为false时，(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) < 1。</td>
     </tr>
     <tr>
-    <td>输入probsOptional非空，且paddedMode为true时，capacity大于tokens_num。</td>
+    <td>输入probsOptional非空，且dropAndPad为true时，capacity大于tokens_num。</td>
     </tr>
     <tr>
-    <td>输入probsOptional非空，且paddedMode为true时，hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，大于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，大于4149248。</td>
+    <td>输入probsOptional非空，且dropAndPad为true时，hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，大于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，大于4149248。</td>
     </tr>
     <tr>
     <td>输入probsOptional非空时，输入routingMapOptional或permutedTokensOptional为空。</td>
@@ -352,11 +352,12 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGrad(
 
 - 确定性计算：
   - aclnnMoeTokenUnpermuteWithRoutingMapGrad默认确定性实现。
-
-- 当输入probsOptional非空，且paddedMode为false时
+- tokens_num表示输入的token数量，hidden_size表示词向量维度，experts_num表示专家个数。
+- 通过dropAndPad区分以下两种模式：dropAndPad等于true时，每个专家固定能够处理capacity个token。dropAndPad等于false时，每个token固定被topK_num个专家处理。
+- 当输入probsOptional非空，且dropAndPad为false时
   - 要求topK_num <= 512且topK_num <= experts_num。
   - 要求experts_num满足196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256 / (6 * tokenTypeLen + 12) >= 1，其中probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
-- 当输入probsOptional非空，且paddedMode为true时
+- 当输入probsOptional非空，且dropAndPad为true时
   - 要求capacity <= tokens_num。
   - 要求hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，需要小于等于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，需要小于等于4149248。
 
@@ -462,7 +463,7 @@ int main() {
             return ret);
 
   // 2. 构造输入与输出，需要根据API的接口自定义构造
-  bool paddedMode = false;
+  bool dropAndPad = false;
   int32_t tokenNum = 1;
   int32_t hiddenSize = 2;
   int32_t expertNum = 2;
@@ -525,7 +526,7 @@ int main() {
   aclOpExecutor *executor;
 
   // 调用aclnnMoeTokenUnpermuteWithRoutingMapGrad第一段接口
-  ret = aclnnMoeTokenUnpermuteWithRoutingMapGradGetWorkspaceSize(unpermutedTokensGrad, outIndex, permuteTokenId, routingMap, permutedTokens, probs, paddedMode, nullptr, permutedTokensGrad, probsGrad, &workspaceSize, &executor);
+  ret = aclnnMoeTokenUnpermuteWithRoutingMapGradGetWorkspaceSize(unpermutedTokensGrad, outIndex, permuteTokenId, routingMap, permutedTokens, probs, dropAndPad, nullptr, permutedTokensGrad, probsGrad, &workspaceSize, &executor);
   CHECK_RET(
       ret == ACL_SUCCESS,
       LOG_PRINT("aclnnMoeTokenUnpermuteWithRoutingMapGradGetWorkspaceSize failed. ERROR: %d\n", ret);
