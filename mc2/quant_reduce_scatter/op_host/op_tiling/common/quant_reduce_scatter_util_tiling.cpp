@@ -86,7 +86,8 @@ static ge::graphStatus SetRankSize(const gert::TilingContext *context, TilingRun
         runInfo.rankSize = *rankSizePtr;
     }
     OP_TILING_CHECK(!IsContains(RANK_SIZE_LIST, runInfo.rankSize),
-                    OP_LOGE(nodeName, "The rankSize should be in [2, 4, 8], but actual value is %u.", runInfo.rankSize),
+                    OP_LOGE(nodeName, "The rankSize should be in %s, but actual value is %u.",
+                    VectorToString(RANK_SIZE_LIST).c_str(), runInfo.rankSize),
                     return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }

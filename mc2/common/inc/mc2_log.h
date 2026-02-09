@@ -50,6 +50,25 @@ std::string ConcatString(T arg, Ts... arg_left) {
   return oss.str();
 }
 
+/**
+ * @brief 工具函数：将合法列表转为字符串动态生成
+ * @param list: 有效值列表
+ */
+template <typename T>
+std::string VectorToString(const std::vector<T> &list)
+{
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < list.size(); i++) {
+        if (i > 0) {
+          oss << ",";
+        }
+        oss << list[i];
+    }
+    oss << "]";
+    return oss.str();
+}
+
 namespace Mc2Log {
 void PrintMMV3TilingData(const std::string &opName, Mc2Tiling::MC2MatmulV3TilingData &tiling);
 
