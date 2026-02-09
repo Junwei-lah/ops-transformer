@@ -25,83 +25,71 @@ public:
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("key")
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("value")
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("sparse_indices")
             .ParamType(REQUIRED)
             .DataType({ge::DT_INT32, ge::DT_INT32})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("d_out")
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("out")
             .ParamType(REQUIRED)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("softmax_max")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("softmax_sum")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("actual_seq_lengths_query")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_INT32, ge::DT_INT32})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("actual_seq_lengths_kv")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_INT32, ge::DT_INT32})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("query_rope")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Input("key_rope")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_BF16, ge::DT_FLOAT16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
 
         this->Output("d_query")
             .ParamType(REQUIRED)

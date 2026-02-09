@@ -23,65 +23,53 @@ public:
         this->Input("query")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("key")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("query_index")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("key_index")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("weight")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("sparse_indices")
             .ParamType(REQUIRED)
             .DataType({ge::DT_INT32, ge::DT_INT32})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("softmax_max")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("softmax_sum")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("query_rope")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("key_rope")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
-            .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .AutoContiguous();
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND});
         this->Input("actual_seq_lengths_query")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_INT64, ge::DT_INT64})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .ValueDepend(OPTIONAL)
-            .AutoContiguous();
+            .ValueDepend(OPTIONAL);
         this->Input("actual_seq_lengths_key")
             .ParamType(OPTIONAL)
             .DataType({ge::DT_INT64, ge::DT_INT64})
             .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-            .ValueDepend(OPTIONAL)
-            .AutoContiguous();
+            .ValueDepend(OPTIONAL);
         this->Output("d_query_index")
             .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT16, ge::DT_BF16})
