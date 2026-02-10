@@ -85,11 +85,6 @@ inline std::ostream& operator<<(std::ostream& os, const MatmulAllReduceApiUtPara
     return os << param.case_name;
 }
 
-inline std::string PrintMatmulAllReduceApiUtParam(const testing::TestParamInfo<MatmulAllReduceApiUtParam>& info)
-{
-    return info.param.case_name;
-}
-
 } // namespace MatmulAllReduceUT
 
 #endif // MATMUL_ALL_REDUCE_API_UT_PARAM_H
