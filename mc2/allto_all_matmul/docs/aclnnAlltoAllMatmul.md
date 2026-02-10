@@ -93,7 +93,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>FLOAT16、BFLOAT16</td>
     <td>ND</td>
     <td>2维，shape为(H*rankSize, N)</td>
-    <td>x</td>
+    <td>√</td>
     </tr>
     <tr>
     <td>biasOptional</td>
@@ -122,7 +122,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>字符串长度要求(0, 128)。</td>
     <td>STRING</td>
     <td>-</td>
-    <td>1维</td>
+    <td>-</td>
     <td>-</td>
     </tr>
     <tr>
@@ -269,13 +269,16 @@ aclnnStatus aclnnAlltoAllMatmul(
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 参数说明中shape使用的变量BS必须整除NPU卡数。
-* BS和N的值不得超过2147483647（INT32_MAX）。
+* BS和N的值不得超过2147483647（INT32_MAX），BS的值不得小于0，N的值不得小于1。
 * H*rankSize范围，根据设备型号有不同限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持[1, 35000]。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持[1, 65535]。
 * 空tensor的支持度根据不同设备型号有不同的限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何空tensor。
   - <term>Ascend 950PR/Ascend 950DT</term>：仅支持输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持。
+* 非连续tensor的支持度根据不同设备型号有不同的限制：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何非连续tensor。
+  - <term>Ascend 950PR/Ascend 950DT</term>：仅支持x2为非连续tensor，其它非连续tensor均不支持。
 * x1、x2计算输入的数据类型要和output、alltoAllOutOptional计算输出的数据类型一致，传入的x1、x2与output均不为空指针。
 * biasOptional的数据类型根据不同设备型号有不同的限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：x1/x2计算输入的数据类型为FLOAT16时，biasOptional计算输入的数据类型支持FLOAT16；x1/x2计算输入的数据类型为BFLOAT16时，biasOptional计算输入的数据类型支持FLOAT32。

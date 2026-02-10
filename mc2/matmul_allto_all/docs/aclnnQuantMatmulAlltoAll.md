@@ -386,10 +386,12 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
   - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 参数说明中shape使用的变量H2必须整除NPU卡数。
 * H1范围仅支持[1, 65535]。
-* BS * rankSize和H2的值不得超过2147483647(INT32_MAX)。
+* BS*rankSize和H2的值不得超过2147483647(INT32_MAX)，BS的值不得小于1，H2的值不得小于2。
 * 目前仅支持左矩阵perToken量化，x1QuantMode=3；右矩阵perChannel量化，x2QuantMode=2。
 * 不支持空tensor。
-* <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>不支持x2为非连续tensor。
+* 非连续tensor的支持度根据不同设备型号有不同的限制：
+  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何非连续tensor。
+  - <term>Ascend 950PR/Ascend 950DT</term>：仅支持x2为非连续tensor，其它非连续tensor均不支持。
 * 传入的x1、x2、x1Scale、x2Scale与output均不为空指针，且
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：biasOptional不支持传入空指针。
 * x1、x2和biasOptional计算输入的数据类型根据不同设备型号有不同的限制：
