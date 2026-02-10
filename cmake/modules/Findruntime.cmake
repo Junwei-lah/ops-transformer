@@ -14,6 +14,7 @@ set(runtime_FOUND ON)
 set(ACL_HEAD_SEARCH_PATHS
   ${ASCEND_DIR}/${SYSTEM_PREFIX}/include
   ${TOP_DIR}/ace/npuruntime/acl/inc/external            # compile with ci
+  ${TOP_DIR}/runtime/include/external                   # compile with ci
 )
 find_path(ACL_INC_DIR
   NAMES acl/acl.h
@@ -32,6 +33,7 @@ message(STATUS "Found source acl include dir:  ${ACL_INC_DIR}")
 set(RUNTIME_SEARCH_PATH
   ${ASCEND_DIR}/${SYSTEM_PREFIX}/include/experiment/runtime
   ${TOP_DIR}/ace/npuruntime/inc            # compile with ci
+  ${TOP_DIR}/runtime/pkg_inc/runtime       # compile with ci
   ${ASCEND_DIR}/${SYSTEM_PREFIX}/pkg_inc/runtime
 )
 find_path(RUNTIME_INC_DIR
