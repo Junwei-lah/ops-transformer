@@ -176,6 +176,12 @@ ge::graphStatus WeightQuantMatmulAllReduceTiling310P::PostTiling()
         opName_, " PostTiling tile_core_num:%d tail_core_num:%d max_core_num:%d", tile_core_num, tail_core_num,
         max_core_num);
     context_->SetBlockDim(max_core_num);
+
+    // 涉及SyncAll，设置batch mode模式，所有核同时启动
+    uint32_t batch_mode = 1U;
+    ret = context_->SetScheduleMode(batch_mode);
+    GE_ASSERT_GRAPH_SUCCESS(ret); 
+    
     return ge::GRAPH_SUCCESS;
 }
 

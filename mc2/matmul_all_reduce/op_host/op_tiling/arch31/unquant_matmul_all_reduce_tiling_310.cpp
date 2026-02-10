@@ -138,6 +138,12 @@ ge::graphStatus UnQuantMatmulAllReduceTiling310::PostTiling()
     }
 
     context_->SetBlockDim(args_.aicCoreNum);
+
+    // 涉及SyncAll，设置batch mode模式，所有核同时启动
+    uint32_t batch_mode = 1U;
+    ret = context_->SetScheduleMode(batch_mode);
+    GE_ASSERT_GRAPH_SUCCESS(ret); 
+
     return ge::GRAPH_SUCCESS;
 }
 

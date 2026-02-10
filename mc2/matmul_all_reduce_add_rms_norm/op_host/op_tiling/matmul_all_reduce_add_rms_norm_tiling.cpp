@@ -174,6 +174,12 @@ ge::graphStatus MatmulAllReduceAddRmsNormTiling::PostTiling()
     // 2代表aic和aiv个数规格定义是1比2的关系
     GE_ASSERT_TRUE(helper_->args_.aicCoreNum * 2 >= numBlocksOfArn);
     context_->SetBlockDim(helper_->args_.aicCoreNum);
+
+    // 涉及SyncAll，设置batch mode模式，所有核同时启动
+    uint32_t batch_mode = 1U;
+    ret = context_->SetScheduleMode(batch_mode);
+    GE_ASSERT_GRAPH_SUCCESS(ret);
+
     return ge::GRAPH_SUCCESS;
 }
 

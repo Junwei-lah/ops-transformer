@@ -609,4 +609,3 @@ IMPL_OP_OPTILING(AllGatherMatmul)
     .Tiling(AllGatherMatmulTilingFunc)
     .TilingParse<AllGatherMatmulCompileInfo>(TilingParseForAllGatherMatmul);
 }  // namespace optiling
-

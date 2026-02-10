@@ -496,6 +496,11 @@ ge::graphStatus AllGatherMatmulTilingAIVModeFunc(gert::TilingContext *context)
 {
     const char *nodeName = context->GetNodeName();
     OP_LOGI("Enter AllGatherMatmulAIVMode tiling func.");
+    
+    // 涉及SyncAll，设置batch mode模式，所有核同时启动
+    uint32_t batch_mode = 1U;
+    auto ret = context->SetScheduleMode(batch_mode);
+    GE_ASSERT_GRAPH_SUCCESS(ret); 
 
     // 1. tilingData
     AllGatherMatmulAIVModeTilingData *tilingData = context->GetTilingData<AllGatherMatmulAIVModeTilingData>();

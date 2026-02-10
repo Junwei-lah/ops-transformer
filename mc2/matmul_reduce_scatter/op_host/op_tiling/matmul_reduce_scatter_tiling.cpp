@@ -404,6 +404,13 @@ static ge::graphStatus MCSpliteMReduceScatter(gert::TilingContext* ctx, MatmulRe
     }
     MC2SetWorkspaceReduceScatter(ctx, tilingData, args);
 
+    // mmReduceScatterBiasCast = true时涉及SyncAll，设置batch mode模式，所有核同时启动
+    if(tilingData.param.biasLen != 0) {
+        uint32_t batch_mode = 1U;
+        auto ret = ctx->SetScheduleMode(batch_mode);
+        GE_ASSERT_GRAPH_SUCCESS(ret);
+    }
+
     return ge::GRAPH_SUCCESS;
 }
 

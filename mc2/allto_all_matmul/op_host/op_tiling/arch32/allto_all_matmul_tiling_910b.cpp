@@ -839,6 +839,10 @@ ge::graphStatus AlltoAllMatmulTiling910b::DoMmCommTiling(CoCTiling &cocTilingDat
 
 ge::graphStatus AlltoAllMatmulTiling910b::DoOpTiling()
 {
+    // 涉及SyncAll，需要设置batch mode模式，所有核同时启动
+    uint32_t batch_mode = 1U;
+    auto ret = context_->SetScheduleMode(batch_mode);
+    GE_ASSERT_GRAPH_SUCCESS(ret);
     // 1. tilingData
     AlltoAllMatmulTilingData *tilingData = context_->GetTilingData<AlltoAllMatmulTilingData>();
     OPS_CHECK(tilingData == nullptr, OPS_REPORT_VECTOR_INNER_ERR(opName_, "tilingData is nullptr."),
