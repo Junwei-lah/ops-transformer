@@ -1095,7 +1095,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td>D</td>
                 <td><ul>
                     <li>支持D轴小于等于512</li>
-                    <li>Q_S>1时，per-tensor全量化场景时，query，key，value的类型全部为INT8/FP8，D轴1-512全部支持。FP8 per-block全量化场景时，query，key，value的类型全部为FLOAT8_E4M3FN、HIFLOAT8，D轴1-128全部支持.</li>
+                    <li>Q_S>1时，per-tensor全量化场景时，query，key，value的类型全部为INT8，D轴1-512全部支持。FP8 per-block全量化场景时，query，key，value的类型全部为FLOAT8_E4M3FN、HIFLOAT8，D轴1-128全部支持.</li>
                     <li>伪量化场景下，aclnn单算子调用支持KV INT4输入或者INT4拼接成INT32输入（建议通过dynamicQuant生成INT4格式的数据，因为dynamicQuant就是一个INT32包括8个INT4）,那么KV的D是实际值的八分之一（prefix同理）</li>
                     <li>key、value输入类型为FLOAT4_E2M1/INT4（INT32）时，query的D轴以及key、value的D轴需要64对齐（INT32仅支持key、value的D 8对齐）</li>
                 </ul></td>
@@ -1916,7 +1916,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             <td>-</td>
         </tr>
         <tr>
-            <td>key</td>
+            <td>value</td>
             <td>FLOAT8_E4M3FN</td>
             <td>-</td>
         </tr>
