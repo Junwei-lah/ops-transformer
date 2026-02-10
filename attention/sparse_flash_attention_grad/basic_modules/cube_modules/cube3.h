@@ -29,11 +29,14 @@ CubeOp<T1>::cube3ProcessSparse(const int64_t dsGmOffset, const int64_t keyGmOffs
     MMParam mmParam;
     mmParam.singleM = dimG;
     mmParam.singleN = perLoopDSize;
-    mmParam.singleK = selectedBlockSize * blockOffset;
     mmParam.isRightTranspose = true;
     mmParam.dstStride = dimDTotal;
 
     LocalTensor<T1> current_l1_ds_tensor, l1_key_tensor; 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + lastBlockSize;
+    }
     for (int32_t dIdx = 0; dIdx < dLoopTimes; dIdx++) {
         LocalTensor<float> l0cTensor = cL0TensorPingPong[ping_pong_flag_l0c_ & 1];
 
@@ -47,10 +50,6 @@ CubeOp<T1>::cube3ProcessSparse(const int64_t dsGmOffset, const int64_t keyGmOffs
             bool isFirstLoop = (nIdx == blkCntOffset);
             bool isLastLoop = (nIdx + blockOffset >= blkCntOffset + selectedCntOffset);
 
-            uint32_t totalSel = selectedCntOffset * selectedBlockSize;
-            if (isLastBasicBlock && isLastLoop) {
-                totalSel = totalSel - selectedBlockSize + lastBlockSize;
-            }
             mmParam.singleK = min(selectedBlockSize * blockOffset, totalSel - (nIdx - blkCntOffset) * selectedBlockSize);
 
             WaitFlag<HardEvent::MTE1_MTE2>(MM_L1_COMMON_EVENTS[ping_pong_flag_l1_common_]);
@@ -90,12 +89,15 @@ CubeOp<T1>::cube3ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
     MMParam mmParam;
     mmParam.singleM = dimG;
     mmParam.singleN = perLoopDSize;
-    mmParam.singleK = selectedBlockSize * blockOffset;
     mmParam.isRightTranspose = true;
     mmParam.dstStride = dimDTotal;
 
     LocalTensor<T1> current_l1_ds_tensor, l1_key_tensor; 
 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + lastBlockSize;
+    }
     for (int32_t dIdx = 0; dIdx < dLoopTimes; dIdx++) {
         LocalTensor<float> l0cTensor = cL0TensorPingPong[ping_pong_flag_l0c_ & 1];
 
@@ -108,11 +110,6 @@ CubeOp<T1>::cube3ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
             bool isFirstLoop = (nIdx == blkCntOffset);
             bool isLastLoop = (nIdx + blockOffset >= blkCntOffset + selectedCntOffset);
 
-
-            uint32_t totalSel = selectedCntOffset * selectedBlockSize;
-            if (isLastBasicBlock && isLastLoop) {
-                totalSel = totalSel - selectedBlockSize + lastBlockSize;
-            }
             mmParam.singleK = min(selectedBlockSize * blockOffset, totalSel - (nIdx - blkCntOffset) * selectedBlockSize);
 
             current_l1_ds_tensor = l1_ds_tensors[ping_pong_flag_l1_ds_][l1Offset];
@@ -153,8 +150,7 @@ CubeOp<T1>::cube3Process(const int64_t dsGmOffset, const int64_t keyGmOffset, co
 {
     if (!runInfo.isSmallS2) {
         cube3ProcessSparse(dsGmOffset, keyGmOffset, indicesGmOffset, outGmOffset, blkCntOffset, mmPingPongIdx, lastBlockSize, isLastBasicBlock);
-    }
-    else {
+    } else {
         cube3ProcessDense(blkCntOffset, mmPingPongIdx,lastBlockSize, isLastBasicBlock, runInfo);
     }
 }

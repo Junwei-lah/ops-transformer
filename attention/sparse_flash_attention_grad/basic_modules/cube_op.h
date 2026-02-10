@@ -60,7 +60,9 @@ private:
                                                                        const int64_t indicesGmOffset,
                                                                        const int64_t outGmOffset, 
                                                                        const int32_t blkCntOffset,
-                                                                       const int32_t mmPingPongIdx);
+                                                                       const int32_t mmPingPongIdx,
+                                                                       const int32_t lastBlockSize,
+                                                                       const bool isLastBasicBlock);
 
     __aicore__ inline __attribute__((always_inline)) void cube1ProcessDense(const int32_t blkCntOffset,
                                                                        const int32_t mmPingPongIdx,
@@ -71,7 +73,9 @@ private:
                                                                        const int64_t indicesGmOffset,
                                                                        const int64_t outGmOffset, 
                                                                        const int32_t blkCntOffset,
-                                                                       const int32_t mmPingPongIdx);
+                                                                       const int32_t mmPingPongIdx,
+                                                                       const int32_t lastBlockSize,
+                                                                       const bool isLastBasicBlock);
 
     __aicore__ inline __attribute__((always_inline)) void cube2Process(const int64_t dyGmOffset,
                                                                        const int64_t valueGmOffset,

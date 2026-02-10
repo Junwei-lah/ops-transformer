@@ -28,7 +28,6 @@ CubeOp<T1>::cube4ProcessSparse(const int64_t dsGmOffset, const int64_t queryGmOf
     uint32_t blockOffset = M_SPLIT_SIZE / selectedBlockSize; // 128 / 1 = 128
 
     MMParam mmParam;
-    mmParam.singleM = selectedBlockSize * blockOffset;
     mmParam.singleK = dimG;
     mmParam.isFixOut = true;
     mmParam.isLeftTranspose = true;
@@ -39,14 +38,18 @@ CubeOp<T1>::cube4ProcessSparse(const int64_t dsGmOffset, const int64_t queryGmOf
     const bool reloadQuery = !runInfo.noReload && runInfo.isLastBasicBlock;
 
     LocalTensor<T1> l1_ds_tensor = l1_ds_tensors[ping_pong_flag_l1_ds_];
-    CopyGmToL1(l1_ds_tensor, dsWorkspaceGm[dsGmOffset], dimG, selectedCntOffset * selectedBlockSize, TOTAL_BLOCK_SIZE);
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (runInfo.isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + runInfo.lastBlockSize;
+    }
+    CopyGmToL1(l1_ds_tensor, dsWorkspaceGm[dsGmOffset], dimG, totalSel, TOTAL_BLOCK_SIZE);
     for (int32_t mIdx = blkCntOffset; mIdx < blkCntOffset + selectedCntOffset; mIdx+=blockOffset) {
         int32_t topkIdx = topkIndicesGm[indicesGmOffset].GetValue(mIdx);
         int32_t startS2Idx = topkIdx * selectedBlockSize * dimN2 * dimDTotal;
         int32_t l1Offset = (mIdx - blkCntOffset) * selectedBlockSize * dimGAlign;
 
         mmParam.singleN = perLoopDSize;
-        mmParam.singleM = min(selectedBlockSize * blockOffset, selectedCntOffset * selectedBlockSize - (mIdx - blkCntOffset) * selectedBlockSize);
+        mmParam.singleM = min(selectedBlockSize * blockOffset, totalSel - (mIdx - blkCntOffset) * selectedBlockSize);
 
         LocalTensor<T1> current_l1_ds_tensor, current_l1_query_tensor;
         current_l1_ds_tensor = l1_ds_tensor[l1Offset];
@@ -122,7 +125,6 @@ CubeOp<T1>::cube4ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
     uint32_t blockOffset = M_SPLIT_SIZE / selectedBlockSize; 
 
     MMParam mmParam;
-    mmParam.singleM = selectedBlockSize * blockOffset;
     mmParam.singleK = dimG;
     mmParam.isFixOut = true;
     mmParam.isLeftTranspose = true;
@@ -133,14 +135,18 @@ CubeOp<T1>::cube4ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
     const bool reloadQuery = !runInfo.noReload && runInfo.isLastBasicBlock;
     
     LocalTensor<T1> l1_ds_tensor = l1_ds_tensors[ping_pong_flag_l1_ds_];
-    CopyGmToL1(l1_ds_tensor, dsWorkspaceGm[dsGmOffset], dimG, selectedCntOffset * selectedBlockSize, TOTAL_BLOCK_SIZE);
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (runInfo.isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + runInfo.lastBlockSize;
+    }
+    CopyGmToL1(l1_ds_tensor, dsWorkspaceGm[dsGmOffset], dimG, totalSel, TOTAL_BLOCK_SIZE);
     for (int32_t mIdx = blkCntOffset; mIdx < blkCntOffset + selectedCntOffset; mIdx+=blockOffset) {
         int32_t topkIdx = topkIndicesGm[indicesGmOffset].GetValue(mIdx);
         int32_t startS2Idx = topkIdx * selectedBlockSize * dimN2 * dimDTotal;
         int32_t l1Offset = (mIdx - blkCntOffset) * selectedBlockSize * dimGAlign;
 
         mmParam.singleN = perLoopDSize;
-        mmParam.singleM = min(selectedBlockSize * blockOffset, selectedCntOffset * selectedBlockSize - (mIdx - blkCntOffset) * selectedBlockSize);
+        mmParam.singleM = min(selectedBlockSize * blockOffset, totalSel - (mIdx - blkCntOffset) * selectedBlockSize);
 
         LocalTensor<T1> current_l1_ds_tensor, current_l1_query_tensor;
         current_l1_ds_tensor = l1_ds_tensor[l1Offset];
@@ -207,8 +213,7 @@ CubeOp<T1>::cube4Process(const int64_t dsGmOffset, const int64_t queryGmOffset, 
 {
     if (!runInfo.isSmallS2) {
         cube4ProcessSparse(dsGmOffset, queryGmOffset, queryRopeGmOffset, indicesGmOffset, outGmOffset, blkCntOffset, mmPingPongIdx, runInfo);
-    }
-    else {
+    } else {
         cube4ProcessDense(blkCntOffset, mmPingPongIdx, runInfo);
     }
 }

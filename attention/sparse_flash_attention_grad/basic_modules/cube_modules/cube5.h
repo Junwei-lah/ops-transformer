@@ -22,11 +22,9 @@ CubeOp<T1>::cube5ProcessSparse(const int64_t pGmOffset, const int64_t dyGmOffset
 {
     uint32_t dLoopTimes = (dimDv + 127) / N_SPLIT_SIZE;
     uint32_t perLoopDSize = N_SPLIT_SIZE;
-    uint32_t tailLoopDSize = dimDv - (dLoopTimes - 1) * perLoopDSize;
     uint32_t blockOffset = M_SPLIT_SIZE / selectedBlockSize; // 128 / 1 = 128
 
     MMParam mmParam;
-    mmParam.singleM = selectedBlockSize * blockOffset;
     mmParam.singleN = perLoopDSize;
     mmParam.singleK = dimG;
     mmParam.isFixOut = true;
@@ -37,12 +35,16 @@ CubeOp<T1>::cube5ProcessSparse(const int64_t pGmOffset, const int64_t dyGmOffset
     int64_t mm5ResOutBaseOffset = runInfo.scatterTaskId * MAX_CORE_NUM * selectedBlockCount * selectedBlockSize * dimDv + cBlockIdx * selectedBlockCount * selectedBlockSize * dimDv;
     const bool reloadDy = !runInfo.noReload && runInfo.isLastBasicBlock;
 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (runInfo.isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + runInfo.lastBlockSize;
+    }
     for (int32_t mIdx = blkCntOffset; mIdx < blkCntOffset + selectedCntOffset; mIdx+=blockOffset) {
         LocalTensor<T1> current_l1_dy_tensor, l1_p_tensor;
         l1_p_tensor = l1_p_tensors[ping_pong_flag_l1_p_];
         WaitFlag<HardEvent::MTE1_MTE2>(MM_L1_P_EVENT[ping_pong_flag_l1_p_]);
 
-        mmParam.singleM = min(selectedBlockSize * blockOffset, selectedCntOffset * selectedBlockSize - (mIdx - blkCntOffset) * selectedBlockSize);
+        mmParam.singleM = min(selectedBlockSize * blockOffset, totalSel - (mIdx - blkCntOffset) * selectedBlockSize);
 
         int64_t mm5ResOutOffset = mm5ResOutBaseOffset + mIdx * selectedBlockSize * dimDv;
         CopyGmToL1(l1_p_tensor, pWorkspaceGm[pGmOffset + (mIdx - blkCntOffset) * selectedBlockSize], dimG, mmParam.singleM, PER_LOOP_BLOCK_SIZE);
@@ -88,11 +90,9 @@ CubeOp<T1>::cube5ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
 
     uint32_t dLoopTimes = (dimDv + 127) / N_SPLIT_SIZE;
     uint32_t perLoopDSize = N_SPLIT_SIZE;
-    uint32_t tailLoopDSize = dimDv - (dLoopTimes - 1) * perLoopDSize;
     uint32_t blockOffset = M_SPLIT_SIZE / selectedBlockSize; // 128 / 1 = 128
 
     MMParam mmParam;
-    mmParam.singleM = selectedBlockSize * blockOffset;
     mmParam.singleN = perLoopDSize;
     mmParam.singleK = dimG;
     mmParam.isFixOut = true;
@@ -103,11 +103,15 @@ CubeOp<T1>::cube5ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
     int64_t mm5ResOutBaseOffset = runInfo.scatterTaskId * MAX_CORE_NUM * selectedBlockCount * selectedBlockSize * dimDv + cBlockIdx * selectedBlockCount * selectedBlockSize * dimDv;
     const bool reloadDy = !runInfo.noReload && runInfo.isLastBasicBlock;
 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (runInfo.isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + runInfo.lastBlockSize;
+    }
     for (int32_t mIdx = blkCntOffset; mIdx < blkCntOffset + selectedCntOffset; mIdx+=blockOffset) {
         LocalTensor<T1> current_l1_dy_tensor, l1_p_tensor;
         l1_p_tensor = l1_p_tensors[ping_pong_flag_l1_p_];
         WaitFlag<HardEvent::MTE1_MTE2>(MM_L1_P_EVENT[ping_pong_flag_l1_p_]);
-        mmParam.singleM = min(selectedBlockSize * blockOffset, selectedCntOffset * selectedBlockSize - (mIdx - blkCntOffset) * selectedBlockSize);
+        mmParam.singleM = min(selectedBlockSize * blockOffset, totalSel - (mIdx - blkCntOffset) * selectedBlockSize);
 
         int64_t mm5ResOutOffset = mm5ResOutBaseOffset + mIdx * selectedBlockSize * dimDv;
         CopyGmToL1(l1_p_tensor, pWorkspaceGm[pGmOffset + (mIdx - blkCntOffset) * selectedBlockSize], dimG, mmParam.singleM, PER_LOOP_BLOCK_SIZE);
@@ -149,8 +153,7 @@ CubeOp<T1>::cube5Process(const int64_t dsGmOffset, const int64_t keyGmOffset, co
 {
     if (!runInfo.isSmallS2) {
         cube5ProcessSparse(dsGmOffset, keyGmOffset, indicesGmOffset, outGmOffset, blkCntOffset, mmPingPongIdx, runInfo);
-    }
-    else {
+    } else {
         cube5ProcessDense(blkCntOffset, mmPingPongIdx, runInfo);
     }
 }

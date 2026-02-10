@@ -19,7 +19,8 @@
 template <typename T1>
 __aicore__ inline __attribute__((always_inline)) void
 CubeOp<T1>::cube2ProcessSparse(const int64_t dyGmOffset, const int64_t valueGmOffset, const int64_t indicesGmOffset,
-                         const int64_t outGmOffset, const int32_t blkCntOffset, const int32_t mmPingPongIdx)
+                         const int64_t outGmOffset, const int32_t blkCntOffset, const int32_t mmPingPongIdx,
+                         const int32_t lastBlockSize, const bool isLastBasicBlock)
 {
     uint32_t dLoopTimes = (dimDqk + 127) / K_SPLIT_SIZE;
     uint32_t perLoopDSize = K_SPLIT_SIZE;
@@ -28,11 +29,14 @@ CubeOp<T1>::cube2ProcessSparse(const int64_t dyGmOffset, const int64_t valueGmOf
 
     MMParam mmParam;
     mmParam.singleM = dimG;
-    mmParam.singleN = selectedBlockSize * blockOffset;
     mmParam.singleK = perLoopDSize;
     mmParam.isFixOut = false;
     mmParam.dstStride = PER_LOOP_BLOCK_SIZE;
 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + lastBlockSize;
+    }
     for (int32_t nIdx = blkCntOffset; nIdx < blkCntOffset + selectedCntOffset; nIdx+=blockOffset) {
         LocalTensor<float> l0cTensor = cL0TensorPingPong[ping_pong_flag_l0c_ & 1];
         int64_t mm2WorkspaceGmOffset =  outGmOffset + (nIdx - blkCntOffset) * selectedBlockSize;
@@ -41,6 +45,8 @@ CubeOp<T1>::cube2ProcessSparse(const int64_t dyGmOffset, const int64_t valueGmOf
         int64_t currentDyOffset = 0;
         int64_t currentVOffset;
         // query node @ key node
+        mmParam.singleN = min(selectedBlockSize * blockOffset, totalSel - (nIdx - blkCntOffset) * selectedBlockSize);
+
         for (int32_t dIdx = 0; dIdx < dLoopTimes; dIdx++) {
             mmParam.isOutKFisrt = dIdx == 0;
             mmParam.isFixOut = dIdx == dLoopTimes - 1;
@@ -80,11 +86,14 @@ CubeOp<T1>::cube2ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
 
     MMParam mmParam;
     mmParam.singleM = dimG;
-    mmParam.singleN = selectedBlockSize * blockOffset;
     mmParam.singleK = perLoopDSize;
     mmParam.isFixOut = false;
     mmParam.dstStride = PER_LOOP_BLOCK_SIZE;
 
+    uint32_t totalSel = selectedCntOffset * selectedBlockSize;
+    if (runInfo.isLastBasicBlock) {
+        totalSel = totalSel - selectedBlockSize + runInfo.lastBlockSize;
+    }
     //切N，也就是切S2
     for (int32_t nIdx = blkCntOffset; nIdx < blkCntOffset + selectedCntOffset; nIdx+=blockOffset) {
         LocalTensor<float> l0cTensor = cL0TensorPingPong[ping_pong_flag_l0c_ & 1];
@@ -93,6 +102,8 @@ CubeOp<T1>::cube2ProcessDense(const int32_t blkCntOffset, const int32_t mmPingPo
         LocalTensor<T1> current_l1_dy_tensor, l1_v_tensor;
         int64_t currentDyOffset = 0;
         int64_t currentVOffset;
+
+        mmParam.singleN = min(selectedBlockSize * blockOffset, totalSel - (nIdx - blkCntOffset) * selectedBlockSize);
         // query node @ key node
         for (int32_t dIdx = 0; dIdx < dLoopTimes; dIdx++) {
             mmParam.isOutKFisrt = dIdx == 0;
@@ -124,9 +135,8 @@ CubeOp<T1>::cube2Process(const int64_t dyGmOffset, const int64_t valueGmOffset, 
                          const int64_t outGmOffset, const int32_t blkCntOffset, const int32_t mmPingPongIdx, const RunInfo &runInfo)
 {
     if (!runInfo.isSmallS2) {
-        cube2ProcessSparse(dyGmOffset, valueGmOffset, indicesGmOffset, outGmOffset, blkCntOffset, mmPingPongIdx);
-    }
-    else {
+        cube2ProcessSparse(dyGmOffset, valueGmOffset, indicesGmOffset, outGmOffset, blkCntOffset, mmPingPongIdx, runInfo.lastBlockSize, runInfo.isLastBasicBlock);
+    } else {
         cube2ProcessDense(blkCntOffset, mmPingPongIdx, runInfo);
     }
 }
