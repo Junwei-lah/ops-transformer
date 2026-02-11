@@ -1416,6 +1416,10 @@ version_install() {
         add_setenv "${install_path_full}" "${package_real}" "${setenv}" "${username}" "${usergroup}" "false" "${docker_root}"
         ret="$?" && [ $ret -ne 0 ] && return $ret
 
+        # set prereq_check
+        add_prereq_check "${install_path_full}" "${package_real}" "${username}" "${usergroup}" "${docker_root}"
+        ret="$?" && [ $ret -ne 0 ] && return $ret
+
         # 调用组件自定义安装流程
         package_custom_install "${package_real}" "${install_path}" "${version_dir}" "${custom_options}"
         ret="$?" && [ $ret -ne 0 ] && return $ret
@@ -1470,6 +1474,10 @@ version_uninstall() {
         del_setenv "${install_path_full}" "${package_real}" "${username}" "${docker_root}"
         ret="$?" && [ $ret -ne 0 ] && return $ret
 
+        # unset prereq_check
+        del_prereq_check "${install_path_full}" "${package_real}" "${docker_root}"
+        ret="$?" && [ $ret -ne 0 ] && return $ret
+
         # 调用组件自定义卸载流程，失败流程不中断
         package_custom_uninstall "${package_real}" "${install_path}" "${version_dir}" "${custom_options}"
         ret="$?" && [ $ret -ne 0 ] && total_ret="$ret"
@@ -1503,8 +1511,6 @@ do_install() {
     check_ret_error "$?" "Set log package name failed in install!"
     ret="$?" && [ ${ret} -ne 0 ] && return ${ret}
 
-    expand_version_file
-
     # 获取filelist.csv文件真实路径
     get_realpath "filelist_path" "${filelist_path}"
     # 获取install_path真实路径
@@ -1519,6 +1525,8 @@ do_install() {
     else
         install_path_real="${install_path}"
     fi
+
+    expand_version_file "$install_path_real"
 
     if [ "${VERSION}" != "" ] && [ "${VERSION_DIR}" != "" ]; then
         multi_version_install "${install_type}" "${install_path_real}" "${filelist_path}" "${package}" "${feature_param}" \
@@ -1551,8 +1559,6 @@ do_uninstall() {
     check_ret_error "$?" "Set log package name failed in uninstall!"
     ret="$?" && [ ${ret} -ne 0 ] && return ${ret}
 
-    expand_version_file
-
     # 获取filelist.csv文件真实路径
     get_realpath "filelist_path" "${filelist_path}"
     # 获取install_path真实路径
@@ -1567,6 +1573,8 @@ do_uninstall() {
     else
         install_path_real="${install_path}"
     fi
+
+    expand_version_file "$install_path_real"
 
     if [ "${VERSION}" != "" ] && [ "${VERSION_DIR}" != "" ]; then
         multi_version_uninstall "${install_type}" "${install_path_real}" "${filelist_path}" "${package}" "${feature_param}" \

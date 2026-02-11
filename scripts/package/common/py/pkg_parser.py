@@ -31,7 +31,8 @@ from .utils import pkg_utils
 from .filelist import FileItem, FileList, fill_is_common_path
 from .utils.pkg_utils import (
     ContainAsteriskError, FAIL, BLOCK_CONFIG_PATH,
-    BlockConfigError, EnvNotSupported, IllegalVersionDir, PackageError,
+    BlockConfigError, EnvNotSupported, IllegalVersionDir,
+    MultiPkgSoftlinkError, PackageError,
     ParseOsArchError, config_feature_to_set,
     flatten, star_pipe, merge_dict, yield_if
 )
@@ -136,6 +137,12 @@ class FileInfoParsedResult(NamedTuple):
     expand_infos: List[Dict[str, str]]
 
 
+class PkgSoftlink(NamedTuple):
+    """包内软链接"""
+    dst_path: str
+    src_path: str
+
+
 class BlockConfig(NamedTuple):
     """块配置。"""
 
@@ -143,6 +150,7 @@ class BlockConfig(NamedTuple):
     move_files: List[FileInfo]
     expand_content_list: List[Dict]
     package_content_list: List[Dict]
+    pkg_soft_links: List[PkgSoftlink]
     generate_infos: List[GenerateInfo]
 
 
@@ -182,6 +190,10 @@ class XmlConfig(NamedTuple):
     @property
     def package_content_list(self):
         return self._collect_list('package_content_list')
+
+    @property
+    def pkg_soft_links(self) -> List[PkgSoftlink]:
+        return self._collect_list('pkg_soft_links')
 
     @property
     def generate_infos(self) -> List[GenerateInfo]:
@@ -401,6 +413,7 @@ def get_env_items_by_version(version: Optional[str]) -> Iterator[Tuple[str, str]
     """根据version获取环境字典条目。"""
     if version:
         yield 'ASCEND_VER', version
+        yield 'VERSION', version
 
         version_parts = version.split('.')
         for idx in range(1, len(version_parts) + 1):
@@ -901,6 +914,59 @@ def parse_file_info_elements(loaded_block: LoadedBlockElement,
             )
 
 
+def get_path_infos(pkg_ele: ET.Element,
+                   default_config: Dict[str, str],
+                   loaded_block: LoadedBlockElement,
+                   env: ParseEnv) -> List[Dict[str, str]]:
+    """获取路径信息"""
+    return invoke(
+        pipe(
+            list,
+            partial(map, attrgetter('attrib')),
+            partial(map, partial(merge_dict, default_config)),
+            partial(
+                map,
+                partial(evaluate_info, loaded_block=loaded_block, env_dict=env.env_dict)
+            ),
+        ),
+        pkg_ele
+    )
+
+
+def get_path_infos_by_elements(pkg_elements: List[ET.Element],
+                               default_config: Dict[str, str],
+                               loaded_block: LoadedBlockElement,
+                               env: ParseEnv) -> List[Dict[str, str]]:
+    """根据节点列表获取路径信息"""
+    return flatten([
+        get_path_infos(pkg_ele, default_config, loaded_block, env)
+        for pkg_ele in pkg_elements
+    ])
+
+
+def parse_pkg_soft_links(path_infos: List[Dict[str, str]]) -> List[PkgSoftlink]:
+    """解析pkg_softlink元素。"""
+    return [
+        PkgSoftlink(
+            dst_path=path_info['value'],
+            src_path=path_info['src_path'],
+        )
+        for path_info in path_infos
+    ]
+
+
+def parse_paths_element(root_ele: ET.Element,
+                        tag_name: str,
+                        ex: PackageError,
+                        parse_func: Callable[[List[ET.Element]], List]) -> List:
+    """解析路径列表元素。"""
+    tag_elements = root_ele.findall(tag_name)
+    if len(tag_elements) > 1:
+        raise ex
+
+    return parse_func(tag_elements)
+
+
 def unique_infos(infos: Iterable) -> List[Dict[str, str]]:
     """infos去重。"""
     cache: Set[str] = set()
@@ -938,6 +1004,21 @@ def parse_block_config(loaded_block: LoadedBlockElement,
         )
     )
 
+    get_path_infos_func = partial(
+        get_path_infos_by_elements,
+        default_config=default_config,
+        loaded_block=loaded_block,
+        env=parse_env
+    )
+
+    parse_pkg_soft_links_func = pipe(get_path_infos_func, parse_pkg_soft_links)
+    pkg_soft_links = parse_paths_element(
+        loaded_block.root_ele,
+        'pkg_softlink',
+        MultiPkgSoftlinkError(),
+        parse_pkg_soft_links_func,
+    )
+
     generate_infos = parse_generate_infos_by_loaded_block(
         loaded_block, default_config, parse_env.env_dict
     )
@@ -951,6 +1032,7 @@ def parse_block_config(loaded_block: LoadedBlockElement,
         list(flatten(map(attrgetter('move_infos'), file_info_results))),
         list(flatten(map(attrgetter('expand_infos'), file_info_results))),
         [result.file_info for result in file_info_results if result.file_info],
+        pkg_soft_links,
         generate_infos,
     )
 

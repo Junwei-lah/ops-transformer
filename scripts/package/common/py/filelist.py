@@ -485,7 +485,7 @@ transform_nested_path_in_filelist = pipe(
 )
 
 
-def generate_filelist(filelist: FileList, filename: str):
+def generate_filelist(filelist: FileList, filename: str, build_dir: str):
     """生成文件列表文件。"""
     content_list = list(
         itertools.chain(
@@ -494,7 +494,7 @@ def generate_filelist(filelist: FileList, filename: str):
         )
     )
     content = '\n'.join(content_list)
-    filepath = os.path.join(TOP_DIR, "build", filename)
+    filepath = os.path.join(build_dir, filename)
     try:
         with open(filepath, 'w', encoding='utf-8') as file:
             file.write(content)

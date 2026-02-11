@@ -44,6 +44,10 @@ class BlockConfigError(PackageError):
     """块配置错误异常。"""
 
 
+class MultiPkgSoftlinkError(PackageError):
+    """多个pkg_softlink元素报错。"""
+
+
 class ParseOsArchError(PackageError):
     """解析os_arch失败异常。"""
 

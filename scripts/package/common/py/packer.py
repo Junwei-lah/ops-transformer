@@ -15,11 +15,13 @@ import shutil
 import subprocess
 from argparse import Namespace
 from itertools import chain
+from pathlib import Path
 from subprocess import PIPE, STDOUT
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from .utils.comm_log import CommLog
 from .utils.pkg_utils import CompressError
+from .pkg_parser import PkgSoftlink
 
 
 class PackageName:
@@ -98,6 +100,16 @@ def remove_ascend(text):
 def get_func_name(func_name: str, package_attr) -> str:
     """获取包func_name。"""
     return func_name or package_attr.get('func_name')
+
+
+def softlink_before_package(pkg_soft_links: List[PkgSoftlink], release_dir: Union[str, Path]):
+    """打包前创建包内文件软链。"""
+    for pkg_softlink in pkg_soft_links:
+        src_path = os.path.join(release_dir, pkg_softlink.src_path)
+        dst_path = os.path.join(release_dir, pkg_softlink.dst_path)
+        os.symlink(
+            os.path.relpath(src_path, os.path.dirname(dst_path)), dst_path
+        )
 
 
 def get_compress_tool() -> str:
