@@ -1,6 +1,6 @@
 # aclnnIncreFlashAttentionV2
 
-[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/attention/incre_flash_attention)
+**该接口后续版本会废弃，请使用最新接口[aclnnIncreFlashAttentionV4](./aclnnIncreFlashAttentionV4.md)。
 
 ## 产品支持情况
 

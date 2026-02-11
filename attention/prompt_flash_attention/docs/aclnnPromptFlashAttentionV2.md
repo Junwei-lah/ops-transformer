@@ -1,6 +1,6 @@
 # aclnnPromptFlashAttentionV2
 
-[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/attention/prompt_flash_attention)
+**该接口后续版本会废弃，请使用最新接口[aclnnPromptFlashAttentionV3](./aclnnPromptFlashAttentionV3.md)。
 
 ## 产品支持情况
 
