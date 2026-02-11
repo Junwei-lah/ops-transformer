@@ -12,7 +12,7 @@
 
 """基础构件。"""
 
-import os 
+import os
 from functools import partial
 from itertools import chain, tee
 from operator import methodcaller

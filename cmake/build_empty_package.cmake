@@ -75,6 +75,7 @@ function(cpack_empty_package)
   endif()
   set(CPACK_EXTERNAL_ENABLE_STAGING true)
   set(CPACK_PACKAGE_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
+  set(CPACK_PACKAGE_PARAM_NAME "ops_transformer")
 
   message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
   include(CPack)
