@@ -1370,7 +1370,7 @@ ge::graphStatus IFATiling::CheckTndMaskShapeWithSparseMode()
 
 ge::graphStatus IFATiling::CheckMaskShapeWithQSeq() const
 {
-    if (antiQuantFlag_ || quantFlag_) {
+    if (antiQuantFlag_ || (ifaContext_->dequantScaleQuery.tensor != nullptr && ropeFlag_)) {
         OP_CHECK_IF((ropeFlag_ && qSeqSize_ > 1U && static_cast<int32_t>(sparseMode_) != 3),
                OP_LOGE(ifaContext_->opName, "when queryS > 1, sparseMode(%d) only support 3 "
                     "in MLA when antiquant or full quant situation.", static_cast<int32_t>(sparseMode_)),
