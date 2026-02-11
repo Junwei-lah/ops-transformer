@@ -1190,8 +1190,6 @@ static aclnnStatus CheckFunctionParams(const gmm::GroupedMatmulParams &gmmParams
     gmmParams, weightDtype, isNoActivation) == ACLNN_SUCCESS,
     ACLNN_ERR_PARAM_INVALID, "Check310PlatformForFunction failed.");
   if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
-    CHECK_COND(isNoActivation, ACLNN_ERR_PARAM_INVALID,
-               "ActType[%ld] is not supported on this platform.", gmmParams.activeType);
     if (IsQuant(gmmParams.xDtype, weightDtype)) {
       CHECK_COND(isNoActivation || CheckIsEnabledActive(gmmParams), ACLNN_ERR_PARAM_INVALID, "On this platform, activation is supported only when the input is INT8"
                  " and the quant mode is either pertoken-perchannel or pertensor-perchannel; "
