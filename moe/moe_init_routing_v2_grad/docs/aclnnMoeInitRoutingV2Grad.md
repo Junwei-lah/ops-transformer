@@ -358,7 +358,7 @@ int main() {
     aclTensor* out = nullptr;
     std::vector<float> gradExpandedXHostData = {0.1, 0.1, 0.3, 0.3, 0.2, 0.2, 0.4, 0.4};
     std::vector<int32_t> expandedRowIdxHostData = {2, 0, 1, 3};
-    std::vector<float> gradXOutHostData = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<float> gradXOutHostData = {0, 0, 0, 0};
     int32_t kValue = 2;
     int32_t dropPadModeValue = 0;
     int32_t activeNumValue = 0;
@@ -388,7 +388,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     // 调用aclnnMoeInitRoutingV2Grad第二段接口
     ret = aclnnMoeInitRoutingV2Grad(workspaceAddr, workspaceSize, executor, stream);

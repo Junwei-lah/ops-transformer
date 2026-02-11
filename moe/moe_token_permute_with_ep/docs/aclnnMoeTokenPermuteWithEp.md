@@ -18,7 +18,7 @@
 
 - **接口功能**：MoE的permute计算，根据索引indices将tokens和可选probs广播后排序并按照rangeOptional中范围切片。
 - **计算公式**：
-  - paddedMode为`false`时，公式如下，其中topK指一个token选择的专家个数，Indices维度为2时等于Indices最后一维大小，Indices维度为1时topK等于1：
+  - paddedMode为`false`时，公式如下。topK表示每个token选择的专家数量。如果Indices为2维，则topK等于Indices最后一维的大小。如果Indices为1维，则topK为1。
     
     $$
     sortedIndicesFirst=argSort(\text{flatten}(Indices))
@@ -34,7 +34,7 @@
     permuteTokensOut[sortedIndicesOut[i] - rangeOptional[1]]=tokens[i//topK]
     $$
 
-  - paddedMode为`true`时：
+  - paddedMode为`true`时(暂不支持)：
 
     $$
     permuteTokensOut[i]=tokens[Indices[i]]
@@ -141,7 +141,7 @@ aclnnStatus aclnnMoeTokenPermuteWithEp(
       <td>numOutTokens</td>
       <td>输入</td>
       <td>有效输出token数。</td>
-      <td>值范围任意整数；0表示不会删除任何token，不为0时会按照numOutTokens进行切片丢弃按照indices排序好的token中超过numOutTokens的部分，为负数时按照切片索引为负数时处理。</td>
+      <td>值范围为任意整数；0表示不会删除任何token，大于0时会按照numOutTokens对按照专家排序好的token进行切片，保留前numOutTokens个token，小于0时按负的切片索引进行处理。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -440,7 +440,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     // 调用aclnnMoeTokenPermuteWithEp第二段接口
     ret = aclnnMoeTokenPermuteWithEp(workspaceAddr, workspaceSize, executor, stream);

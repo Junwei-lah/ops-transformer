@@ -747,7 +747,7 @@ __aicore__ inline void MoeV2GatherDynamicQuant<T, quantType>::Init(
 template <typename T, typename quantType>
 __aicore__ inline void MoeV2GatherDynamicQuant<T, quantType>::Process()
 {
-    if (this->cols == 0) {
+    if (this->cols == 0) { // 空tensor场景提前对dynamicQuantScale赋值
         LocalTensor<float> dynamicQuantLocal = scaleOutQueue.template AllocTensor<float>();
         Duplicate<float>(dynamicQuantLocal, 0.0, MAX_VALUE_NUM);
         scaleOutQueue.FreeTensor(dynamicQuantLocal);

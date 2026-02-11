@@ -25,7 +25,7 @@
 
 -   **计算公式**：
 
-    1.将输入shape为[numRows, k]的expertIdx展平为一行做排序，得出排序后的结果sortedExpertIdx和对应的序号sortedRowIdx，其中numRows为token个数，k为专家个数：
+    1.将输入shape为[NUM_ROWS, K]的expertIdx展平为一行做排序，其中NUM_ROWS为输入token个数，K为token选择的专家个数，得出排序后的结果sortedExpertIdx和对应的序号sortedRowIdx：
     
     $$
     sortedExpertIdx, sortedRowIdx=keyValueSort(\text{flatten}(expertIdx))
@@ -79,10 +79,10 @@
             quantResult = round(x * scaleOptional / dynamicQuantScaleOutOptional)
             $$
 
-  6.根据quantResult得出expandedXOut：
+    6.根据quantResult得出expandedXOut：
 
     $$
-    expandedXOut[i]=quantResult[sortedRowIdx[i]\%k]
+    expandedXOut[expandedRowIdxOut[i]]=quantResult[i // K]
     $$
 
 ## 函数原型
@@ -259,7 +259,7 @@ aclnnStatus aclnnMoeInitRoutingQuantV2(
       <td>expandedXOut</td>
       <td>输出</td>
       <td>根据expertIdx进行扩展过的特征。</td>
-      <td><ul><li>支持空tensor。</li><li>在Dropless/Active场景下要求是一个2D的Tensor，Dropless场景shape为[NUM_ROWS * K, H]，Active场景shape为[min(activeNum, NUM_ROWS * K), H]。</li><li>在Drop/Pad场景下要求是一个3D的Tensor，shape为[expertNum, expertCapacity, H]。</li><li>数据类型支持INT8和INT4,当expandedXOut的数据类型为INT4时dropPadMode仅支持0,H必须可以被2整除，传入scaleOptional时仅支持shape为[1, H]。</li></ul></td>
+      <td><ul><li>支持空tensor。</li><li>在Dropless/Active场景下要求是一个2D的Tensor，Dropless场景shape为[NUM_ROWS * K, H]，Active场景shape为[min(activeNum, NUM_ROWS * K), H]。</li><li>在Drop/Pad场景下要求是一个3D的Tensor，shape为[expertNum, expertCapacity, H]。</li><li>数据类型支持INT8和INT4,当expandedXOut的数据类型为INT4时有如下限制：dropPadMode仅支持0；H必须可以被2整除；传入scaleOptional时scaleOptional的shape仅支持s为[1, H]。</li></ul></td>
       <td>INT8、INT4</td>
       <td>ND</td>
       <td>2或3</td>
@@ -561,7 +561,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     // 调用aclnnMoeInitRoutingQuantV2第二段接口
     ret = aclnnMoeInitRoutingQuantV2(workspaceAddr, workspaceSize, executor, stream);

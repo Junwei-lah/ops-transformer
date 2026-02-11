@@ -32,7 +32,7 @@
       permuteTokensOut[sortedIndicesOut[i]]=tokens[i//topK]
       $$
 
-    - paddedMode为`true`时
+    - paddedMode为`true`时(暂不支持)：
 
       $$
       permuteTokensOut[i]=tokens[indices[i]]
@@ -106,7 +106,7 @@ aclnnStatus aclnnMoeTokenPermute(
       <td>indices</td>
       <td>输入</td>
       <td>输入indices索引。</td>
-      <td><ul><li>支持空tensor。</li><li>要求shape为2D或1D。</li><li>paddedMode为false时表示每一个输入token对应的topK个处理专家索引，shape为(num_tokens, topK)或(num_tokens)。</li><li>paddedMode为true时表示每个专家选中的token索引（暂不支持）。</li><li>元素个数小于16777215，值大于等于0小于16777215。</li></ul></td>
+      <td><ul><li>支持空tensor。</li><li>要求shape为2D或1D。</li><li>paddedMode为false时表示每一个输入token对应的topK个处理专家索引，shape为(num_tokens, topK)或(num_tokens)。</li><li>paddedMode为true时表示每个专家选中的token索引（暂不支持）。</li><li>元素个数小于16777215，值大于等于0且小于16777215。</li></ul></td>
       <td>INT32、INT64</td>
       <td>ND</td>
       <td>1或2</td>
@@ -116,7 +116,7 @@ aclnnStatus aclnnMoeTokenPermute(
       <td>numOutTokens</td>
       <td>输入</td>
       <td>有效输出token数。</td>
-      <td>值范围为任意整数；0表示不会删除任何token，大于0时会按照numOutTokens进行切片丢弃按照indices排序好的token中超过numOutTokens的部分，小于0时按负的切片索引进行处理。</td>
+      <td>值范围为任意整数；0表示不会删除任何token，大于0时会按照numOutTokens对按照专家排序好的token进行切片，保留前numOutTokens个token，小于0时按负的切片索引进行处理。</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -372,7 +372,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     // 调用aclnnMoeTokenPermute第二段接口
     ret = aclnnMoeTokenPermute(workspaceAddr, workspaceSize, executor, stream);

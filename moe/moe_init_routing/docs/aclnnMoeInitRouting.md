@@ -17,7 +17,7 @@
 
 - **接口功能**：MoE的routing计算，根据[aclnnMoeGatingTopKSoftmax](../../moe_gating_top_k_softmax/docs/aclnnMoeGatingTopKSoftmax.md)的计算结果做routing处理。
 - **计算公式**：
-  将输入shape为[numRows, k]的expertIdx展平为一行做排序。
+  将输入shape为[NUM_ROWS, K]的expertIdx展平为一行做排序，其中NUM_ROWS为输入token个数，K为token选择的专家个数。
   
   $$
   expandedExpertIdxOut,sortedRowIdx=keyValueSort(expertIdx,rowIdx)
@@ -28,7 +28,7 @@
   $$
 
   $$
-  expandedXOut[i]=x[sortedRowIdx[i]\%numRows]
+  expandedXOut[i]=x[sortedRowIdx[i]\%NUM_ROWS]
   $$
 
 ## 函数原型
@@ -284,6 +284,7 @@ aclnnStatus aclnnMoeInitRouting(
 #include "acl/acl.h"
 #include "aclnnop/aclnn_moe_init_routing.h"
 #include <iostream>
+#include <cstdio>
 #include <vector>
 #define CHECK_RET(cond, return_expr) \
   do {                               \
@@ -388,7 +389,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     // 调用aclnnMoeInitRouting第二段接口
     ret = aclnnMoeInitRouting(workspaceAddr, workspaceSize, executor, stream);

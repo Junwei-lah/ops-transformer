@@ -492,7 +492,7 @@ __aicore__ inline void MoeV2FullLoadDynamicQuant<T, quantType>::Init(
 template <typename T, typename quantType>
 __aicore__ inline void MoeV2FullLoadDynamicQuant<T, quantType>::Process()
 {
-    if (this->cols_ == 0) {
+    if (this->cols_ == 0) { // 空tensor场景提前对dynamicQuantScale赋值
         LocalTensor<float> dynamicQuantLocal = scaleOutQueue.AllocTensor<float>();
         Duplicate<float>(dynamicQuantLocal,0.0, MAX_VALUE_NUM);
         scaleOutQueue.FreeTensor(dynamicQuantLocal);
