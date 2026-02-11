@@ -15,6 +15,9 @@
 #include "tiling_context_faker.h"
 #include "infer_shape_context_faker.h"
 
+const gert::TilingContextPara::TensorDescription TD_DEFAULT = {{}, ge::DT_UNDEFINED, ge::FORMAT_NULL};
+const gert::InfershapeContextPara::TensorDescription ID_DEFAULT = {{}, ge::DT_UNDEFINED, ge::FORMAT_NULL};
+
 const std::unordered_map<std::string, ge::DataType> GE_DTYPE {
     {"FLOAT", ge::DT_FLOAT},
     {"FLOAT16", ge::DT_FLOAT16},
@@ -110,11 +113,23 @@ const std::unordered_map<std::string, ge::Format> GE_FORMAT {
     {"NCL", ge::FORMAT_NCL}
 };
 
+inline ge::DataType Str2DTypeGE(const std::string& dtypeStr)
+{
+    return ReadMap(GE_DTYPE, dtypeStr, ge::DT_UNDEFINED);
+}
+
+inline ge::graphStatus Str2StatusGE(const std::string& statusStr)
+{
+    return statusStr == "SUCCESS" ? ge::GRAPH_SUCCESS : ge::GRAPH_FAILED;
+}
+
 inline gert::StorageShape GetStorageShape(const std::string& shapeArrStr)
 {
     gert::StorageShape shape;
     std::vector<int64_t> shapeArr = GetShapeArr(shapeArrStr);
     switch (shapeArr.size()) {
+        case 0:
+            break;
         case 1:
             shape = gert::StorageShape({shapeArr[0]}, {shapeArr[0]});
             break;
@@ -136,30 +151,30 @@ inline gert::StorageShape GetStorageShape(const std::string& shapeArrStr)
     return shape;
 }
 
-inline int GetDataType(const csv_map& csvMap, const std::string& dtypeKey, ge::DataType& out)
-{
-    std::string dtypeStr = ReadMap(csvMap, dtypeKey);
-    if (dtypeStr.empty()) return 0;
-
-    out = ReadMap(GE_DTYPE, dtypeStr, ge::DT_UNDEFINED);
-    return 1;
-}
-
 template<typename T>
 inline int GetTensorGE(const csv_map& csvMap, const std::string& shapeKey, const std::string& dtypeKey,
     const std::string& formatKey, T& out)
 {
     std::string shapeStr = ReadMap(csvMap, shapeKey);
-    if (shapeStr.empty()) return 0;
     std::string dtypeStr = ReadMap(csvMap, dtypeKey);
-    if (dtypeStr.empty()) return 0;
     std::string formatStr = ReadMap(csvMap, formatKey);
-    if (formatStr.empty()) return 0;
+    if (shapeStr.empty() && dtypeStr.empty() && formatStr.empty()) {
+        return 0;
+    }
 
     gert::StorageShape shape = GetStorageShape(shapeStr);
     ge::DataType dtype = ReadMap(GE_DTYPE, dtypeStr, ge::DT_UNDEFINED);
     ge::Format format = ReadMap(GE_FORMAT, formatStr, ge::FORMAT_NULL);
     out = T(shape, dtype, format);
+    return 1;
+}
+
+inline int GetDataTypeGE(const csv_map& csvMap, const std::string& dtypeKey, ge::DataType& out)
+{
+    std::string dtypeStr = ReadMap(csvMap, dtypeKey);
+    if (dtypeStr.empty()) return 0;
+
+    out = Str2DTypeGE(dtypeStr);
     return 1;
 }
 

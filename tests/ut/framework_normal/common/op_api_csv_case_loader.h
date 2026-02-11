@@ -91,15 +91,6 @@ const std::unordered_map<std::string, aclnnStatus> ACR_RET {
     {"RUNTIME_ERROR", ACLNN_ERR_RUNTIME_ERROR}
 };
 
-inline int GetDataType(const csv_map& csvMap, const std::string& dtypeKey, aclDataType& out)
-{
-    std::string dtypeStr = ReadMap(csvMap, dtypeKey);
-    if (dtypeStr.empty()) return 0;
-
-    out = ReadMap(ACL_DTYPE, dtypeStr, ACL_DT_UNDEFINED);
-    return 1;
-}
-
 inline op::SocVersion GetCaseSocVersion(const csv_map& csvMap, const std::string& socKey)
 {
     std::string socStr = ReadMap(csvMap, socKey);
