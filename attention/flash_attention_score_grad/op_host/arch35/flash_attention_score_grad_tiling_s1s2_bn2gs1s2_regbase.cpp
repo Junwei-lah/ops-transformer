@@ -92,7 +92,8 @@ constexpr int64_t ALIGN128 = 128;
 constexpr int64_t BN2_MAX_S = 128;
 constexpr int64_t BN2S2_MAX_S = 1024;
 constexpr int64_t BN2_MULTIBLK_SEQ = 640;
-constexpr int64_t BN2_MULTIBLK_BN = 256;
+constexpr int64_t BN2_MULTIBLK_BN_128 = 128;
+constexpr int64_t BN2_MULTIBLK_BN_256 = 256;
 constexpr int64_t BN2_MAX_D = 512;
 constexpr int64_t BN2S2_WRITE_UB_D = 128;
 constexpr int64_t ROPE_D_192 = 192;
@@ -409,10 +410,12 @@ void FlashAttentionScoreGradTilingUs1s2Bs2Regbase::SetSplitAxis()
                         !fBaseParams.hasRope &&
                         (fBaseParams.tailZeroCount == 0);
 
-    bool bnSparseLimit = ((fBaseParams.b * fBaseParams.n1) >= BN2_MULTIBLK_BN) &&
-                            (fBaseParams.layoutType != INPUT_FORMAT_TND) &&
-                            (fBaseParams.sparseMode != static_cast<uint32_t>(SparseMode::PREFIX)) &&
-                            (fBaseParams.sparseMode != static_cast<uint32_t>(SparseMode::PREFIX_COMPRESS));
+    bool bnLimit = ((fBaseParams.b * fBaseParams.n1) >= BN2_MULTIBLK_BN_256) ||
+                    ((fBaseParams.b * fBaseParams.n1) >= BN2_MULTIBLK_BN_128 && (fBaseParams.s1 % ALIGN128 == 0) && (fBaseParams.s2 % ALIGN128 == 0));
+    bool bnSparseLimit = bnLimit &&
+                        (fBaseParams.layoutType != INPUT_FORMAT_TND) &&
+                        (fBaseParams.sparseMode != static_cast<uint32_t>(SparseMode::PREFIX)) &&
+                        (fBaseParams.sparseMode != static_cast<uint32_t>(SparseMode::PREFIX_COMPRESS));
     fBaseParams.isBn2MultiBlk = bnSparseLimit &&
                                 (fBaseParams.s1 > BN2_MAX_S || fBaseParams.s2 > BN2_MAX_S) &&
                                 (fBaseParams.s1 <= BN2_MULTIBLK_SEQ && fBaseParams.s2 <= BN2_MULTIBLK_SEQ) &&
@@ -947,7 +950,6 @@ ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetSparseBlockInfo
 }
 
 ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::DoBn2MultiBlkSparse() {
-
     if (fBaseParams.layoutType == INPUT_FORMAT_TND) {
         return GetBlockInfoOfTNDForBn2();
     } else if (fBaseParams.isSparse) {
@@ -1385,7 +1387,7 @@ uint8_t FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetSparseType()
             (fBaseParams.sparseMode == static_cast<uint32_t>(SparseMode::BAND) &&
             fBaseParams.s1Token >= fBaseParams.s1 && fBaseParams.s2Token == 0);
         // 仅支持N1为偶数，分核时按照N1维度拼接性能最优，如果N1为奇数存在负载不均问题。
-        casualCondition = casualCondition && ((fBaseParams.n1 % 2 == 0));
+        casualCondition = casualCondition && ((fBaseParams.n1 % MULT_BASE == 0));
         if (fBaseParams.sparseMode != static_cast<uint32_t>(SparseMode::RIGHT_DOWN_CAUSAL)) {
             casualCondition = casualCondition && tndBaseInfo.isS1GreaterThanS2;
         } else {

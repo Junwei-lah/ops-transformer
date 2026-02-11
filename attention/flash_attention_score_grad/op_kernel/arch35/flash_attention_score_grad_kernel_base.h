@@ -1159,7 +1159,6 @@ template <typename ChildClass, typename CubeBlockType, typename VecBlockType>
 __aicore__ inline bool
 FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::IsValidForDeter(FagRunInfo &runInfo, int64_t taskId, int64_t index)
 {
-   
     int64_t gDimTail = index % constInfo.s1oS2o;
     int64_t s2oDimIdx = gDimTail / constInfo.s1Outer;
     int64_t s1oDimIdx = gDimTail % constInfo.s1Outer;
@@ -1515,14 +1514,14 @@ FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::GetN
                 } else {
                     gDimTail = gDimTail - rectangleNum;
                     sqrt_delta = sqrt(((constInfo.s1Outer << 1) - 1) * (((constInfo.s1Outer << 1) - 1)) +
-                                      ((constInfo.s1Outer - 1 - gDimTail) << 3));
+                                      ((constInfo.s1Outer - 1 - gDimTail) << kShiftToMultiplyByEight));
                     s2Idx = Ceil<int64_t>(((constInfo.s1Outer << 1) - 1) - sqrt_delta, NUM_TWO);
                     s1Idx = gDimTail - ((((constInfo.s1Outer << 1) - 1 - s2Idx) * s2Idx) >> 1);
                     s2Idx = s2Idx + constInfo.s2Outer - constInfo.s1Outer + 1;
                 }
             } else {
                 sqrt_delta = sqrt(((constInfo.s1Outer << 1) - 1) * (((constInfo.s1Outer << 1) - 1)) +
-                                  ((constInfo.s1Outer - 1 - gDimTail) << 3));
+                                  ((constInfo.s1Outer - 1 - gDimTail) << kShiftToMultiplyByEight));
                 s2Idx = Ceil<int64_t>(((constInfo.s1Outer << 1) - 1) - sqrt_delta, NUM_TWO);
                 s1Idx = gDimTail - ((((constInfo.s1Outer << 1) - 1 - s2Idx) * s2Idx) >> 1);
             }

@@ -303,7 +303,6 @@ __aicore__ inline void CastTransdataDeconflict(const LocalTensor<T1> &dstTensor,
                 }
             }
         }
-
     }
 }
 #else

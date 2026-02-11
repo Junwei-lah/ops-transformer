@@ -39,6 +39,9 @@ constexpr uint8_t DV_IDX = 2;
 constexpr uint32_t MIN_SWIZZLE_S1 = 16384;
 // Swizzle块数量，16K对应8块，随S增大倍数增大
 constexpr uint32_t BASE_SWIZZLE_BLOCK_NUM = 8;
+
+// shift left by three bits
+constexpr uint8_t kShiftToMultiplyByEight = 3;
  
 template <typename T, bool IS_WRITE_UB>
 struct DqkvResPos {

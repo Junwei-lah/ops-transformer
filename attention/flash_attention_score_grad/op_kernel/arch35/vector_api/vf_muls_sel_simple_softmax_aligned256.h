@@ -173,7 +173,6 @@ __aicore__ inline void MulsSelSimpleSoftMaxAligned256(const LocalTensor<float> &
             }
         }
     }
- 
 }
 #else
 template <typename T1, typename T, uint16_t srcN, bool hasAtten = 0, bool hasPse = 0, bool isDeter = 0>

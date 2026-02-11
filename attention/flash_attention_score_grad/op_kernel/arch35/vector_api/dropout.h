@@ -42,7 +42,7 @@ __simd_vf__ inline void CalculateDropoutVF(uint64_t srcLocalInt, uint64_t dstLoc
     uint32_t repeatElm = VECTOR_REG_WIDTH / sizeof(float);
     uint16_t repeatTimes = CeilDivision(dataSize, repeatElm);
     
-    for (uint16_t i = 0; i < (uint16_t)(repeatTimes / 2); ++i) {
+    for (uint16_t i = 0; i < (uint16_t)(repeatTimes / UNROLL_FACTOR); ++i) {
         LoadAlign<uint32_t, MicroAPI::MaskDist::DIST_US>(
             preg1, (__ubuf__ uint32_t *&)maskLocalInt + i * 4);
         MaskInterleave<half>(preg3, preg4, preg1, preg2);
@@ -65,10 +65,10 @@ __simd_vf__ inline void CalculateDropoutVF(uint64_t srcLocalInt, uint64_t dstLoc
     RegTensor<float> vreg9;
     MaskReg preg7;
     MaskReg preg8;
-    uint32_t offset0 = (repeatTimes / 2) * 2 * repeatElm;
-    uint32_t offset2 = (repeatTimes / 2) * 2 * repeatElm;
-    uint32_t selOffset = (repeatTimes / 2) * 4;
-    for (uint16_t i = 0; i < (uint16_t)(repeatTimes % 2); ++i) {
+    uint32_t offset0 = (repeatTimes / UNROLL_FACTOR) * 2 * repeatElm;
+    uint32_t offset2 = (repeatTimes / UNROLL_FACTOR) * 2 * repeatElm;
+    uint32_t selOffset = (repeatTimes / UNROLL_FACTOR) * 4;
+    for (uint16_t i = 0; i < (uint16_t)(repeatTimes % UNROLL_FACTOR); ++i) {
         preg0 = UpdateMask<float>(sreg);
         LoadAlign<uint32_t, MicroAPI::MaskDist::DIST_US>(
             preg7, (__ubuf__ uint32_t *&)maskLocalInt + selOffset);

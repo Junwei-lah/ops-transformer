@@ -152,6 +152,7 @@ constexpr uint32_t PSE_1_N2_G_SLOPE = 6;
 constexpr uint32_t PSE_COMPRESS_H = 1024;
 constexpr uint32_t VREG_SIZE = 256;
 constexpr uint32_t MAX_CONTINUOUS_BLOCK_NUM = 6;
+constexpr uint16_t UNROLL_FACTOR = 2;
 
 struct DeterConstInfo {
     uint8_t usedCubeCoreNum;
@@ -302,15 +303,15 @@ __aicore__ inline uint32_t AlignTo(uint32_t num1, uint32_t num2)
     return (num1 + num2 - 1) / num2 * num2;
 }
 
-__aicore__ inline int64_t AlignTo16(int64_t num) { return (num + 15) >> 4 << 4; }
+__aicore__ inline int64_t AlignTo16(int64_t num) { return (num + 16 - 1) >> 4 << 4; }
 
-__aicore__ inline int64_t AlignTo32(int64_t num) { return (num + 31) >> 5 << 5; }
+__aicore__ inline int64_t AlignTo32(int64_t num) { return (num + 32 - 1) >> 5 << 5; }
 
-__aicore__ inline int64_t AlignTo64(int64_t num) { return (num + 63) >> 6 << 6; }
+__aicore__ inline int64_t AlignTo64(int64_t num) { return (num + 64 - 1) >> 6 << 6; }
 
-__aicore__ inline int64_t AlignTo128(int64_t num) { return (num + 127) >> 7 << 7; }
+__aicore__ inline int64_t AlignTo128(int64_t num) { return (num + 128 - 1) >> 7 << 7; }
 
-__aicore__ inline int64_t AlignTo512(int64_t num) { return (num + 511) >> 9 << 9; }
+__aicore__ inline int64_t AlignTo512(int64_t num) { return (num + 512 - 1) >> 9 << 9; }
 
 __aicore__ constexpr bool IS_DETER_OLD(const uint8_t deterSparseType) 
 {

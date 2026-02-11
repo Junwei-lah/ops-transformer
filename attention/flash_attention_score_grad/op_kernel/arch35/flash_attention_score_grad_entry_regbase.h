@@ -18,7 +18,6 @@
 
 #include "common.h"
 
-// #include "flash_attention_score_grad_s1s2_bn2_regbase.h"
 #include "flash_attention_score_grad_s1s2_bn2s2_regbase.h"
 #include "flash_attention_score_grad_s1s2_bn2gs1s2_regbase.h"
 #include "flash_attention_score_grad_s1s2_bn2gs1s2_post_regbase.h"
