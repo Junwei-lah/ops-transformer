@@ -73,12 +73,16 @@ ge::graphStatus GroupedMatmulQuantChecker::CheckDtypeValid(const gert::InferData
     auto weightDtype = context->GetDynamicInputDataType(GMM_INDEX_IN_WEIGHT, 0);
     // mandory param dtype check
     OP_CHECK_IF(X_TYPE_SUPPORT_SET.find(xDtype) == X_TYPE_SUPPORT_SET.end(),
-                OP_LOGE(context->GetNodeName(), "Data type [%s] is not supported for x's 1st tensor.",
+                OP_LOGE(context->GetNodeName(),
+                        "Data type [%s] is not supported for x's 1st tensor; supported types are: INT8, "
+                        "FLOAT8_E4M3FN, FLOAT8_E5M2, HIFLOAT8, and FLOAT4_E2M1.",
                         ge::TypeUtils::DataTypeToAscendString(xDtype).GetString()),
                 return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(WEIGHT_TYPE_SUPPORT_SET.find(weightDtype) == WEIGHT_TYPE_SUPPORT_SET.end(),
-                OP_LOGE(context->GetNodeName(), "Data type [%s] is not supported for weight.",
+                OP_LOGE(context->GetNodeName(),
+                        "Data type [%s] is not supported for weight; supported types are: INT8, FLOAT8_E4M3FN, "
+                        "FLOAT8_E5M2, HIFLOAT8, and FLOAT4_E2M1.",
                         ge::TypeUtils::DataTypeToAscendString(weightDtype).GetString()),
                 return ge::GRAPH_FAILED);
     if (xDtype == ge::DataType::DT_INT8 || weightDtype == ge::DataType::DT_INT8) {
@@ -117,22 +121,28 @@ weight is %s.", ge::TypeUtils::DataTypeToAscendString(xDtype).GetString(),
                 return ge::GRAPH_FAILED);
     auto ScaleDtype = context->GetDynamicInputDataType(GMM_INDEX_IN_SCALE, 0);
     OP_CHECK_IF(SCALE_TYPE_SUPPORT_SET.find(ScaleDtype) == SCALE_TYPE_SUPPORT_SET.end(),
-                OP_LOGE(context->GetNodeName(), "Data type [%s] is not supported for scale.",
+                OP_LOGE(context->GetNodeName(),
+                        "Data type [%s] is not supported for scale; supported types are: UINT64, INT64, "
+                        "FLOAT, BF16, and FLOAT8_E8M0.",
                         ge::TypeUtils::DataTypeToAscendString(ScaleDtype).GetString()),
                 return ge::GRAPH_FAILED);
 
     auto biasDtype = context->GetDynamicInputDataType(GMM_INDEX_IN_BIAS, 0);
-    OP_CHECK_IF(BIAS_TYPE_SUPPORT_SET.find(biasDtype) == BIAS_TYPE_SUPPORT_SET.end(),
-                OP_LOGE(context->GetNodeName(), "Data type [%s] is not supported for bias.",
-                        ge::TypeUtils::DataTypeToAscendString(biasDtype).GetString()),
-                return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        BIAS_TYPE_SUPPORT_SET.find(biasDtype) == BIAS_TYPE_SUPPORT_SET.end(),
+        OP_LOGE(context->GetNodeName(),
+                "Data type [%s] is not supported for bias; supported types are: FLOAT16, BF16, FLOAT, and INT32.",
+                ge::TypeUtils::DataTypeToAscendString(biasDtype).GetString()),
+        return ge::GRAPH_FAILED);
 
     auto pertokenScaleDtype = context->GetDynamicInputDataType(GMM_INDEX_IN_PERTOKEN_SCALE, 0);
     if (pertokenScaleDtype != ge::DT_UNDEFINED) {
-        OP_CHECK_IF(PERTOEKN_SCALE_TYPE_SUPPORT_SET.find(pertokenScaleDtype) == PERTOEKN_SCALE_TYPE_SUPPORT_SET.end(),
-                    OP_LOGE(context->GetNodeName(), "Data type [%s] is not supported for pertokenScale.",
-                            ge::TypeUtils::DataTypeToAscendString(pertokenScaleDtype).GetString()),
-                    return ge::GRAPH_FAILED);
+        OP_CHECK_IF(
+            PERTOEKN_SCALE_TYPE_SUPPORT_SET.find(pertokenScaleDtype) == PERTOEKN_SCALE_TYPE_SUPPORT_SET.end(),
+            OP_LOGE(context->GetNodeName(),
+                    "Data type [%s] is not supported for pertokenScale; supported types are: FLOAT, and FLOAT8_E8M0.",
+                    ge::TypeUtils::DataTypeToAscendString(pertokenScaleDtype).GetString()),
+            return ge::GRAPH_FAILED);
     }
     return ge::GRAPH_SUCCESS;
 }
