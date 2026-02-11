@@ -118,7 +118,7 @@ ge::graphStatus MoeInitRoutingQuantTilingBase::GetPlatformInfo()
     } else {
         aivNum = ascendcPlatform.GetCoreNumAiv();
     }
-    aicoreParams_.blockDim = aivNum;
+    aicoreParams_.numBlocks = aivNum;
     uint64_t ubSizePlatForm;
     uint64_t l1SizePlatForm;
     uint64_t l0CSizePlatForm;

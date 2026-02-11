@@ -197,14 +197,14 @@ ge::graphStatus TilingSplitS(gert::TilingContext *context, uint64_t coreNum, uin
     // block split
     uint64_t frontCoreNum = GetDivRem(seqLen, coreNum) != 0 ? GetDivRem(seqLen, coreNum) : coreNum;
     uint64_t tailCoreNum = seqLen <= coreNum ? 0 : coreNum - frontCoreNum;
-    uint64_t blockDim = frontCoreNum + tailCoreNum;
+    uint64_t numBlocks = frontCoreNum + tailCoreNum;
     uint64_t coreCalcNum = GetCeilInt(seqLen, coreNum);
     uint64_t coreCalcTail = GetDiv(seqLen, coreNum);
     tiling.ropeInterleavedParams.set_frontCoreNum(frontCoreNum);
     tiling.ropeInterleavedParams.set_tailCoreNum(tailCoreNum);
     tiling.ropeInterleavedParams.set_coreCalcNum(coreCalcNum);
     tiling.ropeInterleavedParams.set_coreCalcTail(coreCalcTail);
-    context->SetBlockDim(blockDim);
+    context->SetBlockDim(numBlocks);
     uint64_t alignFactor = (dataDtype == ge::DT_FLOAT) ? ALIGN_32 : ALIGN_16;
     uint64_t headDimAlign;
     if (GetDivRem(headDim, alignFactor) == 0) {

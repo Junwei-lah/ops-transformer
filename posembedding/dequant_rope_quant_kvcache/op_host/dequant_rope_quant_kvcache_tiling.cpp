@@ -487,10 +487,10 @@ static ge::graphStatus TilingDequantRopeQuantKvcache(gert::TilingContext* contex
     int64_t taskNumRem = GetRem(taskNum, tilingInfoDRQK.coreNum);
     int64_t frontCoreNum = taskNumRem != 0 ? taskNumRem : tilingInfoDRQK.coreNum;
     int64_t tailCoreNum = taskNum <= tilingInfoDRQK.coreNum ? 0 : tilingInfoDRQK.coreNum - frontCoreNum;
-    int64_t blockDim = frontCoreNum + tailCoreNum;
+    int64_t numBlocks = frontCoreNum + tailCoreNum;
 
-    int64_t blockFactor = GetCeilInt(taskNum, blockDim);
-    int64_t lastCoreNum = GetDiv(taskNum, blockDim);
+    int64_t blockFactor = GetCeilInt(taskNum, numBlocks);
+    int64_t lastCoreNum = GetDiv(taskNum, numBlocks);
 
     DequantRopeQuantKvcacheTilingData tiling;
     tiling.set_cacheSeqlen(tilingInfoDRQK.cacheSeqlen);
@@ -509,7 +509,7 @@ static ge::graphStatus TilingDequantRopeQuantKvcache(gert::TilingContext* contex
     tiling.set_vHiddenSize(tilingInfoDRQK.attrData[SIZE_SPLIT_V]);
     tiling.set_frontCoreNum(frontCoreNum);
 
-    tiling.set_realCoreNum(blockDim);
+    tiling.set_realCoreNum(numBlocks);
     tiling.set_blockFactor(blockFactor);
     tiling.set_tailCoreBlockFactor(lastCoreNum);
     tiling.set_hasQuantOffset(tilingInfoDRQK.hasQuantOffset);
@@ -519,7 +519,7 @@ static ge::graphStatus TilingDequantRopeQuantKvcache(gert::TilingContext* contex
     tiling.set_hasAS(tilingInfoDRQK.hasAS);
     uint32_t tilingKey = tilingInfoDRQK.biasDataType;
 
-    context->SetBlockDim(blockDim);
+    context->SetBlockDim(numBlocks);
     context->SetTilingKey(tilingKey);
 
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);

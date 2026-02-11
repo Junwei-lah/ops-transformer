@@ -182,7 +182,7 @@ private:
     float scale_{1.0f};
     float eps_{1e-5f};
 
-    uint32_t blockDim_{0};
+    uint32_t numBlocks_{0};
     int64_t tilingKey_{0};
     size_t *workspace_{nullptr};
     ge::DataType inputDtype_{ge::DT_FLOAT};

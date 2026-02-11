@@ -318,7 +318,7 @@ static ge::graphStatus TilingSplitS(gert::TilingContext* context, uint64_t coreN
 
     uint64_t frontCoreNum = seqLen % coreNum != 0 ? seqLen % coreNum : coreNum;
     uint64_t tailCoreNum = seqLen < coreNum ? 0 : coreNum - frontCoreNum;
-    uint64_t blockDim = frontCoreNum + tailCoreNum;
+    uint64_t numBlocks = frontCoreNum + tailCoreNum;
 
     seqFrontLen = GetCeilInt(seqLen, coreNum);
     seqTailLen = GetDiv(seqLen, coreNum);
@@ -328,7 +328,7 @@ static ge::graphStatus TilingSplitS(gert::TilingContext* context, uint64_t coreN
     tiling.ropeInterleavedGradParams.set_seqFrontLen(seqFrontLen);
     tiling.ropeInterleavedGradParams.set_seqTailLen(seqTailLen);
 
-    context->SetBlockDim(blockDim);
+    context->SetBlockDim(numBlocks);
 
     uint64_t reserveBufferSize = ONE_BLOCK;
     if (ubSize < reserveBufferSize) {

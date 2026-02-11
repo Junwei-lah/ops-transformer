@@ -256,7 +256,7 @@ ge::graphStatus NormRopeConcatTiling::ComputeCoreTilingStrategy()
     uint32_t maxCoreSeq = std::max(maxSeq, maxEncoderSeq);
     usedCore_ = std::min(maxCoreSeq, compileInfo_.aivNum);
 
-    blockDim_ = usedCore_;
+    numBlocks_ = usedCore_;
     return ge::GRAPH_SUCCESS;
 }
 
@@ -342,7 +342,7 @@ ge::graphStatus NormRopeConcatTiling::DoTiling(gert::TilingContext *ctx)
         return ge::GRAPH_FAILED;
     }
     ctx->SetTilingKey(tilingKey_);
-    ctx->SetBlockDim(blockDim_);
+    ctx->SetBlockDim(numBlocks_);
 
     return ge::GRAPH_SUCCESS;
 }

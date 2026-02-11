@@ -705,7 +705,7 @@ bool Mc2QuantBatchMatmulV3TilingBase::SetPlatformInfoForTiling()
     aicoreParams_.l1Size = compileInfo_.l1Size;
     aicoreParams_.l0aSize = compileInfo_.l0aSize;
     aicoreParams_.l0cSize = compileInfo_.l0cSize;
-    aicoreParams_.blockDim = 0;
+    aicoreParams_.numBlocks = 0;
     return true;
 }
 

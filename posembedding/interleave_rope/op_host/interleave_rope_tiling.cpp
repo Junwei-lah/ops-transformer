@@ -154,7 +154,7 @@ ge::graphStatus InterleaveRopeTiling::SplitBlockForFixBNS()
     int64_t batchsPerBlock = DEFAULT_BATCH_PER_BLOCK;
     tilingData_.set_batchsPerBlock(batchsPerBlock);
     tilingData_.set_batchsLastBlock(batchsPerBlock);
-    tilingData_.set_blockDim(batchSize_ / batchsPerBlock);
+    tilingData_.set_numBlocks(batchSize_ / batchsPerBlock);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -165,7 +165,7 @@ ge::graphStatus InterleaveRopeTiling::SplitBlockForBatch()
     int64_t batchsLastBlock = batchSize_ - (needBlocks - 1) * batchsPerBlock;
     tilingData_.set_batchsPerBlock(batchsPerBlock);
     tilingData_.set_batchsLastBlock(batchsLastBlock);
-    tilingData_.set_blockDim(needBlocks);
+    tilingData_.set_numBlocks(needBlocks);
 
     if (tilingKey_ == B11D_TILINGKEY) {
         int64_t NS = numHead_ * seqLength_;
@@ -194,7 +194,7 @@ ge::graphStatus InterleaveRopeTiling::SplitBlockForNS()
     int64_t NSPerBlock = Ops::Base::CeilDiv(NS, static_cast<int64_t>(coreNum_));
     int64_t needBlocks = Ops::Base::CeilDiv(NS, NSPerBlock);
     int64_t NSLastBlock = NS - (needBlocks - 1) * NSPerBlock;
-    tilingData_.set_blockDim(needBlocks);
+    tilingData_.set_numBlocks(needBlocks);
 
     tilingData_.set_hiddenDimCountPerBlock(NSPerBlock);
     tilingData_.set_hiddenDimCountLastBlock(NSLastBlock);
@@ -265,7 +265,7 @@ ge::graphStatus InterleaveRopeTiling::DoOpTiling()
     if (seqLength_ >= MIN_SEQUANCE_LEN && cosS_ == seqLength_) {
         int64_t seqPerBlock = Ops::Base::CeilDiv(seqLength_, static_cast<int64_t>(coreNum_));
         int64_t needBlocks = Ops::Base::CeilDiv(seqLength_, seqPerBlock);
-        tilingData_.set_blockDim(needBlocks);
+        tilingData_.set_numBlocks(needBlocks);
         tilingKey_ = BN1D_TILINGKEY;
         return ge::GRAPH_SUCCESS;
     }
@@ -314,7 +314,7 @@ uint64_t InterleaveRopeTiling::GetTilingKey() const
 ge::graphStatus InterleaveRopeTiling::PostTiling()
 {
     context_->SetTilingKey(GetTilingKey());
-    context_->SetBlockDim(tilingData_.get_blockDim());
+    context_->SetBlockDim(tilingData_.get_numBlocks());
     size_t* workspaces = context_->GetWorkspaceSizes(1);
     workspaces[0] = DEFAULT_WORKSPACE_SIZE;
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());

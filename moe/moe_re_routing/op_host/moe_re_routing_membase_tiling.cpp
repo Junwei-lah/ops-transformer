@@ -182,12 +182,12 @@ ge::graphStatus MoeReRoutingTiling::DoOpTiling()
     tilingKey_ = valueToFind->second;
 
     int64_t blockDimFactor = CeilDiv(rankNums, coreNum_);
-    int64_t blockDim = CeilDiv(rankNums, blockDimFactor);
+    int64_t numBlocks = CeilDiv(rankNums, blockDimFactor);
     if (tokenNum == 0) {
-        blockDim = 1;
+        numBlocks = 1;
     }
-    context_->SetBlockDim(blockDim);
-    tilingData_.set_coreNum(blockDim);
+    context_->SetBlockDim(numBlocks);
+    tilingData_.set_coreNum(numBlocks);
     tilingData_.set_ubFactor(ubFactor);
     return ge::GRAPH_SUCCESS;
 }

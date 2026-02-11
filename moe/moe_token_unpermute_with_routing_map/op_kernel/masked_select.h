@@ -183,7 +183,7 @@ public:
         this->formerlasttileLength = maskedSelectTilingData->formerlasttileLength;
 
         this->needCoreNum = maskedSelectTilingData->needCoreNum; // 修改
-        blockDim = this->needCoreNum;
+        numBlocks = this->needCoreNum;
         this->tailNum = maskedSelectTilingData->tailNum;
         this->tailLength = maskedSelectTilingData->tailLength;
         this->tailtileNum = maskedSelectTilingData->tailtileNum;
@@ -217,7 +217,7 @@ public:
         }
         uint64_t alignNum = DATA_ALIGN / sizeof(half);       // 256/<8>=32
         tileLengthAlign = (tileLength + alignNum - 1) / alignNum * alignNum;
-        offsetGlobal.SetGlobalBuffer((__gm__ int32_t*)workspace, blockDim);
+        offsetGlobal.SetGlobalBuffer((__gm__ int32_t*)workspace, numBlocks);
         pipe->InitBuffer(inQueueX, BUFFER_NUM, this->tileLengthAlign * sizeof(T));
         pipe->InitBuffer(inQueueMask, BUFFER_NUM, this->tileLengthAlign * sizeof(uint8_t));
         pipe->InitBuffer(outQueueY, BUFFER_NUM, this->tileLengthAlign * sizeof(T));
@@ -266,7 +266,7 @@ public:
             PipeBarrier<PIPE_ALL>();
 
             uint64_t ind = 0;
-            copyParams.blockLen = static_cast<uint32_t>(blockDim * sizeof(int32_t));
+            copyParams.blockLen = static_cast<uint32_t>(numBlocks * sizeof(int32_t));
             DataCopyPadExtParams<int32_t> padParams{false, 0, 0, 0};
             DataCopyPad(offsetLocal, offsetGlobal, copyParams, padParams);        //workspace 写入 offset
             PipeBarrier<PIPE_ALL>();
@@ -520,7 +520,7 @@ private:
     LocalTensor<int32_t> offsetLocal;
     LocalTensor<half> maskHalfLocal;
     // 输入
-    uint64_t blockDim;
+    uint64_t numBlocks;
     uint64_t formerNum;
     uint64_t formerLength;
     uint64_t formertileNum;

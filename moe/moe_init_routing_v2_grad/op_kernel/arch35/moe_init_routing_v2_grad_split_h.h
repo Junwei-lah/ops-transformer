@@ -31,7 +31,7 @@ public:
         this->h = tilingData->h;
         this->hBlockFactor = tilingData->hBlockFactor;
         this->hUbFactor = tilingData->hUbFactor;
-        this->blockDim = tilingData->blockDim;
+        this->numBlocks = tilingData->numBlocks;
     }
 
     __aicore__ inline void Init(GM_ADDR gradExpandedX, GM_ADDR expandedRowIdx, GM_ADDR gradX, TPipe* tPipe)
@@ -50,7 +50,7 @@ public:
     __aicore__ inline void Process()
     {
         int64_t currhBlockFactor = this->hBlockFactor;
-        if (this->blockIdx == this->blockDim - 1) {
+        if (this->blockIdx == this->numBlocks - 1) {
             currhBlockFactor = this->h % this->hBlockFactor == 0 ? this->hBlockFactor : this->h % this->hBlockFactor;
         }
         int64_t splitHLoopCnt = Ops::Base::CeilDiv(currhBlockFactor, this->hUbFactor);
@@ -167,7 +167,7 @@ private:
     int64_t h;
     int64_t hBlockFactor;
     int64_t hUbFactor;
-    int64_t blockDim;
+    int64_t numBlocks;
     uint32_t blockIdx;
 };
 } // namespace MoeInitRoutingV2Grad

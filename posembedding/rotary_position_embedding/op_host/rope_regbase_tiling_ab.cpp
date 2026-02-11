@@ -65,16 +65,16 @@ ge::graphStatus RopeRegBaseTilingClassAB::DoOpTiling()
     }
     dAlign_ = Ops::Base::CeilAlign(d_ / dSplitCoef_, blockSize_ / typeSize) * dSplitCoef_;
 
-    blockFactorBS_ = Ops::Base::CeilDiv(bs, int64_t(aicoreParams_.blockDim));
+    blockFactorBS_ = Ops::Base::CeilDiv(bs, int64_t(aicoreParams_.numBlocks));
     blockNumBS_ = Ops::Base::CeilDiv(bs, blockFactorBS_);
     blockTailBS_ = bs - (blockNumBS_ - 1) * blockFactorBS_;
 
-    if (bs <= int64_t(aicoreParams_.blockDim) / CONST_TWO) {
+    if (bs <= int64_t(aicoreParams_.numBlocks) / CONST_TWO) {
         if (blockNumBS_ == 0) {
             OP_LOGD("RopeRegBaseTilingClassAB ComputeUbFactor error, blockNumBS_ == 0");
             return ge::GRAPH_FAILED;
         }
-        blockNumN_ = aicoreParams_.blockDim / blockNumBS_;
+        blockNumN_ = aicoreParams_.numBlocks / blockNumBS_;
         blockFactorN_ = Ops::Base::CeilDiv(n_, blockNumN_);
         blockNumN_ = Ops::Base::CeilDiv(n_, blockFactorN_);
         blockTailN_ = n_ - (blockNumN_ - 1) * blockFactorN_;

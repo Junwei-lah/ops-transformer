@@ -67,7 +67,7 @@ private:
     void SetTilingSplitCore();
     ge::graphStatus SetTilingFactor();
 
-    int64_t blockDim = 0;
+    int64_t numBlocks = 0;
     MoeInitRoutingV2GradRegbaseFullLoadTilingData moeInitRoutingV2GradTilingData;
 };
 
@@ -95,9 +95,9 @@ void MoeInitRoutingV2GradRegbaseFullLoad::SetTilingShapeInfo()
 void MoeInitRoutingV2GradRegbaseFullLoad::SetTilingSplitCore()
 {
     int64_t nBlockFactor = Ops::Base::CeilDiv(N, aivNum); // 单核处理最大token数
-    blockDim = Ops::Base::CeilDiv(N, nBlockFactor);       // 实际使用核数
+    numBlocks = Ops::Base::CeilDiv(N, nBlockFactor);       // 实际使用核数
 
-    moeInitRoutingV2GradTilingData.set_blockDim(blockDim);
+    moeInitRoutingV2GradTilingData.set_numBlocks(numBlocks);
     moeInitRoutingV2GradTilingData.set_nBlockFactor(nBlockFactor);
 }
 
@@ -150,7 +150,7 @@ uint64_t MoeInitRoutingV2GradRegbaseFullLoad::GetTilingKey() const
 
 ge::graphStatus MoeInitRoutingV2GradRegbaseFullLoad::PostTiling()
 {
-    context_->SetBlockDim(blockDim);
+    context_->SetBlockDim(numBlocks);
     size_t* currentWorkspace = context_->GetWorkspaceSizes(1);
     currentWorkspace[0] = workspaceSize_;
     auto tilingData = context_->GetRawTilingData();

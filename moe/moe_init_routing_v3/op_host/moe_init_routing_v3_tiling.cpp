@@ -276,7 +276,7 @@ ge::graphStatus MoeInitRountingV3TilingBase::GetPlatformInfo()
     auto compileInfoPtr = reinterpret_cast<const MoeInitRoutingV3CompileInfo*>(context_->GetCompileInfo());
     OP_CHECK_IF(compileInfoPtr == nullptr, OP_LOGE(context_, "compile info is null"), return ge::GRAPH_FAILED);
     aivNum = compileInfoPtr->aivNum;
-    aicoreParams_.blockDim = aivNum;
+    aicoreParams_.numBlocks = aivNum;
     aicoreParams_.ubSize = compileInfoPtr->ubSize;
     moeInitRoutingV3TilingData.set_coreNum(aivNum);
     OP_LOGI(context_, "---PlatformInfo--- aivNum is: %ld, ubSizePlatForm is: %ld ", aivNum, aicoreParams_.ubSize);

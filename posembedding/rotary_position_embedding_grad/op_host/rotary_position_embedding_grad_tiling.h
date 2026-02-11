@@ -102,7 +102,7 @@ END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(RotaryPositionEmbeddingGrad, RotaryPositionEmbeddingGradTilingData)
 
 struct RotaryPositionEmbeddingGradCompileInfo {
-    int64_t blockDim;
+    int64_t numBlocks;
     uint64_t ubSize;
     platform_ascendc::SocVersion socVersion;
     Ops::Base::ReduceOpCompileInfo opInfo;

@@ -37,9 +37,9 @@ public:
          * y:   [B, N, S, 64]
          */
         // tilingData
-        int64_t blockFactor = (tilingData_->seqLength + tilingData_->blockDim - 1) / tilingData_->blockDim;
+        int64_t blockFactor = (tilingData_->seqLength + tilingData_->numBlocks - 1) / tilingData_->numBlocks;
         int64_t currentBlockFactor = blockFactor;
-        if (GetBlockIdx() == tilingData_->blockDim - 1) {
+        if (GetBlockIdx() == tilingData_->numBlocks - 1) {
             currentBlockFactor = tilingData_->seqLength - GetBlockIdx() * blockFactor;
         }
         ubFactor = 32; // ubfactor: 32

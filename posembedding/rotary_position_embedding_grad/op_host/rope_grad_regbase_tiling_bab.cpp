@@ -68,7 +68,7 @@ private:
 ge::graphStatus RopeGradRegBaseTilingClassBAB::DoOpTiling()
 {
     ubSize_ = aicoreParams_.ubSize;
-    coreNum_ = aicoreParams_.blockDim;
+    coreNum_ = aicoreParams_.numBlocks;
     ge::graphStatus status = SplitUb();
     if (status != ge::GRAPH_SUCCESS) {
         OP_LOGE(context_->GetNodeName(), "SplitUb Failed.");

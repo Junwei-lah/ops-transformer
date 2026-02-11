@@ -449,7 +449,7 @@ protected:
             ApplyRotaryPosEmbCompileInfo{params.totalCoreNum, platformUbSize, params.sysWorkspaceSize, params.socVersion});
         } else {
             OP_LOGD(context_->GetNodeName(), "get platform information from compile info.");
-            params.totalCoreNum = aropeCompileInfo->blockDim;
+            params.totalCoreNum = aropeCompileInfo->numBlocks;
             params.totalUbSize = aropeCompileInfo->ubSize;
             params.sysWorkspaceSize = aropeCompileInfo->sysWorkspaceSize;
             params.socVersion = aropeCompileInfo->socVersion;
@@ -534,7 +534,7 @@ static ge::graphStatus TilingPrepare4ApplyRotaryPosEmb(gert::TilingParseContext 
 
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     compileInfoPtr->socVersion = ascendcPlatform.GetSocVersion();
-    compileInfoPtr->blockDim = ascendcPlatform.GetCoreNumAiv();
+    compileInfoPtr->numBlocks = ascendcPlatform.GetCoreNumAiv();
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, compileInfoPtr->ubSize);
     return ge::GRAPH_SUCCESS;
 }

@@ -59,9 +59,9 @@ bool RopeGradRegBaseTilingClassABAAndBA::IsCapable()
 ge::graphStatus RopeGradRegBaseTilingClassABAAndBA::SplitCore()
 {
     // B大于等于核数，且能被核数整除，则仅在B轴分核
-    if (b_ % aicoreParams_.blockDim == 0) {
-        blockNumB_ = aicoreParams_.blockDim;
-        blockFactorB_ = b_ / aicoreParams_.blockDim;
+    if (b_ % aicoreParams_.numBlocks == 0) {
+        blockNumB_ = aicoreParams_.numBlocks;
+        blockFactorB_ = b_ / aicoreParams_.numBlocks;
         blockNumS_ = 1;
         blockFactorS_ = s_;
         usedCoreNum_ = blockNumB_ * blockNumS_;
@@ -69,9 +69,9 @@ ge::graphStatus RopeGradRegBaseTilingClassABAAndBA::SplitCore()
     }
 
     // S大于等于核数，且能被核数整除，则仅在S轴分核
-    if (s_ % aicoreParams_.blockDim == 0) {
-        blockNumS_ = aicoreParams_.blockDim;
-        blockFactorS_ = s_ / aicoreParams_.blockDim;
+    if (s_ % aicoreParams_.numBlocks == 0) {
+        blockNumS_ = aicoreParams_.numBlocks;
+        blockFactorS_ = s_ / aicoreParams_.numBlocks;
         blockNumB_ = 1;
         blockFactorB_ = b_;
         usedCoreNum_ = blockNumB_ * blockNumS_;
@@ -79,16 +79,16 @@ ge::graphStatus RopeGradRegBaseTilingClassABAAndBA::SplitCore()
     }
 
     // 尝试优先对B分核，再尝试优先对S分核，比较二者切分后的总核数
-    auto blockFactorB1 = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), aicoreParams_.blockDim);
+    auto blockFactorB1 = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), aicoreParams_.numBlocks);
     auto blockNumB1 = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), blockFactorB1);
-    auto blockNumS1 = std::min(static_cast<uint64_t>(s_), aicoreParams_.blockDim / blockNumB1);
+    auto blockNumS1 = std::min(static_cast<uint64_t>(s_), aicoreParams_.numBlocks / blockNumB1);
     auto blockFactorS1 = Ops::Base::CeilDiv(static_cast<uint64_t>(s_), blockNumS1);
     blockNumS1 = Ops::Base::CeilDiv(static_cast<uint64_t>(s_), blockFactorS1);
     auto usedCoreNum1 = blockNumB1 * blockNumS1;
 
-    auto blockFactorS2 = Ops::Base::CeilDiv(static_cast<uint64_t>(s_), aicoreParams_.blockDim);
+    auto blockFactorS2 = Ops::Base::CeilDiv(static_cast<uint64_t>(s_), aicoreParams_.numBlocks);
     auto blockNumS2 = Ops::Base::CeilDiv(static_cast<uint64_t>(s_), blockFactorS2);
-    auto blockNumB2 = std::min(static_cast<uint64_t>(b_), aicoreParams_.blockDim / blockNumS2);
+    auto blockNumB2 = std::min(static_cast<uint64_t>(b_), aicoreParams_.numBlocks / blockNumS2);
     auto blockFactorB2 = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), blockNumB2);
     blockNumB2 = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), blockFactorB2);
     auto usedCoreNum2 = blockNumB2 * blockNumS2;

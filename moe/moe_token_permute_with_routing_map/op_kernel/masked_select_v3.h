@@ -169,7 +169,7 @@ public:
         uint64_t alignNum = DATA_ALIGN / sizeof(half); // 256/<8>=32
         tileLengthAlign = (tileLength + alignNum - 1) / alignNum * alignNum;
 
-        offsetGlobal.SetGlobalBuffer((__gm__ int32_t*)workspace, blockDim);
+        offsetGlobal.SetGlobalBuffer((__gm__ int32_t*)workspace, numBlocks);
         SetPipeBuffer(hasProb);
         indexLocal = indexBuf.Get<int32_t>();
         offsetLocal = offsetBuf.Get<int32_t>();
@@ -204,7 +204,7 @@ public:
         SyncAll();
         if (this->blockIdx < needCoreNum) {
             PipeBarrier<PIPE_ALL>();
-            DataCopyExtParams copyParams{1, static_cast<uint32_t>(blockDim * sizeof(int32_t)), 0, 0, 0};
+            DataCopyExtParams copyParams{1, static_cast<uint32_t>(numBlocks * sizeof(int32_t)), 0, 0, 0};
             uint64_t ind = 0;
             DataCopyPadExtParams<int32_t> padParams{false, 0, 0, 0};
             DataCopyPad(offsetLocal, offsetGlobal, copyParams, padParams); // workspace 写入 offset
@@ -235,7 +235,7 @@ public:
 
 private:
     __aicore__ inline void InitForMaskedSelectTilingData(const MaskedSelectRMTilingData* maskedSelectTilingData) {
-        this->blockDim = maskedSelectTilingData->needCoreNum;
+        this->numBlocks = maskedSelectTilingData->needCoreNum;
         this->formerNum = maskedSelectTilingData->formerNum;
         this->formerLength = maskedSelectTilingData->formerLength;
         this->formertileNum = maskedSelectTilingData->formertileNum;
@@ -518,7 +518,7 @@ private:
     GlobalTensor<int32_t> indexGlobal;
     uint64_t needCoreNum;
     // 输入
-    uint64_t blockDim;
+    uint64_t numBlocks;
     uint64_t formerNum;
     uint64_t formerLength;
     uint64_t formertileNum;

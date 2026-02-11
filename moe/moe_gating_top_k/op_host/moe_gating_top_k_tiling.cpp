@@ -372,7 +372,7 @@ ge::graphStatus MoeGatingTopKTilingBase::GetPlatformInfo()
     auto platformInfo = context_->GetPlatformInfo();
     OP_CHECK_IF(platformInfo == nullptr, OP_LOGE(context_, "fail to get platform info"), return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
+    aicoreParams_.numBlocks = ascendcPlatform.GetCoreNumAiv();
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     aicoreParams_.ubSize = ubSizePlatForm;
@@ -428,7 +428,7 @@ ge::graphStatus MoeGatingTopKTilingBase::CheckOutShape()
 
 void MoeGatingTopKTilingBase::SplitRows()
 {
-    int64_t perCoreRows = Ops::Base::CeilDiv(rows_, static_cast<int64_t>(aicoreParams_.blockDim));
+    int64_t perCoreRows = Ops::Base::CeilDiv(rows_, static_cast<int64_t>(aicoreParams_.numBlocks));
     int64_t needCoreNum = Ops::Base::CeilDiv(rows_, perCoreRows);
     // perCoreRows cannot be 0
     int64_t lastCoreRows = rows_ % perCoreRows == 0 ? perCoreRows : rows_ % perCoreRows;

@@ -229,7 +229,7 @@ ge::graphStatus Mc2WeightQuantBatchMatmulV2Tiling::GetPlatformInfo()
         compileInfoPtr_->supportMmadS8S4 = compileInfoPtr->supportMmadS8S4;
     }
 
-    aicoreParams_.blockDim = 0;
+    aicoreParams_.numBlocks = 0;
     aicoreParams_.aicNum = compileInfoPtr->aicNum;
     aicoreParams_.ubSize = compileInfoPtr->ubSize;
     aicoreParams_.l1Size = compileInfoPtr->l1Size;

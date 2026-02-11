@@ -119,7 +119,7 @@ END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(ApplyRotaryPosEmb_20030, ApplyRotaryPosEmbRegbaseABTilingData)
 
 struct ApplyRotaryPosEmbCompileInfo {
-    int64_t blockDim = 0;
+    int64_t numBlocks = 0;
     uint64_t ubSize = 0;
     int64_t sysWorkspaceSize = 0;
     platform_ascendc::SocVersion socVersion = platform_ascendc::SocVersion::ASCEND910B;

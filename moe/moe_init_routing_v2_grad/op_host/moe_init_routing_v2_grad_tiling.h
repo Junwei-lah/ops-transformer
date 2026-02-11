@@ -57,7 +57,7 @@ TILING_DATA_FIELD_DEF(int64_t, activeNum);
 TILING_DATA_FIELD_DEF(int64_t, h);
 TILING_DATA_FIELD_DEF(int64_t, hBlockFactor);
 TILING_DATA_FIELD_DEF(int64_t, hUbFactor);
-TILING_DATA_FIELD_DEF(int64_t, blockDim);
+TILING_DATA_FIELD_DEF(int64_t, numBlocks);
 END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_200001, MoeInitRoutingV2GradRegbaseSplitHTilingData)
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_200002, MoeInitRoutingV2GradRegbaseSplitHTilingData)
@@ -71,7 +71,7 @@ TILING_DATA_FIELD_DEF(int64_t, k);
 TILING_DATA_FIELD_DEF(int64_t, activeNum);
 TILING_DATA_FIELD_DEF(int64_t, h);
 TILING_DATA_FIELD_DEF(int64_t, hUbFactor);
-TILING_DATA_FIELD_DEF(int64_t, blockDim);
+TILING_DATA_FIELD_DEF(int64_t, numBlocks);
 END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_300001, MoeInitRoutingV2GradRegbaseFullLoadTilingData)
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_300002, MoeInitRoutingV2GradRegbaseFullLoadTilingData)
@@ -86,7 +86,7 @@ TILING_DATA_FIELD_DEF(int64_t, kUbFactor);
 TILING_DATA_FIELD_DEF(int64_t, activeNum);
 TILING_DATA_FIELD_DEF(int64_t, h);
 TILING_DATA_FIELD_DEF(int64_t, hUbFactor);
-TILING_DATA_FIELD_DEF(int64_t, blockDim);
+TILING_DATA_FIELD_DEF(int64_t, numBlocks);
 END_TILING_DATA_DEF;
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_400001, MoeInitRoutingV2GradRegbaseTilingData)
 REGISTER_TILING_DATA_CLASS(MoeInitRoutingV2Grad_400002, MoeInitRoutingV2GradRegbaseTilingData)

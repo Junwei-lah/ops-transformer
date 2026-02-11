@@ -147,7 +147,7 @@ struct MoeTokenPermuteWithRoutingMapIndexCopyParams {
     int64_t cols = 0;
     int64_t frontCoreNum = 0;
     int64_t tailCoreNum = 0;
-    int64_t blockDim = 0;
+    int64_t numBlocks = 0;
     int64_t coreCalcNum = 0;
     int64_t coreCalcTail = 0;
     int64_t ubLeft = 0;
@@ -284,7 +284,7 @@ ge::graphStatus MoeTokenPermuteWithRoutingMapTilingBase::GetPlatformInfo()
         aivNumLocal = compileInfo->aivNum;
     }
     realCoreNumAiv = compileInfo->aivNum;
-    aicoreParams_.blockDim = aivNumLocal;
+    aicoreParams_.numBlocks = aivNumLocal;
 
     moeTokenPermuteWithRoutingMapTilingData.set_coreNum(aivNumLocal);
     return ge::GRAPH_SUCCESS;
@@ -583,15 +583,15 @@ void MoeTokenPermuteWithRoutingMapTilingBase::Tinlig4VBSMultiCoreComputeLastdim(
     int64_t frontCoreNum =
         GetRem(numExperts, realCoreNumAiv) != 0 ? GetRem(numExperts, realCoreNumAiv) : realCoreNumAiv;
     int64_t tailCoreNum = numExperts <= realCoreNumAiv ? 0 : realCoreNumAiv - frontCoreNum;
-    int64_t blockDim = frontCoreNum + tailCoreNum;
-    aivNum = blockDim;
+    int64_t numBlocks = frontCoreNum + tailCoreNum;
+    aivNum = numBlocks;
     int64_t coreCalcNum = GetCeilInt(numExperts, realCoreNumAiv);
     int64_t coreCalcTail = GetDiv(numExperts, realCoreNumAiv);
     tilingData->set_frontcoreTask(coreCalcNum);
     tilingData->set_tailcoreTask(coreCalcTail);
     tilingData->set_frontCoreNum(frontCoreNum);
     tilingData->set_tailCoreNum(tailCoreNum);
-    tilingData->set_needCoreNum(blockDim);
+    tilingData->set_needCoreNum(numBlocks);
     tilingData->set_perCoreElements(perCoreElements);
     tilingData->set_perCoreLoops(
         GetCeilInt(tilingData->get_perCoreElements(), sortLoopMaxElement)); // 每个核处理的loop数
@@ -754,22 +754,22 @@ void MoeTokenPermuteWithRoutingMapTilingBase::Tiling4MaskedSelect()
     uint64_t tailTileLength = 0;
     uint64_t tailLastTileLength = 0;
 
-    uint64_t blockDim = 0;
+    uint64_t numBlocks = 0;
     uint64_t ubLength = CalcMaskedSelectUb();
     OP_CHECK_IF(ubLength == 0, OP_LOGE(opName, "Ub length is zero."), return);
        
     // 运行核数
-    blockDim = (numExperts > static_cast<int64_t>(aivUseNum)) ? aivUseNum : numExperts;
-    tilingData->set_needCoreNum(blockDim);
+    numBlocks = (numExperts > static_cast<int64_t>(aivUseNum)) ? aivUseNum : numExperts;
+    tilingData->set_needCoreNum(numBlocks);
 
     // 切分流程
-    formerNum = numExperts % blockDim;
+    formerNum = numExperts % numBlocks;
     if (formerNum == 0) {
-        formerNum = blockDim;
+        formerNum = numBlocks;
     }
-    tailNum = blockDim - formerNum;
+    tailNum = numBlocks - formerNum;
 
-    formerLength = (numExperts + blockDim - 1) / blockDim * numTokens; // 算的多的核需要算多少数
+    formerLength = (numExperts + numBlocks - 1) / numBlocks * numTokens; // 算的多的核需要算多少数
     formerTileNum = (formerLength + ubLength - 1) / ubLength;          // 算的多的核要用多少次ub
     formerTileLength = ubLength;                                       // 算的多的核一次ub能放多少数
     formerLastTileLength = formerLength % ubLength; // 算的多的核最后一次ub需要算多少数
@@ -786,7 +786,7 @@ void MoeTokenPermuteWithRoutingMapTilingBase::Tiling4MaskedSelect()
             tailLastTileLength = ubLength;
         }
     }
-    aivNum = std::max(aivNum, static_cast<int64_t>(blockDim));
+    aivNum = std::max(aivNum, static_cast<int64_t>(numBlocks));
     tilingData->set_formerNum(formerNum);
     tilingData->set_formerLength(formerLength);
     tilingData->set_formertileNum(formerTileNum);
@@ -812,7 +812,7 @@ void MoeTokenPermuteWithRoutingMapTilingBase::InitMoeTokenPermuteWithRoutingMapI
 
     params.frontCoreNum = GetRem(tokenNums, realCoreNumAiv) != 0 ? GetRem(tokenNums, realCoreNumAiv) : realCoreNumAiv;
     params.tailCoreNum = tokenNums <= realCoreNumAiv ? 0 : realCoreNumAiv - params.frontCoreNum;
-    params.blockDim = params.frontCoreNum + params.tailCoreNum;
+    params.numBlocks = params.frontCoreNum + params.tailCoreNum;
     params.coreCalcNum = GetCeilInt(tokenNums, realCoreNumAiv);
     params.coreCalcTail = GetDiv(tokenNums, realCoreNumAiv);
 
@@ -837,7 +837,7 @@ void MoeTokenPermuteWithRoutingMapTilingBase::SetMoeTokenPermuteWithRoutingMapIn
     auto tilingData = &moeTokenPermuteWithRoutingMapTilingData.indexCopyComputeParamsOp;
     tilingData->set_tokenUB(params.tokenUB);
     tilingData->set_indicesUB(params.indicesUB);
-    tilingData->set_needCoreNum(params.blockDim);
+    tilingData->set_needCoreNum(params.numBlocks);
     tilingData->set_frontCoreNum(params.frontCoreNum);
     tilingData->set_tailCoreNum(params.tailCoreNum);
     tilingData->set_coreCalcNum(params.coreCalcNum);
@@ -897,7 +897,7 @@ void MoeTokenPermuteWithRoutingMapTilingBase::Tiling4IndexCopyCompute()
     params.frontLastIndicesLastTokenNums =
         params.frontCoreLastTokenNums - (params.frontLastonceIndicesTokenMoveTimes - 1) * params.onceUbTokenNums;
     SetMoeTokenPermuteWithRoutingMapIndexCopyParams(params);
-    aivNum = std::max(aivNum, params.blockDim);
+    aivNum = std::max(aivNum, params.numBlocks);
 }
 
 static ge::graphStatus TilingForMoeTokenPermuteWithRoutingMap(gert::TilingContext* context)

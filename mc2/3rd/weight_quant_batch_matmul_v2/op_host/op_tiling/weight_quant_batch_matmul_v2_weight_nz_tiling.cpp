@@ -287,7 +287,7 @@ ge::graphStatus Mc2WeightQuantBatchMatmulV2WeightNz::GetPlatformInfo()
         compileInfoPtr_->workspaceNum = compileInfoPtr->workspaceNum;
     }
 
-    aicoreParams_.blockDim = 0;
+    aicoreParams_.numBlocks = 0;
     aicoreParams_.ubSize = compileInfoPtr->ubSize;
     aicoreParams_.l1Size = compileInfoPtr->l1Size;
     aicoreParams_.l0cSize = compileInfoPtr->l0cSize;

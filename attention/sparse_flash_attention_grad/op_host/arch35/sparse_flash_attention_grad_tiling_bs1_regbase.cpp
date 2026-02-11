@@ -60,7 +60,7 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetPlatformInfo()
         auto compileInfoPtr = reinterpret_cast<const SparseFlashAttentionGradCompileInfo *>(context_->GetCompileInfo());
         OP_CHECK_IF(compileInfoPtr == nullptr, OPS_REPORT_VECTOR_INNER_ERR(opName, "compile_info is null."),
                    return ge::GRAPH_FAILED);
-        aicoreParams_.blockDim = compileInfoPtr->aivNum;
+        aicoreParams_.numBlocks = compileInfoPtr->aivNum;
         aicoreParams_.aicNum = compileInfoPtr->aicNum;
         aicoreParams_.ubSize = compileInfoPtr->ubSize;
         aicoreParams_.l1Size = compileInfoPtr->l1Size;
@@ -70,7 +70,7 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetPlatformInfo()
         l2CacheSize = compileInfoPtr->l2CacheSize;
     } else {
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-        aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
+        aicoreParams_.numBlocks = ascendcPlatform.GetCoreNumAiv();
         aicoreParams_.aicNum = ascendcPlatform.GetCoreNumAic();
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, aicoreParams_.ubSize);
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L1, aicoreParams_.l1Size);
@@ -80,9 +80,9 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetPlatformInfo()
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, aicoreParams_.l0cSize);
     }
 
-    OP_CHECK_IF((aicoreParams_.blockDim == 0) || (aicoreParams_.aicNum == 0),
+    OP_CHECK_IF((aicoreParams_.numBlocks == 0) || (aicoreParams_.aicNum == 0),
                OPS_REPORT_VECTOR_INNER_ERR(opName, "num of coreNum(aivNum) is %lu, num of aicNum is %lu.",
-                                           aicoreParams_.blockDim, aicoreParams_.aicNum),
+                                           aicoreParams_.numBlocks, aicoreParams_.aicNum),
                return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(aicoreParams_.ubSize <= 0 || l2CacheSize <= 0,
@@ -127,15 +127,15 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoLibApiTiling()
 ge::graphStatus SparseFlashAttentionGradBs1Regbase::GetWorkspaceSize()
 {
     int64_t coreNum = aicoreParams_.aicNum;
-    int64_t launchBlockDims = aicoreParams_.blockDim;
+    int64_t launchBlockDims = aicoreParams_.numBlocks;
     int64_t inputDtypeSize = B16;
     int64_t selectedS2 = tmpData.singleN;
 
     // Tiling传递的内存大小、起始地址，统一为字节数，单位为B
-    auto blockdim = CalcTschBlockDim(launchBlockDims, aicoreParams_.aicNum, aicoreParams_.blockDim);
+    auto blockdim = CalcTschBlockDim(launchBlockDims, aicoreParams_.aicNum, aicoreParams_.numBlocks);
     OP_CHECK_IF(blockdim == 0,
                OPS_REPORT_VECTOR_INNER_ERR(opName, "blockdim is 0, aicNum is %lu, aivNum is %lu.",
-                                           aicoreParams_.aicNum, aicoreParams_.blockDim),
+                                           aicoreParams_.aicNum, aicoreParams_.numBlocks),
                return ge::GRAPH_FAILED);
     context_->SetBlockDim(blockdim);
 
@@ -252,7 +252,7 @@ ge::graphStatus SparseFlashAttentionGradBs1Regbase::DoCastTiling()
     }
 
     uint32_t typeSize = B16;
-    uint32_t usedCoreNum = aicoreParams_.blockDim;
+    uint32_t usedCoreNum = aicoreParams_.numBlocks;
     uint32_t coreNum = aicoreParams_.aicNum;
     constexpr uint32_t postNzCoexNode = 12;
     constexpr uint32_t blockSize = 32;

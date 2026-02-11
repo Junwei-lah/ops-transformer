@@ -218,7 +218,7 @@ ge::graphStatus MoeTokenPermuteTilingBase::GetPlatformInfo()
         aivNum = ascendcPlatform.GetCoreNumAiv();
     }
     realCoreNumAiv = ascendcPlatform.GetCoreNumAiv();
-    aicoreParams_.blockDim = aivNum;
+    aicoreParams_.numBlocks = aivNum;
     uint64_t ubSizePlatForm;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSizePlatForm);
     aicoreParams_.ubSize = FloorAlign(ubSizePlatForm, ONE_BLOCK_BYTE);
@@ -561,7 +561,7 @@ void MoeTokenPermuteTilingBase::Tiling4IndexCopyCompute()
 
     int64_t frontCoreNum = GetRem(tokenNums, realCoreNumAiv) != 0 ? GetRem(tokenNums, realCoreNumAiv) : realCoreNumAiv;
     int64_t tailCoreNum = tokenNums <= realCoreNumAiv ? 0 : realCoreNumAiv - frontCoreNum;
-    int64_t blockDim = frontCoreNum + tailCoreNum;
+    int64_t numBlocks = frontCoreNum + tailCoreNum;
     int64_t coreCalcNum = GetCeilInt(tokenNums, realCoreNumAiv);
     int64_t coreCalcTail = GetDiv(tokenNums, realCoreNumAiv);
 
@@ -614,7 +614,7 @@ void MoeTokenPermuteTilingBase::Tiling4IndexCopyCompute()
         frontCoreLastTokenNums - (frontLastonceIndicesTokenMoveTimes - 1) * onceUbTokenNums;
     tilingData->set_tokenUB(tokenUB);
     tilingData->set_indicesUB(indicesUB);
-    tilingData->set_needCoreNum(blockDim);
+    tilingData->set_needCoreNum(numBlocks);
     tilingData->set_frontCoreNum(frontCoreNum);
     tilingData->set_tailCoreNum(tailCoreNum);
     tilingData->set_coreCalcNum(coreCalcNum);
@@ -635,7 +635,7 @@ void MoeTokenPermuteTilingBase::Tiling4IndexCopyCompute()
     tilingData->set_tailLastIndicesLastTokenNums(tailLastIndicesLastTokenNums);
     tilingData->set_frontLastonceIndicesTokenMoveTimes(frontLastonceIndicesTokenMoveTimes);
     tilingData->set_frontLastIndicesLastTokenNums(frontLastIndicesLastTokenNums);
-    aivNum = std::max(aivNum, blockDim);
+    aivNum = std::max(aivNum, numBlocks);
 }
 
 static ge::graphStatus TilingForMoeTokenPermute(gert::TilingContext* context)

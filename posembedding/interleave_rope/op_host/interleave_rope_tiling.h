@@ -29,7 +29,7 @@
 
 namespace optiling {
 BEGIN_TILING_DATA_DEF(InterleaveRopeTilingData)
-TILING_DATA_FIELD_DEF(int64_t, blockDim);
+TILING_DATA_FIELD_DEF(int64_t, numBlocks);
 TILING_DATA_FIELD_DEF(int64_t, splitAxis);
 
 TILING_DATA_FIELD_DEF(int64_t, batchSize);

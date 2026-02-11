@@ -315,7 +315,7 @@ ge::graphStatus NormRopeConcatGradTiling::ComputeCoreTilingStrategy()
     uint64_t maxEncoderSeq = std::max(encoderQuerySeq_, encoderKeySeq_);
     uint64_t maxCoreSeq = std::max(maxSeq, maxEncoderSeq);
     usedCore_ = std::min(maxCoreSeq, compileInfo_.aivNum);
-    blockDim_ = usedCore_;
+    numBlocks_ = usedCore_;
     return ge::GRAPH_SUCCESS;
 }
 
@@ -411,7 +411,7 @@ ge::graphStatus NormRopeConcatGradTiling::DoTiling(gert::TilingContext *ctx)
         return ge::GRAPH_FAILED;
     }
     ctx->SetTilingKey(tilingKey_);
-    ctx->SetBlockDim(blockDim_);
+    ctx->SetBlockDim(numBlocks_);
     if (tilingKey_ >= BATCH_MODE_MIN_KEY){
         ctx->SetScheduleMode(1);
     }

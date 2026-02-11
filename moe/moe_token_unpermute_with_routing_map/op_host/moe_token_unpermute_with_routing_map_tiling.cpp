@@ -351,7 +351,7 @@ static inline void Tiling4MaskedSelect(MoeTokenUnpermuteWithRoutingMapTilingData
   uint64_t tailTileLength = 0;
   uint64_t tailLastTileLength = 0;
 
-  uint64_t blockDim = 0;
+  uint64_t numBlocks = 0;
 
   // 求单个元素大小
   uint64_t sizeOfDataType = 1;
@@ -365,15 +365,15 @@ static inline void Tiling4MaskedSelect(MoeTokenUnpermuteWithRoutingMapTilingData
   ubLength = ubLength > static_cast<uint64_t>(param.input.tokensNum) ? param.input.tokensNum : ubLength;
   // ub能放的元素个数
   // 运行核数
-  blockDim = (static_cast<uint64_t>(param.input.numExperts) > aivUseNum) ? aivUseNum : param.input.numExperts;
-  mstilingData->set_needCoreNum(blockDim);
+  numBlocks = (static_cast<uint64_t>(param.input.numExperts) > aivUseNum) ? aivUseNum : param.input.numExperts;
+  mstilingData->set_needCoreNum(numBlocks);
   // 切分流程
-  formerNum = param.input.numExperts % blockDim;
+  formerNum = param.input.numExperts % numBlocks;
   if (formerNum == 0){
-      formerNum = blockDim;
+      formerNum = numBlocks;
   }
-  tailNum = blockDim - formerNum;
-  formerLength = (param.input.numExperts + blockDim -1) / blockDim * param.input.tokensNum;
+  tailNum = numBlocks - formerNum;
+  formerLength = (param.input.numExperts + numBlocks -1) / numBlocks * param.input.tokensNum;
   formerTileNum = (formerLength + ubLength - 1) / ubLength;
   formerTileLength = ubLength;
   formerLastTileLength = formerLength % ubLength;
@@ -389,7 +389,7 @@ static inline void Tiling4MaskedSelect(MoeTokenUnpermuteWithRoutingMapTilingData
           tailLastTileLength = ubLength;
       }
   }
-  param.core.maxUsedCoreNum = std::max(param.core.usedCoreNum, static_cast<int64_t>(blockDim)); 
+  param.core.maxUsedCoreNum = std::max(param.core.usedCoreNum, static_cast<int64_t>(numBlocks)); 
   mstilingData->set_formerNum(formerNum);
   mstilingData->set_formerLength(formerLength);
   mstilingData->set_formertileNum(formerTileNum);

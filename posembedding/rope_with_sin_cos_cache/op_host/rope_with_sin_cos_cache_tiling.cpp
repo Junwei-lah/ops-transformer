@@ -201,7 +201,7 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
     uint64_t dataTypeSize = FP32_DTYPE_SIZE;
     uint64_t front_core = totalDataNum % coreNum != 0 ? static_cast<uint64_t>(totalDataNum % coreNum) : coreNum;
     uint64_t tail_core = totalDataNum <= coreNum ? 0 : coreNum - front_core;
-    uint64_t blockDim = front_core + tail_core;
+    uint64_t numBlocks = front_core + tail_core;
 
     uint64_t numHeadsMax = numQheads > numKheads ? numQheads : numKheads;
     uint64_t allSize = params.isNeoxStyle == 1UL ?
@@ -246,7 +246,7 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
 
     params.num_tokens = numTokens;
     params.rotary_dim = rotaryDim;
-    params.core_num_use = blockDim;
+    params.core_num_use = numBlocks;
     params.front_core = front_core;
     params.tail_core = tail_core;
 
@@ -267,7 +267,7 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
     params.num_kheads_each_loop = num_kheads_each_loop;
     params.num_kheads_last_loop = num_kheads_last_loop;
 
-    context->SetBlockDim(blockDim);
+    context->SetBlockDim(numBlocks);
     context->SetTilingKey(params.tilingKey);
     return ge::GRAPH_SUCCESS;
 }

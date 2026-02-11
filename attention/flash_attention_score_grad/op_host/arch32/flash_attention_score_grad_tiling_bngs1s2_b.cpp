@@ -270,7 +270,7 @@ public:
             OP_CHECK_IF(compileInfoPtr == nullptr, OP_LOGE(context_, "compile_info is null"),
                        return ge::GRAPH_FAILED);
 
-            aicoreParams_.blockDim = compileInfoPtr->aivNum;
+            aicoreParams_.numBlocks = compileInfoPtr->aivNum;
             aicoreParams_.aicNum = compileInfoPtr->aicNum;
             aicoreParams_.ubSize = compileInfoPtr->ubSize;
             aicoreParams_.l1Size = compileInfoPtr->l1Size;
@@ -279,7 +279,7 @@ public:
             aicoreParams_.l0cSize = compileInfoPtr->l0cSize;
         } else {
             auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-            aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
+            aicoreParams_.numBlocks = ascendcPlatform.GetCoreNumAiv();
             aicoreParams_.aicNum = ascendcPlatform.GetCoreNumAic();
             ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, aicoreParams_.ubSize);
             ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L1, aicoreParams_.l1Size);
@@ -288,9 +288,9 @@ public:
             ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, aicoreParams_.l0cSize);
         }
 
-        OP_CHECK_IF((aicoreParams_.blockDim == 0) || (aicoreParams_.aicNum == 0),
+        OP_CHECK_IF((aicoreParams_.numBlocks == 0) || (aicoreParams_.aicNum == 0),
                     OP_LOGE(context_, "num of coreNum(aivNum) is %lu, num of aicNum is %lu.",
-                    aicoreParams_.blockDim, aicoreParams_.aicNum),
+                    aicoreParams_.numBlocks, aicoreParams_.aicNum),
                     return ge::GRAPH_FAILED);
 
         OP_CHECK_IF(aicoreParams_.ubSize <= 0,
@@ -821,7 +821,7 @@ public:
         td_->splitCoreParams.set_bOut(bOut);
 
         td_->singleCoreParams.set_singleCoreBatchRange(
-            CeilCommon(td_->splitCoreParams.get_bOut(), aicoreParams_.blockDim));
+            CeilCommon(td_->splitCoreParams.get_bOut(), aicoreParams_.numBlocks));
         td_->splitCoreParams.set_usedCoreNum(
             CeilCommon(td_->splitCoreParams.get_bOut(), td_->singleCoreParams.get_singleCoreBatchRange()));
 
@@ -1120,11 +1120,11 @@ public:
     ge::graphStatus PostTiling() override
     {
         auto blockdim =
-            CalcTschBlockDim(td_->splitCoreParams.get_usedCoreNum(), aicoreParams_.aicNum, aicoreParams_.blockDim);
+            CalcTschBlockDim(td_->splitCoreParams.get_usedCoreNum(), aicoreParams_.aicNum, aicoreParams_.numBlocks);
         OP_CHECK_IF(blockdim == 0,
                    OP_LOGW(context_,
                    "blockdim is 0, aicNum is %lu, aivNum is %lu.", aicoreParams_.aicNum,
-                   aicoreParams_.blockDim),
+                   aicoreParams_.numBlocks),
                    return ge::GRAPH_PARAM_INVALID);
         context_->SetBlockDim(blockdim);
 

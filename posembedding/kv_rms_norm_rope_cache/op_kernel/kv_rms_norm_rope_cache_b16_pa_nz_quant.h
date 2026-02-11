@@ -43,9 +43,9 @@ public:
         methodMode = v == nullptr ? 0 : 1;
         this->InitSharedData(methodMode); 
         int64_t currentBlockFactor = this->tilingData_->blockFactor;
-        if (GetBlockIdx() == (this->tilingData_->blockDim - 1)) {
+        if (GetBlockIdx() == (this->tilingData_->numBlocks - 1)) {
             currentBlockFactor = this->tilingData_->batchSize * this->tilingData_->seqLength * this->tilingData_->numHead -
-                                 (this->tilingData_->blockDim - 1) * this->tilingData_->blockFactor;
+                                 (this->tilingData_->numBlocks - 1) * this->tilingData_->blockFactor;
         }
 
         this->ubFactor = this->tilingData_->ubFactor;

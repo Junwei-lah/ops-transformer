@@ -126,13 +126,13 @@ bool FlashAttentionScoreGradTilingS1s2Bn2::IsCapable()
 
     // G>1且BN2不能开满50%核的时候，需要借G轴开核
     if (td_->opInfo.get_G() > 1 &&
-        td_->opInfo.get_B() * td_->opInfo.get_N2() * 2 <= static_cast<int64_t>(aicoreParams_.blockDim)) {
+        td_->opInfo.get_B() * td_->opInfo.get_N2() * 2 <= static_cast<int64_t>(aicoreParams_.numBlocks)) {
         OP_LOGI(context_, "G is larger than 1 and BN2 is less than coreNum, S1s2Bn2 cannot enable full core.");
         return false;
     }
 
     // S1或S2大于768且BN2不能开满核的时候，需要借S1或S2轴开核
-    if (td_->opInfo.get_B() * td_->opInfo.get_N2() < static_cast<int64_t>(aicoreParams_.blockDim) &&
+    if (td_->opInfo.get_B() * td_->opInfo.get_N2() < static_cast<int64_t>(aicoreParams_.numBlocks) &&
         (td_->opInfo.get_S1() > SAMEAB_MIN_S_THRESHOLD || td_->opInfo.get_S2() > SAMEAB_MIN_S_THRESHOLD)) {
         OP_LOGI(context_, "BN2 is less than coreNum, S1s2Bn2 cannot enable full core.");
         return false;
@@ -252,7 +252,7 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::GetPlatformInfo()
         OP_CHECK_IF(compileInfoPtr == nullptr, OP_LOGE(context_, "compile_info is null"),
                    return ge::GRAPH_FAILED);
 
-        aicoreParams_.blockDim = compileInfoPtr->aivNum;
+        aicoreParams_.numBlocks = compileInfoPtr->aivNum;
         aicoreParams_.aicNum = compileInfoPtr->aicNum;
         aicoreParams_.ubSize = compileInfoPtr->ubSize;
         aicoreParams_.l1Size = compileInfoPtr->l1Size;
@@ -263,7 +263,7 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::GetPlatformInfo()
             compileInfoPtr->l2CacheSize; // AiCoreParams使用的是cann仓的结构体，l2CacheSize暂时定义成类成员变量
     } else {
         auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
-        aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
+        aicoreParams_.numBlocks = ascendcPlatform.GetCoreNumAiv();
         aicoreParams_.aicNum = ascendcPlatform.GetCoreNumAic();
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, aicoreParams_.ubSize);
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L1, aicoreParams_.l1Size);
@@ -273,9 +273,9 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::GetPlatformInfo()
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, aicoreParams_.l0cSize);
     }
 
-    OP_CHECK_IF((aicoreParams_.blockDim == 0) || (aicoreParams_.aicNum == 0),
+    OP_CHECK_IF((aicoreParams_.numBlocks == 0) || (aicoreParams_.aicNum == 0),
                OP_LOGE(context_, "num of coreNum(aivNum) is %lu, num of aicNum is %lu.",
-                                           aicoreParams_.blockDim, aicoreParams_.aicNum),
+                                           aicoreParams_.numBlocks, aicoreParams_.aicNum),
                return ge::GRAPH_FAILED);
 
     OP_CHECK_IF(aicoreParams_.ubSize <= 0 || l2CacheSize <= 0,
@@ -1153,9 +1153,9 @@ int64_t FlashAttentionScoreGradTilingS1s2Bn2::GetSplitArrayMinMaxSum(std::vector
 ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
 {
     int64_t nNums = td_->opInfo.get_B() * td_->opInfo.get_N2();
-    int64_t formerCoreProcessNNums = CeilCommon(nNums, aicoreParams_.blockDim);
-    int64_t remainCoreNum = formerCoreProcessNNums * aicoreParams_.blockDim - nNums;
-    td_->opInfo.set_usedCoreNum(aicoreParams_.blockDim);
+    int64_t formerCoreProcessNNums = CeilCommon(nNums, aicoreParams_.numBlocks);
+    int64_t remainCoreNum = formerCoreProcessNNums * aicoreParams_.numBlocks - nNums;
+    td_->opInfo.set_usedCoreNum(aicoreParams_.numBlocks);
     int64_t sameAbBlockDim = 0;
     if (tmpData_.isL1CustomEnable) {
         sameAbBlockDim = aicoreParams_.aicNum;
@@ -1164,8 +1164,8 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
         td_->opInfo.set_usedCoreNum(sameAbBlockDim);
     }
 
-    td_->opInfo.set_castUsedCoreNum(aicoreParams_.blockDim); // for pre & post process
-    if (nNums < static_cast<int64_t>(aicoreParams_.blockDim)) {
+    td_->opInfo.set_castUsedCoreNum(aicoreParams_.numBlocks); // for pre & post process
+    if (nNums < static_cast<int64_t>(aicoreParams_.numBlocks)) {
         if (td_->opInfo.get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
             // 需要给出真实使用的core数，用于bN2idxStarts，bN2idxEnds的检索
             if (tmpData_.isL1CustomEnable) {
@@ -1179,7 +1179,7 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
         } else {
             // 非TND
             int64_t minS = std::min(td_->opInfo.get_S1(), td_->opInfo.get_S2());
-            if (nNums * minS * td_->opInfo.get_D() / aicoreParams_.blockDim * tmpData_.dataTypeSize < 8 * 1024) {
+            if (nNums * minS * td_->opInfo.get_D() / aicoreParams_.numBlocks * tmpData_.dataTypeSize < 8 * 1024) {
                 // 后处理ub利用率严重不足时，减少核启动
                 if (tmpData_.isL1CustomEnable) {
                     if (nNums < sameAbBlockDim) {
@@ -1194,20 +1194,20 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
         }
     }
 
-    td_->opInfo.set_formerCoreNum((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.blockDim) - remainCoreNum);
+    td_->opInfo.set_formerCoreNum((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.numBlocks) - remainCoreNum);
     td_->opInfo.set_formerCoreProcessNNum(formerCoreProcessNNums);
     td_->opInfo.set_remainCoreProcessNNum(static_cast<uint32_t>(formerCoreProcessNNums - 1));
 
     // 确定性计算下的TND对应的分核策略
     if (td_->opInfo.get_layout() == static_cast<uint32_t>(InputLayout::TND)) {
-        if (nNums <= static_cast<int64_t>(tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.blockDim)) {
+        if (nNums <= static_cast<int64_t>(tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.numBlocks)) {
             for (int64_t i = 0; i < nNums; i++) {
                 tmpData_.bN2idxStarts[i] = i;
                 tmpData_.bN2idxEnds[i] = i;
             }
         } else {
             int64_t minMaxSum = GetSplitArrayMinMaxSum(
-                tmpData_.s1s2Weight, tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.blockDim);
+                tmpData_.s1s2Weight, tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.numBlocks);
             OP_LOGD(context_->GetNodeName(), "FlashAttentionScoreGradTilingS1s2Bn2 splite B*N2 minMaxSum: %ld.",
                       minMaxSum);
             int64_t tempSum = 0;
@@ -1218,13 +1218,13 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
             for (uint32_t i = 0; i < tmpData_.s1s2Weight.size(); i++) {
                 tempSum += tmpData_.s1s2Weight[i];
                 if ((tempSum > minMaxSum) ||
-                    ((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.blockDim) - (tempSumIdx + 1) >=
+                    ((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.numBlocks) - (tempSumIdx + 1) >=
                      (tmpData_.s1s2Weight.size() - i))) {
                     tempSumIdx++;
                     tempSum = tmpData_.s1s2Weight[i];
                     tmpData_.bN2idxEnds[coreIdxEnd++] = i - 1;
                     tmpData_.bN2idxStarts[coreIdxBegin++] = i;
-                    if ((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.blockDim) - tempSumIdx >=
+                    if ((tmpData_.isL1CustomEnable ? sameAbBlockDim : aicoreParams_.numBlocks) - tempSumIdx >=
                         (tmpData_.s1s2Weight.size() - i)) {
                         coreIdxBegin--;
                         for (uint32_t k = 0; k < tmpData_.s1s2Weight.size() - i; k++) {
@@ -1238,7 +1238,7 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::DoBlockTiling()
             }
             tmpData_.bN2idxEnds[coreIdxEnd] = tmpData_.s1s2Weight.size() - 1;
         }
-        int64_t maxCoreNum = std::min(nNums, static_cast<int64_t>(aicoreParams_.blockDim));
+        int64_t maxCoreNum = std::min(nNums, static_cast<int64_t>(aicoreParams_.numBlocks));
         if (tndEmptyTensorFlag) {
             for (int64_t coreIdx = 0; coreIdx < maxCoreNum; ++coreIdx) {
                 int64_t idx = tmpData_.bN2idxEnds[coreIdx];
@@ -1542,12 +1542,12 @@ ge::graphStatus FlashAttentionScoreGradTilingS1s2Bn2::GetWorkspaceSize()
 {
     int64_t currentUseCoreNum =
         tmpData_.isL1CustomEnable ? (td_->opInfo.get_usedCoreNum() * 2) : td_->opInfo.get_usedCoreNum();
-    int64_t launchBlockDims = needAdjustBlockDim ? currentUseCoreNum : aicoreParams_.blockDim;
+    int64_t launchBlockDims = needAdjustBlockDim ? currentUseCoreNum : aicoreParams_.numBlocks;
     // Tiling传递的内存大小、起始地址，统一为字节数，单位为B
-    auto blockdim = CalcTschBlockDim(launchBlockDims, aicoreParams_.aicNum, aicoreParams_.blockDim);
+    auto blockdim = CalcTschBlockDim(launchBlockDims, aicoreParams_.aicNum, aicoreParams_.numBlocks);
     OP_CHECK_IF(blockdim == 0,
                OP_LOGE(context_, "blockdim is 0, aicNum is %lu, aivNum is %lu.",
-                                           aicoreParams_.aicNum, aicoreParams_.blockDim),
+                                           aicoreParams_.aicNum, aicoreParams_.numBlocks),
                return ge::GRAPH_FAILED);
     context_->SetBlockDim(blockdim);
 

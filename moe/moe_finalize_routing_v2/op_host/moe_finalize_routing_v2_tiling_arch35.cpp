@@ -613,7 +613,7 @@ void MoeFinalizeRoutingV2Regbase::PrintTilingData()
 {
     OP_LOGI(
         context_->GetNodeName(),
-        "MoeFinalizeRoutingV2 tiling data: blockDim[%ld] row[%ld] e[%ld] c[%ld] h[%ld] hAligned[%ld] k[%ld]"
+        "MoeFinalizeRoutingV2 tiling data: numBlocks[%ld] row[%ld] e[%ld] c[%ld] h[%ld] hAligned[%ld] k[%ld]"
         "rowOfFormerBlock[%ld] rowOfTailBlock[%ld] rowLoopOfFormerBlock[%ld] rowLoopOfTailBlock[%ld] "
         "rowFactor[%ld] tailRowFactorOfFormerBlock[%ld] tailRowFactorOfTailBlock[%ld] "
         "hLoop[%ld] hFactor[%ld] tailHFactor[%ld]",

@@ -55,12 +55,12 @@ ge::graphStatus RopeGradRegBaseTilingClassAB::DoOpTiling()
     int64_t typeSize = ge::GetSizeByDataType(dtype_);
     dAlign_ = Ops::Base::CeilAlign(d_ / dSplitCoef_, blockSize_ / typeSize) * dSplitCoef_;
 
-    blockFactorBS_ = Ops::Base::CeilDiv(bs, int64_t(aicoreParams_.blockDim));
+    blockFactorBS_ = Ops::Base::CeilDiv(bs, int64_t(aicoreParams_.numBlocks));
     blockNumBS_ = Ops::Base::CeilDiv(bs, blockFactorBS_);
     blockTailBS_ = bs - (blockNumBS_ - 1) * blockFactorBS_;
 
-    if (bs <= int64_t(aicoreParams_.blockDim) / CONST_TWO) {
-        blockNumN_ = aicoreParams_.blockDim / blockNumBS_;
+    if (bs <= int64_t(aicoreParams_.numBlocks) / CONST_TWO) {
+        blockNumN_ = aicoreParams_.numBlocks / blockNumBS_;
         blockFactorN_ = Ops::Base::CeilDiv(bn_, blockNumN_);
         blockNumN_ = Ops::Base::CeilDiv(bn_, blockFactorN_);
         blockTailN_ = bn_ - (blockNumN_ - 1) * blockFactorN_;

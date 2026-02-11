@@ -152,9 +152,9 @@ void KvRmsNormRopeCacheTilingDs::DoOpTilingPaBlkNz()
     int64_t numHead = tilingData_.get_numHead();
     int64_t bns = batchSize * numHead * seqLen;
     int64_t blockFactor = (bns + coreNum_ - 1) / coreNum_;
-    int64_t blockDim = (bns + blockFactor - 1) / blockFactor;
+    int64_t numBlocks = (bns + blockFactor - 1) / blockFactor;
     tilingData_.set_blockFactor(blockFactor);
-    tilingData_.set_blockDim(blockDim);
+    tilingData_.set_numBlocks(numBlocks);
 
     int64_t maxUbFactor = (methodMode_ == 1) ? 32 : 16;
     constexpr static int64_t needUbSize = static_cast<int64_t>(170) * static_cast<int64_t>(1024);
@@ -282,9 +282,9 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
     if (IsB1SD(context_)) {
         int64_t bns = batchSize * numHead * seqLen;
         int64_t blockFactor = (bns + coreNum_ - 1) / coreNum_;
-        int64_t blockDim = (bns + blockFactor - 1) / blockFactor;
+        int64_t numBlocks = (bns + blockFactor - 1) / blockFactor;
         tilingData_.set_blockFactor(blockFactor);
-        tilingData_.set_blockDim(blockDim);
+        tilingData_.set_numBlocks(numBlocks);
         
         int64_t maxUbFactor = (methodMode_ == 1) ? 32 : 16;
         constexpr static int64_t needUbSize = static_cast<int64_t>(170) * static_cast<int64_t>(1024);
@@ -295,16 +295,16 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
         }
     } else {
         if (batchSize % BATCHES_FOR_EACH_CORE == 0) {
-            tilingData_.set_blockDim(batchSize / BATCHES_FOR_EACH_CORE);
+            tilingData_.set_numBlocks(batchSize / BATCHES_FOR_EACH_CORE);
             tilingData_.set_rowsPerBlock(BATCHES_FOR_EACH_CORE);
         } else {
-            tilingData_.set_blockDim(batchSize);
+            tilingData_.set_numBlocks(batchSize);
             tilingData_.set_rowsPerBlock(1);
         }
-        // Check blockDim <= MAX_BLOCK_DIM
+        // Check numBlocks <= MAX_BLOCK_DIM
         OP_CHECK_IF(
-            tilingData_.get_blockDim() > MAX_BLOCK_DIM,
-            OP_LOGE(context_->GetNodeName(), "blockDim must be smaller than 65535."), return ge::GRAPH_FAILED);
+            tilingData_.get_numBlocks() > MAX_BLOCK_DIM,
+            OP_LOGE(context_->GetNodeName(), "numBlocks must be smaller than 65535."), return ge::GRAPH_FAILED);
     }
 
     if (methodMode_ == 1) {
@@ -358,7 +358,7 @@ ge::graphStatus KvRmsNormRopeCacheTilingDs::DoOpTiling()
 ge::graphStatus KvRmsNormRopeCacheTilingDs::PostTiling()
 {
     context_->SetTilingKey(GetTilingKey());
-    context_->SetBlockDim(tilingData_.get_blockDim());
+    context_->SetBlockDim(tilingData_.get_numBlocks());
     size_t* workspaces = context_->GetWorkspaceSizes(1);
     workspaces[0] = DEFAULT_WORKSPACE_SIZE;
     tilingData_.SaveToBuffer(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity());

@@ -75,7 +75,7 @@ ge::graphStatus RopeGradRegBaseTilingClassAAndB::MergeDim()
 
 ge::graphStatus RopeGradRegBaseTilingClassAAndB::SplitCore()
 {
-    blockFactorB_ = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), aicoreParams_.blockDim);
+    blockFactorB_ = Ops::Base::CeilDiv(static_cast<uint64_t>(b_), aicoreParams_.numBlocks);
     blockNumB_ = Ops::Base::CeilDiv(static_cast<int64_t>(b_), blockFactorB_);
     usedCoreNum_ = blockNumB_;
     return ge::GRAPH_SUCCESS;

@@ -70,7 +70,7 @@ private:
     void SetTilingSplitCore();
     void SetTilingFactor();
 
-    int64_t blockDim = 0;
+    int64_t numBlocks = 0;
     int64_t hBlockFactor = 0;
     int64_t typeSize = 0;
     int64_t blockSize = Ops::Base::GetUbBlockSize(context_);
@@ -102,8 +102,8 @@ void MoeInitRoutingV2GradRegbaseSplitH::SetTilingShapeInfo()
 void MoeInitRoutingV2GradRegbaseSplitH::SetTilingSplitCore()
 {
     this->hBlockFactor = Ops::Base::CeilDiv(hiddenSize, aivNum);
-    blockDim = Ops::Base::CeilDiv(hiddenSize, this->hBlockFactor); // 实际使用核数
-    moeInitRoutingV2GradTilingData.set_blockDim(blockDim);
+    numBlocks = Ops::Base::CeilDiv(hiddenSize, this->hBlockFactor); // 实际使用核数
+    moeInitRoutingV2GradTilingData.set_numBlocks(numBlocks);
     moeInitRoutingV2GradTilingData.set_hBlockFactor(this->hBlockFactor); // 单核处理的Token序列长度
 }
 
@@ -140,7 +140,7 @@ uint64_t MoeInitRoutingV2GradRegbaseSplitH::GetTilingKey() const
 
 ge::graphStatus MoeInitRoutingV2GradRegbaseSplitH::PostTiling()
 {
-    context_->SetBlockDim(blockDim);
+    context_->SetBlockDim(numBlocks);
     size_t* currentWorkspace = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, currentWorkspace);
     currentWorkspace[0] = workspaceSize_;

@@ -36,9 +36,9 @@ ge::graphStatus MoeFinalizeRoutingV2GradTiling::GetPlatformInfo()
     auto platformInfo = context_->GetPlatformInfo();
      OP_CHECK_NULL_WITH_CONTEXT(context_, platformInfo);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfo);
-    aicoreParams_.blockDim = ascendcPlatform.GetCoreNumAiv();
+    aicoreParams_.numBlocks = ascendcPlatform.GetCoreNumAiv();
      OP_CHECK_IF(
-        (aicoreParams_.blockDim <= 0), OP_LOGE(nodeName_, "get aiv core num failed."),
+        (aicoreParams_.numBlocks <= 0), OP_LOGE(nodeName_, "get aiv core num failed."),
         return ge::GRAPH_FAILED);
 
     uint64_t totalUbSize;
@@ -468,21 +468,21 @@ void MoeFinalizeRoutingV2GradTiling::SetBinaryAddParams(
 
 void MoeFinalizeRoutingV2GradTiling::CalcBaseInfo()
 {
-    initOutEachCoreBatchNum_ = expandedXDim0_ / aicoreParams_.blockDim;
-    initOutModCoreNum_ = expandedXDim0_ % aicoreParams_.blockDim;
+    initOutEachCoreBatchNum_ = expandedXDim0_ / aicoreParams_.numBlocks;
+    initOutModCoreNum_ = expandedXDim0_ % aicoreParams_.numBlocks;
     if (initOutEachCoreBatchNum_ == 0) {
         initOutNeedCoreNum_ = initOutModCoreNum_;
     } else {
-        initOutNeedCoreNum_ = aicoreParams_.blockDim;
+        initOutNeedCoreNum_ = aicoreParams_.numBlocks;
     }
 
     int64_t expandedRowIdxDim0 = expandedRowIdxShape_.GetDim(0);
-    computeEachCoreBatchNum_ = expandedRowIdxDim0 / aicoreParams_.blockDim;
-    computeModCoreNum_ = expandedRowIdxDim0 % aicoreParams_.blockDim;
+    computeEachCoreBatchNum_ = expandedRowIdxDim0 / aicoreParams_.numBlocks;
+    computeModCoreNum_ = expandedRowIdxDim0 % aicoreParams_.numBlocks;
     if (computeEachCoreBatchNum_ == 0) {
         computeNeedCoreNum_ = computeModCoreNum_;
     } else {
-        computeNeedCoreNum_ = aicoreParams_.blockDim;
+        computeNeedCoreNum_ = aicoreParams_.numBlocks;
     }
 }
 
