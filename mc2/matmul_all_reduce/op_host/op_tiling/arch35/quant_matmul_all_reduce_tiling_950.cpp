@@ -74,7 +74,7 @@ ge::graphStatus QuantMatmulAllReduceTilingA5::SetMc2Hcomm()
         uint8_t dataType2 = static_cast<uint8_t>(mc2tiling::ConvertGeTypeToHcclType(opName_, ge::DataType::DT_FLOAT));
         const std::string algConfig1 = "ReduceScatter=level0:fullmesh";
         const std::string algConfig2 = "AllGather=level0:fullmesh";
-        AscendC::Mc2CcTilingConfig mc2CcTilingConfig(groupName, opType1, algConfig1, reduceType, dataType2, dataType1);\
+        AscendC::Mc2CcTilingConfig mc2CcTilingConfig(groupName, opType1, algConfig1, reduceType, dataType2, dataType1);
         OP_TILING_CHECK(
             mc2CcTilingConfig.GetTiling(quantMatmulAllReduceTilingData_.mc2InitTiling),
             OP_LOGE(opName_, "Get mc2InitTiling from quantMatmulAllReduceTilingData failed."),
