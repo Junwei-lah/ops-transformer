@@ -33,6 +33,8 @@ if (BUILD_OPEN_PROJECT)  # custom
             OP_NAME MoeDistributeCombineV2
             OPTIONS --cce-auto-sync=off
         )
+    elseif(NOT "${CONDITION_UNIT}" STREQUAL "ascend950")
+        add_definitions(-DMC2_EXCEPTION_HANDLER)
     endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE moe_distribute_combine_v2 ACLNNTYPE aclnn_inner)
