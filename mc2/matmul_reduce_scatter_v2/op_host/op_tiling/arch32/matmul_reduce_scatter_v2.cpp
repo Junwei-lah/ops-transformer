@@ -34,8 +34,10 @@ ge::graphStatus MatmulReduceScatterTilingV2Func(gert::TilingContext *context)
     if (socVersion == "Ascend910B" || socVersion == "Ascend910_93") {
         auto attrs = context->GetAttrs();
         auto commModePtr = attrs->GetAttrPointer<char>(static_cast<int>(ATTR_COMMMODE));
-        OP_TILING_CHECK((commModePtr == nullptr || !(std::strcmp(commModePtr, "aiv") == 0)),
-            OP_LOGE(context->GetNodeName(), "AivModeTiling commMode is invalid. commMode is %s", commModePtr), return ge::GRAPH_FAILED);
+        OP_TILING_CHECK(commModePtr == nullptr,
+            OP_LOGE(context->GetNodeName(), "AivModeTiling commMode is nullPtr."), return ge::GRAPH_FAILED);
+        OP_TILING_CHECK(std::strcmp(commModePtr, "aiv") != 0,
+            OP_LOGE(context->GetNodeName(), "AivModeTiling commMode is invalid. Expect commMode aiv, but cur commMode is %s", commModePtr), return ge::GRAPH_FAILED);
         if (std::strcmp(commModePtr, "aiv") == 0) {
             return MatmulReduceScatterTilingV2AivModeFunc(context);
         }

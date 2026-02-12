@@ -121,7 +121,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
         <td>MM右矩阵，即计算公式中的x2。</td>
         <td><ul><li>当前版本仅支持二维输入, shape为[m, k]，支持转置/不转置场景。</li><li>仅支持两根轴转置情况下的非连续Tensor，其他场景的<a href="../../../docs/zh/context/非连续的Tensor.md">[非连续的Tensor]</a>不支持。</li></ul></td>
         <td>FLOAT16、BFLOAT16、FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8、INT8</td>
-        <td>ND</td>
+        <td>ND、FRACTAL_NZ</td>
         <td>2</td>
         <td>√（仅适用转置场景）</td>
     </tr>
@@ -158,7 +158,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
     <tr>
         <td>quantScale</td>
         <td>输入</td>
-        <td>即计算公式中的bias。</td>
+        <td>输出矩阵量化scale。</td>
         <td>当前仅支持传入空指针场景。</td>
         <td>FLOAT</td>
         <td>ND</td>
@@ -278,7 +278,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
     </tbody></table>
 
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-        - x1、x2：在commMode为aicpu时，数据类型支持FLOAT16、BFLOAT16；commMode为aiv时，数据类型支持FLOAT16、BFLOAT16、INT8。
+        - x1、x2：在commMode为aicpu时，数据类型支持FLOAT16、BFLOAT16；commMode为aiv时，数据类型支持FLOAT16、BFLOAT16、INT8，x1数据格式仅支持ND，x2数据格式支持ND、FRACTAL_NZ。
         - bias：在commMode为aicpu时，数据类型支持FLOAT16、BFLOAT16，仅支持为0的输入。在commMode为aiv时，当前版本仅支持输入nullptr。
         - x1Scale：在commMode为aicpu时，仅支持输入nullptr。在commMode为aiv时，数据类型支持FLOAT。当x1和x2数据类型为FLOAT16/BFLOAT16时，仅支持输入为nullptr。在pertoken场景，shape为(m, 1)。
         - x2Scale：在commMode为aicpu时，仅支持输入nullptr。在commMode为aiv时，数据类型支持FLOAT、INT64，数据格式支持ND。INT64数据类型仅在output数据类型为FLOAT16场景支持。当x1和x2数据类型为FLOAT16、BFLOAT16时，仅支持输入为nullptr。在perchannel场景，shape为(1, n)。
@@ -286,7 +286,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
         - commMode：当前仅支持aiv模式。aiv模式下使用AI VECTOR核完成通信任务。当前版本仅支持输入“aiv”。
         - output：数据类型支持FLOAT16、BFLOAT16。 如果x1类型为FLOAT16、BFLOAT16，则output类型与x1保持一致。
     - <term>Ascend 950PR/Ascend 950DT</term>：
-        - x1、x2：数据类型支持FLOAT16、BFLOAT16、FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8。
+        - x1、x2：数据类型支持FLOAT16、BFLOAT16、FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8，数据格式仅支持ND。
         - bais：如果x1的数据类型是FLOAT16、BFLOAT16，则bias的数据类型必须为FLOAT16、BFLOAT16。如果x1的数据类型是FLOAT8_E4M3FN、FLOAT8_E5M2、HIFLOAT8时，在pertensor和mx量化场景下，bias的数据类型必须为FLOAT。在perblock场景下，仅支持输入为nullptr。
         - x1Scale：当x1和x2数据类型为FLOAT16、BFLOAT16时，仅支持输入为nullptr。在pertensor场景下，shape为[1]。在perblock场景下，shape为[ceildiv(m, 128), ceildiv(k, 128)]。在pertensor和perblock场景下，数据类型支持FLOAT。在mx量化场景下，数据类型为FLOAT8_E8M0，shape为(m, ceilDiv(k, 64), 2)。
         - x2Scale：当x1和x2数据类型为FLOAT16、BFLOAT16时，仅支持输入为nullptr。在pertensor场景下，shape为[1]。在perblock场景下，shape为[ceildiv(k, 128), ceildiv(n, 128)]。在pertensor和perblock场景下，数据类型支持FLOAT。在mx场景下，数据类型为FLOAT8_E8M0，shape为(ceilDiv(k, 64), n, 2)。

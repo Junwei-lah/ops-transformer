@@ -22,7 +22,7 @@
 - 计算公式：
 
     $$
-    output=reduce_scatter(x1@x2+bias)
+    output=reduceScatter(x1@x2+bias)
     $$
 
 ## 函数原型
