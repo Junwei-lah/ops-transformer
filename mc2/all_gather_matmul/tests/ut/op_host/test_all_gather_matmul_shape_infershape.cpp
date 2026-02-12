@@ -9,35 +9,34 @@
  */
 
 #include <gtest/gtest.h>
-#include "../all_gather_matmul_host_ut_param.h"
-#include "mc2_tiling_case_executor.h"
+#include "all_gather_matmul_host_ut_param.h"
+#include "mc2_infer_shape_case_executor.h"
 
 namespace AllGatherMatmulUT {
 
-class AllGatherMatmulArch32TilingTest : public testing::TestWithParam<AllGatherMatmulTilingUtParam> {
+class AllGatherMatmulInferShapeTest : public testing::TestWithParam<AllGatherMatmulInferShapeUtParam> {
 protected:
     static void SetUpTestCase()
     {
-        std::cout << "AllGatherMatmul Arch32TilingTest SetUp" << std::endl;
+        std::cout << "AllGatherMatmul InferShapeTest SetUp" << std::endl;
     }
 
     static void TearDownTestCase()
     {
-        std::cout << "AllGatherMatmul Arch32TilingTest TearDown" << std::endl;
+        std::cout << "AllGatherMatmul InferShapeTest TearDown" << std::endl;
     }
 };
 
-TEST_P(AllGatherMatmulArch32TilingTest, param)
+TEST_P(AllGatherMatmulInferShapeTest, param)
 {
     auto param = GetParam();
-    struct AllGatherMatmulCompileInfo {} compileInfo;
-    gert::TilingContextPara tilingContextPara(
+    std::vector<gert::InfershapeContextPara::TensorDescription> inputTensorDesc;
+    if (param.inputInstance[0] == 1) inputTensorDesc.emplace_back(param.x1);
+    if (param.inputInstance[1] == 1) inputTensorDesc.emplace_back(param.x2);
+    if (param.inputInstance[2] == 1) inputTensorDesc.emplace_back(param.bias);
+    gert::InfershapeContextPara inferShapeContextPara(
         "AllGatherMatmul",
-        {
-            param.x1,
-            param.x2,
-            param.bias
-        },
+        inputTensorDesc,
         {
             param.y,
             param.gather_out
@@ -49,24 +48,21 @@ TEST_P(AllGatherMatmulArch32TilingTest, param)
             {"gather_index", Ops::Transformer::AnyValue::CreateFrom<int64_t>(param.gather_index)},
             {"comm_turn", Ops::Transformer::AnyValue::CreateFrom<int64_t>(param.comm_turn)},
             {"rank_size", Ops::Transformer::AnyValue::CreateFrom<int64_t>(param.rank_size)},
-            {"is_gather_out", Ops::Transformer::AnyValue::CreateFrom<bool>(param.is_gather_out)}
+            {"is_gather_out", Ops::Transformer::AnyValue::CreateFrom<int64_t>(param.is_gather_out)}
         },
-        param.inputInstance, param.outputInstance,
-        &compileInfo,
-        param.soc, param.coreNum, param.ubsize
+        param.inputInstance, param.outputInstance
     );
     Mc2Hcom::MockValues hcomTopologyMockValues {
         {"rankNum", param.rank_size}
     };
-    Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, param.expectResult, param.expectTilingKey,
-        param.expectTilingDataHash, {}, MC2_TILING_DATA_RESERVED_LEN, true);
+    Mc2ExecuteTestCase(inferShapeContextPara, hcomTopologyMockValues, param.expectResult, param.expectOutputShape);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     AllGatherMatmul,
-    AllGatherMatmulArch32TilingTest,
-    testing::ValuesIn(GetCasesFromCsv<AllGatherMatmulTilingUtParam>(ReplaceFileExtension2Csv(__FILE__))),
-    PrintCaseInfoString<AllGatherMatmulTilingUtParam>
+    AllGatherMatmulInferShapeTest,
+    testing::ValuesIn(GetCasesFromCsv<AllGatherMatmulInferShapeUtParam>(ReplaceFileExtension2Csv(__FILE__))),
+    PrintCaseInfoString<AllGatherMatmulInferShapeUtParam>
 );
 
 } // namespace AllGatherMatmulUT
