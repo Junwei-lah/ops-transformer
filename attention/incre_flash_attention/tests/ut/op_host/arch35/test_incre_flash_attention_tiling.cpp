@@ -275,7 +275,7 @@ TEST_F(IncreFlashAttentionTiling, IncreFlashAttention_tiling_4)
          // 3:pse_shift
          {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
          // 4:atten_mask
-         {{{1,2048}, {1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
+         {{{1,1,2048}, {1,1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
          // 5:actual_seq_lengths
          {{{2048}, {2048}}, ge::DT_INT64, ge::FORMAT_ND},
          // 6:dequant_scale1
@@ -331,7 +331,7 @@ TEST_F(IncreFlashAttentionTiling, IncreFlashAttention_tiling_5)
          // 3:pse_shift
          {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
          // 4:atten_mask
-         {{{1,2048}, {1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
+         {{{1,1,2048}, {1,1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
          // 5:actual_seq_lengths
          {{{2048}, {2048}}, ge::DT_INT64, ge::FORMAT_ND},
          // 6:dequant_scale1
@@ -443,7 +443,7 @@ TEST_F(IncreFlashAttentionTiling, IncreFlashAttention_tiling_7)
          // 3:pse_shift
          {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
          // 4:atten_mask
-         {{{1,2048}, {1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
+         {{{1,1,2048}, {1,1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
          // 5:actual_seq_lengths
          {{{2048}, {2048}}, ge::DT_INT64, ge::FORMAT_ND},
          // 6:dequant_scale1
@@ -2371,7 +2371,7 @@ TEST_F(IncreFlashAttentionTiling, IncreFlashAttention_tiling_41)
          // 3:pse_shift
          {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},
          // 4:atten_mask
-         {{{1,2048}, {1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
+         {{{1,1,2048}, {1,1,2048}}, ge::DT_BOOL, ge::FORMAT_ND},
          // 5:actual_seq_lengths
          {{{2048}, {2048}}, ge::DT_INT64, ge::FORMAT_ND},
          // 6:dequant_scale1
