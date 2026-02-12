@@ -1,15 +1,17 @@
 # aclnnSwinAttentionScoreQuant
 
+[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/attention/swin_attention_score_quant)
+
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
-| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
-| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
-| <term>Atlas 推理系列产品 </term>                             |    √     |
-| <term>Atlas 训练系列产品</term>                              |    ×     |
+| <term>Ascend 950PR/Ascend 950DT</term>|    ×     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>|    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>|    ×     |
+| <term>Atlas 推理系列产品 </term>|    √     |
+| <term>Atlas 训练系列产品</term>|    ×     |
 
 ## 功能说明
 
@@ -22,7 +24,7 @@ $$
 
 ## 函数原型
 
-每个算子分为[两段式接口](common/两段式接口.md)，必须先调用“aclnnSwinAttentionScoreQuantGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnSwinAttentionScoreQuant”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnSwinAttentionScoreQuantGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnSwinAttentionScoreQuant”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnSwinAttentionScoreQuantGetWorkspaceSize(
@@ -58,28 +60,214 @@ aclnnStatus aclnnSwinAttentionScoreQuant(
 
 * **参数说明**：
 
-  - query(aclTensor*,计算输入)：表示输入样本的查询张量，Device侧的aclTensor，公式中的Q，维度支持四维，输入维度[N,C,S,H]需要和key、value保持一致，其中N代表batch size，C为通道深度，S为序列长度，H为headNum，S<=1024，H=32/64，NC维度支持任意值，数据类型支持INT8，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - key(aclTensor*,计算输入): 表示输入样本的每个位置的特征张量，Device侧的aclTensor，公式中的K，维度支持四维，输入维度[N,C,S,H]需要和query、value保持一致，S<=1024，H=32/64，NC维度支持任意值，数据类型支持INT8，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - value(aclTensor*,计算输入): 表示计算注意力后的每个位置值张量，Device侧的aclTensor，公式中的V，维度支持四维，输入维度[N,C,S,H]需要和query、key保持一致，S<=1024，H=32/64，NC维度支持任意值，数据类型支持INT8，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - scaleQuant(aclTensor*,计算输入): 表示对注意力softmax归一化后进行量化的尺度缩放张量，Device侧的aclTensor，维度支持二维，输入维度[1,S]，S<=1024，数据类型支持FLOAT16，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - scaleDequant1(aclTensor*,计算输入)：表示计算注意力时进行反量化的尺度缩放张量，Device侧的aclTensor，维度支持二维，输入维度[1,S]，S<=1024，数据类型支持UINT64，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - scaleDequant2(aclTensor*,计算输入): 表示计算注意力后的输出进行反量化的尺度缩放张量，Device侧的aclTensor，维度支持二维，输入维度[1,H]，H=32/64，数据类型支持UINT64，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - biasQuantOptional(aclTensor*,计算输入): 表示对注意力softmax归一化后进行量化的偏移张量，Device侧的aclTensor，维度支持二维，输入维度[1,S]，S<=1024，数据类型支持FLOAT16，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - biasDequant1Optional(aclTensor*,计算输入): 表示计算注意力时进行反量化的偏移张量，Device侧的aclTensor，维度支持二维，输入维度[1,S]，S<=1024，数据类型支持INT32，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - biasDequant2Optional(aclTensor*,计算输入)：表示计算注意力后的输出进行反量化的偏移张量 Device侧的aclTensor，维度支持二维，输入维度[1,H]，H=32/64，数据类型支持INT32，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - paddingMask1Optional(aclTensor*,计算输入): Device侧的aclTensor，公式中的bias1，支持输入nullptr，或者四维的tensor，维度[1,C,S,S]，S<=1024，C维度支持任意值，数据类型支持FLOAT16，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - paddingMask2Optional(aclTensor*,计算输入): 预留参数，公式中的bias2，当前仅支持输入nullptr。
-  - queryTranspose(bool，计算输入): Host侧的bool，表示query是否转置，当前仅支持不转置false。
-  - keyTranspose(bool，计算输入): Host侧的bool，表示key是否转置，当前仅支持不转置false。
-  - valueTranspose(bool，计算输入): Host侧的bool，表示value是否转置，当前仅支持不转置false。
-  - softmaxAxes(int，计算输入): Host侧的int，用于指定softmax计算的维度，当前仅支持取-1（即tensor的最后一维）。
-  - out(aclTensor*, 计算输出)：Device侧的aclTensor，维度支持四维，输出维度[N,C,S,H]，S<=1024，H=32/64，数据类型支持FLOAT16，不支持[非连续的Tensor](common/非连续的Tensor.md)，[数据格式](common/数据格式.md)支持ND。
-  - workspaceSize(uint64_t*, 出参)：返回需要在Device侧申请的workspace大小。
-  - executor(aclOpExecutor**, 出参)：返回op执行器，包含了算子计算流程。
+    <table style="undefined;table-layout: fixed; width: 1550px">
+        <colgroup>
+            <col style="width: 220px">
+            <col style="width: 120px">
+            <col style="width: 300px">  
+            <col style="width: 400px">  
+            <col style="width: 212px">  
+            <col style="width: 100px">
+            <col style="width: 190px">
+            <col style="width: 145px">
+            </colgroup>
+    <thead>
+    <tr>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度（shape）</th>
+        <th>非连续Tensor</th>
+    </tr></thead>
+    <tbody>
+    <tr>
+        <td>query</td>
+        <td>输入</td>
+        <td>输入样本的查询张量，公式中的Q</td>
+        <td>输入维度[N,C,S,H]需要和key、value保持一致，其中N代表batch size，C为通道深度，S为序列长度，H为headNum，S&lt;=1024，H=32/64，NC维度支持任意值</td>
+        <td>INT8</td>
+        <td>ND</td>
+        <td>4</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>key</td>
+        <td>输入</td>
+        <td>输入样本的每个位置的特征张量，公式中的K</td>
+        <td>输入维度需要与query、value保持一致</td>
+        <td>INT8</td>
+        <td>ND</td>
+        <td>4</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>value</td>
+        <td>输入</td>
+        <td>计算注意力后的每个位置值张量，公式中的V</td>
+        <td>输入维度需要与query、key保持一致</td>
+        <td>INT8</td>
+        <td>ND</td>
+        <td>4</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>scaleQuant</td>
+        <td>输入</td>
+        <td>对注意力softmax归一化后进行量化的尺度缩放张量</td>
+        <td>输入维度[1,S]，S&lt;=1024</td>
+        <td>FLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>scaleDequant1</td>
+        <td>输入</td>
+        <td>计算注意力时进行反量化的尺度缩放张量</td>
+        <td>输入维度[1,S]，S&lt;=1024</td>
+        <td>UINT64</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>scaleDequant2</td>
+        <td>输入</td>
+        <td>计算注意力后的输出进行反量化的尺度缩放张量</td>
+        <td>输入维度[1,H]，H=32/64</td>
+        <td>UINT64</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>biasQuantOptional</td>
+        <td>输入</td>
+        <td>对注意力softmax归一化后进行量化的偏移张量</td>
+        <td>输入维度[1,S]，S&lt;=1024</td>
+        <td>FLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>biasDequant1Optional</td>
+        <td>输入</td>
+        <td>计算注意力时进行反量化的偏移张量</td>
+        <td>输入维度[1,S]，S&lt;=1024</td>
+        <td>INT32</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>biasDequant2Optional</td>
+        <td>输入</td>
+        <td>计算注意力后的输出进行反量化的偏移张量</td>
+        <td>输入维度[1,H]，H=32/64</td>
+        <td>INT32</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>paddingMask1Optional</td>
+        <td>输入</td>
+        <td>公式中的bias1</td>
+        <td>维度[1,C,S,S]，S&lt;=1024，C维度支持任意值</td>
+        <td>FLOAT16</td>
+        <td>ND</td>
+        <td>4</td>
+        <td>×</td>
+    </tr>
+    <tr>
+        <td>paddingMask2Optional</td>
+        <td>输入</td>
+        <td>公式中的bias2，预留参数</td>
+        <td>当前仅支持输入nullptr</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>queryTranspose</td>
+        <td>输入</td>
+        <td>表示query是否转置</td>
+        <td>当前仅支持不转置</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>keyTranspose</td>
+        <td>输入</td>
+        <td>表示key是否转置</td>
+        <td>当前仅支持不转置</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>valueTranspose</td>
+        <td>输入</td>
+        <td>表示value是否转置</td>
+        <td>当前仅支持不转置</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>softmaxAxes</td>
+        <td>输入</td>
+        <td>指定softmax计算的维度</td>
+        <td>当前仅支持取-1（即tensor的最后一维）</td>
+        <td>INT</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>out</td>
+        <td>输出</td>
+        <td>计算公式的最终输出</td>
+        <td>-</td>
+        <td>FLOAT16</td>
+        <td>ND</td>
+        <td>4</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>workspaceSize</td>
+        <td>输出</td>
+        <td>返回需要在Device侧申请的workspace大小</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>executor</td>
+        <td>输出</td>
+        <td>返回op执行器，包含算子计算流程</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    </tbody></table>
 
 * **返回值**：
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](./common/aclnn返回码.md)。
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，若出现以下错误码，则对应原因为：
 
@@ -149,7 +337,7 @@ aclnnStatus aclnnSwinAttentionScoreQuant(
 
 * **返回值**
 
-  返回aclnnStatus状态码，具体参见[aclnn返回码](common/aclnn返回码.md)。
+  返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
 
@@ -161,7 +349,7 @@ aclnnStatus aclnnSwinAttentionScoreQuant(
 
 ## 调用示例
 
-示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](common/编译与运行样例.md)。
+示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp
 #include <iostream>
