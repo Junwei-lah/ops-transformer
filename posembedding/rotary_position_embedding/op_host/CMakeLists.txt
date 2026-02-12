@@ -12,7 +12,7 @@ if (BUILD_OPEN_PROJECT)
     target_sources(op_host_aclnnInner PRIVATE
         rotary_position_embedding_def.cpp
     )
-    add_modules_sources(OPTYPE rotary_position_embedding ACLNNTYPE aclnn_inner ACLNN_EXTRA_VERSION v2)
+    add_modules_sources(OPTYPE rotary_position_embedding ACLNNTYPE aclnn_inner)
 endif()
 
 set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
@@ -33,5 +33,5 @@ if (BUILD_OPS_RTY_KERNEL)
                     -Werror
     )
 else()
-    add_modules_sources(OPTYPE rotary_position_embedding ACLNNTYPE aclnn_inner ACLNN_EXTRA_VERSION v2)
+    add_modules_sources(OPTYPE rotary_position_embedding ACLNNTYPE aclnn_inner)
 endif()
