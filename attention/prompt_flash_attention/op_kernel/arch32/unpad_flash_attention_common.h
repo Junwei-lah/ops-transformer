@@ -30,8 +30,6 @@ using namespace AscendC;
 
 #ifdef __CCE_KT_TEST__
 #define __aicore__
-#else
-#define __aicore__ [aicore]
 #endif
 
 constexpr int32_t FLOAT_VECTOR_SIZE = 64;
