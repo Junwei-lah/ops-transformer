@@ -16,8 +16,7 @@
 #define KERNEL_OPERATOR_SOFTMAX_COMPUTE_NZ_H
 
 #include "kernel_tensor.h"
-#include "kernel_vec_intf.h"
-#include "kernel_cube_intf.h"
+#include "kernel_operator_intf.h"
 #include "kernel_pop_stack_buffer.h"
 #include "kernel_tiling/kernel_tiling.h"
 
@@ -110,7 +109,7 @@ __aicore__ inline void ReduceSumLastNZImplPFA(const LocalTensor<half>& dst, cons
         transDataParams.dstRepStride = B16_BYTE_SIZE * DEFAULT_REPEAT_STRIDE;
         transDataParams.srcRepStride = B16_BYTE_SIZE * DEFAULT_REPEAT_STRIDE;
     }
-    TransDataTo5HD<half>(dstList, srcList, transDataParams);
+    TransDataTo5HD<half>(dstList, srcList, transDataParams);    
 }
 
 __aicore__ inline void CreateSpecialFormatMaskPFA(uint64_t& lowMask, const uint32_t& maskLen, const uint32_t& nzBlockCount)
@@ -190,13 +189,13 @@ __aicore__ inline void BinaryComputeWithSpecialMaskPFA(const LocalTensor<float>&
             {1, 1, 1, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE});
     }
     if (repeatTail != 0) {
-        func(dst[repeatRange * offsetCount], src0[repeatRange * offsetCount], src1[repeatRange * offsetCount], mask,
+        func(dst[repeatRange * offsetCount], src0[repeatRange * offsetCount], src1[repeatRange * offsetCount], mask, 
             repeatTail, {1, 1, 1, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE});
     }
     if (tail != 0) {
         uint64_t tailMask[2] = { 0, 0 };
         CreateSpecialFormatMaskPFA(tailMask[0], lastBlockMaskLen, tail / SOFTMAX_SHAPE_NZ_BASIC_COUNT);
-        func(dst[repeat * FLOAT_REPEAT_SIZE], src0[repeat * FLOAT_REPEAT_SIZE], src1[repeat * FLOAT_REPEAT_SIZE],
+        func(dst[repeat * FLOAT_REPEAT_SIZE], src0[repeat * FLOAT_REPEAT_SIZE], src1[repeat * FLOAT_REPEAT_SIZE], 
             tailMask, 1, {1, 1, 1, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE, DEFAULT_REPEAT_STRIDE});
     }
 }
@@ -222,7 +221,7 @@ __aicore__ inline void BroadCastNZImplPFA(const LocalTensor<float>& dst, const L
         transDataParams.dstRepStride = B16_BYTE_SIZE * DEFAULT_REPEAT_STRIDE;
         transDataParams.srcRepStride = B16_BYTE_SIZE * DEFAULT_REPEAT_STRIDE;
     }
-    TransDataTo5HD<float>(dstList, srcList, transDataParams);
+    TransDataTo5HD<float>(dstList, srcList, transDataParams);   
 }
 
 __aicore__ inline void UnaryComputeWithSpecialMaskPFA(const LocalTensor<float>& dst, const LocalTensor<float>& src,
@@ -280,7 +279,7 @@ __aicore__  inline void ExpFast(const LocalTensor<T>& dst, const LocalTensor<T>&
         Adds<T, false>(dst, dst, c, MASK_PLACEHOLDER, repeatTimes, repeatParams);
         PipeBarrier<PIPE_V>();
         for (uint32_t i = 0; i < N; ++i) {
-            Mul<T, false>(dst, dst, dst, MASK_PLACEHOLDER, repeatTimes,
+            Mul<T, false>(dst, dst, dst, MASK_PLACEHOLDER, repeatTimes, 
                 { (uint8_t)repeatParams.dstBlkStride, (uint8_t)repeatParams.srcBlkStride,
                 (uint8_t)repeatParams.srcBlkStride, (uint8_t)repeatParams.dstRepStride, (uint8_t)repeatParams.srcRepStride,
                 (uint8_t)repeatParams.srcRepStride} );
@@ -315,7 +314,7 @@ __aicore__ inline void SoftMaxGenericNZImplPFA(const LocalTensor<half>& dst, con
     const uint32_t lastSplitNZBlockOffset = splitOffset * (splitNZBlockCount - 1);
     const uint32_t lastBlockMaskLen = reduceParam.originalSrcK % SOFTMAX_SHAPE_NZ_BASIC_COUNT != 0 ?
         reduceParam.originalSrcK % SOFTMAX_SHAPE_NZ_BASIC_COUNT : SOFTMAX_SHAPE_NZ_BASIC_COUNT;
-
+    
     LocalTensor<half> halfBuffer;
     halfBuffer = tmpBuffer0.template ReinterpretCast<half>();
     halfBuffer.SetSize(tiling.splitSize);
@@ -363,7 +362,7 @@ __aicore__ inline void FlashV2NZUpdateGenericImplPFA(const LocalTensor<half>& ds
     const uint32_t lastBlockMaskLen = reduceParam.originalSrcK % SOFTMAX_SHAPE_NZ_BASIC_COUNT != 0 ?
         reduceParam.originalSrcK % SOFTMAX_SHAPE_NZ_BASIC_COUNT :
         SOFTMAX_SHAPE_NZ_BASIC_COUNT;
-
+    
     LocalTensor<half> halfBuffer;
     halfBuffer = tmpBuffer0.template ReinterpretCast<half>();
     halfBuffer.SetSize(tiling.splitSize);
@@ -433,7 +432,7 @@ __aicore__ inline void SoftmaxFlashV2NZNoUpdateImplPFA(const LocalTensor<T>& dst
     uint32_t offset2 = 0;
     uint32_t splitCount = tiling.splitM * SOFTMAX_SHAPE_NZ_BASIC_COUNT;
     uint32_t paddingTailCount = (tiling.srcM - originalSrcShape.m) * SOFTMAX_SHAPE_NZ_BASIC_COUNT;
-    // Loop through the range of M to perform the softmax operation.
+    // Loop through the range of M to perform the softmax operation.    
     for (uint32_t i = 0; i < tiling.rangeM; i++) {
         offset1 = i * splitCount;
         offset2 = i * tiling.reduceSize;

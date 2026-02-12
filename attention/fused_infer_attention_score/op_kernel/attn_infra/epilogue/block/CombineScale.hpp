@@ -14,8 +14,6 @@
 #include <limits>
 #include "../../../attn_infra/base_defs.hpp"
 #include "../../../attn_infra/arch/resource.hpp"
-#include "adv_api/pad/broadcast.h"
-#include "adv_api/reduce/reduce.h"
 
 namespace NpuArch::Epilogue::Block {
 
@@ -31,13 +29,13 @@ public:
     static constexpr uint32_t STAGE2_UB_UINT8_BLOCK_SIZE = 6144; // 24 * 64 * 4
     static constexpr uint32_t UB_UINT8_LINE_SIZE = 32768; // 1 * 64 * 128 * 4
 
-    __aicore__ inline
+    __aicore__ inline 
     CombineScale() {}
 
-    __aicore__ inline
+    __aicore__ inline 
     ~CombineScale() {}
 
-    __aicore__ inline
+    __aicore__ inline 
     void init(Arch::Resource<ArchTag> &resource) {
         // UB Memory Allocation
         constexpr uint32_t LL_UB_OFFSET = 0; // splitnum_align * (q * h)_algin
@@ -53,7 +51,7 @@ public:
         constexpr uint32_t GO16_UB_OFFSET = 8 * STAGE2_UB_UINT8_BLOCK_SIZE + 2 * UB_UINT8_LINE_SIZE; // (q * h)_algin * v
         constexpr uint32_t tempReduceMax_OFFSET = 8 * STAGE2_UB_UINT8_BLOCK_SIZE + 3 * UB_UINT8_LINE_SIZE + 1 * STAGE2_UB_UINT8_BLOCK_SIZE; //splitnum_align * (q * h)_algin * v
         constexpr uint32_t tempReduceSum_OFFSET = 8 * STAGE2_UB_UINT8_BLOCK_SIZE + 3 * UB_UINT8_LINE_SIZE + 2 * STAGE2_UB_UINT8_BLOCK_SIZE; //splitnum_align * (q * h)_algin * v
-
+        
         // Buffer Init
         llUbTensor = resource.ubBuf.template GetBufferByByte<float>(LL_UB_OFFSET);
         lmUbTensor = resource.ubBuf.template GetBufferByByte<float>(LM_UB_OFFSET);
@@ -121,11 +119,11 @@ public:
             uint32_t baseGmOffset = prevQSeqlenSum * qHeads * headSizeV + qStartIndx * qHeads * headSizeV + headStartIndx * headSizeV;
             uint32_t gmOScalar = 0;
             if (q_len == 1) {
-                gmOScalar = vectorsubBlockID == 0 ? baseGmOffset
+                gmOScalar = vectorsubBlockID == 0 ? baseGmOffset 
                                                 : baseGmOffset + sum_former * headSizeV;
             } else {
                 uint32_t q_half = q_len / 2;
-                gmOScalar = vectorsubBlockID == 0 ? baseGmOffset
+                gmOScalar = vectorsubBlockID == 0 ? baseGmOffset 
                                                 : baseGmOffset + q_half * qHeads * headSizeV;
             }
 
@@ -141,16 +139,16 @@ public:
             int32_t oCount = lseBlock * headSizeV;
             int32_t lseCount = lseBlockAlign * headSizeV;
             int32_t oCount_vector = sum * headSizeV;
-
+            
 
             AscendC::Duplicate(llUbTensor, std::numeric_limits<float>::lowest(), calcLen);
             AscendC::Duplicate(tlUbTensor, 0.0f, calcLen);
 
             AscendC::WaitFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
-
+            
             // Copy LSE from GM to UB
             uint32_t srcStride = vectorsubBlockID == 0 ? sum - sum_former : sum_former;
-            AscendC::DataCopyPad(llUbTensor, lGmTensor[addrLOffset],
+            AscendC::DataCopyPad(llUbTensor, lGmTensor[addrLOffset], 
                                 AscendC::DataCopyExtParams(splitNum, lseBlock * sizeof(float), srcStride * sizeof(float), 0, 0),
                                 AscendC::DataCopyPadExtParams<float>(false, 0, lseBlockAlign - lseBlock, 0));
 
@@ -192,7 +190,7 @@ public:
             AscendC::BroadCast<float, 2, 0>(broadCastScaleTensor, tsUbTensor, dstShapeBroadcast, srcShapeBroadcast, tempReduceSum);
             AscendC::PipeBarrier<PIPE_V>();
 
-
+            
             AscendC::Sub(glUbTensor, llUbTensor, broadCastScaleTensor, count);
             AscendC::PipeBarrier<PIPE_V>();
 
@@ -203,7 +201,7 @@ public:
             for (uint32_t nIdx = 0; nIdx < splitNum; nIdx++) {
 
                 AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(EVENT_ID2);
-                AscendC::DataCopyPad(loFloatUbTensor, oCoreTmpGmTensor[addrOOffset + nIdx * oCount_vector],
+                AscendC::DataCopyPad(loFloatUbTensor, oCoreTmpGmTensor[addrOOffset + nIdx * oCount_vector], 
                     AscendC::DataCopyExtParams(1, oCount * sizeof(float), 0, 0, 0),
                     AscendC::DataCopyPadExtParams<float>(true, 0, 0, 0));
 
@@ -236,10 +234,10 @@ public:
                 AscendC::Cast(go16UbTensor, goUbTensor, AscendC::RoundMode::CAST_NONE, oCount);
             }
             AscendC::PipeBarrier<PIPE_V>();
-
+            
             AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID1);
             AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID1);
-
+            
             if (q_len == 1) {
                 AscendC::DataCopyPad(oGmTensor[gmOScalar], go16UbTensor, AscendC::DataCopyExtParams(1, oCount * sizeof(ElementOutput) , 0, 0, 0));
             } else {
@@ -253,7 +251,7 @@ public:
                 }
             }
 
-
+            
             AscendC::SetFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
         }
         AscendC::WaitFlag<AscendC::HardEvent::MTE3_MTE2>(EVENT_ID0);
