@@ -1055,9 +1055,9 @@ FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::IsVa
                 }
 
                 UpdateToken(runInfo, bIdx);
-                int64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - actualCalcS1Token, 0);
+                uint64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - actualCalcS1Token, 0);
                 s2SparseLeft = s2SparseLeft >> 6 << 6;
-                int64_t s2SparseRight = AlignTo64(
+                uint64_t s2SparseRight = AlignTo64(
                     Min(CUBE_BASEM * (s1oDimIdx + 1), constInfo.commonConstInfo.s1Size) + actualCalcS2Token);
                 s2SparseRight = Min(s2SparseRight, actualS2Len);
                 bool isValid = s2IdxLeft < s2SparseRight && s2IdxRight > s2SparseLeft;
@@ -1115,9 +1115,9 @@ FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::IsVa
                 constInfo.sparseMode == PREFIX_COMPRESS) {
                 return CheckIsValidBlock(runInfo, index, s1oDimIdx, s2oDimIdx, taskId);
             } else {
-                int64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - constInfo.s1Token, 0);
+                uint64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - constInfo.s1Token, 0);
                 s2SparseLeft = s2SparseLeft >> 6 << 6;
-                int64_t s2SparseRight =
+                uint64_t s2SparseRight =
                     AlignTo64(Min(CUBE_BASEM * (s1oDimIdx + 1), constInfo.commonConstInfo.s1Size) + constInfo.s2Token);
                 s2SparseRight = Min(s2SparseRight, constInfo.commonConstInfo.s2Size);
                 if constexpr (IS_BN2_MULTIBLK) {
@@ -1169,9 +1169,9 @@ FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockType, VecBlockType>::IsVa
             constInfo.sparseMode == PREFIX_COMPRESS) {
             return CheckIsValidBlockForDeter(runInfo, index, s1oDimIdx, s2oDimIdx, taskId);
         } else {
-            int64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - constInfo.s1Token, 0);
+            uint64_t s2SparseLeft = Max(CUBE_BASEM * s1oDimIdx - constInfo.s1Token, 0);
             s2SparseLeft = s2SparseLeft >> 6 << 6;
-            int64_t s2SparseRight =
+            uint64_t s2SparseRight =
                 AlignTo64(Min(CUBE_BASEM * (s1oDimIdx + 1), constInfo.commonConstInfo.s1Size) + constInfo.s2Token);
             s2SparseRight = Min(s2SparseRight, constInfo.commonConstInfo.s2Size);
             if constexpr (IS_BN2_MULTIBLK) {
