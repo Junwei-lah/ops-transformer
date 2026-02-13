@@ -2,17 +2,16 @@
 
 ## 产品支持情况
 | 产品                                                         | 是否支持 |
-| :----------------------------------------------------------- |:----:|
-| <term>昇腾950 AI处理器</term>                             |  ×   |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |  ×   |
-| <term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term> |  ×   |
-| <term>Atlas 200I/500 A2 推理产品</term>                      |  ×   |
-| <term>Atlas 推理系列产品</term>                             |  √   |
-| <term>Atlas 训练系列产品</term>                              |  ×   |
-| <term>Atlas 200/300/500 推理产品</term>                      |  ×   |
+| :----------------------------------------------------------- | :------: |
+| <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
+| <term>Atlas 推理系列产品</term>                             |    √     |
+| <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
-- 算子功能：Swin Transformer 网络模型 完成 Q、K、V 的计算。  
+- 接口功能：Swin Transformer 网络模型 完成 Q、K、V 的计算。  
 - 计算公式：  
 
   q/k/v = (Quant(Layernorm(x).transpose)  * weight).dequant.transpose.split
@@ -55,15 +54,15 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
 
 ## aclnnSwinTransformerLnQkvQuantGetWorkspaceSize
 - **参数说明**：
-  <table style="undefined;table-layout: fixed; width: 1587px"><colgroup>
-  <col style="width: 159px">
-  <col style="width: 127px">
-  <col style="width: 230px">
-  <col style="width: 400px">
-  <col style="width: 249px">
-  <col style="width: 117px">
-  <col style="width: 117px">
-  <col style="width: 153px">
+  <table style="undefined;table-layout: fixed; width: 1552px"><colgroup>
+  <col style="width: 166px">
+  <col style="width: 121px">
+  <col style="width: 336px">
+  <col style="width: 290px">
+  <col style="width: 149px">
+  <col style="width: 128px">
+  <col style="width: 218px">
+  <col style="width: 144px">
   </colgroup>
   <thead>
       <tr>
@@ -80,7 +79,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>x</td>
       <td>输入</td>
-      <td>表示待进行归一化计算的目标张量，公式中的x， Device侧的aclTensor。</td>
+      <td>表示待进行归一化计算的目标张量。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -90,7 +89,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>gamma</td>
       <td>输入</td>
-      <td>表示layernorm计算中尺度缩放的大小，维度只支持1维且为[H]，Device侧的aclTensor。</td>
+      <td>表示layernorm计算中尺度缩放的大小。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -100,7 +99,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>beta</td>
       <td>输入</td>
-      <td>表示layernorm计算中尺度偏移的大小，维度只支持1维且维度为[H]，Device侧的aclTensor。</td>
+      <td>表示layernorm计算中尺度偏移的大小。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -110,7 +109,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>weight</td>
       <td>输入</td>
-      <td>表示目标张量转换使用的权重矩阵，维度只支持2维且维度为[H, 3 * H],Device侧的aclTensor。</td>
+      <td>表示目标张量转换使用的权重矩阵。</td>
       <td>-</td>
       <td>INT8</td>
       <td>ND</td>
@@ -120,7 +119,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>bias</td>
       <td>输入</td>
-      <td>表示目标张量转换使用的偏移矩阵，维度只支持1维且维度为[3 * H]，Device侧的aclTensor。</td>
+      <td>表示目标张量转换使用的偏移矩阵。</td>
       <td>-</td>
       <td>INT32</td>
       <td>ND</td>
@@ -130,7 +129,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>quantScale</td>
       <td>输入</td>
-      <td>表示目标张量量化使用的缩放参数，维度只支持1维且维度为[H]，Device侧的aclTensor。</td>
+      <td>表示目标张量量化使用的缩放参数。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -140,7 +139,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>quantOffset</td>
       <td>输入</td>
-      <td>表示目标张量量化使用的偏移参数，维度只支持1维且维度为[H]，Device侧的aclTensor。</td>
+      <td>表示目标张量量化使用的偏移参数。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -150,7 +149,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>dequantScale</td>
       <td>输入</td>
-      <td>表示目标张量乘以权重矩阵之后反量化使用的缩放参数，维度只支持1维且维度为[3 * H]，Device侧的aclTensor。</td>
+      <td>表示目标张量乘以权重矩阵之后反量化使用的缩放参数。</td>
       <td>-</td>
       <td>UINT64</td>
       <td>ND</td>
@@ -160,8 +159,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>headNum</td>
       <td>输入</td>
-      <td>表示转换使用的通道数；支持范围[1,32]。</td>
-      <td>-</td>
+      <td>表示转换使用的通道数。</td>
+      <td>支持取值为[1,32]。</td>
       <td>int</td>
       <td>-</td>
       <td>-</td>
@@ -170,8 +169,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>seqLength</td>
       <td>输入</td>
-      <td>表示转换使用的通道深度。只支持32/64两种。</td>
-      <td>-</td>
+      <td>表示转换使用的通道深度。</td>
+      <td>支持取值为32/64。</td>
       <td>int</td>
       <td>-</td>
       <td>-</td>
@@ -180,8 +179,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>seqLength</td>
       <td>输入</td>
-      <td>表示转换使用的通道深度。只支持32/64两种。</td>
-      <td>-</td>
+      <td>表示转换使用的通道深度。</td>
+      <td>支持取值为32/64。</td>
       <td>int</td>
       <td>-</td>
       <td>-</td>
@@ -190,8 +189,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>epsilon</td>
       <td>输入</td>
-      <td>layernorm 计算除0保护值；为了保证精度，建议小于等于1e-4。</td>
-      <td>-</td>
+      <td>layernorm 计算除0保护值。</td>
+      <td>为了保证精度，取值建议小于等于1e-4。</td>
       <td>float</td>
       <td>-</td>
       <td>-</td>
@@ -220,8 +219,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>hWinSize</td>
       <td>输入</td>
-      <td>使用的特征窗高度大小；支持范围[7,32]。</td>
-      <td>-</td>
+      <td>使用的特征窗高度大小。</td>
+      <td>支持取值为[7,32]。</td>
       <td>int</td>
       <td>-</td>
       <td>-</td>
@@ -230,8 +229,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>wWinSize</td>
       <td>输入</td>
-      <td>使用的特征窗宽度大小；支持范围[7,32]。</td>
-      <td>-</td>
+      <td>使用的特征窗宽度大小。</td>
+      <td>支持取值为[7,32]。</td>
       <td>int</td>
       <td>-</td>
       <td>-</td>
@@ -240,8 +239,8 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>weightTranspose</td>
       <td>输入</td>
-      <td>weight矩阵需要转置，当前不支持不转置场景。</td>
-      <td>-</td>
+      <td>weight矩阵是否转置。</td>
+      <td>当前不支持取值为False场景。</td>
       <td>bool</td>
       <td>-</td>
       <td>-</td>
@@ -250,7 +249,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>queryOutputOut</td>
       <td>输出</td>
-      <td>表示转换之后的张量，公式中的Q，Device侧的aclTensor。</td>
+      <td>表示转换之后的张量，公式中的Q。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -260,7 +259,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>keyOutputOut</td>
       <td>输出</td>
-      <td>表示转换之后的张量，公式中的K，Device侧的aclTensor。</td>
+      <td>表示转换之后的张量，公式中的K。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -270,7 +269,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     <tr>
       <td>valueOutputOut</td>
       <td>输出</td>
-      <td>表示转换之后的张量，公式中的V，Device侧的aclTensor。</td>
+      <td>表示转换之后的张量，公式中的V。</td>
       <td>-</td>
       <td>FLOAT16</td>
       <td>ND</td>
@@ -300,6 +299,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
   </tbody></table>  
 
 - **返回值**：
+
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
@@ -367,6 +367,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
   </table>
 
 - **返回值**：
+
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
