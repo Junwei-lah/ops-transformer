@@ -2218,8 +2218,8 @@ static aclnnStatus CheckEmptyTensor(const aclTensorList *x, const aclTensorList 
     CHECK_COND((*x)[i] != nullptr, ACLNN_ERR_PARAM_INVALID, "GroupedMatmul x tensor should not be null");
     auto xShape = (*x)[i]->GetViewShape();
     size_t xDimNum = xShape.GetDimNum();
-    CHECK_COND(xDimNum >= gmm::MIN_FM_DIM, ACLNN_ERR_PARAM_INVALID,
-                "GroupedMatmul x dim num should be larger than 2, but actual is %zu.", xDimNum);
+    CHECK_COND(xDimNum >= gmm::MIN_FM_DIM && xDimNum <= gmm::MAX_FM_DIM, ACLNN_ERR_PARAM_INVALID,
+ 	             "GroupedMatmul x dim num should be in the range [2, 6], but actual is %zu.", xDimNum);
     uint64_t m = 1;
     for (size_t dimIdx = 0; dimIdx < xDimNum - 1; dimIdx++) {
         m *= xShape.GetDim(dimIdx);
@@ -2232,12 +2232,12 @@ static aclnnStatus CheckEmptyTensor(const aclTensorList *x, const aclTensorList 
                "GroupedMatmul weight tensor should not be null");
     auto wShape = (*weight)[i]->GetViewShape();
     CHECK_COND(wShape.GetDimNum() >= gmm::MIN_FM_DIM, ACLNN_ERR_PARAM_INVALID,
-               "GroupedMatmul weight dim num should larger than 2, but actual %d.", wShape.GetDimNum());
+               "GroupedMatmul weight dim num should be 2 or 3, but actual %zu.", wShape.GetDimNum());
     zeroN = zeroN && (wShape.GetDim(wShape.GetDimNum() - 1) == 0);
   }
   // if all M or N is zero, do not need to check K
   CHECK_COND(zeroM || zeroN || !zeroK, ACLNN_ERR_PARAM_INVALID,
-             " GroupedMatmul does not support input K being 0 unless all M/N is 0");
+             "GroupedMatmul does not support input K being 0 unless all M/N is 0");
   return ACLNN_SUCCESS;
 }
 
