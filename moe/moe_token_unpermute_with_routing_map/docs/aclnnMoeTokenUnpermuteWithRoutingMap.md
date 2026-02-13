@@ -363,7 +363,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMap(
 - 确定性计算：
   - aclnnMoeTokenUnpermuteWithRoutingMap默认确定性实现。
 
-- topkNum <= 512, pad模式为false时routingMap中每行为1或true的个数固定且小于`512`。
+- topK_num <= 512, pad模式为false时routingMap中每行为1或true的个数固定且小于`512`。
 
 ## 调用示例
 
@@ -500,7 +500,7 @@ int main() {
     void* workspaceAddr = nullptr;
     if (workspaceSize > 0) {
         ret = aclrtMalloc(&workspaceAddr, workspaceSize, ACL_MEM_MALLOC_HUGE_FIRST);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret;);
+        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("allocate workspace failed. ERROR: %d\n", ret); return ret);
     }
     ret = aclnnMoeTokenUnpermuteWithRoutingMap(workspaceAddr, workspaceSize, executor, stream);
     CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnMoeTokenUnpermuteWithRoutingMapfailed. ERROR: %d\n", ret); return ret);
