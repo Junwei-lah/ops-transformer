@@ -330,7 +330,7 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
     <tr>
       <td>ACLNN_ERR_PARAM_INVALID</td>
       <td>161002</td>
-      <td>输入和输出的数据类型不在支持的范围内。</td>
+      <td>输入和输出的数据类型、数据格式或者维度不在支持的范围内。</td>
     </tr>
       </tbody>
   </table>
