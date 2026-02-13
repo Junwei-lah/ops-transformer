@@ -1827,7 +1827,10 @@ bool IFATilingV2::CheckMaskShape(bool isDefaultSparseMode, const gert::Tensor* m
 
   if (isDefaultSparseMode || (ifaContext_->sparseMode != nullptr && sparseMode_ == SPARSE_MODE_ALL_MASK)) {
     checkMask = (attenMaskQSize_ >= sOfQuery_) && (attenMaskKvSize_ >= seqSize_) && 
-      (attenMaskBatch_ == NUM1 || attenMaskBatch_ == batchSize_) &&  (static_cast<uint32_t>(attenMaskN) == NUM1);
+      (attenMaskBatch_ == NUM1 || attenMaskBatch_ == batchSize_) && (static_cast<uint32_t>(attenMaskN) == NUM1);
+    if (static_cast<uint32_t>(attenMaskN) != NUM1) {
+      OP_LOGE(ifaContext_->opName, "The second dimension of the 4D mask must be 1, but now it is %lld!", attenMaskN);
+    }
   } else if ((ifaContext_->sparseMode != nullptr) && ((sparseMode_ == SPARSE_MODE_LEFT_UP) ||
     (sparseMode_ == SPARSE_MODE_RIGHT_DOWN) || (sparseMode_ == SPARSE_MODE_BAND))) {
     checkMask = (attenMaskBatch_ == NUM1) && (static_cast<uint32_t>(attenMaskN) == NUM1) &&

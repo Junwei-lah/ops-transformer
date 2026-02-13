@@ -276,19 +276,11 @@ static bool CheckTensorList(gert::TilingContext* context, ContextParamsForPFATil
     contextKeyParams.vTensorList.resize(batchOfQ);
     while (context->GetDynamicInputShape(KEY_INDEX, validBatchOfK) != nullptr) {
         contextKeyParams.kTensorList[validBatchOfK] = context->GetDynamicInputShape(KEY_INDEX, validBatchOfK);
-        OP_CHECK_IF(contextKeyParams.kTensorList[validBatchOfK]->GetStorageShape().GetDim(0) != 1,
-            OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Batch value of Key(%ld) is NOT 1 but should be 1 under tensorlist mode!", 
-            contextKeyParams.kTensorList[validBatchOfK]->GetStorageShape().GetDim(0)),
-            return false);
         validBatchOfK++;
     }
 
     while (context->GetDynamicInputShape(VALUE_INDEX, validBatchOfV) != nullptr) {
         contextKeyParams.vTensorList[validBatchOfV] = context->GetDynamicInputShape(VALUE_INDEX, validBatchOfV);
-        OP_CHECK_IF(contextKeyParams.vTensorList[validBatchOfV]->GetStorageShape().GetDim(0) != 1,
-            OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Batch value of Value(%ld) is NOT 1 but should be 1 under tensorlist mode!",
-            contextKeyParams.vTensorList[validBatchOfV]->GetStorageShape().GetDim(0)),
-            return false);
         validBatchOfV++;
     }
 
@@ -303,6 +295,20 @@ static bool CheckTensorList(gert::TilingContext* context, ContextParamsForPFATil
 
     if (CheckEmptyTensorList(contextKeyParams, validBatchOfK)) {
         return true;
+    }
+    
+    for (int i = 0; i < validBatchOfK; i++) {
+        OP_CHECK_IF(contextKeyParams.kTensorList[i]->GetStorageShape().GetDim(0) != 1,
+            OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Batch value of Key(%ld) is NOT 1 but should be 1 under tensorlist mode!", 
+            contextKeyParams.kTensorList[i]->GetStorageShape().GetDim(0)),
+            return false);
+    }
+
+    for (int i = 0; i < validBatchOfV; i++) {
+        OP_CHECK_IF(contextKeyParams.vTensorList[i]->GetStorageShape().GetDim(0) != 1,
+            OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Batch value of Value(%ld) is NOT 1 but should be 1 under tensorlist mode!",
+            contextKeyParams.vTensorList[i]->GetStorageShape().GetDim(0)),
+            return false);
     }
 
     if (!CheckNormalTensorList(context, contextKeyParams, layoutStr, validBatchOfK)) {
