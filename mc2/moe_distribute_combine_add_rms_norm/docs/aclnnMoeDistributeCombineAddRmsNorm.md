@@ -191,7 +191,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
     <td>xActiveMaskOptional</td>
     <td>输入</td>
     <td>表示token是否参与通信。</td>
-    <td><li>可传有效数据或空指针，默认所有token参与通信，1D时shape为(BS, )，2D时shape为(BS, K)。</li><li>各卡BS不一致时所有token需有效。</li></td>
+    <td><ul><li>可传有效数据或空指针，默认所有token参与通信，1D时shape为(BS, )，2D时shape为(BS, K)。</li><li>各卡BS不一致时所有token需有效。</li></td>
     <td>BOOL</td>
     <td>ND</td>
     <td>-</td>
@@ -241,7 +241,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
     <td>sharedExpertXOptional</td>
     <td>输入</td>
     <td>表示共享专家计算后的Token。</td>
-    <td>可传有效数据或空指针，2D时shape为(Bs, H)，3D时shape为(Bs, 1, H)）</td>
+    <td>可传有效数据或空指针，2D时shape为(Bs, H)，3D时shape为(Bs, 1, H)</td>
     <td>BFLOAT16</td>
     <td>ND</td>
     <td>-</td>
@@ -351,7 +351,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
     <td>globalBS</td>
     <td>输入</td>
     <td>EP域全局的batch size大小。</td>
-    <td><li>各rank Bs一致时，globalBS = Bs * epWorldSize 或 0。</li><li>各rank Bs不一致时，globalBS = maxBs * epWorldSize（maxBs为单卡Bs最大值）。</li></td>
+    <td><ul><li>各rank Bs一致时，globalBS = Bs * epWorldSize 或 0。</li><li>各rank Bs不一致时，globalBS = maxBs * epWorldSize（maxBs为单卡Bs最大值）。</li></td>
     <td>INT64</td>
     <td>ND</td>
     <td>-</td>
@@ -462,7 +462,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
 
 - **返回值**
 
-    aclnnStatus：返回状态码，具体参见[aclnn](../../../docs/zh/context/aclnn返回码.md)。
+    aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
     第一段接口完成入参校验，出现以下场景时报错：
 
@@ -577,11 +577,12 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
 
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
-- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Ascend 950PR/Ascend 950DT</term>：
     ```Cpp
     #include <thread>
     #include <iostream>
     #include <string>
+    #include <cstring>
     #include <vector>
     #include "acl/acl.h"
     #include "hccl/hccl.h"
@@ -611,8 +612,8 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
         aclrtContext context;
     };
 
-    constexpr uint32_t EP_WORLD_SIZE = 8;
-    constexpr uint32_t TP_WORLD_SIZE = 2;
+    constexpr uint32_t EP_WORLD_SIZE = 2;
+    constexpr uint32_t TP_WORLD_SIZE = 1;
     constexpr uint32_t DEV_NUM = EP_WORLD_SIZE * TP_WORLD_SIZE;
 
     int64_t GetShapeSize(const std::vector<int64_t> &shape)
@@ -652,8 +653,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
         ret = HcclGetCommName(args.hcclEpComm, hcomEpName);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclGetEpCommName failed, ret %d\n", ret); return -1);
         char hcomTpName[128] = {0};
-        ret = HcclGetCommName(args.hcclTpComm, hcomTpName);
-        CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclGetTpCommName failed, ret %d\n", ret); return -1);
         LOG_PRINT(
             "[INFO] rank = %d, hcomEpName = %s, hcomTpName = %s, dispatchStream = %p, combineStream = %p, context = %p\n",
             args.rankId, hcomEpName, hcomTpName, args.dispatchStream, args.combineStream, args.context
@@ -999,7 +998,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
 
     int main(int argc, char *argv[])
     {
-        // 本样例基于Atlas A3实现，必须在Atlas A3上运行
         int ret = aclInit(nullptr);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] aclInit failed, ret = %d\n", ret); return ret);
 
