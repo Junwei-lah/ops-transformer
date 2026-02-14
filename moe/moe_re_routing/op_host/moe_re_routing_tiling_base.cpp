@@ -102,9 +102,9 @@ ge::graphStatus MoeReRoutingTilingBase::CheckDtypeAndAttr() const
             ge::TypeUtils::DataTypeToSerialString(expertDtype_).c_str()),
         return ge::GRAPH_FAILED);
     if (tokenDtype_ == ge::DT_FLOAT8_E4M3FN || tokenDtype_ == ge::DT_FLOAT8_E5M2) {
-        OP_CHECK_IF(scaleDtype_ != ge::DT_FLOAT8_E8M0,
+        OP_CHECK_IF((scaleDtype_ != ge::DT_FLOAT8_E8M0 && scaleDtype_ != ge::DT_FLOAT),
             OP_LOGE(context_->GetNodeName(),
-                "tokens is fp8, scale should be float8_e8m0, actual %s.",
+                "tokens is fp8, scale should be float8_e8m0 or float32, actual %s.",
                 ge::TypeUtils::DataTypeToSerialString(scaleDtype_).c_str()),
             return ge::GRAPH_FAILED);
     }
