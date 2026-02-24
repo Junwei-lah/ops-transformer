@@ -1013,8 +1013,8 @@ bool CheckSpecConditions(const gert::TilingContext *context)
     bool isRopeSplitMla = (qRope != nullptr) && (kRope != nullptr);
     
     bool isMha = (kvHeadNum == 0) || (headNum == kvHeadNum);
-    bool mhaConditions = isMha && (tempAttnMaskShape == nullptr) &&
-        (qDataType == ge::DT_FLOAT16) && (innerPrecise == 1) && !isPageAttention;
+    bool mhaConditions = isMha && !((qDataType == ge::DT_BF16) && (innerPrecise == 1)) && 
+        (tempAttnMaskShape == nullptr);
     bool nonMhaConditions = !isMha && (innerPrecise == 0);
     bool specConditionFlag = false;
     if (isLayoutSupported && !isRopeSplitMla && sparseModeSupported &&
