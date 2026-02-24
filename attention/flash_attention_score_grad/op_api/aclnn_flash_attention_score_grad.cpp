@@ -328,30 +328,40 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
     auto queryDimSize = query->Size();
     auto kvDimSize = key->Size();
     fagShape.inputLayoutStr = op::ToString(inputLayout).GetString();
-    fagShape.n1Dim = (fagShape.inputLayoutStr == "BNSD") ? queryShape.GetDim(1) : queryShape.GetDim(2); // 1 or 2:n1
-    fagShape.n2Dim = (fagShape.inputLayoutStr == "BNSD") ? keyShape.GetDim(1) : keyShape.GetDim(2);       // 1 or 2:n2
-    fagShape.s1Dim = (fagShape.inputLayoutStr == "BNSD") ? queryShape.GetDim(2) : queryShape.GetDim(1); // 1 or 2:s1
-    fagShape.s2Dim = (fagShape.inputLayoutStr == "BNSD") ? keyShape.GetDim(2) : keyShape.GetDim(1);       // 1 or 2:s2
-    if (fagShape.inputLayoutStr == "BSH" || fagShape.inputLayoutStr == "SBH") {
+    bool isLayoutBNSD = (fagShape.inputLayoutStr == "BNSD");
+    bool isLayoutBSND = (fagShape.inputLayoutStr == "BSND");
+    bool isLayoutBSH = (fagShape.inputLayoutStr == "BSH");
+    bool isLayoutSBH = (fagShape.inputLayoutStr == "SBH");
+    bool isLayoutTND = (fagShape.inputLayoutStr == "TND");
+    fagShape.n1Dim = isLayoutBNSD ? queryShape.GetDim(1) : queryShape.GetDim(2); // 1 or 2:n1
+    fagShape.n2Dim = isLayoutBNSD ? keyShape.GetDim(1) : keyShape.GetDim(2);       // 1 or 2:n2
+    fagShape.s1Dim = isLayoutBNSD ? queryShape.GetDim(2) : queryShape.GetDim(1); // 1 or 2:s1
+    fagShape.s2Dim = isLayoutBNSD ? keyShape.GetDim(2) : keyShape.GetDim(1);       // 1 or 2:s2
+    if (isLayoutBSH || isLayoutSBH) {
         fagShape.h1Dim = queryShape.GetDim(2); // 2:h1
         fagShape.h2Dim = keyShape.GetDim(2);    // 2:h2
+        auto h3Dim = valueShape.GetDim(2);    // 3:h3，h of v
         if (headNum == 0) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The headNum is zero.");
             return ACLNN_ERR_PARAM_INVALID;
         }
         fagShape.dDim = fagShape.h1Dim / headNum; // q Head-dim
         if (fagShape.dDim == 0) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dimension of D is zero.");
-            return ACLNN_ERR_PARAM_INVALID;
+            fagShape.n1Dim = headNum;
+            fagShape.n2Dim = headNum;
+            fagShape.s1Dim = isLayoutBSH ? queryShape.GetDim(1) : queryShape.GetDim(0);
+            fagShape.s2Dim = isLayoutBSH ? keyShape.GetDim(1) : keyShape.GetDim(0);
+            fagShape.dkDim = fagShape.h2Dim;
+            fagShape.dvDim = h3Dim;
+        } else {
+            fagShape.n1Dim = headNum;
+            fagShape.n2Dim = fagShape.h2Dim / fagShape.dDim;
+            fagShape.s1Dim = isLayoutBSH ? queryShape.GetDim(1) : queryShape.GetDim(0);
+            fagShape.s2Dim = isLayoutBSH ? keyShape.GetDim(1) : keyShape.GetDim(0);
+            fagShape.dkDim = fagShape.n2Dim == 0 ? fagShape.dDim : keyShape.GetDim(DIM_NUM_2) / fagShape.n2Dim;
+            fagShape.dvDim = fagShape.n2Dim == 0 ? 0 : valueShape.GetDim(DIM_NUM_2) / fagShape.n2Dim;
         }
-
-        fagShape.n1Dim = headNum;
-        fagShape.n2Dim = fagShape.h2Dim / fagShape.dDim;
-        fagShape.s1Dim = (fagShape.inputLayoutStr == "BSH") ? queryShape.GetDim(1) : queryShape.GetDim(0);
-        fagShape.s2Dim = (fagShape.inputLayoutStr == "BSH") ? keyShape.GetDim(1) : keyShape.GetDim(0);
-        fagShape.dkDim = keyShape.GetDim(DIM_NUM_2) / fagShape.n2Dim;
-        fagShape.dvDim = valueShape.GetDim(DIM_NUM_2) / fagShape.n2Dim;
-    } else if (fagShape.inputLayoutStr == "TND") {
+    } else if (isLayoutTND) {
         fagShape.dDim = queryShape.GetDim(2);  // 2:d
         fagShape.n1Dim = queryShape.GetDim(1); // 1:n1
         fagShape.n2Dim = keyShape.GetDim(1);    // 1:n2
@@ -366,8 +376,19 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
         return ACLNN_ERR_PARAM_INVALID;
     }
 
-    if (fagShape.dDim != fagShape.dkDim) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "qD and kD should be same, but got qD=%ld kD=%ld", fagShape.dDim, fagShape.dkDim);
+    if (fagShape.dDim != fagShape.dkDim && queryShape.GetDimNum() == DIM_NUM_3) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "qD and kD should be same, q shape = [%ld, %ld, %ld], k shape = [%ld, %ld, %ld].",
+            queryShape.GetDim(0), queryShape.GetDim(1), queryShape.GetDim(DIM_NUM_2),
+            keyShape.GetDim(0), keyShape.GetDim(1), keyShape.GetDim(DIM_NUM_2));
+        return ACLNN_ERR_PARAM_INVALID;
+    }
+
+    if (fagShape.dDim != fagShape.dkDim && queryShape.GetDimNum() == DIM_NUM_4) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "qD and kD should be same, q shape = [%ld, %ld, %ld, %ld], k shape = [%ld, %ld, %ld, %ld].",
+            queryShape.GetDim(0), queryShape.GetDim(1), queryShape.GetDim(DIM_NUM_2), queryShape.GetDim(DIM_NUM_3),
+            keyShape.GetDim(0), keyShape.GetDim(1), keyShape.GetDim(DIM_NUM_2), keyShape.GetDim(DIM_NUM_3));
         return ACLNN_ERR_PARAM_INVALID;
     }
 
@@ -394,13 +415,13 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
     fagShape.querySDimStrideSize = 0;
     fagShape.kvSDimStrideSize = 0;
 
-    if (fagShape.inputLayoutStr == "BSND") { // stride is N * D
+    if (isLayoutBSND) { // stride is N * D
         fagShape.querySDimStrideSize = fagShape.n1Dim * fagShape.dDim;
         fagShape.kvSDimStrideSize = fagShape.n2Dim * fagShape.dDim;
-    } else if (fagShape.inputLayoutStr == "BSH") {           // stride is H
+    } else if (isLayoutBSH) {           // stride is H
         fagShape.querySDimStrideSize = queryShape.GetDim(2); // 2:dv
         fagShape.kvSDimStrideSize = keyShape.GetDim(2);       // 2:dv
-    } else if (fagShape.inputLayoutStr == "SBH") {           // stride is B * H
+    } else if (isLayoutSBH) {           // stride is B * H
         fagShape.querySDimStrideSize = fagShape.s1Dim == 0 ? 0 : (queryDimSize / fagShape.s1Dim);
         fagShape.kvSDimStrideSize = fagShape.s2Dim == 0 ? 0 : (kvDimSize / fagShape.s2Dim);
     }
@@ -418,15 +439,15 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
 
         // 计算是否超过65535时，应该使用对齐以后的D值
         if (fagShape.needPadDimD) {
-            if (fagShape.inputLayoutStr == "BSND") { // stride is N * D
+            if (isLayoutBSND) { // stride is N * D
                 fagShape.querySDimStrideSize = fagShape.n1Dim * dDimAlignSize;
                 fagShape.kvSDimStrideSize = fagShape.n2Dim * dDimAlignSize;
-            } else if (fagShape.inputLayoutStr == "BSH") {           // stride is H
+            } else if (isLayoutBSH) {           // stride is H
                 fagShape.querySDimStrideSize = fagShape.dDim == 0 ? 0 :
                     (queryShape.GetDim(2) / fagShape.dDim * dDimAlignSize); // 2:dv
                 fagShape.kvSDimStrideSize = fagShape.dDim == 0 ? 0 :
                     (keyShape.GetDim(2) / fagShape.dDim * dDimAlignSize);       // 2:dv
-            } else if (fagShape.inputLayoutStr == "SBH") {           // stride is B * H
+            } else if (isLayoutSBH) {           // stride is B * H
                 int64_t queryBHSize = fagShape.s1Dim == 0 ? 0 : (queryDimSize / fagShape.s1Dim);
                 int64_t kvBHSize = fagShape.s2Dim == 0 ? 0 : (kvDimSize / fagShape.s2Dim);
                 fagShape.querySDimStrideSize = fagShape.dDim == 0 ? 0 : (queryBHSize / fagShape.dDim * dDimAlignSize);
@@ -445,7 +466,7 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
             fagShape.needPadDimD = false;
         }
         // 特殊情况的TND的D不等长无需处理
-        if (fagShape.inputLayoutStr == "TND" && fagShape.dDim == HEAD_DIM_192 && fagShape.dvDim == HEAD_DIM_128 && deterministicValue == 0) {
+        if (isLayoutTND && fagShape.dDim == HEAD_DIM_192 && fagShape.dvDim == HEAD_DIM_128 && deterministicValue == 0) {
             fagShape.needPadDimD = false;
         }
     } else {
@@ -455,7 +476,7 @@ static aclnnStatus GetInputShapeInfo(const aclTensor *query, const aclTensor *ke
     
     fagShape.passThrowInnerFag = (!(fagShape.needPadDimD) && !(fagShape.needTranspose));
     fagShape.needBackwordReshape =
-        (fagShape.inputLayoutStr == "SBH" && fagShape.needPadDimD && !(fagShape.needTranspose));
+        (isLayoutSBH && fagShape.needPadDimD && !(fagShape.needTranspose));
     return ACLNN_SUCCESS;
 }
 

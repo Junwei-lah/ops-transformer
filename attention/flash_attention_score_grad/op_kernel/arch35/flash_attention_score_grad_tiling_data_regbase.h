@@ -28,6 +28,8 @@ public:
     uint32_t formerDkNum;
     uint32_t formerDvNum;
     uint32_t formerDpseNum;
+    uint32_t formerDqRopeNum;
+    uint32_t formerDkRopeNum;
     uint64_t singleCoreDqNum;
     uint64_t tailCoreDqNum;
     uint64_t singleCoreDkNum;
@@ -36,11 +38,18 @@ public:
     uint64_t tailCoreDvNum;
     uint64_t singleCoreDpseNum;
     uint64_t tailCoreDpseNum;
+    uint64_t singleCoreDqRopeNum;
+    uint64_t tailCoreDqRopeNum;
+    uint64_t singleCoreDkRopeNum;
+    uint64_t tailCoreDkRopeNum;
+    uint64_t isRope = 0; 
 
     uint32_t get_formerDqNum() const { return formerDqNum; }
     uint32_t get_formerDkNum() const { return formerDkNum; }
     uint32_t get_formerDvNum() const { return formerDvNum; }
     uint32_t get_formerDpseNum() const { return formerDpseNum; }
+    uint32_t get_formerDqRopeNum() const { return formerDqRopeNum; }
+    uint32_t get_formerDkRopeNum() const { return formerDkRopeNum; }
     uint64_t get_singleCoreDqNum() const { return singleCoreDqNum; }
     uint64_t get_tailCoreDqNum() const { return tailCoreDqNum; }
     uint64_t get_singleCoreDkNum() const { return singleCoreDkNum; }
@@ -49,11 +58,17 @@ public:
     uint64_t get_tailCoreDvNum() const { return tailCoreDvNum; }
     uint64_t get_singleCoreDpseNum() const { return singleCoreDpseNum; }
     uint64_t get_tailCoreDpseNum() const { return tailCoreDpseNum; }
+    uint64_t get_singleCoreDqRopeNum() const { return singleCoreDqRopeNum; }
+    uint64_t get_tailCoreDqRopeNum() const { return tailCoreDqRopeNum; }
+    uint64_t get_singleCoreDkRopeNum() const { return singleCoreDkRopeNum; }
+    uint64_t get_tailCoreDkRopeNum() const { return tailCoreDkRopeNum; }
 
     void set_formerDqNum(uint32_t formerDqNumParam) { this->formerDqNum = formerDqNumParam; }
     void set_formerDkNum(uint32_t formerDkNumParam) { this->formerDkNum = formerDkNumParam; }
     void set_formerDvNum(uint32_t formerDvNumParam) { this->formerDvNum = formerDvNumParam; }
     void set_formerDpseNum(uint32_t formerDpseNumParam) { this->formerDpseNum = formerDpseNumParam; }
+    void set_formerDqRopeNum(uint32_t formerDqRopeNumParam) { this->formerDqRopeNum = formerDqRopeNumParam; }
+    void set_formerDkRopeNum(uint32_t formerDkRopeNumParam) { this->formerDkRopeNum = formerDkRopeNumParam; }
     void set_singleCoreDqNum(uint64_t singleCoreDqNumParam) { this->singleCoreDqNum = singleCoreDqNumParam; }
     void set_tailCoreDqNum(uint64_t tailCoreDqNumParam) { this->tailCoreDqNum = tailCoreDqNumParam; }
     void set_singleCoreDkNum(uint64_t singleCoreDkNumParam) { this->singleCoreDkNum = singleCoreDkNumParam; }
@@ -62,6 +77,10 @@ public:
     void set_tailCoreDvNum(uint64_t tailCoreDvNumParam) { this->tailCoreDvNum = tailCoreDvNumParam; }
     void set_singleCoreDpseNum(uint64_t singleCoreDpseNumParam) { this->singleCoreDpseNum = singleCoreDpseNumParam; }
     void set_tailCoreDpseNum(uint64_t tailCoreDpseNumParam) { this->tailCoreDpseNum = tailCoreDpseNumParam; }
+    void set_singleCoreDqRopeNum(uint64_t singleCoreDqRopeNumParam) { this->singleCoreDqRopeNum = singleCoreDqRopeNumParam; }
+    void set_tailCoreDqRopeNum(uint64_t tailCoreDqRopeNumParam) { this->tailCoreDqRopeNum = tailCoreDqRopeNumParam; }
+    void set_singleCoreDkRopeNum(uint64_t singleCoreDkRopeNumParam) { this->singleCoreDkRopeNum = singleCoreDkRopeNumParam; }
+    void set_tailCoreDkRopeNum(uint64_t tailCoreDkRopeNumParam) { this->tailCoreDkRopeNum = tailCoreDkRopeNumParam; }
 };
 
 class FlashAttentionScoreGradS1S2BNGS1S2BaseParamsRegbase {

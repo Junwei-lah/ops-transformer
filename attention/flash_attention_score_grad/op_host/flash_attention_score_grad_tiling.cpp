@@ -49,6 +49,7 @@ constexpr uint32_t LAYOUT_ATTR_IDX = 5;
 constexpr uint32_t FAG_EMPTY_TILING_KEY = 0;
 constexpr uint32_t TILING_KEY_1 = 1U;
 constexpr size_t WORKSPACE_SIZE = 100 * 1024 * 1024;
+constexpr uint64_t SMLEST_ROPE_SIZE = 64;
 
 static uint32_t CalculateTschBlockDim(uint32_t sliceNum, uint32_t aicCoreNum, uint32_t aivCoreNum)
 {
@@ -194,7 +195,35 @@ public:
             emptyTensorTilingDataRegbase->set_singleCoreDpseNum(dpseNum / aivNum + 1);
             emptyTensorTilingDataRegbase->set_tailCoreDpseNum(dpseNum / aivNum);
         }
- 
+
+        // rope场景清零的处理
+        const gert::StorageShape *dqRopeShape = context->GetOutputShape(OUTPUT_IDX_DQ_ROPE);
+        const gert::StorageShape *dkRopeShape = context->GetOutputShape(OUTPUT_IDX_DK_ROPE);
+        uint64_t dqRopeNum = (dqRopeShape == nullptr) ? 0 : static_cast<uint64_t>(dqRopeShape->GetStorageShape().GetShapeSize());
+        dqRopeNum = (dqRopeNum < SMLEST_ROPE_SIZE) ? 0 : dqRopeNum;
+        if (dqRopeNum % aivNum == 0ULL) {
+            emptyTensorTilingDataRegbase->set_formerDqRopeNum(aivNum);
+            emptyTensorTilingDataRegbase->set_singleCoreDqRopeNum(dqRopeNum / aivNum);
+            emptyTensorTilingDataRegbase->set_tailCoreDqRopeNum(0);
+        } else {
+            emptyTensorTilingDataRegbase->set_formerDqRopeNum(dqRopeNum % aivNum);
+            emptyTensorTilingDataRegbase->set_singleCoreDqRopeNum(dqRopeNum / aivNum + 1);
+            emptyTensorTilingDataRegbase->set_tailCoreDqRopeNum(dqRopeNum / aivNum);
+        }
+
+        uint64_t dkRopeNum = (dkRopeShape == nullptr) ? 0 : static_cast<uint64_t>(dkRopeShape->GetStorageShape().GetShapeSize());
+        dkRopeNum = (dkRopeNum < SMLEST_ROPE_SIZE) ? 0 : dkRopeNum;
+        if (dkRopeNum % aivNum == 0ULL) {
+            emptyTensorTilingDataRegbase->set_formerDkRopeNum(aivNum);
+            emptyTensorTilingDataRegbase->set_singleCoreDkRopeNum(dkRopeNum / aivNum);
+            emptyTensorTilingDataRegbase->set_tailCoreDkRopeNum(0);
+        } else {
+            emptyTensorTilingDataRegbase->set_formerDkRopeNum(dkRopeNum % aivNum);
+            emptyTensorTilingDataRegbase->set_singleCoreDkRopeNum(dkRopeNum / aivNum + 1);
+            emptyTensorTilingDataRegbase->set_tailCoreDkRopeNum(dkRopeNum / aivNum);
+        }
+        emptyTensorTilingDataRegbase->isRope = (dqRopeNum > 0 || dkRopeNum > 0);
+
         context->SetTilingKey(GET_TPL_TILING_KEY(TILING_KEY_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TILING_KEY_1));
         auto sliceNum =
             (dqNum < aivNum && dkNum < aivNum && dpseNum < aivNum) ? std::max(std::max(dqNum, dkNum), dpseNum) : aivNum;

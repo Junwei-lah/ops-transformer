@@ -27,7 +27,6 @@ static const uint64_t INDEX_OUT_4 = 4;
 static const uint64_t INDEX_OUT_5 = 5;
 static const uint64_t INDEX_OUT_6 = 6;
 static const uint64_t INDEX_OUTDTYPE = 11;
-
 ge::graphStatus InferShape4FlashAttentionScoreGrad(gert::InferShapeContext *context)
 {
     OP_CHECK_NULL_WITH_CONTEXT(context, context);
@@ -112,12 +111,12 @@ ge::graphStatus InferShape4FlashAttentionScoreGrad(gert::InferShapeContext *cont
         dpseShape->SetDim(0, 0);
     }
     const gert::Shape *queryRopeShape = context->GetOptionalInputShape(22);
-    if (queryRopeShape != nullptr && queryRopeShape->GetShapeSize() != 0) {
+    if (queryRopeShape != nullptr) {
         OP_LOGD(context, "queryRope is not nullptr");
         *dqRopeShape = *queryRopeShape;
     } 
     const gert::Shape *keyRopeShape = context->GetOptionalInputShape(23);
-    if (keyRopeShape != nullptr && keyRopeShape->GetShapeSize() != 0) {
+    if (keyRopeShape != nullptr) {
         OP_LOGD(context, "keyRope is not nullptr");
         *dkRopeShape = *keyRopeShape;
     }
