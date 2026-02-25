@@ -315,7 +315,7 @@ aclnnStatus aclnnMoeDistributeDispatch(
     <tr>
     <td>dynamicScales</td>
     <td>输出</td>
-    <td>Device侧的aclTensor。</td>
+    <td>量化场景下，表示本卡输出Token的量化系数。</td>
     <td>要求为1D或2D Tensor。</td>
     <td>FLOAT32</td>
     <td>ND</td>
@@ -478,7 +478,7 @@ aclnnStatus aclnnMoeDistributeDispatch(
     <tr>
     <td>workspaceSize</td>
     <td>输入</td>
-    <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMoeDistributeCombineGetWorkspaceSize</code>获取。</td>
+    <td>在Device侧申请的workspace大小，由第一段接口<code>aclnnMoeDistributeDispatchGetWorkspaceSize</code>获取。</td>
     </tr>
     <tr>
     <td>executor</td>
