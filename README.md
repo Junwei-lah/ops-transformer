@@ -2,6 +2,7 @@
 
 ## 🔥Latest News
 
+- [2026/02] 新支持算子[mhc_post](experimental/mhc/mhc_post)、[mhc_pre](experimental/mhc/mhc_pre)、[mhc_res](experimental/mhc/mhc_res)。
 - [2026/01] 新支持算子[grouped matmul<<<>>>调用示例](examples/fast_kernel_launch_example/ascend_ops/csrc/grouped_matmul)，方便用户自定义使用。
 - [2026/01] 新支持算子[fused_floyd_attention](attention/fused_floyd_attention)、[fused_floyd_attention_grad](attention/fused_floyd_attention_grad)、[matmul_allto_all](mc2/matmul_allto_all)。
 - [2025/12] 新增[QuickStart](QUICKSTART.md)，指导新手零基础入门算子项目部署（支持Docker环境）、算子开发和贡献流程。
