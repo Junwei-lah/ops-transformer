@@ -66,7 +66,7 @@ AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulT
 {
     // 获取tilingdata数据
     tilingData_ = tilingData;
-    auto &&mc2Tiling_ = tilingData_->alltoAllKcQuantMatmulTilingInfo;
+    auto &&mc2Tiling_ = tilingData_->alltoAllQuantMatmulTilingInfo;
     tPipe_ = tPipe;
     x1_ = x1;
     x2_ = x2;
@@ -93,7 +93,7 @@ template <typename SchedulerType, typename SchedulerContextType, typename AlltoA
 __aicore__ inline void
 AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulTilingDataType>::Process()
 {
-    auto &&mc2Tiling_ = tilingData_->alltoAllKcQuantMatmulTilingInfo;
+    auto &&mc2Tiling_ = tilingData_->alltoAllQuantMatmulTilingInfo;
     // 启动主块流水
     if (mc2Tiling_.tileCnt > 0) {
         ProcessTile(mc2Tiling_.tileCnt);
@@ -113,7 +113,7 @@ __aicore__ inline void
 AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulTilingDataType>::ProcessTile(
     uint32_t taskCnt)
 {
-    auto &&mc2Tiling_ = tilingData_->alltoAllKcQuantMatmulTilingInfo;
+    auto &&mc2Tiling_ = tilingData_->alltoAllQuantMatmulTilingInfo;
     // 复用的变量
     uint64_t tileMMultiRankK = (uint64_t)mc2Tiling_.tileM * (uint64_t)mc2Tiling_.rankK;
 
@@ -164,7 +164,7 @@ AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulT
     pipeLineContext_.extraData.x1_scale_offset = (uint64_t)mc2Tiling_.tileM * sizeof(float);
     pipeLineContext_.extraData.x2_scale = x2Scale_;
     pipeLineContext_.extraData.x2_offset = x2Offset_;
-    pipeLineContext_.tilingData = &(tilingData_->mc2KcQuantMmTileTilingData);
+    pipeLineContext_.tilingData = &(tilingData_->mc2QuantMmTileTilingData);
 
     ProcessPipeLine(taskCnt);
 }
@@ -174,7 +174,7 @@ __aicore__ inline void
 AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulTilingDataType>::ProcessTail(
     uint32_t taskCnt)
 {
-    auto &&mc2Tiling_ = tilingData_->alltoAllKcQuantMatmulTilingInfo;
+    auto &&mc2Tiling_ = tilingData_->alltoAllQuantMatmulTilingInfo;
     uint64_t tailMMultiRankK = (uint64_t)mc2Tiling_.tailM * (uint64_t)mc2Tiling_.rankK;
     uint64_t tileCntMultitileMMultiRankK =
         (uint64_t)mc2Tiling_.tileCnt * (uint64_t)mc2Tiling_.tileM * (uint64_t)mc2Tiling_.rankK;
@@ -217,7 +217,7 @@ AlltoAllKcQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulT
     pipeLineContext_.extraData.x1_scale_offset = (uint64_t)mc2Tiling_.tailM * sizeof(float);
     pipeLineContext_.extraData.x2_scale = x2Scale_;
     pipeLineContext_.extraData.x2_offset = x2Offset_;
-    pipeLineContext_.tilingData = &(tilingData_->mc2KcQuantMmTailTilingData);
+    pipeLineContext_.tilingData = &(tilingData_->mc2QuantMmTailTilingData);
 
     ProcessPipeLine(taskCnt);
 }

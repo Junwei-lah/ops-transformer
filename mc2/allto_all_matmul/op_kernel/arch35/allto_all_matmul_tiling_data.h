@@ -48,13 +48,13 @@ struct AlltoAllMatmulTilingData {
     Mc2MatMulV3TilingData mc2MmV3TailTilingData; // 通算切分尾块matmul tiling数据
 };
 
-// 量化tiling结构体
-struct AlltoAllKcQuantMatmulTilingData {
-    Mc2InitTiling mc2InitTiling;                                                  // 初始化通信任务配置
-    Mc2CcTiling mc2CcTiling;                                                      // 具体每个通信任务的参数配置
-    AlltoAllMatmulTilingInfo alltoAllKcQuantMatmulTilingInfo;                     // 传递给kernel的tiling info
-    DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams mc2KcQuantMmTileTilingData; // 通算切分头块matmul tiling数据
-    DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams mc2KcQuantMmTailTilingData; // 通算切分尾块matmul tiling数据
+// MX量化tiling结构体
+struct AlltoAllQuantMatmulTilingData {
+    Mc2InitTiling mc2InitTiling;                                                // 初始化通信任务配置
+    Mc2CcTiling mc2CcTiling;                                                    // 具体每个通信任务的参数配置
+    AlltoAllMatmulTilingInfo alltoAllQuantMatmulTilingInfo;                     // 传递给kernel的tiling info
+    DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams mc2QuantMmTileTilingData; // 通算切分头块matmul tiling数据
+    DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams mc2QuantMmTailTilingData; // 通算切分尾块matmul tiling数据
 };
 
 #endif // ALLTO_ALL_MATMUL_TILING_H

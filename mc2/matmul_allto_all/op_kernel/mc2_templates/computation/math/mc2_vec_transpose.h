@@ -93,7 +93,7 @@ protected:
                                                     loadGm2UbParams.blockLen);
         loadGm2UbParams.dstStride = static_cast<int64_t>(0);
 
-        DataCopyPadExtParams<tranposeDataType> padExtParams{false, 0, 0, 0};
+        DataCopyPadExtParams<tranposeDataType> padExtParams{true, 0, 0, *reinterpret_cast<tranposeDataType *>(uint8_t(0))};
 
         DataCopyPad<tranposeDataType, PaddingMode::Normal>(vecInBuf, tranposeGm_[srcGmOffset], loadGm2UbParams,
                                                         padExtParams);
