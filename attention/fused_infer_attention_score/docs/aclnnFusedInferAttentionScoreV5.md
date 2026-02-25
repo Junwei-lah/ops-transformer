@@ -706,7 +706,8 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             <li>当前支持BSH、BSND、BNSD、BNSD_BSND（输入为BNSD时，输出格式为BSND）、BSND_BNSD（输入为BSND时，输出格式为BNSD）、BSH_BNSD（输入为BSH时，输出格式为BNSD）、BNSD_NBSD（输入为BNSD时，输出格式为NBSD）、BSND_NBSD（输入为BSND时，输出格式为NBSD）、BSH_NBSD（输入为BSH时，输出格式为NBSD）、TND（TND相关场景综合约束见<a href="#约束说明">约束说明</a>）、NTD、NTD_TND（输入为NTD时，输出格式为TND）、TND_NTD（输入为TND时，输出格式为NTD）。不特意指定时建议传入"BSH"。</li>
             <li>注意排布格式带下划线时，下划线左边表示输入query的layout，下划线右边表示输出output的格式。</li>
             <li>query、key、value数据排布格式支持从多种维度解读，其中B（Batch）表示输入样本批量大小、S（Seq-Length）表示输入样本序列长度、H（Hidden-Size）表示隐藏层的大小、N（Head-Num）表示多头数、D（Head-Dim）表示隐藏层最小的单元尺寸，且满足D=H/N、T表示所有Batch输入样本序列长度的累加和。</li>
-            <li>inputLayout=BSH_BNSD、BSND_BNSD、BNSD_BSND、NTD、NTD_TND仅支持Q_D=K_D=V_D都等于64或128，或Q_D=K_D等于192，V_D等于128<br></li>
+            <li>inputLayout=BSH_BNSD、BSND_BNSD、NTD、NTD_TND仅支持Q_D=K_D=V_D都等于64或128，或Q_D=K_D等于192，V_D等于128。</li>
+            <li>inputLayout=BNSD_BSND仅支持Q_D=K_D=V_D都16对齐(output dtype为int8时为32对齐)，或Q_D=K_D等于192，V_D等于128<br></li>
         </ul>
         </td>
         <td>CHAR</td>
@@ -1035,7 +1036,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
           - 支持prefill mla或gqa非量化场景，其中prefill mla场景需满足下述条件之一：
             - query、key、value的d等于128，queryRope和keyRope不等于空，queryRope和keyRope的d为64;
             - query、key的d等于192，value的d等于128，queryRope和keyRope等于空。
-          - gqa非量化场景仅支持D=64或D=128;
+          - gqa非量化场景下，BSH_BNSD、BSND_BNSD仅支持D=64或D=128;BNSD_BSND仅支持D=16对齐(output dtype为int8时为32对齐);
           - BSH_BNSD、BSND_BNSD场景下不支持左padding、tensorlist、pse、prefix;
           - 不支持伪量化。
     -  TND、NTD、TND_NTD、NTD_TND场景下query，key，value输入的综合限制：

@@ -208,9 +208,9 @@ TEST_F(PromptFlashAttentionTiling, PromptFlashAttention_tiling_4)
     gert::TilingContextPara tilingContextPara(
         "PromptFlashAttention",
         {
-            {{{8, 20, 65, 48}, {8, 20, 65, 48}}, ge::DT_BF16, ge::FORMAT_ND},  // query input0
-            {{{8, 20, 65, 48}, {8, 20, 65, 48}}, ge::DT_BF16, ge::FORMAT_ND},  // key input1
-            {{{8, 20, 65, 48}, {8, 20, 65, 48}}, ge::DT_BF16, ge::FORMAT_ND},  // value input2
+            {{{8, 20, 65, 50}, {8, 20, 65, 50}}, ge::DT_BF16, ge::FORMAT_ND},  // query input0
+            {{{8, 20, 65, 50}, {8, 20, 65, 50}}, ge::DT_BF16, ge::FORMAT_ND},  // key input1
+            {{{8, 20, 65, 50}, {8, 20, 65, 50}}, ge::DT_BF16, ge::FORMAT_ND},  // value input2
             {{{}, {}}, ge::DT_BF16, ge::FORMAT_ND},    // pse_shift input3
             {{{2048, 2048}, {2048, 2048}}, ge::DT_UINT8, ge::FORMAT_ND},    // atten_mask input4
             {{{8}, {8}}, ge::DT_INT64, ge::FORMAT_ND, true, actual_seq_qlist},    // actual_seq_lengths_q
@@ -222,7 +222,7 @@ TEST_F(PromptFlashAttentionTiling, PromptFlashAttention_tiling_4)
             {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND}    // quant_offset2 input9
         },
         {
-            {{{8, 65, 20, 48}, {8, 65, 20, 48}}, ge::DT_BF16, ge::FORMAT_ND}
+            {{{8, 65, 20, 50}, {8, 65, 20, 50}}, ge::DT_BF16, ge::FORMAT_ND}
         },
         {
             {"num_heads", Ops::Transformer::AnyValue::CreateFrom<int64_t>(20)},
