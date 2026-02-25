@@ -47,10 +47,10 @@ protected:
     ge::graphStatus SetHcclTiling();
     
     void SetTilingInfo(MatmulAlltoAllTilingInfo &tilingInfo) const;
-    void PrintKcQuantMatmulAlltoAllTilingData(KcQuantMatmulAlltoAllTilingData &outTilingData);
+    void PrintKcQuantMatmulAlltoAllTilingData(QuantMatmulAlltoAllTilingData &outTilingData);
     
 private:
-    KcQuantMatmulAlltoAllTilingData localTilingData_;
+    QuantMatmulAlltoAllTilingData localTilingData_;
     uint64_t mmMvalueLen = 0;
     void PrintKcQuantMatmulAlltoAllTilingInfo(const std::string &opName, MatmulAlltoAllTilingInfo &tilingInfo);
     void PrintKcQuantMMV3TilingData(const std::string &opName, DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams &tiling);
