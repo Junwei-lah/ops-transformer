@@ -65,8 +65,6 @@ message("gtest found:${gtest_FOUND}")
 
 if(gtest_FOUND AND NOT FORCE_REBUILD_CANN_3RD)
     message("gtest found in ${GTEST_INSTALL_PATH}, and not force rebuild cann third_party")
-    # 当gtest已存在时，创建一个空目标
-    add_custom_target(third_party_gtest)
 else()
     set(REQ_URL "https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz")
     set(GTEST_ARCHIVE ${GTEST_DOWNLOAD_PATH}/googletest-1.14.0.tar.gz)
@@ -106,48 +104,37 @@ else()
             )
 endif()
 
-# 确保目录存在
-if (NOT EXISTS ${GTEST_INSTALL_PATH}/include)
-  file(MAKE_DIRECTORY "${GTEST_INSTALL_PATH}/include")
-endif()
+set(GTEST_INCLUDE ${GTEST_INSTALL_PATH}/include)	 
 
-# 使用条件判断来设置导入目标
-if(TARGET third_party_gtest)
-    add_library(gtest STATIC IMPORTED)
-    add_dependencies(gtest third_party_gtest)
 
-    add_library(gmock STATIC IMPORTED)
-    add_dependencies(gmock third_party_gtest)
+add_library(gtest STATIC IMPORTED) 
+add_dependencies(gtest third_party_gtest) 
 
-    add_library(gtest_main STATIC IMPORTED)
-    add_dependencies(gtest_main third_party_gtest)
 
-    set_target_properties(gtest PROPERTIES
-            IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgtest.a
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include)
+add_library(gmock STATIC IMPORTED) 
+add_dependencies(gmock third_party_gtest) 
 
-    set_target_properties(gmock PROPERTIES
-            IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgmock.a
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include)
 
-    set_target_properties(gtest_main PROPERTIES
-            IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgtest_main.a
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include)
-else()
-    # 如果third_party_gtest目标不存在，仍然创建导入目标但不添加依赖
-    add_library(gtest STATIC IMPORTED)
-    add_library(gmock STATIC IMPORTED)
-    add_library(gtest_main STATIC IMPORTED)
+add_library(gtest_main STATIC IMPORTED) 
+add_dependencies(gtest_main third_party_gtest) 
 
-    set_target_properties(gtest PROPERTIES
-            IMPORTED_LOCATION ${GTEST_STATIC_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE})
+if (NOT EXISTS ${GTEST_INSTALL_PATH}/include)	 
+file(MAKE_DIRECTORY "${GTEST_INSTALL_PATH}/include")	 
+endif ()	 
 
-    set_target_properties(gmock PROPERTIES
-            IMPORTED_LOCATION ${GMOCK_STATIC_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE})
 
-    set_target_properties(gtest_main PROPERTIES
-            IMPORTED_LOCATION ${GTEST_MAIN_STATIC_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE})
-endif()
+set_target_properties(gtest PROPERTIES	 
+        IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgtest.a	 
+        INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include)	 
+
+
+
+
+set_target_properties(gmock PROPERTIES	 
+        IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgmock.a	 
+        INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include) 
+
+
+set_target_properties(gtest_main PROPERTIES	 
+        IMPORTED_LOCATION ${GTEST_INSTALL_PATH}/lib/libgtest_main.a	 
+        INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INSTALL_PATH}/include)
