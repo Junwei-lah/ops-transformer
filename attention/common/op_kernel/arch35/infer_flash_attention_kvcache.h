@@ -143,7 +143,8 @@ __aicore__ inline int64_t CalculateActualS2Size(RunParamStr<isInfer>& runParam,
             runParam.s2InCurrentBatch;
     } else {
         if constexpr (layout == LayOutTypeEnum::LAYOUT_TND || layout == LayOutTypeEnum::LAYOUT_NTD) {
-            actualS2Size = actualSeqKvlenAddr[bIdx];
+            actualS2Size = (isPa && constInfo.actualSeqLenKVSize == actualSeqKVMin) ? 
+                actualSeqKvlenAddr[0] : actualSeqKvlenAddr[bIdx];
             if ((bIdx > 0) && (!isPa)) {
                 actualS2Size -= actualSeqKvlenAddr[bIdx - 1];
             }

@@ -2143,19 +2143,34 @@ bool PromptFlashAttentionTilingV2::CheckActSeq(const ContextParamsForPFATiling& 
 
     auto batchOfQuery = actSeqLen->GetShapeSize();
     auto batchOfKey = actSeqLenKV->GetShapeSize();
-    OP_CHECK_IF(batchOfQuery != batchOfKey,
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "When layout is TND/NTD, the batch size of actualSequenceLengthQ and actualSequenceLengthKV must be equal, "
-            "batch size of actualSequenceLengthQ = %ld, batch size of actualSequenceLengthKV = %ld",
-            batchOfQuery, batchOfKey),
-        return false);
+    OP_CHECK_IF(!enablePA && (batchOfQuery != batchOfKey),
+                OP_LOGE(contextKeyParams.opName,
+                        "When layout is TND/NTD and page attention is not enable, "
+                        "the batch size of actualSequenceLengthQ and actualSequenceLengthKV must be equal, "
+                        "batch size of actualSequenceLengthQ = %ld, batch size of actualSequenceLengthKV = %ld",
+                        batchOfQuery, batchOfKey),
+                return false);
+    // layout为TND, kv PA管理场景 actualSequenceLengthKV size可以为1或者>=B
+    OP_CHECK_IF(enablePA && (batchOfKey != 1 && batchOfKey < batchOfQuery),
+                OP_LOGE(contextKeyParams.opName,
+                        "When layout is TND/NTD and page attention is enable, "
+                        "the size of actualSequenceLengthKV (%ld) should be greater than or equal to "
+                        "the size of actualSequenceLengthQ(%ld) or equal to 1 ",
+                        batchOfKey, batchOfQuery),
+                return false);
 
     int64_t lastActSeq = 0;
     int64_t lastActSeqKV = 0;
+    int64_t curActSeqKV = 0;
     uint32_t batchSize = queryShapeInfo.b; // actSeqLengthSize and actSeqLengthKVSize are equal
     for (uint32_t i = LOOP_BEGIN_NUM; i < batchSize; ++i) {
         int64_t curActSeq = actSeqLen->GetData<int64_t>()[i];
-        int64_t curActSeqKV = actSeqLenKV->GetData<int64_t>()[i];
+        if (enablePA && batchOfKey == 1) {
+            curActSeqKV = actSeqLenKV->GetData<int64_t>()[0];
+        } else {
+            curActSeqKV = actSeqLenKV->GetData<int64_t>()[i];
+        }
+
         OP_CHECK_IF(curActSeq < 0,
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "actualSeqLengths[%u] = %ld, should >= 0",
                 i, curActSeq),
