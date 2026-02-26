@@ -647,7 +647,7 @@ ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetShapeAttrsInfo(
                 if (qLen < 0 || kvLen < 0) {
                     isEOD = true;
                 } 
-                tndBaseInfo.isSeqExistZero = (qLen == 0 || kvLen == 0);
+                tndBaseInfo.isSeqExistZero = (tndBaseInfo.isSeqExistZero || (qLen == 0 || kvLen == 0));
                 if (isEOD && (qValue[i] == 0 || kvValue[i] == 0)) {
                     ++fBaseParams.tailZeroCount;
                     fBaseParams.sValueZeroUnderTND = true;
