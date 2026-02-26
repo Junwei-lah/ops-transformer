@@ -243,11 +243,14 @@ template <typename T>
 __aicore__ inline void DenseLISoftmaxLseVector<T>::ProcessSoftmax(const DenseLISoftmaxLseCommon::RunInfo &info)
 {
     uint32_t loop = info.s1BlockInnerLoop;
-    if (blockId_ % AIV_RATIO == 0 && loop % AIV_RATIO != 0) {
+    uint32_t actDealS1BaseSize = info.gS1Idx * s1BaseSize_ + s1BaseSize_ > info.actS1Size ?
+        info.actS1Size % s1BaseSize_ : s1BaseSize_;
+    uint32_t aiv0DealS1Size = DenseLISoftmaxLseCommon::CeilDiv(actDealS1BaseSize, (uint32_t)AIV_RATIO);
+    if (blockId_ % AIV_RATIO == 0 && loop >= aiv0DealS1Size) {
         return;
     }
 
-    if (blockId_ % AIV_RATIO != 0 && loop % AIV_RATIO == 0) {
+    if (blockId_ % AIV_RATIO != 0 && loop < aiv0DealS1Size) {
         return;
     }
 
