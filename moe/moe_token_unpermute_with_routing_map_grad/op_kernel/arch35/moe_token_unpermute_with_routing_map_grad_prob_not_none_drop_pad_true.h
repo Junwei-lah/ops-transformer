@@ -137,8 +137,7 @@ __aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNotNoneDropPadTrue
             this->ReduceSumFunc(probGradReduceSumLocal[hiddenLoop], permutedTokensLocalFp32, hiddenLoopNum);
             VToSSync();
             Muls(permutedTokensLocalFp32, unpermutedGradLocalFp32, prob, hiddenLoopNum);
-            permutedTokensTQue.template EnQue(permutedTokensLocalFp32);
-            permutedTokensLocalFp32 = permutedTokensTQue.template DeQue<float>();
+            VToMTE3Sync();
             // 搬出permutedToken梯度
             permutedTokensGradLocal = permutedTokensGradTQue.template AllocTensor<PermutedTokenT>();
             if constexpr (IsSameType<PermutedTokenT, float>::value) {

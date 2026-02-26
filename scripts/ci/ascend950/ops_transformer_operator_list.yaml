@@ -27,6 +27,7 @@ operator_group_2:
 operator_group_3:
   - incre_flash_attention,2-0
 operator_group_4:
+  - moe_token_unpermute_with_routing_map_grad
   - moe_finalize_routing
   - moe_finalize_routing_v2
   - moe_finalize_routing_v2_grad

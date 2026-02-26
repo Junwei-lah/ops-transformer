@@ -9,11 +9,11 @@
  */
 
 /*!
- * \file moe_token_unpermute_with_routing_map_grad_prob_none_drop_pad_false.h
+ * \file moe_token_unpermute_with_routing_map_grad_prob_none_drop_pad_true.h
  * \brief
  */
-#ifndef MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_FALSE_H
-#define MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_FALSE_H
+#ifndef MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_TRUE_H
+#define MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_TRUE_H
 
 #include "moe_token_unpermute_with_routing_map_grad_base.h"
 
@@ -21,11 +21,11 @@ namespace MoeTokenUnpermuteWithRoutingMapGrad {
 using namespace AscendC;
 
 template <typename PermutedTokenT, typename IdxT, typename ProbsT = PermutedTokenT>
-class MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse
+class MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadTrue
     : protected MoeTokenUnpermuteWithRoutingMapGradBase<PermutedTokenT, IdxT, ProbsT>
 {
 public:
-    __aicore__ inline MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse(){};
+    __aicore__ inline MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadTrue(){};
     __aicore__ inline void Init(
         GM_ADDR unpermuted_tokens_grad, GM_ADDR outIndex, GM_ADDR permuteTokenId, GM_ADDR routing_map,
         GM_ADDR permuted_tokens, GM_ADDR probs, GM_ADDR permuted_tokens_grad, GM_ADDR probs_grad,
@@ -33,14 +33,13 @@ public:
     __aicore__ inline void Process();
 
 protected:
-    TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> padFalseInOutque;
-    LocalTensor<PermutedTokenT> inOutLocal;
-
     DataCopyExtParams copyParams{1, 0, 0, 0, 0};
+    TQueBind<QuePosition::VECIN, QuePosition::VECOUT, 1> padTrueInOutque;
+    LocalTensor<PermutedTokenT> inOutLocal;
 };
 
 template <typename PermutedTokenT, typename IdxT, typename ProbsT>
-__aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse<PermutedTokenT, IdxT, ProbsT>::Init(
+__aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadTrue<PermutedTokenT, IdxT, ProbsT>::Init(
     GM_ADDR unpermuted_tokens_grad, GM_ADDR outIndex, GM_ADDR permuteTokenId, GM_ADDR routing_map,
     GM_ADDR permuted_tokens, GM_ADDR probs, GM_ADDR permuted_tokens_grad, GM_ADDR probs_grad,
     const MoeTokenUnpermuteWithRoutingMapGradTilingData& tiling_data)
@@ -49,18 +48,18 @@ __aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse<P
         unpermuted_tokens_grad, outIndex, permuteTokenId, routing_map, permuted_tokens, probs, permuted_tokens_grad,
         probs_grad, tiling_data);
     this->pipe.InitBuffer(
-        padFalseInOutque, DOUBLE_BUFFER, (this->inputReserveNum * this->hiddenSizeAlign) * this->inputTypeSize);
+        padTrueInOutque, DOUBLE_BUFFER, (this->inputReserveNum * this->hiddenSizeAlign) * this->inputTypeSize);
 }
 
 template <typename PermutedTokenT, typename IdxT, typename ProbsT>
-__aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse<PermutedTokenT, IdxT, ProbsT>::Process()
+__aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadTrue<PermutedTokenT, IdxT, ProbsT>::Process()
 {
     int64_t outNumCurrentCore = this->coreIndex < this->formerCoreNum ? this->rowIdMapEachCore : this->rowIdMapTailCore;
     int64_t inputBlockNum = BLOCK_SIZE_32 / this->inputTypeSize;
     for (int64_t indicesLoopTime = 0; indicesLoopTime < outNumCurrentCore;
          indicesLoopTime++) { // 外循环是根据x的数量循环
         int64_t rowIdMapLoopOffset = this->rowIdMapStartOffset + indicesLoopTime;
-        int64_t tokenId = this->SafeDiv(rowIdMapLoopOffset, this->topK);
+        int64_t tokenId = this->sortedTwiceIndicesGm.GetValue(rowIdMapLoopOffset);
         int64_t permuteTokenId = this->sortedTwiceIndexGm.GetValue(rowIdMapLoopOffset);
         SToMTE2Sync();
         for (int64_t hiddenLoop = 0; hiddenLoop < this->hiddenSizeLoopTimes; hiddenLoop++) {
@@ -68,19 +67,19 @@ __aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNoneDropPadFalse<P
                 hiddenLoop == this->hiddenSizeLoopTimes - 1 ? this->hiddenSizeTail : this->hiddenSizeAlign;
             uint32_t hiddenLoopBlockLen = hiddenLoopNum * this->inputTypeSize;
             int64_t hiddenLoopOffset = hiddenLoop * this->hiddenSizeAlign;
-            inOutLocal = padFalseInOutque.AllocTensor<PermutedTokenT>();
+            inOutLocal = padTrueInOutque.AllocTensor<PermutedTokenT>();
             copyParams.blockLen = hiddenLoopBlockLen;
             int64_t unpermutedTokensGradOffset = tokenId * this->hiddenSize + hiddenLoopOffset;
             DataCopyPad(
                 inOutLocal, this->unpermutedTokensGradGm[unpermutedTokensGradOffset], copyParams, this->inputPadParams);
-            padFalseInOutque.EnQue<QuePosition::VECIN, QuePosition::VECOUT, PermutedTokenT>(inOutLocal);
-            inOutLocal = padFalseInOutque.DeQue<QuePosition::VECIN, QuePosition::VECOUT, PermutedTokenT>();
+            padTrueInOutque.EnQue<QuePosition::VECIN, QuePosition::VECOUT, PermutedTokenT>(inOutLocal);
+            inOutLocal = padTrueInOutque.DeQue<QuePosition::VECIN, QuePosition::VECOUT, PermutedTokenT>();
             int64_t permutedTokensGradOffset = permuteTokenId * this->hiddenSize + hiddenLoopOffset;
             DataCopyPad(this->permutedTokensGradGm[permutedTokensGradOffset], inOutLocal, copyParams);
-            padFalseInOutque.FreeTensor(inOutLocal);
+            padTrueInOutque.FreeTensor(inOutLocal);
         }
     }
 }
 
 } // namespace MoeTokenUnpermuteWithRoutingMapGrad
-#endif // MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_FALSE_H
+#endif // MOE_TOKEN_UNPERMUTE_WITH_ROUTING_MAP_GRAD_PROB_NONE_DROP_PAD_TRUE_H

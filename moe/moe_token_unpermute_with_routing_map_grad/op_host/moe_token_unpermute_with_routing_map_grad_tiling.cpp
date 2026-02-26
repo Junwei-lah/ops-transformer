@@ -144,7 +144,7 @@ static void MoeTokenUnpermuteWithRoutingMapGradPrintParam(
     OP_LOGD(nodeName, ">>>>>>>>>>>>>>> Print MoeTokenUnpermuteWithRoutingMapGrad tiling data end <<<<<<<<<<<<<<<<");
 }
 
-static void TilingForProbIsNone(
+static ge::graphStatus TilingForProbIsNone(
     const gert::TilingContext* context, MoeTokenUnpermuteWithRoutingMapGradTilingData& tiling, bool paddedMode)
 {
     // 核间切分策略
@@ -159,14 +159,15 @@ static void TilingForProbIsNone(
     tiling.set_rowIdMapEachCore(rowIdMapEachCore);
     tiling.set_rowIdMapTailCore(rowIdMapTailCore);
     if (!paddedMode) {
-        tiling.set_topK(numOutTokens / tiling.get_tokensNum());
+        tiling.set_topK(GetDiv(numOutTokens, tiling.get_tokensNum()));
     }
     // 核内切分策略
     int64_t hiddenSize = tiling.get_hiddenSize();
     auto tokensDtype = context->GetInputDesc(INPUT_UNPERMUTEDOUTPUTD_IDX)->GetDataType();
     int64_t inputTypeLength = GetLengthByType(tokensDtype);
     if (inputTypeLength == 0){
-        return;
+        OP_LOGE(context->GetNodeName(), "The Dtype size of unpermuted_tokens_grad is 0.");
+        return ge::GRAPH_FAILED;
     }
     int64_t inputBlockAlignEleNum = BLOCK_SIZE_32 / inputTypeLength;
     int64_t totalUbSize = tiling.get_totalUbSize();
@@ -183,6 +184,7 @@ static void TilingForProbIsNone(
     tiling.set_hiddenSizeTail(hiddenSizeTail);
     tiling.set_inputReserveNum(PROB_NONE_PERLOOP_NUM);
     tiling.set_indicesReserveNum(PROB_NONE_PERLOOP_NUM); // indicesNumPerLoop
+    return ge::GRAPH_SUCCESS;
 }
 
 static ge::graphStatus TilingForProbNotNonePadTrue(
@@ -195,7 +197,7 @@ static ge::graphStatus TilingForProbNotNonePadTrue(
     int64_t formerCoreNum = GetRem(numOutTokens, totalCoreNum);
     int64_t rowIdMapEachCore = formerCoreNum == 0 ? rowIdMapTailCore : rowIdMapTailCore + 1;
     int64_t tailCoreNum = totalCoreNum - formerCoreNum;
-    int64_t capacity = numOutTokens / tiling.get_numExpert();
+    int64_t capacity = GetDiv(numOutTokens, tiling.get_numExpert());
     int64_t tokensNum = tiling.get_tokensNum();
     OP_CHECK_IF(
         capacity > tokensNum,
@@ -215,22 +217,24 @@ static ge::graphStatus TilingForProbNotNonePadTrue(
     auto tokensDtype = context->GetInputDesc(INPUT_UNPERMUTEDOUTPUTD_IDX)->GetDataType();
     int64_t inputTypeLength = GetLengthByType(tokensDtype);
     if (inputTypeLength == 0){
+        OP_LOGE(context->GetNodeName(), "The Dtype size of unpermuted_tokens_grad is 0.");
         return ge::GRAPH_FAILED;
     }
     int64_t inputBlockAlignEleNum = BLOCK_SIZE_32 / inputTypeLength;
     int64_t totalUbSize = tiling.get_totalUbSize();
     int64_t hiddenSizeAlign = AlignUp<int64_t>(hiddenSize, inputBlockAlignEleNum);
-    int64_t hiddenSizeTmpMax = (totalUbSize - BLOCK_SIZE_32 - H_LOOP_ALIGN_BUFFER_LENGTH * SIZE_OF_FLOAT) /
+    int64_t hiddenSizeOneLoopMax = (totalUbSize - BLOCK_SIZE_32 - H_LOOP_ALIGN_BUFFER_LENGTH * SIZE_OF_FLOAT) /
                                (BUFFER_NUM * (H_BUFFER_NUM + inputTypeLength));
-    if (hiddenSizeTmpMax < hiddenSizeAlign) { // hiddensize需要切分
-        hiddenSizeAlign = AlignDown<int64_t>(hiddenSizeTmpMax, inputBlockAlignEleNum);
+    int64_t hiddenSizeMax = hiddenSizeOneLoopMax * H_LOOP_ALIGN_BUFFER_LENGTH;
+    OP_CHECK_IF(
+        hiddenSize > hiddenSizeMax,
+        OP_LOGE(context->GetNodeName(), "The maximum hidden_size supported is %d, but got %d, which is too large.", hiddenSizeMax, hiddenSize),
+        return ge::GRAPH_FAILED);
+    if (hiddenSizeOneLoopMax < hiddenSizeAlign) { // hiddensize需要切分
+        hiddenSizeAlign = AlignDown<int64_t>(hiddenSizeOneLoopMax, inputBlockAlignEleNum);
     }
     int64_t hiddenSizeLoopTimes = CeilDiv(hiddenSize, hiddenSizeAlign);
     int64_t hiddenSizeLoopTimesAlign = AlignUp<int64_t>(hiddenSizeLoopTimes, FP32_BLOCK_NUM);
-    OP_CHECK_IF(
-        hiddenSizeLoopTimesAlign > H_LOOP_ALIGN_BUFFER_LENGTH,
-        OP_LOGE(context->GetNodeName(), "The hidden_size is too large."),
-        return ge::GRAPH_FAILED);
     int64_t hiddenSizeTail = hiddenSize - (hiddenSizeLoopTimes - 1) * hiddenSizeAlign;
     tiling.set_hiddenSizeAlign(hiddenSizeAlign);
     tiling.set_hiddenSizeLoopTimes(hiddenSizeLoopTimes);
@@ -249,7 +253,7 @@ static ge::graphStatus TilingForProbNotNonePadFalse(
     if (tokensNum == 0){
         return ge::GRAPH_FAILED;
     }
-    int64_t topK = numOutTokens / tokensNum;
+    int64_t topK = GetDiv(numOutTokens, tokensNum);
     OP_CHECK_IF(
         topK > MAX_TOP_K,
         OP_LOGE(
@@ -291,14 +295,16 @@ static ge::graphStatus TilingForProbNotNonePadFalse(
     int64_t indicesReserveNumAlign = AlignUp<int64_t>(indicesReserveNum, inputBlockAlignEleNum);
     int64_t numExpertAlign = AlignUp<int64_t>(numExpert, BLOCK_SIZE_32);
     int64_t probTypeLength = GetLengthByType(context->GetInputDesc(INPUT_PROB_IDX)->GetDataType());
-    int64_t remainSize = tiling.get_totalUbSize() - numExpertAlign - numExpertAlign * probTypeLength -
-        inputTypeLength * INDICES_RESERVE_MAX_NUM - INDICES_RESERVE_MAX_NUM * SIZE_OF_FLOAT * INDICES_FP32_BUFFER_NUM;
+    int64_t remainSize = tiling.get_totalUbSize() - inputTypeLength * INDICES_RESERVE_MAX_NUM - INDICES_RESERVE_MAX_NUM * SIZE_OF_FLOAT * INDICES_FP32_BUFFER_NUM;
+    int64_t numExpertSize = (1 + probTypeLength) * numExpertAlign;
     int64_t hiddenNum = H_BUFFER_NUM_PAD_FALSE * BUFFER_NUM * inputTypeLength + H_FP32_BUFFER_NUM_PAD_FALSE * SIZE_OF_FLOAT;
-    int64_t hiddenSizeTmpMax = remainSize / hiddenNum;
+    
+    int64_t numExpertMax = (remainSize - hiddenNum) / (1 + probTypeLength);
     OP_CHECK_IF(
-        hiddenSizeTmpMax < MIN_SPILT_H_SIZE,
-        OP_LOGE(context->GetNodeName(), "The experts_num is too large."),
+        numExpert > numExpertMax,
+        OP_LOGE(context->GetNodeName(), "The maximum experts_num supported is %d, but got %d, which is too large.",numExpertMax, numExpert),
         return ge::GRAPH_FAILED);
+    int64_t hiddenSizeTmpMax = (remainSize - numExpertSize) / hiddenNum;
     hiddenSizeAlign = hiddenSizeTmpMax < hiddenSizeAlign ? AlignDown<int64_t>(hiddenSizeTmpMax, inputBlockAlignEleNum) :
                                                            hiddenSizeAlign;
     int64_t hiddenSizeLoopTimes = CeilDiv(hiddenSize, hiddenSizeAlign);
@@ -431,7 +437,10 @@ static ge::graphStatus Tiling4MoeTokenUnpermuteWithRoutingMapGrad(gert::TilingCo
     bool paddedMode = *paddedModePtr;
     OP_LOGD(context->GetNodeName(), ">>> [MoeTokenUnpermuteWithRoutingMapGradTiling] paddedMode: %d", paddedMode);
     if (probTensor == nullptr) {
-        TilingForProbIsNone(context, tiling, paddedMode);
+        OP_CHECK_IF(
+            ge::GRAPH_SUCCESS != TilingForProbIsNone(context, tiling, paddedMode),
+            OP_LOGE(context->GetNodeName(), "Tiling( Prob is None ) failed."),
+            return ge::GRAPH_FAILED);
     } else {
         OP_CHECK_IF(
             ge::GRAPH_SUCCESS != CheckInputForProbIsNotNone(context, tiling),

@@ -56,7 +56,7 @@ TEST_F(MoeTokenUnpermuteWithRoutingMapGradTiling, test_tiling_prob_not_none_bf16
                                               &compileInfo,
                                               socVersion, coreNum, ubSize);
     int64_t expectTilingKey = 1;
-    string expectTilingData = "30 1 0 64 64 30 30 10 1 0 1 0 64 1 0 64 0 1 16 64 196608 ";
+    string expectTilingData = "30 1 0 64 64 30 30 10 1 0 1 0 64 1 0 64 0 1 16 64 196352 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -83,7 +83,7 @@ TEST_F(MoeTokenUnpermuteWithRoutingMapGradTiling, test_tiling_prob_not_none_bf16
                                               &compileInfo,
                                               socVersion, coreNum, ubSize);
     int64_t expectTilingKey = 11;
-    string expectTilingData = "30 0 0 64 64 30 30 10 0 0 1 0 64 1 8 64 1 1 0 0 196608 ";
+    string expectTilingData = "30 0 0 64 64 30 30 10 0 0 1 0 64 1 8 64 1 1 0 0 196352 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -108,7 +108,7 @@ TEST_F(MoeTokenUnpermuteWithRoutingMapGradTiling, test_tiling_prob_none_bf16_til
                                               &compileInfo,
                                               socVersion, coreNum, ubSize);
     int64_t expectTilingKey = 0;
-    string expectTilingData = "30 1 0 0 64 30 30 10 0 0 1 0 64 1 0 64 1 1 0 0 196608 ";
+    string expectTilingData = "30 1 0 0 64 30 30 10 0 0 1 0 64 1 0 64 1 1 0 0 196352 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -135,7 +135,7 @@ TEST_F(MoeTokenUnpermuteWithRoutingMapGradTiling, test_tilingkey_101) {
                                               &compileInfo,
                                               socVersion, coreNum, ubSize);
     int64_t expectTilingKey = 101;
-    string expectTilingData = "30 1 0 8 8 30 30 10 1 0 1 0 16 1 0 8 0 1 16 32 196608 ";
+    string expectTilingData = "30 1 0 8 8 30 30 10 1 0 1 0 16 1 0 8 0 1 16 32 196352 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -162,7 +162,7 @@ TEST_F(MoeTokenUnpermuteWithRoutingMapGradTiling, test_tilingkey_111) {
                                               &compileInfo,
                                               socVersion, coreNum, ubSize);
     int64_t expectTilingKey = 111;
-    string expectTilingData = "30 0 3 8 8 30 30 10 0 0 1 0 16 1 8 8 1 1 0 0 196608 ";
+    string expectTilingData = "30 0 3 8 8 30 30 10 0 0 1 0 16 1 8 8 1 1 0 0 196352 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

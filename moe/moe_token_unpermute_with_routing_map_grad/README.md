@@ -4,7 +4,7 @@
 
 |产品             |  是否支持  |
 |:-------------------------|:----------:|
-|  <term>Ascend 950PR/Ascend 950DT</term>   |     ×    |
+|  <term>Ascend 950PR/Ascend 950DT</term>   |     √    |
 |  <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>   |     √    |
 |  <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>     |     √    |
 |  <term>Atlas 200I/500 A2 推理产品</term>    |     ×    |
@@ -163,10 +163,10 @@
 
 - 当输入probsOptional非空，且dropAndPad为false时
     - 要求topK_num <= 512且topK_num <= experts_num。
-    - 要求experts_num满足(196608 - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) >= 1，其中probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
+    - 要求experts_num满足(ubSize - (probTypeLen + 1) * numExpertAlign-(tokenTypeLen + 8) * 256) / (6 * tokenTypeLen + 12) >= 1，其中ubSize是芯片ub空间大小，probTypeLen是输入probsOptional的数据类型对应的字节数，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数，numExpertAlign是experts_num对32做向上对齐的结果。
 - 当输入probsOptional非空，且dropAndPad为true时
     - 要求capacity <= tokens_num。
-    - 要求hidden_size在输入unpermutedTokensGrad是BFLOAT16或FLOAT16时，需要小于等于4972544，hidden_size在输入unpermutedTokensGrad是FLOAT时，需要小于等于4149248。
+    - 要求hidden_size <= 256 * (ubSize - 2080) / (8 + tokenTypeLen)，其中ubSize是芯片ub空间大小，tokenTypeLen是输入unpermutedTokensGrad的数据类型对应的字节数。
 
 ## 调用说明
 
