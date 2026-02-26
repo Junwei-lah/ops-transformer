@@ -15,6 +15,7 @@
 #define VF_SOFTMAX_FLASH_CONST_H
 
 #include "kernel_tensor.h"
+#include "adv_api/activation/softmax.h"
 #include "../incre_flash_attention_pub.h"
 
 namespace AscendC {

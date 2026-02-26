@@ -15,7 +15,12 @@
 #ifndef PROMPT_FLASH_ATTENTION_KVCACHE_H
 #define PROMPT_FLASH_ATTENTION_KVCACHE_H
 
+#if ASC_DEVKIT_MAJOR >= 9
+#include "kernel_vec_intf.h"
+#include "kernel_cube_intf.h"
+#else
 #include "kernel_operator.h"
+#endif
 #include "kernel_operator_list_tensor_intf.h"
 #include "prompt_flash_attention_comm.h"
 #include "prompt_flash_attention_sparse.h"

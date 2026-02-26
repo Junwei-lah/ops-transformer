@@ -18,6 +18,7 @@
 #include "../vf_softmaxflashv3.h"
 #include "../vf_softmaxflashv3_dn.h"
 #include "../vf_row_invalid.h"
+#include "adv_api/activation/softmax.h"
 
 template <typename PFAT>
 class PromptFlashAttentionNormalVector1 {

@@ -21,7 +21,12 @@
 #include "iterator.h"
 #include "common.h"
 #include "mma.h"
+#if ASC_DEVKIT_MAJOR >= 9
+#include "kernel_vec_intf.h"
+#include "kernel_cube_intf.h"
+#else
 #include "kernel_operator.h"
+#endif
 
 extern constexpr int32_t LOCAL_STORAGE_BUFFER_SIZE = 4096;
 extern constexpr int32_t FLOAT_VECTOR_SIZE_T = 64;
