@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "opdev/op_log.h"
 #include "aclnn_fused_infer_attention_score.h"
 #include "aclnn_fused_infer_attention_score_inner.h"
 
@@ -26,6 +27,13 @@ aclnnStatus aclnnFusedInferAttentionScoreGetWorkspaceSize(
     int64_t sparseMode, int64_t innerPrecise, int64_t blockSize, int64_t antiquantMode, bool softmaxLseFlag,
     const aclTensor *attentionOut, const aclTensor *softmaxLse, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnFusedInferAttentionScoreGetWorkspaceSize is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnFusedInferAttentionScoreV5GetWorkspaceSize. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface.");
+        isFirstCall = false;
+    }
     const aclTensor *placeHolder = nullptr;
     const aclTensor *tempTensor = nullptr;
     FusedInferAttentionScoreProcessSoftmaxLse(softmaxLseFlag, softmaxLse, tempTensor, placeHolder);
@@ -46,6 +54,13 @@ aclnnStatus aclnnFusedInferAttentionScoreGetWorkspaceSize(
 aclnnStatus aclnnFusedInferAttentionScore(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
                                           const aclrtStream stream)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnFusedInferAttentionScore is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnFusedInferAttentionScoreV5. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface. ");
+        isFirstCall = false;
+    }
     return aclnnInnerFusedInferAttentionScore(workspace, workspaceSize, executor, stream);
 }
 

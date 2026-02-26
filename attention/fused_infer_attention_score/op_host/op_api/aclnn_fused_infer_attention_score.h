@@ -21,8 +21,8 @@ extern "C" {
  * @brief The first interface of aclnnFusedInferAttentionScore calculates the workspace size based on the specific calculation process.
  * @domain aclnn_ops_infer
  */
- __attribute__((deprecated("aclnnFusedInferAttentionScoreGetWorkspaceSize is scheduled to be deprecated in December 2026, and will be replaced by the aclnnFusedInferAttentionScoreV5GetWorkspaceSize. "
-                           "We apologize for any inconvenience caused and appreciate your timely migration to the new interface. ")))
+__attribute__((deprecated("aclnnFusedInferAttentionScoreGetWorkspaceSize is scheduled to be deprecated in December 2026, and will be replaced by the aclnnFusedInferAttentionScoreV5GetWorkspaceSize. "
+                          "We apologize for any inconvenience caused and appreciate your timely migration to the new interface. ")))
 __attribute__((visibility("default"))) aclnnStatus aclnnFusedInferAttentionScoreGetWorkspaceSize(
     const aclTensor *query, const aclTensorList *key, const aclTensorList *value, const aclTensor *pseShift,
     const aclTensor *attenMask, const aclIntArray *actualSeqLengths, const aclIntArray *actualSeqLengthsKv,

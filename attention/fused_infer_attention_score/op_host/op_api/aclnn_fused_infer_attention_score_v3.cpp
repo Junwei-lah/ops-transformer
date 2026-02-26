@@ -180,6 +180,13 @@ aclnnStatus aclnnFusedInferAttentionScoreV3GetWorkspaceSize(
     int64_t antiquantMode, bool softmaxLseFlag, int64_t keyAntiquantMode, int64_t valueAntiquantMode,
     const aclTensor *attentionOut, const aclTensor *softmaxLse, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnFusedInferAttentionScoreV3GetWorkspaceSize is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnFusedInferAttentionScoreV5GetWorkspaceSize. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface.");
+        isFirstCall = false;
+    }
     const aclTensorList *tensorListKey = key;
     const aclTensorList *tensorListValue = value;
     TensorPreProcess(tensorListKey, tensorListValue);
@@ -219,6 +226,13 @@ aclnnStatus aclnnFusedInferAttentionScoreV3GetWorkspaceSize(
 aclnnStatus aclnnFusedInferAttentionScoreV3(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
                                             const aclrtStream stream)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnFusedInferAttentionScoreV3 is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnFusedInferAttentionScoreV5. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface.");
+        isFirstCall = false;
+    }
     return aclnnInnerFusedInferAttentionScore(workspace, workspaceSize, executor, stream);
 }
 

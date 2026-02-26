@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "opdev/op_log.h"
 #include "aclnn_incre_flash_attention_v2.h"
 
 #ifdef __cplusplus
@@ -33,6 +34,13 @@ aclnnStatus aclnnIncreFlashAttentionV2GetWorkspaceSize(
     const aclTensor *quantOffset2, int64_t numHeads, double scaleValue, char *inputLayout, int64_t numKeyValueHeads,
     const aclTensor *attentionOut, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnIncreFlashAttentionV2GetWorkspaceSize is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnIncreFlashAttentionV4GetWorkspaceSize. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface.");
+        isFirstCall = false;
+    }
     (void) pseShift;
     aclnnStatus ret = aclnnInnerIncreFlashAttentionGetWorkspaceSize(
         query, key, value, nullptr, attenMask, actualSeqLengths, dequantScale1, quantScale1, dequantScale2, quantScale2,
@@ -45,6 +53,13 @@ aclnnStatus aclnnIncreFlashAttentionV2GetWorkspaceSize(
 aclnnStatus aclnnIncreFlashAttentionV2(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
                                        const aclrtStream stream)
 {
+    static bool isFirstCall = true;
+    if (isFirstCall) {
+        OP_LOGW("aclnnIncreFlashAttentionV2 is scheduled to be deprecated in December 2026, "
+                "and will be replaced by the aclnnIncreFlashAttentionV4. "
+                "We apologize for any inconvenience caused and appreciate your timely migration to the new interface.");
+        isFirstCall = false;
+    }
     aclnnStatus ret = aclnnInnerIncreFlashAttention(workspace, workspaceSize, executor, stream);
     return ret;
 }
