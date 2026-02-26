@@ -12,6 +12,7 @@
  * \file moe_token_permute_with_routing_map_tiling.cpp
  * \brief
  */
+#include "tiling_base/tiling_util.h"
 #include "moe_token_permute_with_routing_map_tiling.h"
 
 namespace {
@@ -51,6 +52,12 @@ constexpr static uint64_t INDEX_ONE_DATA_SIZE = 12; // doublebufer 2 *4(int32)
 constexpr static uint64_t PROB_INDEX = 2;
 constexpr static uint64_t PAD_KEY = 9;
 constexpr uint32_t INT64_LENGTH_IN_INT32 = 2; // INT64 相当于 2个int32长
+const static int64_t INPUT_DTYPE_B64 = 8;
+const static int64_t INPUT_DTYPE_B32 = 4;
+const static int64_t INPUT_DTYPE_B16 = 2;
+const static int64_t INPUT_DTYPE_B8 = 1;
+const static int64_t INDICES_SIZE = 8192;
+
 template <typename T>
 static auto GetCeilInt(const T& value1, const T& value2) -> T
 {
@@ -223,6 +230,8 @@ private:
     void Tiling4VBSCompute();
     void Tiling4VBSComputeLastdim();
     void ShowIndexCopyComputeTilingDataTilingData();
+    void Tiling4GatherCompute();
+    int64_t XDtypeImprove();
     void ShowTilingData();
     void Tinlig4VBSMultiCoreCompute(PermuteVBSComputeRMTilingData* tilingData);
     void Tinlig4VBSMultiCoreComputeLastdim(PermuteVBSComputeRMTilingData* tilingData);
@@ -242,6 +251,8 @@ private:
     int64_t capacity = 0;
     int64_t hasProb = 0;
     int64_t mrgSortListMaxElement = 1024;
+    int32_t improveDtypeSize_ = 0;
+    bool regBase = false;
     bool paddedMode = false;
     const char* opName = nullptr;
     MoeTokenPermuteWithRoutingMapTilingData moeTokenPermuteWithRoutingMapTilingData;
@@ -264,6 +275,7 @@ ge::graphStatus MoeTokenPermuteWithRoutingMapTilingBase::GetPlatformInfo()
 
     uint64_t aivNumLocal; // Vector核数量
     auto platformInfo = context_->GetPlatformInfo();
+    regBase = Ops::Transformer::OpTiling::IsRegbaseSocVersion(context_);
     if (platformInfo == nullptr) {
         aivNumLocal = compileInfo->aivNum; // Vector核数量
         OP_CHECK_IF(
@@ -507,6 +519,57 @@ void MoeTokenPermuteWithRoutingMapTilingBase::ShowTilingData()
         moeTokenPermuteWithRoutingMapTilingData.sortOutComputeParamsOp.get_oneLoopMaxElements());
 }
 
+int64_t MoeTokenPermuteWithRoutingMapTilingBase::XDtypeImprove() {
+  improveDtypeSize_ = tokenBtypeSize;
+  int64_t lastAxisBytes = moeTokenPermuteWithRoutingMapTilingData.get_cols() * tokenBtypeSize;
+  if ((tokenBtypeSize < INPUT_DTYPE_B64) && (lastAxisBytes % INPUT_DTYPE_B64) == 0) {
+    OP_LOGD(context_->GetNodeName(), "XDtypeImprove lastAxisBytes %ld, improve to INPUT_DTYPE_B64", lastAxisBytes);
+    improveDtypeSize_ = INPUT_DTYPE_B64;
+    return INPUT_DTYPE_B64;
+  }
+
+  if ((tokenBtypeSize < INPUT_DTYPE_B32) && (lastAxisBytes % INPUT_DTYPE_B32) == 0) {
+    OP_LOGD(context_->GetNodeName(), "XDtypeImprove lastAxisBytes %ld, improve to INPUT_DTYPE_B32", lastAxisBytes);
+    improveDtypeSize_ = INPUT_DTYPE_B32;
+    return INPUT_DTYPE_B32;
+  }
+
+  if ((tokenBtypeSize < INPUT_DTYPE_B16) && (lastAxisBytes % INPUT_DTYPE_B16) == 0) {
+    OP_LOGD(context_->GetNodeName(), "XDtypeImprove lastAxisBytes %ld, improve to INPUT_DTYPE_B16", lastAxisBytes);
+    improveDtypeSize_ = INPUT_DTYPE_B16;
+    return INPUT_DTYPE_B16;
+  }
+  return tokenBtypeSize;
+}
+
+void MoeTokenPermuteWithRoutingMapTilingBase::Tiling4GatherCompute() {
+    auto tilingData = &moeTokenPermuteWithRoutingMapTilingData.indexCopyComputeParamsOp;
+    OP_LOGD(opName, "Tiling4GatherCompute start");
+
+    int64_t cols = moeTokenPermuteWithRoutingMapTilingData.get_cols();
+
+    int64_t blockFactor = numOutTokens / realCoreNumAiv;
+    int64_t tailBlockFactor = numOutTokens - blockFactor * realCoreNumAiv;
+
+    int64_t ubBlockSize = static_cast<int64_t>(ONE_BLOCK_BYTE);
+    int64_t innerSize_ = cols / (XDtypeImprove() / tokenBtypeSize);
+
+    int64_t ubAviable = (aicoreParams_.ubSize - INDICES_SIZE) / ubBlockSize * ubBlockSize / improveDtypeSize_ / BUFFER_NUM;
+
+    int32_t indiceFactor = INDICES_SIZE / INT32_DTYPE_SIZE;
+    int64_t needCoreNum_ = blockFactor > 0 ? realCoreNumAiv : tailBlockFactor;
+    aivNum = std::max(aivNum, static_cast<int64_t>(needCoreNum_));
+
+    tilingData->set_needCoreNum(needCoreNum_);
+    tilingData->set_onceIndices(indiceFactor);
+    tilingData->set_oneTokenBtypeSize(improveDtypeSize_);
+    tilingData->set_numOutTokens(numOutTokens);
+    tilingData->set_onceUbTokenNums(innerSize_);
+    tilingData->set_coreCalcNum(blockFactor);
+    tilingData->set_tailCoreNum(tailBlockFactor);
+    tilingData->set_tokenUB(ubAviable);
+}
+
 ge::graphStatus MoeTokenPermuteWithRoutingMapTilingBase::DoOpTiling()
 {
     sortLoopMaxElement = (aicoreParams_.ubSize - aivNum * ONE_BLOCK_BYTE) / (NUM_FOUR * NUM_TWO * NUM_FOUR) /
@@ -520,6 +583,9 @@ ge::graphStatus MoeTokenPermuteWithRoutingMapTilingBase::DoOpTiling()
     } else {
         Tiling4VBSComputeLastdim();
         Tiling4SortOutCompute();
+        if (regBase) {
+            Tiling4GatherCompute();
+        }
     }
 
     return ge::GRAPH_SUCCESS;

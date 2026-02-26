@@ -20,6 +20,7 @@
 #include "opdev/op_executor.h"
 #include "opdev/op_log.h"
 #include "opdev/shape_utils.h"
+#include "external/aclnn_kernels/aclnn_platform.h"
 
 using namespace op;
 
@@ -58,7 +59,10 @@ const std::array<const aclTensor*, 3> MoeTokenPermuteWithRoutingMap(
         return {nullptr, nullptr, nullptr};
     }
     op::Shape permuteTokensOutShape;
-    if (!dropAndPad) {
+
+    bool isRegbase = Ops::Transformer::AclnnUtil::IsRegbase();
+
+    if (!dropAndPad || isRegbase) { // regbase 场景在算子内部进行gather，其余场景由gather算子计算
         permuteTokensOutShape.AppendDim(numOutTokens);
         permuteTokensOutShape.AppendDim(tokens->GetViewShape().GetDim(1));
     } else {

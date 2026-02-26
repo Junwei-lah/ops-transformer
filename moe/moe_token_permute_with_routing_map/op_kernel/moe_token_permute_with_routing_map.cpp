@@ -21,6 +21,10 @@
 #include "moe_index_copy_split_d.h"
 #include "masked_select_v3.h"
 #include "moe_permute_prob.h"
+#ifdef __DAV_C310__
+#include "arch35/gather_v2_simd_two_dim.h"
+#endif
+
 #if !defined(DTYPE_TOKENS)
 #define DTYPE_TOKENS bfloat16_t
 #endif
@@ -46,21 +50,35 @@ using namespace MoeTokenPermute;
         indexCopyOp.Init(tokens, sortedIndices, permuteTokens, t, &MoeindexCopyPipe);                                  \
         indexCopyOp.Process();                                                                                         \
     } while (0)
-#define GENERAL_PAD_OP_IMPL(sortClass1, sortClass2, indexCopyClass, ...) \
-    do {                                                                 \
-        TPipe sortPipe2;                                                 \
-        MoeSortMultiLastDimCore<uint8_t> op;                             \
-        op.Init(routingMap, sortedIndices, userWS, t, &sortPipe2);       \
-        op.Process();                                                    \
-        sortPipe2.Destroy();                                             \
-        if (hasProb) {                                                   \
-            TPipe sortPipe;                                              \
-            AscendC::SyncAll();                                          \
-            MoePermuteProb<DTYPE_PERMUTE_PROBS> op2;                     \
-            op2.Init(permuteProbs, probs, sortedIndices, t, &sortPipe);  \
-            op2.Process();                                               \
-        }                                                                \
+
+#define GENERAL_PAD_OP_IMPL(sortClass1, sortClass2, indexCopyClass, ...)         \
+    do {                                                                         \
+        TPipe sortPipe2;                                                         \
+        MoeSortMultiLastDimCore<uint8_t> op;                                     \
+        op.Init(routingMap, sortedIndices, userWS, t, &sortPipe2);               \
+        op.Process();                                                            \
+        sortPipe2.Destroy();                                                     \
+        if (hasProb) {                                                           \
+            TPipe sortPipe;                                                      \
+            AscendC::SyncAll();                                                  \
+            MoePermuteProb<DTYPE_PERMUTE_PROBS> op2;                             \
+            op2.Init(permuteProbs, probs, sortedIndices, t, &sortPipe);          \
+            op2.Process();                                                       \
+            sortPipe.Destroy();                                                  \
+        }                                                                        \
+    } while (0)                                                                  \
+
+#ifdef __DAV_C310__
+#define GATHER_IMPL()                                                            \
+    do {                                                                         \
+        AscendC::SyncAll();                                                      \
+        TPipe MoeindexCopyPipe;                                                  \
+        gatherv2::Gatherv2SimdTwoDim<int32_t> gatherv2Op(&MoeindexCopyPipe);     \
+        gatherv2Op.Init(tokens, sortedIndices, permuteTokens, t);                \
+        gatherv2Op.Process();                                                    \
     } while (0)
+#endif
+
 extern "C" __global__ __aicore__ void moe_token_permute_with_routing_map(
     GM_ADDR tokens, GM_ADDR routingMap, GM_ADDR probs, GM_ADDR permuteTokens, GM_ADDR permuteProbs,
     GM_ADDR sortedIndices, GM_ADDR workspace, GM_ADDR tiling)
@@ -99,5 +117,8 @@ extern "C" __global__ __aicore__ void moe_token_permute_with_routing_map(
         GENERAL_OP_IMPL(MoeSortMultiCore, MoeSortMultiCore, MoeindexCopySplitDOp, DTYPE_TOKENS, true);
     } else if (TILING_KEY_IS(9)) {
         GENERAL_PAD_OP_IMPL(MoeSortMultiCore, MoeSortMultiCore, MoeindexCopySplitDOp, DTYPE_TOKENS, true);
+#ifdef __DAV_C310__
+        GATHER_IMPL(); // __DAV_C310__ 上在算子内部进行gather
+#endif
     }
 }

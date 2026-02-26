@@ -27,6 +27,7 @@
 #else
     #include "level0/gather_v2.h"
 #endif
+#include "external/aclnn_kernels/aclnn_platform.h"
 
 using namespace op;
 #ifdef __cplusplus
@@ -281,19 +282,24 @@ aclnnStatus aclnnMoeTokenPermuteWithRoutingMapGetWorkspaceSize(
     }
 
     const aclTensor* permuteTokensOpOut;
-    #ifdef BUILD_OPEN_PROJECT_API
-        if (dropAndPad) {
-            permuteTokensOpOut = l0op::MoeGatherV2(tokensContiguous, 0, sortedIndicesOut, uniqueExecutor.get());
-        } else {
-            permuteTokensOpOut = MoeTokenPermuteWithRoutingMapOut[0];
-        }
-    #else
-        if (dropAndPad) {
-            permuteTokensOpOut = l0op::GatherV2(tokensContiguous, 0, sortedIndicesOut, uniqueExecutor.get());
-        } else {
-            permuteTokensOpOut = MoeTokenPermuteWithRoutingMapOut[0];
-        }
-    #endif
+    bool isRegbase = Ops::Transformer::AclnnUtil::IsRegbase();
+    if (isRegbase) {// regbase 场景在算子内部进行gather，其余场景由gather算子计算
+        permuteTokensOpOut = MoeTokenPermuteWithRoutingMapOut[0];
+    } else {
+        #ifdef BUILD_OPEN_PROJECT_API
+            if (dropAndPad) {
+                permuteTokensOpOut = l0op::MoeGatherV2(tokensContiguous, 0, sortedIndicesOut, uniqueExecutor.get());
+            } else {
+                permuteTokensOpOut = MoeTokenPermuteWithRoutingMapOut[0];
+            }
+        #else
+            if (dropAndPad) {
+                permuteTokensOpOut = l0op::GatherV2(tokensContiguous, 0, sortedIndicesOut, uniqueExecutor.get());
+            } else {
+                permuteTokensOpOut = MoeTokenPermuteWithRoutingMapOut[0];
+            }
+        #endif
+    }
 
     CHECK_RET(permuteTokensOpOut != nullptr, ACLNN_ERR_INNER_NULLPTR);
     auto permuteTokensResult = l0op::ViewCopy(permuteTokensOpOut, permuteTokensOut, uniqueExecutor.get());

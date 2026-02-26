@@ -48,6 +48,7 @@ operator_group_4:
   - ring_attention_update
   - sparse_flash_attention_grad
   - fused_infer_attention_score,10-9
+  - moe_token_permute_with_routing_map
 operator_group_5:
   - flash_attention_score,3-0
 operator_group_6:
