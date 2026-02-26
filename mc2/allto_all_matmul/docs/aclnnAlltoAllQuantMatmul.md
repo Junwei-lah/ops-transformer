@@ -438,6 +438,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
       * 目前支持左矩阵perToken量化和perToken动态量化，x1QuantMode=3或7；右矩阵perChannel量化，x2QuantMode=2。
     * 类型约束：
       * x1、alltoAllOutOptional的数据类型必须一致。
+      * 若x1、x2、alltoallout输入int32类型，则视作8个int4打包，会被重新解释为int4。
       * x1QuantDtype仅支持配置2（表示aclDataType.ACL_INT8）。
       * A16W8和A16W4时，smoothQuant场景，x1ScaleOptional与x1的数据类型必须一致。
       * A16W8时，x1、x2、biasOptional和output支持的数据类型组合有：

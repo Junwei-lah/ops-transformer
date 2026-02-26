@@ -51,8 +51,8 @@ using namespace Catlass;
 namespace AlltoAllMatmulImpl {
 
 // A2AMM : AlltoAllMatmul
-#define TemplateA2AMMClass typename AType, typename BType, typename BiasType, typename PerTokenScaleType, typename ScaleType, typename CType, typename AllToAllResultType, bool hasBias, bool transB, bool needDynamicQuant
-#define TemplateA2AMMFunc AType, BType, BiasType, PerTokenScaleType, ScaleType, CType, AllToAllResultType, hasBias, transB, needDynamicQuant
+#define TemplateA2AMMClass typename AType, typename BType, typename BiasType, typename PerTokenScaleType, typename ScaleType, typename CType, typename AllToAllResultType, bool hasBias, bool transB, int32_t QuantType
+#define TemplateA2AMMFunc AType, BType, BiasType, PerTokenScaleType, ScaleType, CType, AllToAllResultType, hasBias, transB, QuantType
 
 using namespace AscendC;
 template <TemplateA2AMMClass>
@@ -135,10 +135,15 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Init(GM_ADDR aGM, GM_A
     CommBase::SetArgs<AType>(rank, rankSize, tilingData);
     this->ub_offset = Catlass::BytesToBits(UB_OFFSET) / Catlass::SizeOfBits<int8_t>::value;
 
-    quantAGM_ = reinterpret_cast<__gm__ int8_t *>(needDynamicQuant ? workspaceGM_ : nullptr);
-    dequantCGM_ = reinterpret_cast<__gm__ int32_t *>(needDynamicQuant ? workspaceGM_ + quantSize : nullptr);
-    quantScaleGM_ = reinterpret_cast<GM_ADDR>(needDynamicQuant ? workspaceGM_ + quantSize + dequantSize : nullptr);
-
+    if constexpr (QuantType == MC2_DYNAMIC_QUANT) {
+        quantAGM_ = reinterpret_cast<__gm__ int8_t *>(workspaceGM_);
+        dequantCGM_ = reinterpret_cast<__gm__ int32_t *>(workspaceGM_ + quantSize);
+        quantScaleGM_ = reinterpret_cast<GM_ADDR>(workspaceGM_ + quantSize + dequantSize);
+    }
+    if constexpr (QuantType == MC2_STATIC_QUANT) {
+        x1ScaleGM_ += rank * (m / rankSize) * sizeof(PerTokenScaleType);  // 全量化场景，对x1Scale进行偏移
+        dequantCGM_ = reinterpret_cast<__gm__ int32_t *>(workspaceGM_);
+    }
     kBytes = Catlass::BitsToBytes(k * Catlass::SizeOfBits<AType>::value);
     tokenBytes = Catlass::BitsToBytes(tokenSize * Catlass::SizeOfBits<AType>::value);
 
@@ -175,11 +180,11 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::CatlassMatmul()
 
         constexpr bool ENABLE_UNIT_FLAG = false;
         constexpr bool ENABLE_SHUFFLE_K = false;
-        constexpr bool aicCalBias = !needDynamicQuant && hasBias;  // 计算量化后的矩阵乘不由CatlassMatmul负责
+        constexpr bool aicCalBias = (QuantType == MC2_NON_QUANT) && hasBias;  // 计算量化后的矩阵乘，bias不由CatlassMatmul负责
 
         using ElementA = BType; //非量化场景、量化场景，A、B的入参类型一致；伪量化场景，A需要动态量化成BType
         using ElementB = BType;
-        using ElementC = std::conditional_t<needDynamicQuant, int32_t, CType>;  // 非量化场景，Btype和CType一致；量化场景计算结果为int32_t
+        using ElementC = std::conditional_t<QuantType != MC2_NON_QUANT, int32_t, CType>;  // 非量化场景，Btype和CType一致；量化场景计算结果为int32_t
         using ElementBias = BiasType;
         using LayoutA = layout::RowMajor;
         // B转置
@@ -224,35 +229,66 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::CatlassMatmul()
         GemmCoord processSize{static_cast<uint32_t>(realM), static_cast<uint32_t>(n), static_cast<uint32_t>(realK)};
         using BlockScheduler30 = typename Gemm::Block::GemmIdentityBlockSwizzle<3, 0>;
 
-        GM_ADDR srcGM = needDynamicQuant ? reinterpret_cast<GM_ADDR>(quantAGM_) : reinterpret_cast<GM_ADDR>(gmPeerMem_);  // int8时，才需要更改左矩阵读取位置
-        GM_ADDR matmulResultGM = needDynamicQuant ? reinterpret_cast<GM_ADDR>(dequantCGM_) : cGM_;  // 量化矩阵乘法时，需要修改c矩阵存放地址
-        if (m0 == 128) {
-            using L1TileShape = GemmShape<128, 256, 256>;
-            using L0TileShape = GemmShape<128, 256, 64>;
-            using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-            using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-            MatmulKernel matmul_op;
-            typename MatmulKernel::Params params{processSize,
-                                    reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                    reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                    reinterpret_cast<GM_ADDR>(biasGM_),
-                                    reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                    pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-            matmul_op(params);
+        GM_ADDR srcGM = (QuantType == MC2_DYNAMIC_QUANT) ? reinterpret_cast<GM_ADDR>(quantAGM_) : reinterpret_cast<GM_ADDR>(gmPeerMem_);  // 动态量化时，需要更改左矩阵读取位置
+        GM_ADDR matmulResultGM = (QuantType == MC2_NON_QUANT) ? cGM_ : reinterpret_cast<GM_ADDR>(dequantCGM_);  // 量化矩阵乘法时，需要修改c矩阵存放地址
+        if constexpr (AscendC::IsSameType<AscendC::int4b_t, BType>::value) {
+            if (m0 == 128) {
+                using L1TileShape = GemmShape<128, 256, 1024>;
+                using L0TileShape = GemmShape<128, 256, 256>;
+                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+                MatmulKernel matmul_op;
+                typename MatmulKernel::Params params{processSize,
+                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                        reinterpret_cast<GM_ADDR>(biasGM_),
+                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+                matmul_op(params);
+            } else {
+                using L1TileShape = GemmShape<256, 128, 1024>;
+                using L0TileShape = GemmShape<256, 128, 256>;
+                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+                MatmulKernel matmul_op;
+                typename MatmulKernel::Params params{processSize,
+                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                        reinterpret_cast<GM_ADDR>(biasGM_),
+                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+                matmul_op(params);
+            }
         } else {
-            using L1TileShape = GemmShape<256, 128, 256>;
-            using L0TileShape = GemmShape<256, 128, 64>;
-            using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-            using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-            MatmulKernel matmul_op;
-            typename MatmulKernel::Params params{processSize,
-                                    reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                    reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                    reinterpret_cast<GM_ADDR>(biasGM_),
-                                    reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                    pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-            matmul_op(params);
+            if (m0 == 128) {
+                using L1TileShape = GemmShape<128, 256, 256>;
+                using L0TileShape = GemmShape<128, 256, 64>;
+                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+                MatmulKernel matmul_op;
+                typename MatmulKernel::Params params{processSize,
+                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                        reinterpret_cast<GM_ADDR>(biasGM_),
+                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+                matmul_op(params);
+            } else {
+                using L1TileShape = GemmShape<256, 128, 256>;
+                using L0TileShape = GemmShape<256, 128, 64>;
+                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+                MatmulKernel matmul_op;
+                typename MatmulKernel::Params params{processSize,
+                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                        reinterpret_cast<GM_ADDR>(biasGM_),
+                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+                matmul_op(params);
+            }
         }
+        
     }
 }
 
@@ -588,7 +624,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Dequant()
     constexpr uint32_t ubStages = 2;
     using EpilogueDispatchPolicy = Epilogue::EpilogueAtlasA2PerTokenDequant<ubStages>;
     using ScaleGType = Gemm::GemmType<ScaleType, layout::VectorLayout>;
-    using PerTokenScaleGType = Gemm::GemmType<float, layout::VectorLayout>;
+    using PerTokenScaleGType = Gemm::GemmType<float, layout::VectorLayout>;  // 全量化时，也限定为float
     using BiasGType = Gemm::GemmType<BiasType, layout::VectorLayout>;
     using DType = Gemm::GemmType<CType, layout::RowMajor>;
     layout::VectorLayout layoutScale{static_cast<uint32_t>(n)};
@@ -626,14 +662,6 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Dequant()
     AscendC::GlobalTensor<ElementC> gmC;
     gmC.SetGlobalBuffer((__gm__ ElementC *)dequantCGM_);
 
-    AscendC::GlobalTensor<ScaleType> gmScale;
-    gmScale.SetGlobalBuffer((__gm__ ScaleType *)scaleGM_);
-    AscendC::GlobalTensor<float> gmPerTokenScale;
-    gmPerTokenScale.SetGlobalBuffer((__gm__ float *)quantScaleGM_);
-
-    AscendC::GlobalTensor<ElementBias> gmBias;
-    gmBias.SetGlobalBuffer((__gm__ ElementBias *)biasGM_);
-
     uint32_t rowsPerCore = DivCeil(problemShape.m(), blockNum);
     uint32_t rowsThisCore = rowsPerCore;
     uint32_t stRowPerCore = aicIdx * rowsPerCore;
@@ -648,6 +676,9 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Dequant()
     auto layoutC = layout::RowMajor{problemShape.m(), n};
     int64_t gmOffsetC = layoutC.GetOffset(coreOffset);
     GemmCoord actualBlockShape{rowsThisCore, n, 1};
+
+    GM_ADDR x1ScaleGM = (QuantType == MC2_DYNAMIC_QUANT) ? quantScaleGM_ : x1ScaleGM_;  // 根据是否是全量化，决定从哪里获得pertokenScale
+
     if (m0 == 128) {
         using EpilogueTileShape = MatrixShape<32, 256>;
         using TileRowBroadcastMul = Epilogue::Tile::TileRowBroadcastMul<ArchTag, RowBroadcastMulType, EpilogueTileShape>;
@@ -663,7 +694,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Dequant()
         using EpilogueParams = typename QuantBlockEpilogue::Params;
         EpilogueParams epilogueParams {
             scaleGM_, layoutScale,
-            quantScaleGM_, layoutPerTokenScale.GetTileLayout(problemShape.template GetCoordByAxis<0>()),
+            x1ScaleGM, layoutPerTokenScale.GetTileLayout(problemShape.template GetCoordByAxis<0>()),
             biasGM_, layoutBias
         };
         blockEpilogue.UpdateParams(epilogueParams);
@@ -686,7 +717,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Dequant()
         using EpilogueParams = typename QuantBlockEpilogue::Params;
         EpilogueParams epilogueParams {
             scaleGM_, layoutScale,
-            quantScaleGM_, layoutPerTokenScale.GetTileLayout(problemShape.template GetCoordByAxis<0>()),
+            x1ScaleGM, layoutPerTokenScale.GetTileLayout(problemShape.template GetCoordByAxis<0>()),
             biasGM_, layoutBias
         };
         blockEpilogue.UpdateParams(epilogueParams);
@@ -731,8 +762,8 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::AlltoAll()
                 uint32_t copyBytes = Catlass::BitsToBytes(dataLen * Catlass::SizeOfBits<AType>::value);
 
                 if (dataLen > 0) {
-                    CopyTokensFromGMToGM(reinterpret_cast<__gm__ int8_t*>(aGM_) + dataSrc * elemBytes,
-                                        (__gm__ int8_t*)buff[dstRank] + dataDst * elemBytes,
+                    CopyTokensFromGMToGM(reinterpret_cast<__gm__ int8_t*>(aGM_) + ElemNumToBytes<AType>(dataSrc),
+                                        (__gm__ int8_t*)buff[dstRank] + ElemNumToBytes<AType>(dataDst),
                                         copyBytes, kBytes, tokenBytes);
                 }
                 src_offset += allToAllSizePerRankPerLoop;
@@ -746,8 +777,8 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::AlltoAll()
                 int64_t srcSt = blockDst + mSt * tokenSize;
                 int64_t dstSt = ((commIdx - 1) * mPerLoop + mSt) * tokenSize;
                 if (mThisCoreThisLoop > 0) {
-                    CopyTokensFromGMToGM((__gm__ int8_t*)buff[rank] + srcSt * elemBytes,
-                                        reinterpret_cast<__gm__ int8_t*>(allToAllResultGM_) + dstSt * elemBytes,
+                    CopyTokensFromGMToGM((__gm__ int8_t*)buff[rank] + ElemNumToBytes<AType>(srcSt),
+                                        reinterpret_cast<__gm__ int8_t*>(allToAllResultGM_) + ElemNumToBytes<AType>(dstSt),
                                         mThisCoreThisLoop * tokenBytes, tokenBytes, tokenBytes);
                 }
             }
@@ -758,7 +789,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::AlltoAll()
             }
             SetAndWaitAivSync(flagIdx);
 
-            if constexpr(needDynamicQuant) {  // 拷贝完成后，对左矩阵进行quant
+            if constexpr(QuantType == MC2_DYNAMIC_QUANT) {  // 动态量化场景，拷贝完成后，对左矩阵进行quant
                 if (commIdx < commCount) {
                     Quant(flagIdx, commIdx);
                     SetAndWaitAivSync(flagIdx);
@@ -775,7 +806,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::AlltoAll()
             WaitEvent(FLAG_ONE_IDX);
         }
 
-        if constexpr (needDynamicQuant) {
+        if constexpr (QuantType != MC2_NON_QUANT) {
             SetAndWaitAivSync(FLAG_ONE_IDX);
             Dequant();
         }

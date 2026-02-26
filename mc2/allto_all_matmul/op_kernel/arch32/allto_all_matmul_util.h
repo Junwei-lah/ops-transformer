@@ -21,6 +21,11 @@
 #include "../../3rd/template_linear_algebra/include/template_linear_algebra/numeric_size.hpp"
 #include <cstdint>
 
+#define MC2_NON_QUANT 0
+#define MC2_DYNAMIC_QUANT 1
+#define MC2_STATIC_QUANT 2
+#define MC2_UNKNOWN_QUANT 3
+
 using namespace AscendC;
 
 constexpr static uint32_t BUFFER_NUM = 2U;
@@ -308,5 +313,18 @@ __aicore__ inline void SetAndWaitAivSync(uint64_t flagIdx, int32_t pipeDepth = 2
 __aicore__ inline void SetAicSync(uint64_t flagIdx)
 {
     AscendC::CrossCoreSetFlag<0x2, PIPE_MTE3>(flagIdx);
+}
+
+template <typename T>
+__aicore__ inline int64_t ElemNumToBytes(int64_t elemNum)
+{
+    return elemNum * sizeof(T);
+}
+
+// int4时，无法使用sizeof
+template <>
+__aicore__ inline int64_t ElemNumToBytes<AscendC::int4b_t>(int64_t elemNum)
+{
+    return elemNum / 2;
 }
 #endif
