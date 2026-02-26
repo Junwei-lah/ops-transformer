@@ -373,8 +373,8 @@ __aicore__ inline void FABlockCube<TEMPLATE_ARGS>::InitGmTensor(CVSharedParams<i
                 sharedParams->s1Size, sharedParams->dSizeRope);
         }
     } else {  // GM_Q_OUT_TND
-        GlobalTensor<int64_t> actualSeqQLen;
-        actualSeqQLen.SetGlobalBuffer(actualSeqQlenAddr);
+        GlobalTensor<uint64_t> actualSeqQLen;
+        actualSeqQLen.SetGlobalBuffer((__gm__ uint64_t *)actualSeqQlenAddr);
         if constexpr (isInfer) {
             this->queryGm.offsetCalculator.Init(sharedParams->n2Size, sharedParams->gSize, sharedParams->dSize,
                 actualSeqQLen, sharedParams->actualSeqLengthsSize);
@@ -401,8 +401,8 @@ __aicore__ inline void FABlockCube<TEMPLATE_ARGS>::InitGmTensor(CVSharedParams<i
                 sharedParams->dSizeRope);
         }
     } else {  // GM_KV_TND
-        GlobalTensor<int64_t> actualSeqKVLen;
-        actualSeqKVLen.SetGlobalBuffer(actualSeqKvlenAddr);
+        GlobalTensor<uint64_t> actualSeqKVLen;
+        actualSeqKVLen.SetGlobalBuffer((__gm__ uint64_t *)actualSeqKvlenAddr);
         if constexpr (isInfer) {
             this->keyGm.offsetCalculator.Init(sharedParams->n2Size, sharedParams->dSize, actualSeqKVLen,
                 sharedParams->actualSeqLengthsKVSize);

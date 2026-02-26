@@ -20,6 +20,8 @@
 #include "gm_layout.h"
 #include "offset_calculator_v2.h"
 
+using AscendC::GlobalTensor;
+
 template <typename Q_T, GmFormat FORMAT>
 struct FaGmTensor {
     GlobalTensor<Q_T> gmTensor;

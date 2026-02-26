@@ -18,6 +18,8 @@
 #include "kernel_vec_intf.h"
 #include "kernel_cube_intf.h"
 
+using AscendC::GlobalTensor;
+
 // ----------------------------------------------ActualSeqLensParser--------------------------------
 enum class ActualSeqLensMode
 {

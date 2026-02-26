@@ -18,6 +18,8 @@
 #include "kernel_vec_intf.h"
 #include "kernel_cube_intf.h"
 
+using AscendC::LocalTensor;
+
 enum class UbFormat
 {
     GS1 = 0,

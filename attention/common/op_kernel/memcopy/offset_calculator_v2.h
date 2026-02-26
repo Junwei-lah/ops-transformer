@@ -18,6 +18,8 @@
 #include "gm_layout.h"
 #include "parser.h"
 
+using AscendC::GlobalTensor;
+
 // ----------------------------------------------GmLayoutParams--------------------------------
 enum class FormatCategory
 {
@@ -99,6 +101,16 @@ struct GmLayoutParams<GmFormat::PA_NZ> {
     static constexpr FormatCategory CATEGORY = FormatCategory::GM_KV_PA_NZ;
 };
 
+template <>
+struct GmLayoutParams<GmFormat::SBNGD> {
+    static constexpr FormatCategory CATEGORY = FormatCategory::GM_Q_OUT_BNGSD;
+};
+
+template <>
+struct GmLayoutParams<GmFormat::SBND> {
+    static constexpr FormatCategory CATEGORY = FormatCategory::GM_KV_BNSD;
+};
+
 // post_quant
 template <>
 struct GmLayoutParams<GmFormat::NGD> {
@@ -145,6 +157,11 @@ struct OffsetCalculatorImpl<FORMAT, FormatCategory::GM_Q_OUT_BNGSD> {
     uint64_t qPaddingSize = 0;
 
     __aicore__ inline OffsetCalculatorImpl() = default;
+
+    __aicore__ inline void Init(uint32_t b, uint32_t n2, uint32_t g, uint32_t s1, uint32_t d)
+    {
+        gmLayout.MakeLayout(b, n2, g, s1, d);
+    }
 
     __aicore__ inline void Init(uint32_t b, uint32_t n2, uint32_t g, uint32_t s1, uint32_t d,
                                 GlobalTensor<uint64_t> actualSeqLengthsGmQ, uint32_t actualLenQDims,
