@@ -526,6 +526,11 @@ aclnnStatus aclnnNormRopeConcat(
       <td>161001</td>
       <td>传入的query、key或value是空指针。</td>
     </tr>
+    <tr>
+      <td rowspan="2">ACLNN_ERR_PARAM_INVALID</td>
+      <td rowspan="2">161002</td>
+      <td>计算输入和输出的数据类型不在支持范围内。</td>
+    </tr>
   </tbody>
   </table>
 
