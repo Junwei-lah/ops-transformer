@@ -2166,11 +2166,6 @@ bool PromptFlashAttentionTiling::CheckPAWhenBaseApi(ContextParamsForPFATiling& c
         b, maxBlockNumPerBatch, blockTableDim1, blockTableDim2),
         return false);
     int32_t keyDim1 = keyShape->GetStorageShape().GetDim(FIRST_DIM);
-    OP_CHECK_IF((keyDim1 < blockNumValid),
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-        "the first dim of key(%d) should not less than valid block num(%ld) when PA enable",
-        keyDim1, blockNumValid),
-        return false);
     PABlockNumSum = keyDim1;
     tmpS2 = maxBlockNumPerBatch * tempBlockSize;
     return true;
@@ -2313,13 +2308,6 @@ bool PromptFlashAttentionTiling::CheckPATypeAndShape(ContextParamsForPFATiling& 
         "block table shape should be [%d, >=%d], now is [%d, %d] when PA enable",
         b, maxBlockNumPerBatch, blockTableDim1, blockTableDim2),
         return false);
-
-    OP_CHECK_IF((keyDim1 < blockNumValid),
-        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-        "the first dim of key(%d) should not less than valid block num(%ld) when PA enable",
-        keyDim1, blockNumValid),
-        return false);
-
     PABlockNumSum = keyDim1;
     tmpS2 = maxBlockNumPerBatch * tempBlockSize;
     return true;
