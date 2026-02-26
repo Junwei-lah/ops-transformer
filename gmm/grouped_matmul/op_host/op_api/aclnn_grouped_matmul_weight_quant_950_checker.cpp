@@ -109,8 +109,14 @@ aclnnStatus AclnnGroupedMatmulWeightQuantDAV3510Checker::CheckTensorShape(const 
     size_t tensorDimNum = tensorShape.GetDimNum();
     size_t expectedDimNum = gmmParams_.groupType == SPLIT_M ? 2 : 1;  // 单单单场景默认维度为2，多多多场景默认维度为1
 
-    if ((IsA16MxFp4NZ() || IsMxA8W4NZ() || IsS8S4NZ()) && tensorType.find("antiquant") != std::string::npos) {
-        expectedDimNum = 3;  // Mx / PerGroup量化，仅支持antiquantSacle/antiquantOffset维度为3
+    if ((IsA16MxFp4NZ() || IsS8S4NZ()) && tensorType.find("antiquant") != std::string::npos) {
+        expectedDimNum = 3; // Mx / PerGroup量化，仅支持antiquantSacle/antiquantOffset维度为3
+    } else if (IsMxA8W4NZ()) {
+        if (tensorType.find("antiquant") != std::string::npos) {
+            expectedDimNum = 4; // MxA8W4场景，antiquantScale维度为4
+        } else if (tensorType.find("token") != std::string::npos) {
+            expectedDimNum = 3; // MxA8W4场景，perTokenScale维度为3
+        }
     }
 
     CHECK_COND(tensorDimNum == expectedDimNum, ACLNN_ERR_PARAM_INVALID, "%s Dim must be [%zu], but now is [%zu].",
@@ -128,7 +134,12 @@ aclnnStatus AclnnGroupedMatmulWeightQuantDAV3510Checker::CheckTensorShape(const 
     // Check tensor’s Ndim must match weight’s Ndim.
     uint64_t weightNDimIdx = wShape.GetDimNum() - 1;
     int64_t weightNDimValue = wShape.GetDim(weightNDimIdx);
-    int64_t tensorNDimValue = tensorShape.GetDim(tensorDimNum - 1);
+    int64_t tensorNDimValue;
+    if (IsMxA8W4NZ() && tensorType.find("antiquant") != std::string::npos) { // viewShape,所以是-2
+        tensorNDimValue = tensorShape.GetDim(tensorDimNum - 2);
+    } else {
+        tensorNDimValue = tensorShape.GetDim(tensorDimNum - 1);
+    }
     CHECK_COND(tensorNDimValue == weightNDimValue, ACLNN_ERR_PARAM_INVALID,
                "NDim[%ld] of %s should be equal to NDim[%ld] of weight.", tensorNDimValue, tensorType.c_str(),
                weightNDimValue);
@@ -440,10 +451,10 @@ aclnnStatus AclnnGroupedMatmulWeightQuantDAV3510Checker::CheckScaleAndPerTokenSc
         // check pertokenscale shape for MxA8W4
         auto perTokenScaleShape = (*gmmParams_.perTokenScaleOptional)[0]->GetViewShape();
         auto perTokenScaleShapeDimNum = perTokenScaleShape.GetDimNum();
-        // MxA8W4NZ仅支持perTokenScale维度为2
-        size_t perTokenScaleSupportDimNum = 2;
+        // MxA8W4NZ仅支持perTokenScale维度为3
+        size_t perTokenScaleSupportDimNum = 3;
         CHECK_COND(perTokenScaleShapeDimNum == perTokenScaleSupportDimNum, ACLNN_ERR_PARAM_INVALID,
-                   "The dim of pertokenscale must be 2!");
+                   "The dim of pertokenscale must be 3!");
         auto xShape = (*gmmParams_.x)[0]->GetViewShape();
         auto perTokenScaleShapeMDim = perTokenScaleShape.GetDim(0);
         auto perTokenScaleShapeKDim = perTokenScaleShape.GetDim(1);
@@ -451,9 +462,9 @@ aclnnStatus AclnnGroupedMatmulWeightQuantDAV3510Checker::CheckScaleAndPerTokenSc
         auto xShapeMDim = xShape.GetDim(0);
         CHECK_COND(xShapeMDim == perTokenScaleShapeMDim, ACLNN_ERR_PARAM_INVALID,
                    "The first dim of pertokenscale must be equal to the first dim of x!");
-        // 32含义：pertokenscale的shape应为(m,k/32)
-        CHECK_COND(xShapeKDim == perTokenScaleShapeKDim * 32, ACLNN_ERR_PARAM_INVALID,
-                   "The second dim of x must be 32 times the second dim of pertokenscale!");
+        // 64含义：pertokenscale的shape应为(m,k/64,2)
+        CHECK_COND(xShapeKDim == perTokenScaleShapeKDim * 64, ACLNN_ERR_PARAM_INVALID,
+                   "The second dim of x must be 64 times the second dim of pertokenscale!");
     } else if (IsS8S4NZ()) {
         auto perTokenScaleShape = (*gmmParams_.perTokenScaleOptional)[0]->GetViewShape();
         auto perTokenScaleShapeDimNum = perTokenScaleShape.GetDimNum();
@@ -521,14 +532,18 @@ aclnnStatus AclnnGroupedMatmulWeightQuantDAV3510Checker::CheckGroupSize(size_t i
     // 2含义: (g,k,n)的k轴索引
     int64_t kSize = weightShape.GetDim(weightShape.GetDimNum() - 2);
     // 2含义: (g,k/groupSize,n)的k轴索引
-    int64_t groupNum = antiquantScaleShape.GetDim(antiquantScaleDimNum - 2);
+    int64_t groupNum = IsMxA8W4NZ() ? antiquantScaleShape.GetDim(antiquantScaleDimNum - 3) * 2:
+                                      antiquantScaleShape.GetDim(antiquantScaleDimNum - 2);
     CHECK_COND(groupNum > 0, ACLNN_ERR_PARAM_INVALID,
                "GroupNum must be greater than 0, but the actual groupNum is [%ld].", groupNum);
     CHECK_COND(kSize % groupNum == 0, ACLNN_ERR_PARAM_INVALID,
                "kSize must be a multiple of groupNum, but the actual kSize is [%ld], groupNum is [%ld].", kSize,
                groupNum);
     groupSize = kSize / groupNum;
-
+    if (IsMxA8W4NZ()) {
+        // 2：MxA8W4NZ的antiquantScaleViewShape: (g, k / groupSIze / 2, n, 2)
+        groupSize = kSize / groupNum;
+    }
     // 当前伪量化仅支持groupsize为32整数倍
     if (IsS8S4NZ()) {
         // 伪量化S8S4场景支持groupsize为128/192/256/512

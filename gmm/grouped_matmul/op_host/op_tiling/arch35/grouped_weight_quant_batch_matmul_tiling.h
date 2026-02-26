@@ -59,6 +59,8 @@ constexpr uint32_t SCALE_FACTOR_N_BIT = 24;
 constexpr int32_t B16_DATA_SIZE = 2;
 constexpr int32_t B8_DATA_SIZE = 1;
 
+constexpr uint32_t MX_GROUP_SIZE = 32;
+
 struct TailBlockResplitParam {
     uint32_t mainBlockSize = 0;
     uint64_t mainBlockCount = 0;
@@ -245,6 +247,8 @@ protected:
     void SetTilingKey(gert::TilingContext *context);
     bool SetCustomParam(gert::TilingContext *context);
     bool IsA16W4ND() const;
+    bool IsMxA8W4() const;
+    bool CheckPerTokenScale(const gert::TilingContext* context) const;
     bool CheckUnsupportDataFlow(const gert::TilingContext *context) const;
     bool CheckAntiQuantDtype(const gert::TilingContext *context) const;
     bool CheckBiasDtype(const gert::TilingContext *context) const;
