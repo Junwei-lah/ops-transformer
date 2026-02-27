@@ -548,71 +548,73 @@ public:
     void set_gOfMla(uint32_t gOfMlaParam) { this->gOfMla = gOfMlaParam; }
 };
 
+#define CORE_NUM 64 // 64: default core num
+
 class PromptAttentionSeqParams {
 public:
-    uint32_t CoreHeadNumTail[64] = {0};
+    uint32_t CoreHeadNumTail[CORE_NUM] = {0};
     uint32_t *get_CoreHeadNumTailPtr()
     {
         return CoreHeadNumTail;
     }
     void set_CoreHeadNumTail(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->CoreHeadNumTail[i] = val[i];
         }
     }
-    uint32_t actualS1[64] = {0};
+    uint32_t actualS1[CORE_NUM] = {0};
     uint32_t *get_actualS1Ptr()
     {
         return actualS1;
     }
     void set_actualS1(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->actualS1[i] = val[i];
         }
     }
-    uint32_t actualCoreNums[64] = {0};
+    uint32_t actualCoreNums[CORE_NUM] = {0};
     uint32_t *get_actualCoreNumsPtr()
     {
         return actualCoreNums;
     }
     void set_actualCoreNums(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->actualCoreNums[i] = val[i];
         }
     }
-    uint32_t singleCoreHeadNumSize[64] = {0};
+    uint32_t singleCoreHeadNumSize[CORE_NUM] = {0};
     uint32_t *get_singleCoreHeadNumSizePtr()
     {
         return singleCoreHeadNumSize;
     }
     void set_singleCoreHeadNumSize(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->singleCoreHeadNumSize[i] = val[i];
         }
     }
-    uint32_t coreSeqPosStart[64] = {0};
+    uint32_t coreSeqPosStart[CORE_NUM] = {0};
     uint32_t *get_coreSeqPosStartPtr()
     {
         return coreSeqPosStart;
     }
     void set_coreSeqPosStart(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->coreSeqPosStart[i] = val[i];
         }
     }
-    uint32_t coreSeqPosEnd[64] = {0};
+    uint32_t coreSeqPosEnd[CORE_NUM] = {0};
     uint32_t *get_coreSeqPosEndPtr()
     {
         return coreSeqPosEnd;
     }
     void set_coreSeqPosEnd(const uint32_t *val)
     {
-        for (int i = 0; i < 64; ++i) {
+        for (int i = 0; i < CORE_NUM; ++i) {
             this->coreSeqPosEnd[i] = val[i];
         }
     }

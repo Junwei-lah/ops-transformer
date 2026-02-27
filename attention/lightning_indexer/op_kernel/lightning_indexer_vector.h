@@ -271,10 +271,10 @@ __aicore__ inline void SortAll(LocalTensor<float> &dst, LocalTensor<float> &srcV
 __aicore__ inline void MergeSort(const LocalTensor<float> &mrgDst, int32_t mrgDstNum, LocalTensor<float> &mrgSrc,
                                  int32_t mrgSrcNum, LocalTensor<float> &tmpTensor)
 {
-    if (mrgDstNum <= 3072) {
+    if (mrgDstNum <= 3072) { // 3072: threshold of data size for different processing strategy
         AscendC::MrgSort4Info params;
-        params.elementLengths[0] = mrgSrcNum;
-        params.elementLengths[1] = mrgDstNum;
+        params.elementLengths[MRG_QUE_0] = mrgSrcNum;
+        params.elementLengths[MRG_QUE_1] = mrgDstNum;
         params.ifExhaustedSuspension = false;
         params.validBit = 0b0011;
         params.repeatTimes = 1;
@@ -295,10 +295,10 @@ __aicore__ inline void MergeSort(const LocalTensor<float> &mrgDst, int32_t mrgDs
         int64_t mrgQuelen_3 = segNum - mrgQuelen_1 - mrgQuelen_2;
 
         AscendC::MrgSort4Info params;
-        params.elementLengths[0] = mrgQuelen_1 * unitElements;
-        params.elementLengths[1] = mrgQuelen_2 * unitElements;
-        params.elementLengths[2] = mrgQuelen_3 * unitElements;
-        params.elementLengths[3] = mrgSrcNum;
+        params.elementLengths[MRG_QUE_0] = mrgQuelen_1 * unitElements;
+        params.elementLengths[MRG_QUE_1] = mrgQuelen_2 * unitElements;
+        params.elementLengths[MRG_QUE_2] = mrgQuelen_3 * unitElements;
+        params.elementLengths[MRG_QUE_3] = mrgSrcNum;
 
         params.ifExhaustedSuspension = false;
         params.validBit = 0b1111;

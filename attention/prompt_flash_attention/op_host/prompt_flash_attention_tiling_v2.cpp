@@ -610,12 +610,12 @@ void PromptFlashAttentionTilingV2::GetQueryDimAndOutDim(const gert::StorageShape
         if (i == 1) { // BNSD_BSND：query:N, output:S; BSND_BNSD：query:S, output:N
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i + 1);
-        } else if (i == 2) { // BNSD_BSND：query:S, output:N; BSND_BNSD：query:N, output:S
+        } else if (i == 2) { // 2: current queryDimNum; BNSD_BSND：query:S, output:N; BSND_BNSD：query:N, output:S
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i - 1);
         }
     } else if (layoutStr == "BSH_BNSD") {
-        if (i == 2) { // BSH_BNSD：query:H, output:ND
+        if (i == 2) { // 2: current queryDimNum; BSH_BNSD：query:H, output:ND
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i + 1) * outShape->GetStorageShape().GetDim(i - 1);
         }
@@ -623,22 +623,22 @@ void PromptFlashAttentionTilingV2::GetQueryDimAndOutDim(const gert::StorageShape
         if (i == 1) { // BSND_NBSD：query:S, output:B
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i + 1);
-        } else if (i == 2) { // BSND_NBSD：query:N, output:S
+        } else if (i == 2) { // 2: current queryDimNum; BSND_NBSD：query:N, output:S
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
-            outDim = outShape->GetStorageShape().GetDim(i - 2);
+            outDim = outShape->GetStorageShape().GetDim(i - 2); // 2: 获取outShape的第i - 2个维度
         }
     } else if (layoutStr == "BNSD_NBSD") {
         if (i == 1) { // BNSD_NBSD：query:N, output:B
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i - 1);
-        } else if (i == 2) { // BNSD_NBSD：query:S, output:S
+        } else if (i == 2) { // 2: current queryDimNum; BNSD_NBSD：query:S, output:S
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
             outDim = outShape->GetStorageShape().GetDim(i);
         }
     } else if (layoutStr == "BSH_NBSD") {
-        if (i == 2) { // BSH_NBSD：query:H, output:ND
+        if (i == 2) { // 2: current queryDimNum; BSH_NBSD：query:H, output:ND
             tmpqueryDim = queryShape->GetStorageShape().GetDim(i);
-            outDim = outShape->GetStorageShape().GetDim(i + 1) * outShape->GetStorageShape().GetDim(i - 2);
+            outDim = outShape->GetStorageShape().GetDim(i + 1) * outShape->GetStorageShape().GetDim(i - 2); //  2: 获取outShape的第i - 2个维度
         }
     } else if (layoutStr == "NTD_TND" || layoutStr == "TND_NTD") {
         if (i == 0) { // query:N/T, output:T/N
@@ -866,7 +866,6 @@ bool PromptFlashAttentionTilingV2::SetAndCheckHeadNumRatio(ContextParamsForPFATi
             OP_LOGE(contextKeyParams.opName, "In antiquant and fullquant scenario, the G(numHeads / numKeyValueHeads) connot be larger than 64, but G = %d", nQ / nKV);	 
             return false; 
         } 
-          
      } else if (enableIFAMLA || enablePFAMLA || enableIFAMLAFullQuant) { 
         if ((enableIFAMLA || enableIFAMLAFullQuant) && (nQ / nKV > GLIMIT_128)) { // G cannot be greater than 128. 
             OP_LOGE(contextKeyParams.opName, "In mla decode (non quant and fullquant) scenario, the G(numHeads / numKeyValueHeads) connot be larger than 128, but G = %d", nQ / nKV); 
@@ -3831,56 +3830,56 @@ void PromptFlashAttentionTilingV2::UpdateTilingKeyConfig(ContextParamsForPFATili
     auto sOuter = tilingData.promptAttentionSingleCoreParams.get_singleProcessSOuterSize() * 2;    
     auto dSize = tilingData.promptAttentionBaseParams.get_qkHeadSize();
     auto dVsize = tilingData.promptAttentionBaseParams.get_vHeadSize();
-    if (dSize <= 64) dSize = 64;
-    else if (dSize <= 128) dSize = 128;
-    else if (dSize <= 256) dSize = 256;
-    else if (dSize <= 512) dSize = 512;
-    else if (dSize <= 576) dSize = 576;
+    if (dSize <= 64) dSize = 64; // 64: adjust qk headsize
+    else if (dSize <= 128) dSize = 128; // 128: adjust qk headsize
+    else if (dSize <= 256) dSize = 256; // 256: adjust qk headsize
+    else if (dSize <= 512) dSize = 512; // 512: adjust qk headsize
+    else if (dSize <= 576) dSize = 576; // 576: adjust qk headsize
 
-    if (dVsize <= 64) dVsize = 64;
-    else if (dVsize <= 128) dVsize = 128;
-    else if (dVsize <= 256) dVsize = 256;
-    else if (dVsize <= 512) dVsize = 512;
+    if (dVsize <= 64) dVsize = 64; // 64: adjust v headsize
+    else if (dVsize <= 128) dVsize = 128; // 128: adjust v headsize
+    else if (dVsize <= 256) dVsize = 256; // 256: adjust v headsize
+    else if (dVsize <= 512) dVsize = 512; // 512: adjust v headsize
 
-    if (sOuter == 64 && sInner == 64 && dSize == 256 && dVsize == 256) {
+    if (sOuter == 64 && sInner == 64 && dSize == 256 && dVsize == 256) { // 64, 256: head size
         config = Config_S1Aligned64_S2Aligned64_DAligned256_DVAligned256;
-    } else if (sOuter == 64 && sInner == 64 && dSize == 512 && dVsize == 512) {
+    } else if (sOuter == 64 && sInner == 64 && dSize == 512 && dVsize == 512) { // 64, 512: head size
         config = Config_S1Aligned64_S2Aligned64_DAligned512_DVAligned512;
-    } else if (sOuter == 64 && sInner == 256 && dSize == 64 && dVsize == 64) {
+    } else if (sOuter == 64 && sInner == 256 && dSize == 64 && dVsize == 64) { // 64, 256: head size
         config = Config_S1Aligned64_S2Aligned256_DAligned64_DVAligned64;
-    } else if (sOuter == 64 && sInner == 256 && dSize == 128 && dVsize == 128) {
+    } else if (sOuter == 64 && sInner == 256 && dSize == 128 && dVsize == 128) { // 64, 256, 128: head size
         config = Config_S1Aligned64_S2Aligned256_DAligned128_DVAligned128;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 64 && dVsize == 64) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 64 && dVsize == 64) { // 64, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned64_DVAligned64;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 128 && dVsize == 128) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 128 && dVsize == 128) { // 128: head size
         if (enablePFARope) {
             config = Config_S1Aligned128_S2Aligned128_DAligned192_DVAligned128;
         } else {
             config = Config_S1Aligned128_S2Aligned128_DAligned128_DVAligned128;
         }        
-    } else if (sOuter == 128 && sInner == 128 && dSize == 192 && dVsize == 128) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 192 && dVsize == 128) { // 192, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned256_DVAligned128;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 256 && dVsize == 128) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 256 && dVsize == 128) { // 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned256_DVAligned128;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 256 && dVsize == 256) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 256 && dVsize == 256) { // 256, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned256_DVAligned256;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 512 && dVsize == 512) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 512 && dVsize == 512) { // 512, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned512_DVAligned512;
-    } else if (sOuter == 128 && sInner == 256 && dSize == 64 && dVsize == 64) {
+    } else if (sOuter == 128 && sInner == 256 && dSize == 64 && dVsize == 64) { // 64, 256: head size
         config = Config_S1Aligned128_S2Aligned256_DAligned64_DVAligned64;
-    } else if (sOuter == 64 && sInner == 128 && dSize == 576 && dVsize == 512) {
+    } else if (sOuter == 64 && sInner == 128 && dSize == 576 && dVsize == 512) { // 64, 128, 576, 512: head size
         config = Config_S1Aligned64_S2Aligned128_DAligned576_DVAligned512;
-    } else if (sOuter == 64 && sInner == 256 && dSize == 256 && dVsize == 256) {
+    } else if (sOuter == 64 && sInner == 256 && dSize == 256 && dVsize == 256) { // 64, 256: head size
         config = Config_S1Aligned64_S2Aligned256_DAligned256_DVAligned256;
-    } else if (sOuter == 128 && sInner == 256 && dSize == 128 && dVsize == 128) {
+    } else if (sOuter == 128 && sInner == 256 && dSize == 128 && dVsize == 128) { // 256, 128: head size
         config = Config_S1Aligned128_S2Aligned256_DAligned128_DVAligned128;
-    } else if (sOuter == 128 && sInner == 128 && dSize == 128 && dVsize == 64) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 128 && dVsize == 64) { // 64, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned128_DVAligned64; //qkvd不等长
-    } else if (sOuter == 128 && sInner == 128 && dSize == 64 && dVsize == 128) {
+    } else if (sOuter == 128 && sInner == 128 && dSize == 64 && dVsize == 128) { // 64, 128: head size
         config = Config_S1Aligned128_S2Aligned128_DAligned64_DVAligned128;//qkvd不等长
-    } else if (sOuter == 64 && sInner == 256 && dSize == 128 && dVsize == 64) {
+    } else if (sOuter == 64 && sInner == 256 && dSize == 128 && dVsize == 64) { // 64, 128, 256: head size
         config = Config_S1Aligned64_S2Aligned256_DAligned128_DVAligned64;//qkvd不等长
-    } else if (sOuter == 64 && sInner == 256 && dSize == 64 && dVsize == 128) {
+    } else if (sOuter == 64 && sInner == 256 && dSize == 64 && dVsize == 128) { // 64, 128, 256: head size
         config = Config_S1Aligned64_S2Aligned256_DAligned64_DVAligned128;//qkvd不等长
     } else {
         OP_LOGE(contextKeyParams.opName, "The combination of parameters S1, S2, D, DV is not supported!");

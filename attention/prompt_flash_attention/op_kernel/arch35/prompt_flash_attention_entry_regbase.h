@@ -36,7 +36,7 @@ using namespace regbaseutil;
 
 #define REGBASE_COPY_TILING_DATA_ASCEND950_KVSAME_BASEAPI(tiling)                                                    \
     GET_TILING_DATA_WITH_STRUCT(FlashAttentionScoreSimplifiedTilingData, tilingDataIn, tiling);                           \
-    const FlashAttentionScoreSimplifiedTilingData *__restrict tilingData = &tilingDataIn;                                  \
+    const FlashAttentionScoreSimplifiedTilingData *__restrict tilingData = &tilingDataIn
 
 #define INVOKE_FA_OP_IMPL_ASCEND950_KVSAME_BASEAPI(templateClass, ...)                                               \
     do {                                                                                                                \
@@ -97,7 +97,7 @@ using namespace regbaseutil;
     TilingDataCopy(tiling_data_in, tiling_data_in_new);                                                               \
     const PromptFlashAttentionTilingData* __restrict tiling_data = &tiling_data_in;                                   \
     const TCubeTiling* __restrict bmm1tiling = &(tiling_data->bmm1TilingDataRect);                                    \
-    const TCubeTiling* __restrict bmm2tiling = &(tiling_data->bmm2TilingDataRect);
+    const TCubeTiling* __restrict bmm2tiling = &(tiling_data->bmm2TilingDataRect)
 
 #define INVOKE_PFA_TILING_DATA_95(tiling)           \
     INVOKE_PFA_TILING_DATA_V2(tiling)
