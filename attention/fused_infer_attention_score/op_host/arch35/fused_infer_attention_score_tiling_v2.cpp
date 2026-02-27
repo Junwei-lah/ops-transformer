@@ -35,6 +35,7 @@ constexpr uint32_t QUERY_DIM_3 = 3;
 constexpr uint32_t QUERY_DIM_4 = 4;
 constexpr uint32_t VALUE_DIM_2 = 2;
 constexpr uint32_t VALUE_DIM_3 = 3;
+constexpr uint32_t VALUE_DIM_4 = 4;
 constexpr uint32_t KV_DIM_0 = 0;
 constexpr uint32_t KV_DIM_2 = 2;
 constexpr uint32_t KV_DIM_3 = 3;
@@ -706,6 +707,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
     auto tempOut = context_->GetOutputShape(ATTENTION_OUT_INDEX);
     auto tempLse = context_->GetOutputShape(SOFTMAX_LSE_INDEX);
     bool qOutEmptyTensor = false;
+    bool enablePA = context_->GetOptionalInputTensor(BLOCK_TABLE_INDEX) != nullptr;
     uint32_t queryD = 1U;
     uint32_t valueD = 1U;
     OP_CHECK_IF((tempQ == nullptr),
@@ -740,6 +742,14 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
         return ge::GRAPH_FAILED);
     if (tempKVN == 0U) {
         tempKVN = tempN;
+    }
+    if (enablePA) {
+        size_t vDim = tempV->GetStorageShape().GetDimNum();
+        if (vDim == 3) {         // BBH, dim num: 3
+            valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_2) / tempKVN;
+        } else if (vDim == 5) {  // BND1BD0, dum num: 5
+            valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_2) * tempV->GetStorageShape().GetDim(VALUE_DIM_4);
+        }
     }
     const string inputLayoutStr = string(attrs->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
     int64_t s = 0;
@@ -807,7 +817,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 "The current layout is %s, attention out shape dim(%zu) should be 3!", inputLayoutStr.c_str(),
                 tempOut->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
         queryD = tempQ->GetStorageShape().GetDim(QUERY_DIM_2);
-        valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_2);
+        valueD = enablePA ? valueD : tempV->GetStorageShape().GetDim(VALUE_DIM_2);
         if (inputLayoutStr == "TND") {
             OP_CHECK_IF(((queryD == valueD) && (tempQ->GetStorageShape() != tempOut->GetStorageShape())),
                 OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), 
@@ -863,7 +873,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 "The current layout is %s, attention out shape dim(%zu) should be 3!", inputLayoutStr.c_str(),
                 tempOut->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
         queryD = tempQ->GetStorageShape().GetDim(QUERY_DIM_2) / tempN;
-        valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_2) / tempKVN;
+        valueD = enablePA ? valueD : tempV->GetStorageShape().GetDim(VALUE_DIM_2) / tempKVN;
         OP_CHECK_IF(((queryD == valueD) && (tempQ->GetStorageShape() != tempOut->GetStorageShape())),
             OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), 
                 "Layout is BSH and Query shape size[%ld, %ld, %ld] does NOT match Attention Out shape size[%ld, %ld, %ld]!",
@@ -880,7 +890,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 "The current layout is %s, attention out shape dim(%zu) should be 4!", inputLayoutStr.c_str(),
                 tempOut->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
         queryD = tempQ->GetStorageShape().GetDim(QUERY_DIM_3);
-        valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_3);
+        valueD = enablePA ? valueD : tempV->GetStorageShape().GetDim(VALUE_DIM_3);
         if (inputLayoutStr == "BNSD_BSND" || inputLayoutStr == "BSND_BNSD") {
             OP_CHECK_IF(((queryD == valueD) && ((tempQ->GetStorageShape().GetDim(0) != tempOut->GetStorageShape().GetDim(0)) ||
                 (tempQ->GetStorageShape().GetDim(1) != tempOut->GetStorageShape().GetDim(OUT_DIM_2)) ||
@@ -908,7 +918,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 "The current layout is %s, attention out shape dim(%zu) should be 4!", inputLayoutStr.c_str(),
                 tempOut->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
         queryD = tempQ->GetStorageShape().GetDim(QUERY_DIM_2) / tempN;
-        valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_2) / tempKVN;
+        valueD = enablePA ? valueD : tempV->GetStorageShape().GetDim(VALUE_DIM_2) / tempKVN;
         if (inputLayoutStr == "BSH_BNSD") {
             OP_CHECK_IF(((queryD == valueD) && ((tempQ->GetStorageShape().GetDim(QUERY_DIM_0) != tempOut->GetStorageShape().GetDim(0)) ||
                 (tempQ->GetStorageShape().GetDim(QUERY_DIM_1) != tempOut->GetStorageShape().GetDim(OUT_DIM_2)) ||
@@ -938,7 +948,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
                 "The current layout is %s, attention out shape dim(%zu) should be 4!", inputLayoutStr.c_str(),
                 tempOut->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
         queryD = tempQ->GetStorageShape().GetDim(QUERY_DIM_3);
-        valueD = tempV->GetStorageShape().GetDim(VALUE_DIM_3);
+        valueD = enablePA ? valueD : tempV->GetStorageShape().GetDim(VALUE_DIM_3);
         if (inputLayoutStr == "BSND_NBSD") {
             OP_CHECK_IF(((queryD == valueD) && ((tempQ->GetStorageShape().GetDim(0) != tempOut->GetStorageShape().GetDim(OUT_DIM_1)) ||
                 (tempQ->GetStorageShape().GetDim(QUERY_DIM_1) != tempOut->GetStorageShape().GetDim(OUT_DIM_2)) ||
