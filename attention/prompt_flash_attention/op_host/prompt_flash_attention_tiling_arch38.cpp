@@ -205,7 +205,8 @@ enum class PfaPseShapeType : uint8_t {
 };
 
 bool PromptFlashAttentionTilingArch38::CheckNonEmptyShapeExceptions(const ContextParamsForPFATiling& contextKeyParams,
-    const gert::StorageShape* shape, const std::string &sName) const {
+    const gert::StorageShape* shape, const std::string &sName) const 
+{
     OP_CHECK_IF(shape == nullptr,
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "%s shape is null.", sName.c_str()),
         return false);
@@ -216,7 +217,8 @@ bool PromptFlashAttentionTilingArch38::CheckNonEmptyShapeExceptions(const Contex
 }
 
 void PromptFlashAttentionTilingArch38::PromptFlashAttentionInitOutputSplit(int64_t totalSize,
-    PromptFlashAttentionTilingData &tilingData) {
+    PromptFlashAttentionTilingData &tilingData) 
+{
     PromptAttentionInitOutputParams *initParams = &tilingData.promptAttentionInitOutputParams;
     // Upward rounding, coreNum has been verified to be non-zero when obtained.
     uint32_t singleCoreSize = (totalSize + coreNum - 1) / (coreNum);
@@ -238,7 +240,8 @@ bool PromptFlashAttentionTilingArch38::CheckEmptyTensor(ContextParamsForPFATilin
 }
 
 void PromptFlashAttentionTilingArch38::SetEmptyTensor(ContextParamsForPFATiling& contextKeyParams, uint64_t& tilingKey,
-    uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) {
+    uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) 
+{
     tilingKey = EMPTY_KV_TILING_KEY;
     PromptFlashAttentionInitOutputSplit(contextKeyParams.outputShape->GetStorageShape().GetShapeSize(), tilingData);
     tilingData.promptAttentionInitOutputParams.set_needInit(1);
@@ -250,7 +253,8 @@ void PromptFlashAttentionTilingArch38::SetEmptyTensor(ContextParamsForPFATiling&
     workspace[0] = sysWorkspaceSize;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckIODataType(ContextParamsForPFATiling& contextKeyParams) {
+bool PromptFlashAttentionTilingArch38::CheckIODataType(ContextParamsForPFATiling& contextKeyParams) 
+{
     outputType = contextKeyParams.outputDataType;
     inputType = contextKeyParams.inputDataType;
 
@@ -282,7 +286,8 @@ bool PromptFlashAttentionTilingArch38::CheckIODataType(ContextParamsForPFATiling
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::SetInputLayout(const char* layout) {
+bool PromptFlashAttentionTilingArch38::SetInputLayout(const char* layout) 
+{
     if (layout == nullptr) {
         inputLayout = InputLayout::BSH;
         return true;
@@ -304,7 +309,8 @@ bool PromptFlashAttentionTilingArch38::SetInputLayout(const char* layout) {
     return true;
 }
 
-int64_t GetMaxSeq(const gert::Tensor* actualSeqLength) {
+int64_t GetMaxSeq(const gert::Tensor* actualSeqLength) 
+{
     int64_t max = actualSeqLength->GetData<int64_t>()[0];
     for (int i = 1; i < actualSeqLength->GetShapeSize(); ++i) {
         max = std::max(max, actualSeqLength->GetData<int64_t>()[i] - actualSeqLength->GetData<int64_t>()[i - 1]);
@@ -313,7 +319,8 @@ int64_t GetMaxSeq(const gert::Tensor* actualSeqLength) {
 }
 
 bool PromptFlashAttentionTilingArch38::SetShape(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* shape,
-    const std::string inputName, int64_t& b, int64_t& n, int64_t& s, int64_t& d, int64_t& h, int64_t& t) const {
+    const std::string inputName, int64_t& b, int64_t& n, int64_t& s, int64_t& d, int64_t& h, int64_t& t) const 
+{
     // when enablePA, k_v has two shapes:
     // 1. [>=blockNums, N, blockSize, D]
     // 2. [>=blockNums, blockSize, H]
@@ -369,7 +376,8 @@ bool PromptFlashAttentionTilingArch38::SetShape(ContextParamsForPFATiling& conte
 }
 
 bool PromptFlashAttentionTilingArch38::GetAndCheckShape(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& shapeInfo, const gert::StorageShape* shape, const std::string& sName) const {
+    PFAShapeInfo& shapeInfo, const gert::StorageShape* shape, const std::string& sName) const 
+{
     std::string layoutStr(contextKeyParams.layout);
     OP_CHECK_IF((shape->GetStorageShape().GetDimNum() != 3) && (inputLayout == InputLayout::BSH || inputLayout == InputLayout::TND),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "dim num of %s should = 3 when inputLayout is %s,"
@@ -425,7 +433,8 @@ bool PromptFlashAttentionTilingArch38::GetAndCheckShape(ContextParamsForPFATilin
 }
 
 bool PromptFlashAttentionTilingArch38::GetAndCheckRopeShape(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& shapeInfo,
-    PFAShapeInfo& ropeShapeInfo, const gert::StorageShape* shape, const std::string& sName, const std::string& rName) const {
+    PFAShapeInfo& ropeShapeInfo, const gert::StorageShape* shape, const std::string& sName, const std::string& rName) const 
+{
     std::string layoutStr(contextKeyParams.layout);
     OP_CHECK_IF((shape->GetStorageShape().GetDimNum() != 3) && (inputLayout == InputLayout::BSH || inputLayout == InputLayout::TND),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "dim num of %s should = 3 when inputLayout is %s,"
@@ -488,7 +497,8 @@ bool PromptFlashAttentionTilingArch38::GetAndCheckRopeShape(ContextParamsForPFAT
 }
 
 bool PromptFlashAttentionTilingArch38::CheckQueryOutParamsConsistency(const ContextParamsForPFATiling& contextKeyParams,
-    const gert::StorageShape* queryShape, const gert::StorageShape* outShape) const {
+    const gert::StorageShape* queryShape, const gert::StorageShape* outShape) const 
+{
     const size_t queryDimNum = queryShape->GetStorageShape().GetDimNum();
     const size_t outDimNum = outShape->GetStorageShape().GetDimNum();
     int64_t tmpqueryDim = 0;
@@ -530,7 +540,8 @@ bool PromptFlashAttentionTilingArch38::CheckQueryOutParamsConsistency(const Cont
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckKVDataType(ContextParamsForPFATiling& contextKeyParams) const {
+bool PromptFlashAttentionTilingArch38::CheckKVDataType(ContextParamsForPFATiling& contextKeyParams) const 
+{
     ge::DataType keyDataType = contextKeyParams.kDataType;
     ge::DataType valueDataType = contextKeyParams.vDataType;
 
@@ -550,7 +561,8 @@ bool PromptFlashAttentionTilingArch38::CheckKVDataType(ContextParamsForPFATiling
 }
 
 bool PromptFlashAttentionTilingArch38::CheckKeyValueParamsConsistency(ContextParamsForPFATiling& contextKeyParams,
-    const gert::StorageShape* keyShape, const gert::StorageShape* valueShape) const {
+    const gert::StorageShape* keyShape, const gert::StorageShape* valueShape) const 
+{
     if (enableTensorList) {
         return true;
     }
@@ -578,7 +590,8 @@ bool PromptFlashAttentionTilingArch38::CheckKeyValueParamsConsistency(ContextPar
 }
 
 bool PromptFlashAttentionTilingArch38::CheckInputDimAndHeadNum(ContextParamsForPFATiling& contextKeyParams,
-    const uint32_t nQAttr, const uint32_t nKVAttr) {
+    const uint32_t nQAttr, const uint32_t nKVAttr) 
+{
     uint32_t nQ = nQAttr;
     uint32_t nKV = nKVAttr;
     if (nKVAttr == 0U) { // Detected that nKVAttr is the default value, which means that the customer did not pass in.
@@ -643,7 +656,8 @@ bool PromptFlashAttentionTilingArch38::CheckInputDimAndHeadNum(ContextParamsForP
 }
 
 bool PromptFlashAttentionTilingArch38::SetAndCheckHeadNumRatio(ContextParamsForPFATiling& contextKeyParams,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     const int32_t nQ = *contextKeyParams.headsNumber;
     const int32_t nKV = *contextKeyParams.numKeyValueHeads;
 
@@ -685,7 +699,8 @@ bool PromptFlashAttentionTilingArch38::SetAndCheckHeadNumRatio(ContextParamsForP
 
 bool PromptFlashAttentionTilingArch38::CheckPostQuantShape(const ContextParamsForPFATiling& contextKeyParams,
     const gert::StorageShape* quantOffset2Shape, const ge::DataType quantScale2Type, int64_t quantScale2ShapeSize,
-    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& valueShapeInfo) const {
+    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& valueShapeInfo) const 
+{
     // dtype verification
     OP_CHECK_IF((quantOffset2Shape != nullptr) && (quantScale2Type != contextKeyParams.quantOffset2Type),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
@@ -731,7 +746,8 @@ bool PromptFlashAttentionTilingArch38::CheckPostQuantShape(const ContextParamsFo
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckPerTensorQuantParams(const ContextParamsForPFATiling& contextKeyParams) const {
+bool PromptFlashAttentionTilingArch38::CheckPerTensorQuantParams(const ContextParamsForPFATiling& contextKeyParams) const 
+{
     const gert::StorageShape* deqScale1Shape = contextKeyParams.deqScale1Shape;
     const gert::StorageShape* quantScale1Shape = contextKeyParams.scale1Shape;
     const gert::StorageShape* deqScale2Shape = contextKeyParams.deqScale2Shape;
@@ -756,7 +772,8 @@ bool PromptFlashAttentionTilingArch38::CheckPerTensorQuantParams(const ContextPa
 }                                       
 
 bool PromptFlashAttentionTilingArch38::CheckPerblockQuantParams(const ContextParamsForPFATiling& contextKeyParams, 
-    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) const {
+    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) const 
+{
     const ge::DataType dequantScaleQueryType = contextKeyParams.dequantScaleQueryType;
     const ge::DataType KeyAntiquantScaleType = contextKeyParams.KeyAntiquantScaleType;
     const ge::DataType valueAntiquantScaleType = contextKeyParams.valueAntiquantScaleType;
@@ -809,7 +826,8 @@ bool PromptFlashAttentionTilingArch38::CheckPerblockQuantParams(const ContextPar
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPostQuantParams(const ContextParamsForPFATiling& contextKeyParams, 
-    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& valueShapeInfo) const {
+    const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& valueShapeInfo) const 
+{
     const gert::StorageShape* quantScale2Shape = contextKeyParams.scale2Shape;
     const gert::StorageShape* quantOffset2Shape = contextKeyParams.offset2Shape;
     const ge::DataType quantScale2Type = contextKeyParams.quantScale2Type;
@@ -850,7 +868,8 @@ bool PromptFlashAttentionTilingArch38::CheckPostQuantParams(const ContextParamsF
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams) const {
+bool PromptFlashAttentionTilingArch38::CheckAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams) const 
+{
     const gert::StorageShape* antiquantScaleShape = contextKeyParams.antiquantScaleShape;
     // 伪量化收编至ifa tiling，pfa接口kv若传入伪量化dtype均会在此被拦截
     OP_CHECK_IF(contextKeyParams.antiquantScale == nullptr || antiquantScaleShape == nullptr,
@@ -861,7 +880,8 @@ bool PromptFlashAttentionTilingArch38::CheckAntiquantParamsShape(ContextParamsFo
 
 bool PromptFlashAttentionTilingArch38::GetAndCheckPrefixShape(ContextParamsForPFATiling& contextKeyParams,
     const PFAShapeInfo& queryShapeInfo, PFAShapeInfo& prefixShapeInfo,
-    PromptFlashAttentionTilingData& tilingData) const {
+    PromptFlashAttentionTilingData& tilingData) const 
+{
     int64_t prefixSeqInnerSize = 0;
     int64_t bPrefix = 0U;
     int64_t nPrefix = 0U;
@@ -896,7 +916,8 @@ bool PromptFlashAttentionTilingArch38::GetAndCheckPrefixShape(ContextParamsForPF
 }
 
 bool PromptFlashAttentionTilingArch38::CheckKeyValuePrefixConsistency(ContextParamsForPFATiling& contextKeyParams,
-    const gert::StorageShape* keyShape) const {
+    const gert::StorageShape* keyShape) const 
+{
     size_t prefixKeyDim = contextKeyParams.keySharedPrefix->GetStorageShape().GetDimNum();
     size_t prefixValueDim = contextKeyParams.valueSharedPrefix->GetStorageShape().GetDimNum();
     size_t KVDim = keyShape->GetStorageShape().GetDimNum();
@@ -922,7 +943,8 @@ bool PromptFlashAttentionTilingArch38::CheckKeyValuePrefixConsistency(ContextPar
 }
 
 bool PromptFlashAttentionTilingArch38::CheckActSharedPrefix(ContextParamsForPFATiling& contextKeyParams,
-    const uint32_t sPrefix, const uint32_t sKV) {
+    const uint32_t sPrefix, const uint32_t sKV) 
+{
     size_t prefixDimNum = contextKeyParams.actualSharedPrefixLen->GetStorageShape().GetDimNum();
     OP_CHECK_IF((prefixDimNum != 1), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
         "actualSharedPrefixLen dim num(%zu) should be 1!", prefixDimNum),
@@ -949,7 +971,8 @@ bool PromptFlashAttentionTilingArch38::CheckActSharedPrefix(ContextParamsForPFAT
 
 bool PromptFlashAttentionTilingArch38::CheckPAKeyValueShape(ContextParamsForPFATiling& contextKeyParams, int64_t& keyDim1,
     const PFAShapeInfo& queryShapeInfo, const gert::StorageShape* keyShape, const gert::StorageShape* valueShape,
-    const size_t keyDim, const int32_t* blockSize, int64_t blockNumValid, int32_t headNumRatio) const {
+    const size_t keyDim, const int32_t* blockSize, int64_t blockNumValid, int32_t headNumRatio) const 
+{
     int64_t keyDim2 = keyShape->GetStorageShape().GetDim(KV_CACHE_DIM_1);
     int64_t keyDim3 = keyShape->GetStorageShape().GetDim(KV_CACHE_DIM_2);
     int64_t keyDim4 = 0;
@@ -992,7 +1015,8 @@ bool PromptFlashAttentionTilingArch38::CheckPAKeyValueShape(ContextParamsForPFAT
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPACacheShape(ContextParamsForPFATiling& contextKeyParams, const size_t keyDim, const PFAShapeInfo& shapeInfo,
-    const gert::StorageShape* shape, const int32_t* blockSize, int64_t blockNumValid, int32_t headNumRatio, const std::string& sName) {
+    const gert::StorageShape* shape, const int32_t* blockSize, int64_t blockNumValid, int32_t headNumRatio, const std::string& sName) 
+{
     std::string layoutStr(contextKeyParams.layout);
     int64_t dim1 = shape->GetStorageShape().GetDim(KV_CACHE_DIM_0);
     int64_t dim2 = shape->GetStorageShape().GetDim(KV_CACHE_DIM_1);
@@ -1030,7 +1054,8 @@ bool PromptFlashAttentionTilingArch38::CheckPACacheShape(ContextParamsForPFATili
 
 bool PromptFlashAttentionTilingArch38::CheckBlockTableShape(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo,
     PFAShapeInfo& queryRopeShapeInfo, const int32_t* blockSize, const gert::StorageShape* blockTableShape,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     const gert::Tensor* actSeqLenKV = contextKeyParams.actualSequenceLengthKV;
     int32_t actualSeqKVPerBatch = 0;
     int32_t blockNumPerBatch = 0;
@@ -1105,7 +1130,8 @@ bool PromptFlashAttentionTilingArch38::CheckBlockTableShape(ContextParamsForPFAT
 
 bool PromptFlashAttentionTilingArch38::CheckMaskShape(ContextParamsForPFATiling& contextKeyParams, const int32_t* sparseMode,
     int64_t& attenMaskBatch, int64_t& attenMaskS1, int64_t& attenMaskS2, bool& checkMask, const uint32_t sQ,
-    const uint32_t sK, const uint32_t batchSize, std::string& strMaskShape) const {
+    const uint32_t sK, const uint32_t batchSize, std::string& strMaskShape) const 
+{
     const gert::StorageShape* attenMaskShape = contextKeyParams.attentionMaskShape;
     size_t attenMaskDim = attenMaskShape->GetStorageShape().GetDimNum();
     int64_t attenMaskN = 1U;
@@ -1152,7 +1178,8 @@ bool PromptFlashAttentionTilingArch38::CheckMaskShape(ContextParamsForPFATiling&
 
 void PromptFlashAttentionTilingArch38::SetSparseModeData(ContextParamsForPFATiling& contextKeyParams,
     const gert::StorageShape* attenMaskShape, PromptFlashAttentionTilingData& tilingData,
-    const int32_t* sparseMode, const int64_t* preTokens, const int64_t* nextTokens) {
+    const int32_t* sparseMode, const int64_t* preTokens, const int64_t* nextTokens) 
+{
     size_t attenMaskBatch = 1;
     if ((attenMaskShape != nullptr) && (attenMaskShape->GetStorageShape().GetDimNum() != MASKDIM_2)) {
         // 2: target dimension of attenMask
@@ -1216,7 +1243,8 @@ void PromptFlashAttentionTilingArch38::SetSparseModeData(ContextParamsForPFATili
 }
 
 bool PromptFlashAttentionTilingArch38::CheckMaskShapeCrossSparse(ContextParamsForPFATiling& contextKeyParams,
-    const int32_t* sparseMode, uint32_t sQ, const uint32_t sK, const uint32_t batchSize) {
+    const int32_t* sparseMode, uint32_t sQ, const uint32_t sK, const uint32_t batchSize) 
+{
     if ((contextKeyParams.fromTilingSink != 0) || (!enableMask)) {
         return true;
     }
@@ -1260,7 +1288,8 @@ bool PromptFlashAttentionTilingArch38::CheckMaskShapeCrossSparse(ContextParamsFo
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPFAMerge(ContextParamsForPFATiling& contextKeyParams,
-    const PFAShapeInfo& queryShapeInfo) const {
+    const PFAShapeInfo& queryShapeInfo) const 
+{
     if ((queryShapeInfo.s <= 1U) || (queryShapeInfo.s > pfaMergeQsLimit)) {
         return false;
     }
@@ -1278,7 +1307,8 @@ bool PromptFlashAttentionTilingArch38::CheckPFAMerge(ContextParamsForPFATiling& 
 }
 
 bool PromptFlashAttentionTilingArch38::CheckIO(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo) {
+    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo) 
+{
     const gert::StorageShape* queryShape = contextKeyParams.queryInputShape;
     const gert::StorageShape* outShape = contextKeyParams.outputShape;
     const gert::StorageShape* valueShape = contextKeyParams.valueInputShape;
@@ -1332,7 +1362,8 @@ bool PromptFlashAttentionTilingArch38::CheckIO(ContextParamsForPFATiling& contex
 }
 
 bool PromptFlashAttentionTilingArch38::CheckKV(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo) {
+    PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo) const 
+{
     const gert::StorageShape* keyShape = contextKeyParams.keyInputShape;
     const gert::StorageShape* valueShape = contextKeyParams.valueInputShape;
 
@@ -1360,7 +1391,8 @@ bool PromptFlashAttentionTilingArch38::CheckKV(ContextParamsForPFATiling& contex
 }
 
 bool PromptFlashAttentionTilingArch38::CheckQueryAndKey(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, PromptFlashAttentionTilingData& tilingData) {
+    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, PromptFlashAttentionTilingData& tilingData) 
+{
     // check numhead ratio
     if (!SetAndCheckHeadNumRatio(contextKeyParams, tilingData)) {
         return false;
@@ -1379,7 +1411,8 @@ bool PromptFlashAttentionTilingArch38::CheckQueryAndKey(ContextParamsForPFATilin
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckIFAMLA(ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const {
+bool PromptFlashAttentionTilingArch38::CheckIFAMLA(ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const 
+{
     constexpr uint32_t maxQuerySeqLenInIfaMla = 16U; // ifa mla场景qS最大支持16
     OP_CHECK_IF((queryShapeInfo.s > maxQuerySeqLenInIfaMla || queryShapeInfo.s < 1),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "input query's sequence length is %u, it should be "
@@ -1399,7 +1432,8 @@ bool PromptFlashAttentionTilingArch38::CheckIFAMLA(ContextParamsForPFATiling& co
 }
 
 bool PromptFlashAttentionTilingArch38::CheckRope(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, PFAShapeInfo& queryRopeShapeInfo) {
+    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, PFAShapeInfo& queryRopeShapeInfo) 
+{
     if (contextKeyParams.queryRopeInputShape == nullptr && contextKeyParams.keyRopeInputShape == nullptr) {
         return true;
     }
@@ -1434,7 +1468,8 @@ bool PromptFlashAttentionTilingArch38::CheckRope(ContextParamsForPFATiling& cont
 }
 
 bool PromptFlashAttentionTilingArch38::CheckQuant(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) {
+    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) const 
+{
     const gert::StorageShape* deqScale1Shape = contextKeyParams.deqScale1Shape;
     const gert::StorageShape* quantScale1Shape = contextKeyParams.scale1Shape;
     const gert::StorageShape* deqScale2Shape = contextKeyParams.deqScale2Shape;
@@ -1482,7 +1517,8 @@ bool PromptFlashAttentionTilingArch38::CheckQuant(ContextParamsForPFATiling& con
 
 bool PromptFlashAttentionTilingArch38::CheckPrefix(ContextParamsForPFATiling& contextKeyParams,
     PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     PFAShapeInfo prefixShapeInfo;
     tilingData.promptAttentionBaseParams.set_prefixSeqInnerSize(0);
     if (!isKVHasPrefix) {
@@ -1527,7 +1563,8 @@ bool PromptFlashAttentionTilingArch38::CheckPrefix(ContextParamsForPFATiling& co
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckActSeq(const ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const {
+bool PromptFlashAttentionTilingArch38::CheckActSeq(const ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const 
+{
     if (inputLayout != InputLayout::TND) {
         return true;
     }
@@ -1599,7 +1636,8 @@ bool PromptFlashAttentionTilingArch38::CheckActSeq(const ContextParamsForPFATili
 }
 
 bool PromptFlashAttentionTilingArch38::CheckActSeqLen(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& keyShapeInfo) {
+    PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& keyShapeInfo) 
+{
     const gert::Tensor* actSeqLen = contextKeyParams.actualSequenceLengthQ;
     const gert::Tensor* actSeqLenKV = contextKeyParams.actualSequenceLengthKV;
 
@@ -1671,7 +1709,8 @@ bool PromptFlashAttentionTilingArch38::CheckActSeqLen(ContextParamsForPFATiling&
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPATypeAndShape(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& queryRopeShapeInfo, PromptFlashAttentionTilingData& tilingData) {
+    PFAShapeInfo& queryShapeInfo, PFAShapeInfo& queryRopeShapeInfo, PromptFlashAttentionTilingData& tilingData) 
+{
     // The interception that is mutually exclusive with the left padding has been implemented in FIA.
     OP_CHECK_IF(enableTensorList,
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "not support tensorlist when blockTable is not null"),
@@ -1731,7 +1770,8 @@ bool PromptFlashAttentionTilingArch38::CheckPATypeAndShape(ContextParamsForPFATi
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPseShiftTypeAndShape(ContextParamsForPFATiling& contextKeyParams,
-    uint32_t b, uint32_t n, uint32_t s1, uint32_t s2) {
+    uint32_t b, uint32_t n, uint32_t s1, uint32_t s2) 
+{
     const gert::StorageShape* pseShiftShape = contextKeyParams.pseShiftShape;
     if (!CheckNonEmptyShapeExceptions(contextKeyParams, pseShiftShape, "pseShift")) {
         return false;
@@ -1780,7 +1820,8 @@ bool PromptFlashAttentionTilingArch38::CheckPseShiftTypeAndShape(ContextParamsFo
 }
 
 bool PromptFlashAttentionTilingArch38::CheckInnerPrecise(ContextParamsForPFATiling& contextKeyParams,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     // 0: Invalid plural number; 4: Invalid if greater than or equal to 4; 0,1,2,3 are effective values for innerPrecise.
     if (innerPrecise >= 4 || innerPrecise < 0) {
         OP_LOGE(contextKeyParams.opName, "innerPrecise [%d] should be 0,1,2,3, please check.", innerPrecise);
@@ -1811,7 +1852,8 @@ bool PromptFlashAttentionTilingArch38::CheckInnerPrecise(ContextParamsForPFATili
 }
 
 bool PromptFlashAttentionTilingArch38::CheckMaskTypeAndShape(ContextParamsForPFATiling& contextKeyParams,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     const gert::StorageShape* attenMaskShape = contextKeyParams.attentionMaskShape;
     OP_CHECK_IF((attenMaskShape->GetStorageShape().GetShapeSize() == gert::Shape::kInvalidDimValue),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "Get the shape size of attenMask failed."),
@@ -1887,7 +1929,8 @@ void PromptFlashAttentionTilingArch38::SetSparseType(uint32_t qS)
 }
 
 bool PromptFlashAttentionTilingArch38::CheckSparseMode(ContextParamsForPFATiling& contextKeyParams,
-    uint32_t qS, PromptFlashAttentionTilingData& tilingData) {
+    uint32_t qS, PromptFlashAttentionTilingData& tilingData) 
+{
     const int32_t* sparseMode = contextKeyParams.sparseMode;
     const int64_t* nextTokens = contextKeyParams.nextToken;
     const int64_t* preTokens = contextKeyParams.preToken;
@@ -1940,7 +1983,8 @@ bool PromptFlashAttentionTilingArch38::CheckSparseMode(ContextParamsForPFATiling
 }
 
 bool PromptFlashAttentionTilingArch38::CheckPACrossover(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo) {
+    PFAShapeInfo& queryShapeInfo) 
+{
     if (enablePA) {
         OP_CHECK_IF((isKVHasPrefix),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
@@ -1963,7 +2007,8 @@ bool PromptFlashAttentionTilingArch38::CheckPACrossover(ContextParamsForPFATilin
 }
 
 bool PromptFlashAttentionTilingArch38::CheckMaskCrossIFAMLA(ContextParamsForPFATiling& contextKeyParams,
-    const int32_t *sparseMode, uint32_t queryS) {
+    const int32_t *sparseMode, uint32_t queryS) 
+{
     if (sparseMode == nullptr) {
         return true;
     }
@@ -1986,7 +2031,8 @@ bool PromptFlashAttentionTilingArch38::CheckMaskCrossIFAMLA(ContextParamsForPFAT
 }
 
 bool PromptFlashAttentionTilingArch38::CheckMaskCrossover(ContextParamsForPFATiling& contextKeyParams,
-    PFAShapeInfo& queryShapeInfo, PromptFlashAttentionTilingData& tilingData) {
+    PFAShapeInfo& queryShapeInfo, PromptFlashAttentionTilingData& tilingData) 
+{
     auto maskDataType = contextKeyParams.maskDataType;
     const int32_t* sparseMode = contextKeyParams.sparseMode;
     const gert::StorageShape* attenMaskShape = contextKeyParams.attentionMaskShape;
@@ -2021,7 +2067,8 @@ bool PromptFlashAttentionTilingArch38::CheckMaskCrossover(ContextParamsForPFATil
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckTNDLayoutCrossover(ContextParamsForPFATiling& contextKeyParams) {
+bool PromptFlashAttentionTilingArch38::CheckTNDLayoutCrossover(ContextParamsForPFATiling& contextKeyParams) 
+{
     if (inputLayout != InputLayout::TND) {
         return true;
     }
@@ -2128,7 +2175,8 @@ bool PromptFlashAttentionTilingArch38::ParseActualSeqLengths(ContextParamsForPFA
 
 bool PromptFlashAttentionTilingArch38::CheckMultiFeatureCrossover(ContextParamsForPFATiling& contextKeyParams,
     PFAShapeInfo& queryShapeInfo, std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     if (!ParseActualSeqLengths(contextKeyParams, queryShapeInfo, actualSeqLengths, actualSeqLengthsKV)) {
         return false;
     }
@@ -2199,7 +2247,8 @@ bool PromptFlashAttentionTilingArch38::CheckMultiFeatureCrossover(ContextParamsF
     return true;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckPerblockCrossover(ContextParamsForPFATiling& contextKeyParams) {
+bool PromptFlashAttentionTilingArch38::CheckPerblockCrossover(ContextParamsForPFATiling& contextKeyParams) 
+{
     if (!enablePerblockQuant) {
         return true;
     }
@@ -2241,7 +2290,8 @@ bool PromptFlashAttentionTilingArch38::CheckPerblockCrossover(ContextParamsForPF
 }
 
 void PromptFlashAttentionTilingArch38::SetTilingDataAttribute(ContextParamsForPFATiling& contextKeyParams,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     tilingData.promptAttentionBaseParams.set_preTokens(sparsePreTokens);
     tilingData.promptAttentionBaseParams.set_nextTokens(sparseNextTokens);
     tilingData.promptAttentionBaseParams.set_sparseMode(static_cast<uint32_t>(sparseModeVal));
@@ -2281,7 +2331,8 @@ void PromptFlashAttentionTilingArch38::SetTilingDataAttribute(ContextParamsForPF
 }
 
 void PromptFlashAttentionTilingArch38::GetEnableDN(PromptFlashAttentionTilingData& tilingData, PFAShapeInfo& queryShapeInfo,
-    const PFAShapeInfo& valueShapeInfo, std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV) {
+    const PFAShapeInfo& valueShapeInfo, std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV) 
+{
     // 使能DN条件：1.sOuter >= 128; 2.d等长且不大于128; 3.输入类型为fp16/bf16; 4.不带mask、pse、MLA等高阶特性; 5.FP8 perblock全量化
     bool isQKVActualSeqLengthsRight = true;
     constexpr uint32_t dLimitDN = 128;
@@ -2307,7 +2358,8 @@ void PromptFlashAttentionTilingArch38::GetEnableDN(PromptFlashAttentionTilingDat
 }
 
 void PromptFlashAttentionTilingArch38::SetTilingData(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo,
-    PFAShapeInfo& queryRopeShapeInfo, PFAShapeInfo& valueShapeInfo, PromptFlashAttentionTilingData& tilingData) {
+    PFAShapeInfo& queryRopeShapeInfo, PFAShapeInfo& valueShapeInfo, PromptFlashAttentionTilingData& tilingData) 
+{
     typeByteNum = BYTE_BLOCK / dataTypeSize;
     outputTypeByteNum = BYTE_BLOCK / outputDataTypeSize;
     softmaxTypeByteNum = BYTE_BLOCK / softmaxDataTypeSize;
@@ -2368,8 +2420,8 @@ void PromptFlashAttentionTilingArch38::SetTilingData(ContextParamsForPFATiling& 
 }
 
 void PromptFlashAttentionTilingArch38::InferTilingMod(const ContextParamsForPFATiling& contextKeyParams,
-    std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, uint32_t actualSeqArrayLen,
-    uint32_t d) {
+    std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, uint32_t actualSeqArrayLen, uint32_t d) 
+{
     // Determine whether to use the norm template
     int64_t minActualSeqLengths = INT64_MAX;
     int64_t minActualSeqLengthsKV = INT64_MAX;
@@ -2387,19 +2439,22 @@ void PromptFlashAttentionTilingArch38::InferTilingMod(const ContextParamsForPFAT
     }
 }
 
-void PromptFlashAttentionTilingArch38::InferSplitCoreMode() {
+void PromptFlashAttentionTilingArch38::InferSplitCoreMode() 
+{
     splitCoreMode = SplitCoreMode::SPLIT_NBS_CUBE;
     if (ascendPlatformInfo.socVersion == platform_ascendc::SocVersion::MC62CM12A) {
         splitCoreMode = SplitCoreMode::SPLIT_NBS_VECTOR;
     }
 }
 
-void PromptFlashAttentionTilingArch38::InferConstantization() {
+void PromptFlashAttentionTilingArch38::InferConstantization() 
+{
     isConstantization = true;
 }
 
 void PromptFlashAttentionTilingArch38::GetMatMulType(matmul_tiling::DataType &mmInputType,
-    matmul_tiling::DataType &mmOutputType) const {
+    matmul_tiling::DataType &mmOutputType) const 
+{
     if (inputType == ge::DT_FLOAT16 && innerPrecise == HIGH_PRECISION) {
         mmInputType = matmul_tiling::DataType::DT_FLOAT16;
         mmOutputType = matmul_tiling::DataType::DT_FLOAT;
@@ -2413,7 +2468,8 @@ void PromptFlashAttentionTilingArch38::GetMatMulType(matmul_tiling::DataType &mm
 }
 
 bool PromptFlashAttentionTilingArch38::EnableMTE2BmmPipe(PromptFlashAttentionTilingData& tilingData,
-    matmul_tiling::MatmulApiTiling& bmm, TCubeTiling& bmmTilingData, uint32_t sOuterFactor, uint32_t sInnerFactor) const {
+    matmul_tiling::MatmulApiTiling& bmm, TCubeTiling& bmmTilingData, uint32_t sOuterFactor, uint32_t sInnerFactor) const 
+{
     // When the size is greater than 16, use xiaoe speculative inference.
     if (tilingData.promptAttentionBaseParams.get_seqSize() > 16) {
         return true;
@@ -2437,7 +2493,8 @@ bool PromptFlashAttentionTilingArch38::EnableMTE2BmmPipe(PromptFlashAttentionTil
     return res;
 }
 
-void PromptFlashAttentionTilingArch38::EnableBmmDoubleBuffer(TCubeTiling& bmmTilingData) const {
+void PromptFlashAttentionTilingArch38::EnableBmmDoubleBuffer(TCubeTiling& bmmTilingData) const 
+{
     if ((bmmTilingData.get_depthA1() == 1) && (bmmTilingData.get_depthB1() == 1)) {
         bmmTilingData.set_depthA1(2); // 2 : depthA1
         bmmTilingData.set_depthB1(2); // 2 : depthB1
@@ -2446,7 +2503,8 @@ void PromptFlashAttentionTilingArch38::EnableBmmDoubleBuffer(TCubeTiling& bmmTil
 
 bool PromptFlashAttentionTilingArch38::PromptFlashAttentionCheckBmm1(PromptFlashAttentionTilingData& tilingData,
     TCubeTiling& bmm1TilingData, int64_t l1SizeRemain, int64_t l0CSize, uint32_t sOuterFactor,
-    uint32_t sInnerFactor, bool autoBaseMNK) {
+    uint32_t sInnerFactor, bool autoBaseMNK) 
+{
     if (splitCoreMode == SplitCoreMode::SPLIT_NBS_CUBE) {
         sOuterFactor = sOuterFactor * CV_RATIO;
     }
@@ -2557,7 +2615,8 @@ bool PromptFlashAttentionTilingArch38::PromptFlashAttentionCheckBmm1(PromptFlash
 
 bool PromptFlashAttentionTilingArch38::AdjustCVTilingCVDiff(const ContextParamsForPFATiling& contextKeyParams,
     uint32_t& sOuterFactor, uint32_t& sInnerFactor, uint32_t& softmaxSOuterFactor,
-    PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo) {
+    PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo) 
+{
     uint32_t minFactor = SOUTER_FACTOR_DEFAULT;
     uint32_t rectangleFactor = SINNER_FACTOR_DEFAULT;
     softmaxSOuterFactor = SOUTER_FACTOR_DEFAULT;
@@ -2620,7 +2679,8 @@ bool PromptFlashAttentionTilingArch38::AdjustCVTilingCVDiff(const ContextParamsF
 
 bool PromptFlashAttentionTilingArch38::PromptFlashAttentionCheckBmm2(PromptFlashAttentionTilingData& tilingData,
     TCubeTiling& bmm2TilingData, int64_t l1SizeRemain, int64_t l0CSize, uint32_t sOuterFactor, uint32_t sInnerFactor,
-    uint32_t dSplitFactor, bool autoBaseMNK) {
+    uint32_t dSplitFactor, bool autoBaseMNK) 
+{
     int32_t ret = 0;
     matmul_tiling::MatmulApiTiling bmm2(ascendPlatformInfo);
     matmul_tiling::DataType bmm2InputType = matmul_tiling::DataType::DT_FLOAT16;
@@ -2704,7 +2764,8 @@ bool PromptFlashAttentionTilingArch38::PromptFlashAttentionCheckBmm2(PromptFlash
 }
 
 bool PromptFlashAttentionTilingArch38::PromptFlashAttentionComputeCVDiffParams(PromptFlashAttentionTilingData& tilingData,
-    int64_t l1Size, int64_t l0CSize, uint32_t& sOuterFactor, uint32_t &sInnerFactor) {
+    int64_t l1Size, int64_t l0CSize, uint32_t& sOuterFactor, uint32_t &sInnerFactor) 
+{
     constexpr uint32_t dSplitFactorBmm2 = 128U;
     int32_t l1SizeRemain = l1Size;
     bool res = PromptFlashAttentionCheckBmm1(tilingData, tilingData.bmm1TilingDataRect, l1SizeRemain, l0CSize, sOuterFactor,
@@ -2721,7 +2782,8 @@ bool PromptFlashAttentionTilingArch38::PromptFlashAttentionComputeCVDiffParams(P
 }
 
 void PromptFlashAttentionTilingArch38::GetPreNextTokensLeftUp(PromptFlashAttentionTilingData& tilingData,
-    int64_t actualSeqLength, int64_t actualSeqLengthKV, int64_t& preTokensLeftUp, int64_t& nextTokensLeftUp) const {
+    int64_t actualSeqLength, int64_t actualSeqLengthKV, int64_t& preTokensLeftUp, int64_t& nextTokensLeftUp) const 
+{
     PromptAttentionBaseParams* baseParams = &tilingData.promptAttentionBaseParams;
     if (baseParams->get_sparseMode() == SPARSE_MODE_RIGHT_DOWN) {
         preTokensLeftUp = SPARSE_MODE_INT_MAX;
@@ -2743,7 +2805,8 @@ void PromptFlashAttentionTilingArch38::GetPreNextTokensLeftUp(PromptFlashAttenti
     }
 }
 
-void PromptFlashAttentionTilingArch38::UpdateTilingKeyMatmulCfg(uint64_t& tilingKey) const {
+void PromptFlashAttentionTilingArch38::UpdateTilingKeyMatmulCfg(uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeySplitCoreNBSVectorValue = 0;
     constexpr uint64_t tilingKeySplitCoreNBSCubeValue = static_cast<uint64_t>(1e6); // Position 6
 
@@ -2757,7 +2820,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyMatmulCfg(uint64_t& tiling
 }
 
 void PromptFlashAttentionTilingArch38::UpdateTilingKeyMaskCfg(PromptFlashAttentionTilingData& tilingData,
-    uint64_t& tilingKey) const {
+    uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeyDisableMask = 0;
     constexpr uint64_t tilingKeyEnableMaskNoBand = static_cast<uint64_t>(1e8); // Position 8
     constexpr uint64_t tilingKeyEnableMaskBand = static_cast<uint64_t>(2e8);
@@ -2772,7 +2836,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyMaskCfg(PromptFlashAttenti
     }
 }
 
-void PromptFlashAttentionTilingArch38::UpdateTilingKeyPseCfg(uint64_t& tilingKey) const {
+void PromptFlashAttentionTilingArch38::UpdateTilingKeyPseCfg(uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeyDisablePse = 0;
     constexpr uint64_t tilingKeyEnablePse = static_cast<uint64_t>(1e9); // Position 9
     constexpr uint64_t tilingKeyEnableAlibiPse = static_cast<uint64_t>(2e9); // Position 9
@@ -2790,7 +2855,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyPseCfg(uint64_t& tilingKey
 }
 
 void PromptFlashAttentionTilingArch38::UpdateTilingKeyDSizeConst(PromptFlashAttentionTilingData &tilingData,
-    uint64_t& tilingKey) const {
+    uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeyDSizeConstValue64  = static_cast<uint64_t>(1e12); // Position 12
     constexpr uint64_t tilingKeyDSizeConstValue128 = static_cast<uint64_t>(2e12);
     constexpr uint64_t tilingKeyDSizeConstValue256 = static_cast<uint64_t>(3e12);
@@ -2811,7 +2877,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyDSizeConst(PromptFlashAtte
 }
 
 void PromptFlashAttentionTilingArch38::UpdateTilingKeySInnerConst(PromptFlashAttentionTilingData &tilingData,
-    uint64_t& tilingKey) const {
+    uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeySInnerConstValue128 = static_cast<uint64_t>(1e13); // Position 13
     constexpr uint64_t tilingKeySInnerConstValue256 = static_cast<uint64_t>(2e13);
 
@@ -2823,7 +2890,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeySInnerConst(PromptFlashAtt
 }
 
 void PromptFlashAttentionTilingArch38::UpdateTilingKeySOuterConst(PromptFlashAttentionTilingData &tilingData,
-    uint64_t& tilingKey) {
+    uint64_t& tilingKey) 
+{
     constexpr uint64_t tilingKeySOuterConstValue64  = static_cast<uint64_t>(1e14); // Position 14
     constexpr uint64_t tilingKeySOuterConstValue96  = static_cast<uint64_t>(2e14);
     constexpr uint64_t tilingKeySOuterConstValue128 = static_cast<uint64_t>(3e14);
@@ -2852,7 +2920,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeySOuterConst(PromptFlashAtt
 }
 
 void PromptFlashAttentionTilingArch38::UpdateTilingKeyValueDSizeConst(PromptFlashAttentionTilingData &tilingData,
-    uint64_t& tilingKey) const {
+    uint64_t& tilingKey) const 
+{
     constexpr uint64_t tilingKeyDSizeConstValue64  = static_cast<uint64_t>(1e15); // Position 15
     constexpr uint64_t tilingKeyDSizeConstValue128 = static_cast<uint64_t>(2e15);
     constexpr uint64_t tilingKeyDSizeConstValue256 = static_cast<uint64_t>(3e15);
@@ -2870,7 +2939,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyValueDSizeConst(PromptFlas
 }
 
 int64_t PromptFlashAttentionTilingArch38::GetSInnerBlockNums(int64_t sInnerIndexStart, int64_t sInnerIndexEnd,
-    int64_t innerBlockNums) const {
+    int64_t innerBlockNums) const 
+{
     int64_t sInnerBlockNums = 0;
 
     if (sInnerIndexEnd < 0) {
@@ -2886,7 +2956,8 @@ int64_t PromptFlashAttentionTilingArch38::GetSInnerBlockNums(int64_t sInnerIndex
 }
 
 int64_t PromptFlashAttentionTilingArch38::GetCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength,
-        int64_t sInner, int64_t sOuter, int64_t token) const {
+        int64_t sInner, int64_t sOuter, int64_t token) const 
+{
     int64_t blockNums = 0;
     int64_t blockToken = 0;
     int64_t outDivIn = 0;
@@ -2921,7 +2992,8 @@ int64_t PromptFlashAttentionTilingArch38::GetCutBlockNums(int64_t blockSeqLength
 
 // 函数内部不处理prefix逻辑，prefix场景下入参需自行传入actualSeqLengthKV + prefix
 void PromptFlashAttentionTilingArch38::FixParamWithRowInvalid(int64_t& actualSeqLength, int64_t actualSeqLengthKV,
-    int64_t& preTokensLeftUp, int64_t& nextTokensLeftUp) const {
+    int64_t& preTokensLeftUp, int64_t& nextTokensLeftUp) const 
+{
     // 若出现行无效，需要重新计算nexttokens，pretokens，actualseqlen，以便正确计算分核核数
     int64_t nextTokensError = (nextTokensLeftUp < 0) ? -nextTokensLeftUp : 0;
     int64_t preTokensError = (actualSeqLength > actualSeqLengthKV + preTokensLeftUp) ?
@@ -2937,7 +3009,8 @@ void PromptFlashAttentionTilingArch38::FixParamWithRowInvalid(int64_t& actualSeq
 }
 
 int64_t PromptFlashAttentionTilingArch38::GetCalcBlockNumsOneHead(int64_t actualSeqLength, int64_t actualSeqLengthKV,
-    uint32_t sOuterSize, uint32_t sInnerSize, int64_t preTokensLeftUp, int64_t nextTokensLeftUp, bool isAttenMaskUsed) {
+    uint32_t sOuterSize, uint32_t sInnerSize, int64_t preTokensLeftUp, int64_t nextTokensLeftUp, bool isAttenMaskUsed) const 
+{
     if (!isAttenMaskUsed) {
         int64_t outerBlockNums = (actualSeqLength + sOuterSize - 1) / sOuterSize;
         int64_t innerBlockNums = (actualSeqLengthKV + sInnerSize - 1) / sInnerSize;
@@ -2962,7 +3035,8 @@ int64_t PromptFlashAttentionTilingArch38::GetCalcBlockNumsOneHead(int64_t actual
 
 void PromptFlashAttentionTilingArch38::ComputeSplitNBSeq(PromptFlashAttentionTilingData& tilingData, uint32_t batchSize,
     const size_t tilingElementArrayLen, std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV,
-    uint32_t sOuterSize, uint32_t sInnerSize, double coreWightTarget, uint32_t& curCore) {
+    uint32_t sOuterSize, uint32_t sInnerSize, double coreWightTarget, uint32_t& curCore) 
+{
     PromptAttentionBaseParams* baseParams = &tilingData.promptAttentionBaseParams;
     std::vector<uint32_t> coreSposEnd(tilingElementArrayLen, 0U);
     std::vector<uint32_t> coreSposStart(tilingElementArrayLen, 0U);
@@ -3051,7 +3125,8 @@ void PromptFlashAttentionTilingArch38::SetMultiCoreParamsRegbase(int64_t totalSi
 }
 
 void PromptFlashAttentionTilingArch38::PromptFlashAttentionSplitNBSeq(PromptFlashAttentionTilingData& tilingData,
-    std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, bool isAttenMaskUsed) {
+    std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, bool isAttenMaskUsed) 
+{
     PromptAttentionBaseParams* baseParams = &tilingData.promptAttentionBaseParams;
     PromptAttentionSingleCoreParams* singleCoreParams = &tilingData.promptAttentionSingleCoreParams;
     uint32_t curCoreNum = coreNum;
@@ -3109,12 +3184,14 @@ void PromptFlashAttentionTilingArch38::PromptFlashAttentionSplitNBSeq(PromptFlas
 }
 
 void PromptFlashAttentionTilingArch38::PromptFlashAttentionInitSoftmaxLseOutputSplit(int64_t totalSize,
-    PromptFlashAttentionTilingData &tilingData) const {
+    PromptFlashAttentionTilingData &tilingData) const 
+{
     PromptAttentionInitOutputParams *initParams = &tilingData.promptAttentionInitOutputParams;
     initParams->set_totalSoftMaxLseOutputSize(totalSize);
 }
 
-void PromptFlashAttentionTilingArch38::UpdateTilingKeyFlag(const ContextParamsForPFATiling& contextKeyParams, uint64_t& tilingKey) const {
+void PromptFlashAttentionTilingArch38::UpdateTilingKeyFlag(const ContextParamsForPFATiling& contextKeyParams, uint64_t& tilingKey) const 
+{
     uint64_t binaryFlag = 0;
     auto queryDtype = contextKeyParams.inputDataType;
     auto kvDtype = contextKeyParams.kDataType;
@@ -3130,7 +3207,8 @@ void PromptFlashAttentionTilingArch38::UpdateTilingKeyFlag(const ContextParamsFo
 }
 
 bool PromptFlashAttentionTilingArch38::TilingGetTilingKeyAttentionAscendC(uint64_t& tilingKey,
-    ContextParamsForPFATiling& contextKeyParams, PromptFlashAttentionTilingData &tilingData) {
+    ContextParamsForPFATiling& contextKeyParams, PromptFlashAttentionTilingData &tilingData) 
+{
     auto inputDataType = contextKeyParams.inputDataType; // input q
     auto attenMaskElemType = contextKeyParams.maskDataType;
     auto outputDataType = contextKeyParams.outputDataType; // output tensor
@@ -3190,7 +3268,8 @@ bool PromptFlashAttentionTilingArch38::TilingGetTilingKeyAttentionAscendC(uint64
     return true;
 };
 
-size_t PromptFlashAttentionTilingArch38::GetPFAWorkSpaceSize(PromptFlashAttentionTilingData& tilingData) {
+size_t PromptFlashAttentionTilingArch38::GetPFAWorkSpaceSize(PromptFlashAttentionTilingData& tilingData) 
+{
     size_t sysWorkspaceSize = 0;
     size_t curWorkspaceSize = 0;
     const uint64_t defaultSysWorkspaceSize910B = 16U * 1024U * 1024U;
@@ -3256,7 +3335,8 @@ size_t PromptFlashAttentionTilingArch38::GetPFAWorkSpaceSize(PromptFlashAttentio
     return curWorkspaceSize;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::SetPlatMemoryInfo(ContextParamsForPFATiling& contextKeyParams) {
+ge::graphStatus PromptFlashAttentionTilingArch38::SetPlatMemoryInfo(ContextParamsForPFATiling& contextKeyParams) 
+{
     // In subsequent version, contextKeyParams will be written as a member variable of the class.
     auto compileInfoPtr = contextKeyParams.compileInfoPtr;
     contextKeyParamsPtr = &contextKeyParams;
@@ -3292,7 +3372,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::SetPlatMemoryInfo(ContextParam
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::SetAttributeInfo(ContextParamsForPFATiling& contextKeyParams) {
+ge::graphStatus PromptFlashAttentionTilingArch38::SetAttributeInfo(ContextParamsForPFATiling& contextKeyParams) 
+{
     // antiquant check, temporary solution
     if (contextKeyParams.hasKeyAntiquantScale || contextKeyParams.hasValueAntiquantScale) {
         enableKVAntiquant = false;
@@ -3398,7 +3479,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::SetAttributeInfo(ContextParams
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::CheckRopeInvalid(const ContextParamsForPFATiling& contextKeyParams) const {
+ge::graphStatus PromptFlashAttentionTilingArch38::CheckRopeInvalid(const ContextParamsForPFATiling& contextKeyParams) const 
+{
     const gert::StorageShape* queryRopeShapeParam = contextKeyParams.queryRopeInputShape;
     const gert::StorageShape* keyRopeShapeParam = contextKeyParams.keyRopeInputShape;
     if ((queryRopeShapeParam != nullptr) && (queryRopeShapeParam->GetStorageShape().GetShapeSize() == 0)) {
@@ -3412,7 +3494,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::CheckRopeInvalid(const Context
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::CheckTensorInvalid(const ContextParamsForPFATiling& contextKeyParams) const {
+ge::graphStatus PromptFlashAttentionTilingArch38::CheckTensorInvalid(const ContextParamsForPFATiling& contextKeyParams) const 
+{
     if (!CheckNonEmptyShapeExceptions(contextKeyParams, contextKeyParams.queryInputShape, "query")){
         return ge::GRAPH_FAILED;
     }
@@ -3475,7 +3558,8 @@ bool PromptFlashAttentionTilingArch38::CheckAlibiPseShiftTypeAndShape(ContextPar
 }
 
 ge::graphStatus PromptFlashAttentionTilingArch38::CheckSingleAttribute(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo,
-    PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo, PFAShapeInfo& queryRopeShapeInfo, PromptFlashAttentionTilingData& tilingData) {
+    PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo, PFAShapeInfo& queryRopeShapeInfo, PromptFlashAttentionTilingData& tilingData) 
+{
     if (!CheckIO(contextKeyParams, queryShapeInfo, valueShapeInfo)){
         OP_LOGE(contextKeyParams.opName, "Check query/ouput failed!");
         return ge::GRAPH_FAILED;
@@ -3575,7 +3659,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::CheckSingleAttribute(ContextPa
     return ge::GRAPH_SUCCESS;
 }
 
-bool PromptFlashAttentionTilingArch38::CheckAlibiPseCrossover(ContextParamsForPFATiling& contextKeyParams) {
+bool PromptFlashAttentionTilingArch38::CheckAlibiPseCrossover(ContextParamsForPFATiling& contextKeyParams) 
+{
     if (!enableAlibiPse) {
         return true;
     }
@@ -3598,7 +3683,8 @@ bool PromptFlashAttentionTilingArch38::CheckAlibiPseCrossover(ContextParamsForPF
 
 ge::graphStatus PromptFlashAttentionTilingArch38::CheckCrossoverAttribute(ContextParamsForPFATiling& contextKeyParams,
     PFAShapeInfo& queryShapeInfo, std::vector<int64_t>& actualSeqLengths,
-    std::vector<int64_t>& actualSeqLengthsKV, PromptFlashAttentionTilingData& tilingData) {
+    std::vector<int64_t>& actualSeqLengthsKV, PromptFlashAttentionTilingData& tilingData) 
+{
     // PA and prefix,antiquant,actseqlenKV features crossover
     if (!CheckPACrossover(contextKeyParams, queryShapeInfo)) {
         return ge::GRAPH_FAILED;
@@ -3630,8 +3716,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::CheckCrossoverAttribute(Contex
 }
 
 ge::graphStatus PromptFlashAttentionTilingArch38::AdjustTilingData(ContextParamsForPFATiling& contextKeyParams,
-    PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo,
-    const PFAShapeInfo& valueShapeInfo) {
+    PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo) 
+{
     uint32_t sOuterFactor = 0;
     uint32_t sInnerFactor = 0;
     uint32_t softmaxSInnerFactor = 0;
@@ -3654,11 +3740,13 @@ ge::graphStatus PromptFlashAttentionTilingArch38::AdjustTilingData(ContextParams
     return ge::GRAPH_SUCCESS;
 }
 
-bool PromptFlashAttentionTilingArch38::IsFlashDecode(ContextParamsForPFATiling& contextKeyParams, uint64_t bng) const {
+bool PromptFlashAttentionTilingArch38::IsFlashDecode() 
+{
     return false;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::SplitBNS(PromptFlashAttentionTilingData& tilingData, uint64_t bng) {
+ge::graphStatus PromptFlashAttentionTilingArch38::SplitBNS(PromptFlashAttentionTilingData& tilingData, uint64_t bng) 
+{
     uint64_t batchSize = tilingData.promptAttentionBaseParams.get_batchSize();
     uint64_t headNumSize = tilingData.promptAttentionBaseParams.get_headNumSize() * gSize;
     uint64_t headDimAlign = AlignUp(tilingData.promptAttentionBaseParams.get_vHeadSize(), BYTE_BLOCK);
@@ -3680,7 +3768,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::SplitBNS(PromptFlashAttentionT
 
 ge::graphStatus PromptFlashAttentionTilingArch38::ComputeTilingData(ContextParamsForPFATiling& contextKeyParams,
     std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     // Compute tiling data.
     bool isAttenMaskUsed = (contextKeyParams.attentionMaskShape != nullptr);
     PromptFlashAttentionSplitNBSeq(tilingData, actualSeqLengths, actualSeqLengthsKV, isAttenMaskUsed);
@@ -3700,7 +3789,7 @@ ge::graphStatus PromptFlashAttentionTilingArch38::ComputeTilingData(ContextParam
         uint64_t batchSize = tilingData.promptAttentionBaseParams.get_batchSize();
         uint64_t headNumKVSize = tilingData.promptAttentionBaseParams.get_headNumSize(); // IFA kv N
         uint64_t bng = batchSize * headNumKVSize * (gSize + sOuterSize - 1) / sOuterSize;
-        if(IsFlashDecode(contextKeyParams, bng)) {
+        if(IsFlashDecode()) {
             enableFlashDecode = true;
             return SplitBNS(tilingData, bng);
         }
@@ -3709,7 +3798,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::ComputeTilingData(ContextParam
 }
 
 ge::graphStatus PromptFlashAttentionTilingArch38::ComputeTilingKey(uint64_t& tilingKey, ContextParamsForPFATiling& contextKeyParams,
-    uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) {
+    uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) 
+{
     bool tilingRet = TilingGetTilingKeyAttentionAscendC(tilingKey, contextKeyParams, tilingData);
     OP_CHECK_IF(!tilingRet, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "Get tilingKey fail"),
         return ge::GRAPH_FAILED);
@@ -3755,7 +3845,8 @@ void PromptFlashAttentionTilingArch38::SetLayoutType()
     }
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::SetQKVStartIdx(ContextParamsForPFATiling& contextKeyParams) {
+ge::graphStatus PromptFlashAttentionTilingArch38::SetQKVStartIdx(ContextParamsForPFATiling& contextKeyParams) 
+{
     auto &inputParams = faTilingAdapter.inputParamsRegbase;
     inputParams.set_qStartIdx(0);
     inputParams.set_kvStartIdx(0);
@@ -3798,7 +3889,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::SetQKVStartIdx(ContextParamsFo
     return ge::GRAPH_SUCCESS;
 }
 
-void PromptFlashAttentionTilingArch38::PFATilingDataconvert(PromptFlashAttentionTilingData& tilingData) {
+void PromptFlashAttentionTilingArch38::PFATilingDataconvert(PromptFlashAttentionTilingData& tilingData) 
+{
     if (!faRunFlag_) {
         return;
     }
@@ -3892,7 +3984,7 @@ void PromptFlashAttentionTilingArch38::PFATilingDataconvert(PromptFlashAttention
     inputParams.set_antiquantParaSeqSize(1);
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::ConvertContextToPFAParams(ContextParamsForPFATiling& contextKeyParams)
+ge::graphStatus PromptFlashAttentionTilingArch38::ConvertContextToPFAParams(ContextParamsForPFATiling& contextKeyParams) const
 {
     contextKeyParams.opName = context_->GetNodeName();
     bool inputOutputIsNullPtr = (context_->GetInputDesc(QUERY_INDEX) == nullptr) || (context_->GetInputDesc(KEY_INDEX) == nullptr) ||
@@ -3968,7 +4060,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::ConvertContextToPFAParams(Cont
 }
 
 ge::graphStatus PromptFlashAttentionTilingArch38::PromptFlashAttentionSetTilingData(gert::TilingContext* context,
-    PromptFlashAttentionTilingData& tilingData) {
+    PromptFlashAttentionTilingData& tilingData) 
+{
     if (faRunFlag_) {
         faTilingAdapter.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
         context->GetRawTilingData()->SetDataSize(faTilingAdapter.GetDataSize());
@@ -3979,8 +4072,10 @@ ge::graphStatus PromptFlashAttentionTilingArch38::PromptFlashAttentionSetTilingD
 
     return ge::GRAPH_SUCCESS;
 }
+
 ge::graphStatus PromptFlashAttentionTilingArch38::RunBigKernelTilingWithParams(ContextParamsForPFATiling& contextKeyParams,
-    uint64_t& tilingKey, uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) {
+    uint64_t& tilingKey, uint32_t& numBlocksToBeSet, PromptFlashAttentionTilingData& tilingData) 
+{
     // set memory parameters
     if (SetPlatMemoryInfo(contextKeyParams) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
@@ -4050,7 +4145,7 @@ ge::graphStatus PromptFlashAttentionTilingArch38::RunBigKernelTilingWithParams(C
     // Whether to enable constant templates
     InferConstantization();
 
-    if (AdjustTilingData(contextKeyParams, tilingData, queryShapeInfo, valueShapeInfo) != ge::GRAPH_SUCCESS) {
+    if (AdjustTilingData(contextKeyParams, tilingData, queryShapeInfo) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
 
@@ -4074,7 +4169,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::RunBigKernelTilingWithParams(C
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::DoSubOpTiling(PromptFlashAttentionTilingData& tilingData, ContextParamsForPFATiling& contextParamsForPFATiling) {
+ge::graphStatus PromptFlashAttentionTilingArch38::DoSubOpTiling(PromptFlashAttentionTilingData& tilingData, ContextParamsForPFATiling& contextParamsForPFATiling) 
+{
     uint64_t tilingKey = 7;
     uint32_t numBlocksToBeSet;
     auto ret = RunBigKernelTilingWithParams(contextParamsForPFATiling, tilingKey, numBlocksToBeSet, tilingData);
@@ -4087,7 +4183,8 @@ ge::graphStatus PromptFlashAttentionTilingArch38::DoSubOpTiling(PromptFlashAtten
     return ret;
 }
 
-ge::graphStatus PromptFlashAttentionTilingArch38::DoOpTiling() {
+ge::graphStatus PromptFlashAttentionTilingArch38::DoOpTiling() 
+{
     PromptFlashAttentionTilingData tilingData;
     ContextParamsForPFATiling contextParamsForPFATiling;
     uint64_t tilingKey = 7;
@@ -4100,6 +4197,6 @@ ge::graphStatus PromptFlashAttentionTilingArch38::DoOpTiling() {
     PromptFlashAttentionSetTilingData(context_, tilingData);
     return ret;
 }
-REGISTER_TILING_TEMPLATE_FIA(PromptFlashAttention, PromptFlashAttentionTilingArch38, std::vector<int32_t>({(int32_t)NpuArch::DAV_5102}), 91);
+REGISTER_TILING_TEMPLATE_FIA(PromptFlashAttention, PromptFlashAttentionTilingArch38, std::vector<int32_t>({static_cast<int32_t>(NpuArch::DAV_5102)}), 91);
 } // namespace arch38
 } // namespace optiling

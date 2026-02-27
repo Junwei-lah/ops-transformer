@@ -16,7 +16,6 @@
 #ifndef FLASH_ATTENTION_SCORE_GRAD_TILING_REGBASE_H_
 #define FLASH_ATTENTION_SCORE_GRAD_TILING_REGBASE_H_
 
-#include <cstdint>
 
 namespace optiling {
 class FlashAttentionScoreEmptyInputTilingDataRegbase {

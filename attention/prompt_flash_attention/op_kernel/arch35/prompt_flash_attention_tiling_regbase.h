@@ -12,8 +12,6 @@
  * \file prompt_flash_attention_tiling_regbase.h
  * \brief
  */
- 
-
 #ifndef PROMPT_FLASH_ATTENTION_TILING_REGBASE_H
 #define PROMPT_FLASH_ATTENTION_TILING_REGBASE_H
 

@@ -40,7 +40,7 @@ protected:
     void InitTilingInfo(TilingInfo *tilingInfo) override {}
     bool IsCapable() override {return true;}
     ge::graphStatus DoOpTiling() override;
-    ge::graphStatus ConvertContextToPFAParams(ContextParamsForPFATiling& contextKeyParams);
+    ge::graphStatus ConvertContextToPFAParams(ContextParamsForPFATiling& contextKeyParams) const;
     void PromptFlashAttentionInitOutputSplit(int64_t totalSize, PromptFlashAttentionTilingData &tilingData);
     bool CheckEmptyTensor(ContextParamsForPFATiling& contextKeyParams) const;
     void SetEmptyTensor(ContextParamsForPFATiling& contextKeyParams, uint64_t& tilingKey, uint32_t& numBlocksToBeSet,
@@ -90,14 +90,14 @@ protected:
         uint32_t sQ, const uint32_t sK, const uint32_t batchSize);
     bool CheckMaskCrossIFAMLA(ContextParamsForPFATiling& contextKeyParams, const int32_t *sparseMode, uint32_t queryS);
     bool CheckIO(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo);
-    bool CheckKV(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo);
+    bool CheckKV(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo) const;
     bool CheckQueryAndKey(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, 
         PFAShapeInfo& keyShapeInfo, PromptFlashAttentionTilingData& tilingData);
     bool CheckPFAMerge(ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const;
     bool CheckRope(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo,
         PFAShapeInfo& keyShapeInfo, PFAShapeInfo& queryRopeShapeInfo);
     bool CheckIFAMLA(ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const;
-    bool CheckQuant(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo);
+    bool CheckQuant(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) const;
     bool CheckPrefix(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, 
         PromptFlashAttentionTilingData& tilingData);
     bool CheckActSeq(const ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const;
@@ -132,7 +132,7 @@ protected:
     void FixParamWithRowInvalid(int64_t& actualSeqLength, int64_t actualSeqLengthKV, int64_t& preTokensLeftUp,
         int64_t& nextTokensLeftUp) const;
     int64_t GetCalcBlockNumsOneHead(int64_t actualSeqLength, int64_t actualSeqLengthKV, uint32_t sOuterSize,
-        uint32_t sInnerSize, int64_t preTokensLeftUp, int64_t nextTokensLeftUp, bool isAttenMaskUsed);
+        uint32_t sInnerSize, int64_t preTokensLeftUp, int64_t nextTokensLeftUp, bool isAttenMaskUsed) const;
     void ComputeSplitNBSeq(PromptFlashAttentionTilingData& tilingData, uint32_t batchSize, const size_t tilingElementArrayLen,
         std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, uint32_t sOuterSize,
         uint32_t sInnerSize, double coreWightTarget, uint32_t& curCore);
@@ -178,7 +178,7 @@ protected:
         std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV,
         PromptFlashAttentionTilingData& tilingData);
     ge::graphStatus AdjustTilingData(ContextParamsForPFATiling& contextKeyParams,
-        PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo, const PFAShapeInfo& valueShapeInfo);
+        PromptFlashAttentionTilingData& tilingData, const PFAShapeInfo& queryShapeInfo);
     ge::graphStatus ComputeTilingData(ContextParamsForPFATiling& contextKeyParams, std::vector<int64_t>& actualSeqLengths,
         std::vector<int64_t>& actualSeqLengthsKV, PromptFlashAttentionTilingData& tilingData);
     ge::graphStatus ComputeTilingKey(uint64_t& tilingKey, ContextParamsForPFATiling& contextKeyParams,
@@ -187,7 +187,7 @@ protected:
     void SetLayoutType();
     void PFATilingDataconvert(PromptFlashAttentionTilingData& tilingData);
     void SetMultiCoreParamsRegbase(int64_t totalSize, int64_t actualUsedCoreNum);
-    bool IsFlashDecode(ContextParamsForPFATiling& contextKeyParams, uint64_t bng) const;
+    bool IsFlashDecode();
     ge::graphStatus SplitBNS(PromptFlashAttentionTilingData& tilingData, uint64_t bng);
     bool CheckAlibiPseShiftTypeAndShape(ContextParamsForPFATiling& contextKeyParams, uint32_t n);
     ge::graphStatus SetQKVStartIdx(ContextParamsForPFATiling& contextKeyParams);

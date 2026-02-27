@@ -20,7 +20,6 @@
 
 #include "prompt_flash_attention_template_tiling_key_enum.h"
 #include "ascendc/host_api/tiling/template_argument.h"
-#include "prompt_flash_attention_tiling_regbase.h"
 
 #ifndef ORIG_DTYPE_QUERY
 #define ORIG_DTYPE_QUERY (DT_FLOAT16)
