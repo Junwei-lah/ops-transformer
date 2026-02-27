@@ -430,7 +430,6 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何非连续tensor。
   - <term>Ascend 950PR/Ascend 950DT</term>：仅支持x2为非连续tensor，其它非连续tensor均不支持。
 * 传入的x1、x2、x2Scale和output不为空指针，且
-  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：biasOptional不支持传入空指针。
   - <term>Ascend 950PR/Ascend 950DT</term>：在x1QuantMode为pertoken动态量化场景下，不支持传入x1ScaleOptional。
 * 该算子输入输出的数据类型、数据维度和量化模式根据不同设备型号有不同的限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
@@ -439,7 +438,6 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     * 类型约束：
       * x1、alltoAllOutOptional的数据类型必须一致。
       * 若x1、x2、alltoallout输入int32类型，则视作8个int4打包，会被重新解释为int4。
-      * x1QuantDtype仅支持配置2（表示aclDataType.ACL_INT8）。
       * A16W8和A16W4时，smoothQuant场景，x1ScaleOptional与x1的数据类型必须一致。
       * A16W8时，x1、x2、biasOptional和output支持的数据类型组合有：
         | x1 | x2 | biasOptional | output |

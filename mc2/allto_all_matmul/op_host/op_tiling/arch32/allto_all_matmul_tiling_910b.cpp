@@ -95,7 +95,13 @@ const std::vector<std::vector<uint32_t>> SUPPORTED_TYPES_WITH_BIAS = {
 };
 const std::vector<std::vector<uint32_t>> SUPPORTED_TYPES_WITHOUT_BIAS = {
     {ge::DT_BF16, ge::DT_BF16, ge::DT_BF16},
-    {ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16}
+    {ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_FLOAT16},
+    {ge::DT_BF16, ge::DT_INT8, ge::DT_BF16},
+    {ge::DT_FLOAT16, ge::DT_INT8, ge::DT_FLOAT16},
+    {ge::DT_INT4, ge::DT_INT4, ge::DT_BF16},
+    {ge::DT_INT4, ge::DT_INT4, ge::DT_FLOAT16},
+    {ge::DT_BF16, ge::DT_INT4, ge::DT_BF16},
+    {ge::DT_FLOAT16, ge::DT_INT4, ge::DT_FLOAT16}
 };
 }
 
@@ -473,8 +479,8 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckTensorDataType(AlltoAllMatmulInfo
     auto x2ScaleTensorDesc = context_->GetOptionalInputDesc(INPUT_X2_SCALE_INDEX);
     // 校验 scale 张量，量化模式
     if ((x1Dtype == ge::DT_FLOAT16 || x1Dtype == ge::DT_BF16) && x2Dtype == ge::DT_INT8) {
-        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr || biasTensorDesc == nullptr),
-                        OP_LOGE(opName_, "x2Scale and bias tensors should not be null in quant mode."), return ge::GRAPH_FAILED);
+        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr),
+                        OP_LOGE(opName_, "x2Scale should not be null in quant mode."), return ge::GRAPH_FAILED);
         ge::DataType x2ScaleDtype = x2ScaleTensorDesc->GetDataType();
         OP_TILING_CHECK(x2ScaleDtype != ge::DT_FLOAT,
                         OP_LOGE(opName_, "x2Scale tensors Dtype should be FLOAT, but x2Scale Dtype is %s.", Ops::Base::ToString(x2ScaleDtype).c_str()),
@@ -498,8 +504,8 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckTensorDataType(AlltoAllMatmulInfo
                         OP_LOGE(opName_, "Scale tensors Dtype should be FLOAT, but x1Scale Dtype is %s.", Ops::Base::ToString(x1ScaleDtype).c_str()),
                         return ge::GRAPH_FAILED);
         
-        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr || biasTensorDesc == nullptr),
-                        OP_LOGE(opName_, "x2Scale and bias tensors should not be null in quant mode."), return ge::GRAPH_FAILED);
+        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr),
+                        OP_LOGE(opName_, "x2Scale should not be null in quant mode."), return ge::GRAPH_FAILED);
         ge::DataType x2ScaleDtype = x2ScaleTensorDesc->GetDataType();
         OP_TILING_CHECK(x2ScaleDtype != ge::DT_FLOAT,
                         OP_LOGE(opName_, "Scale tensors Dtype should be FLOAT, but x2Scale Dtype is %s.", Ops::Base::ToString(x2ScaleDtype).c_str()),
@@ -508,8 +514,8 @@ ge::graphStatus AlltoAllMatmulTiling910b::CheckTensorDataType(AlltoAllMatmulInfo
     }
     // A16W4检测
     if ((x1Dtype == ge::DT_FLOAT16 || x1Dtype == ge::DT_BF16) && x2Dtype == ge::DT_INT4) {  
-        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr || biasTensorDesc == nullptr),
-                        OP_LOGE(opName_, "x2Scale and bias tensors should not be null in quant mode."), return ge::GRAPH_FAILED);
+        OP_TILING_CHECK((x2ScaleTensorDesc == nullptr),
+                        OP_LOGE(opName_, "x2Scale should not be null in quant mode."), return ge::GRAPH_FAILED);
         ge::DataType x2ScaleDtype = x2ScaleTensorDesc->GetDataType();
         OP_TILING_CHECK(x2ScaleDtype != ge::DT_FLOAT,
                         OP_LOGE(opName_, "x2Scale tensors Dtype should be FLOAT, but x2Scale Dtype is %s.", Ops::Base::ToString(x2ScaleDtype).c_str()),

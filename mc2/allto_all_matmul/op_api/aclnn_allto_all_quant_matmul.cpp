@@ -72,12 +72,6 @@ static bool CheckNotNull(const aclTensor* x1, const aclTensor* x2, const aclTens
         OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "Input x2 should not be null.");
         return false;
     }
-    if(op::GetCurrentPlatformInfo().GetSocVersion() == op::SocVersion::ASCEND910B) {
-        if (biasOptional == nullptr) {
-            OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "Input bias should not be null.");
-            return false;
-        }
-    }
     if (static_cast<QuantModeType>(x1QuantMode) != QuantModeType::DYN_PERTOKEN_QUANT && GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
         if (x1ScaleOptional == nullptr) {
         	OP_LOGE(ACLNN_ERR_PARAM_NULLPTR,
