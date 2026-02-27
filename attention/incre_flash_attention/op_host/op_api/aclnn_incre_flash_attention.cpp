@@ -9,6 +9,8 @@
  */
 
 #include "opdev/op_log.h"
+#include "opdev/common_types.h"
+#include "opdev/platform.h"
 #include "aclnn_incre_flash_attention.h"
 
 #ifdef __cplusplus
@@ -34,6 +36,10 @@ aclnnStatus aclnnIncreFlashAttentionGetWorkspaceSize(const aclTensor *query, con
                                                      int64_t numKeyValueHeads, const aclTensor *attentionOut,
                                                      uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Interface aclnnIncreFlashAttention versions V1 to V3 are no longer supported on Ascend950.");
+        return ACLNN_ERR_RUNTIME_ERROR;
+    }
     static bool isFirstCall = true;
     if (isFirstCall) {
         OP_LOGW("aclnnIncreFlashAttentionGetWorkspaceSize is scheduled to be deprecated in December 2026, "
@@ -53,6 +59,10 @@ aclnnStatus aclnnIncreFlashAttentionGetWorkspaceSize(const aclTensor *query, con
 aclnnStatus aclnnIncreFlashAttention(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
                                      const aclrtStream stream)
 {
+    if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Interface aclnnIncreFlashAttention versions V1 to V3 are no longer supported on Ascend950.");
+        return ACLNN_ERR_RUNTIME_ERROR;
+    }
     static bool isFirstCall = true;
     if (isFirstCall) {
         OP_LOGW("aclnnIncreFlashAttention is scheduled to be deprecated in December 2026, "

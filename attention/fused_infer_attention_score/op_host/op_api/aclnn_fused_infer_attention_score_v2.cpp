@@ -9,9 +9,9 @@
  */
 
 #include "aclnn_fused_infer_attention_score_v2.h"
-
 #include "opdev/common_types.h"
 #include "opdev/make_op_executor.h"
+#include "opdev/platform.h"
 #include "opdev/op_def.h"
 #include "opdev/op_log.h"
 #include "aclnn_fused_infer_attention_score_inner.h"
@@ -72,6 +72,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV2GetMaxWorkspaceSize(
     int64_t antiquantMode, bool softmaxLseFlag, int64_t keyAntiquantMode, int64_t valueAntiquantMode,
     const aclTensor *attentionOut, const aclTensor *softmaxLse, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Interface aclnnFusedInferAttentionScore versions V1 to V4 are no longer supported on Ascend950.");
+        return ACLNN_ERR_RUNTIME_ERROR;
+    }
     OP_LOGD("start aclnnFusedInferAttentionScoreV2GetMaxWorkspaceSize");
     TensorPreProcess(tensorListKey, tensorListValue);
     PrefixTensorPreProcess(tensorKeySharedPrefixOptional, tensorValueSharedPrefixOptional);
@@ -151,6 +155,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV2GetWorkspaceSize(
     int64_t antiquantMode, bool softmaxLseFlag, int64_t keyAntiquantMode, int64_t valueAntiquantMode,
     const aclTensor *attentionOut, const aclTensor *softmaxLse, uint64_t *workspaceSize, aclOpExecutor **executor)
 {
+    if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Interface aclnnFusedInferAttentionScore versions V1 to V4 are no longer supported on Ascend950.");
+        return ACLNN_ERR_RUNTIME_ERROR;
+    }
     static bool isFirstCall = true;
     if (isFirstCall) {
         OP_LOGW("aclnnFusedInferAttentionScoreV2GetWorkspaceSize is scheduled to be deprecated in December 2026, "
@@ -200,6 +208,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV2GetWorkspaceSize(
 aclnnStatus aclnnFusedInferAttentionScoreV2(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
                                             const aclrtStream stream)
 {
+    if (op::GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {
+        OP_LOGE(ACLNN_ERR_RUNTIME_ERROR, "Interface aclnnFusedInferAttentionScore versions V1 to V4 are no longer supported on Ascend950.");
+        return ACLNN_ERR_RUNTIME_ERROR;
+    }
     static bool isFirstCall = true;
     if (isFirstCall) {
         OP_LOGW("aclnnFusedInferAttentionScoreV2 is scheduled to be deprecated in December 2026, "
