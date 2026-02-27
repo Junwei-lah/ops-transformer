@@ -29,7 +29,7 @@ protected:
     }
 };
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_sink01)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_0)     // learnableSink
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -96,7 +96,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_sin
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_0)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_1)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -162,7 +162,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_0)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_1)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_2)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -228,7 +228,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_1)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_2)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_3)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -294,7 +294,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_2)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_3)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_4)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -360,7 +360,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_3)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_4)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_5)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -426,7 +426,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_4)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_5)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_6)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -492,7 +492,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_5)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_6)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_7)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -558,8 +558,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_6)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_12)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_8)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -625,7 +624,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_12)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_7)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_9)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -691,7 +690,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_7)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_8)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_10)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -757,7 +756,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_8)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_9)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_11)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -823,7 +822,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_9)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_10)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_12)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};
@@ -889,7 +888,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_10)
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
-TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_11)
+TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScore_950_tiling_13)
 {
     optiling::FusedInferAttentionScoreCompileInfo compileInfo = {
         64, 32, 196608, 524288, 65536, 65536, 65536, 33554432, platform_ascendc::SocVersion::ASCEND950};

@@ -28,7 +28,7 @@ protected:
     }
 };
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_0)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_0)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -82,8 +82,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_0)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_1)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_1)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -137,9 +136,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_1)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-
-
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_2)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_2)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -193,7 +190,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_2)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_3)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_3)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -247,7 +244,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_3)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_4)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_4)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -302,7 +299,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_4)
 }
 
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_5)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_5)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -356,7 +353,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_5)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_6)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_6)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -410,8 +407,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_6)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
-
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_7)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_7)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -465,8 +461,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_7)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
-
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_8)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_8)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",
@@ -520,7 +515,7 @@ TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_8)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
-TEST_F(IncreFlashAttentionProto, incre_flash_attention_infershape_9)
+TEST_F(IncreFlashAttentionProto, IncreFlashAttention_950_infershape_9)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "IncreFlashAttention",

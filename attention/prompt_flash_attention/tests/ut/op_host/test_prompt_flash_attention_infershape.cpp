@@ -29,7 +29,7 @@ protected:
 };
 
 // BNSD
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_0)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_0)
 {
     int64_t actual_seq_qlist[] = {556, 732, 637, 573, 149, 158, 278, 1011, 623, 683, 680, 449, 538, 920, 396, 322, 268, 153, 452, 458, 821, 1001, 744};
     int64_t actual_seq_kvlist[] = {556, 732, 637, 573, 149, 158, 278, 1011, 623, 683, 680, 449, 538, 920, 396, 322, 268, 153, 452, 458, 821, 1001, 744};
@@ -70,9 +70,8 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_0)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);   // 比对成功返回SUCCESS
 }
 
-
 // BSH
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_1)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_1)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -114,7 +113,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_1)
 }
 
 // BSND
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_2)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_2)
 {
     int64_t actual_seq_qlist[] = {2048, 2048, 1024, 1024, 2048, 2028, 2048, 1024};
     int64_t actual_seq_kvlist[] = {2048, 1024, 2048, 2048, 2048, 1024, 1024, 1024};
@@ -156,7 +155,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_2)
 }
 
 // TND
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_3)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_3)
 {
     int64_t actual_seq_qlist[] = {409, 818, 1227, 1636, 2045, 2454, 2863, 3272, 3681, 4090, 4499, 4908, 5317, 5726, 6135, 6544, 6953, 7362, 7771, 8180, 8589,
                 8998, 9407, 9816, 10225, 10634, 11043, 11452, 11861, 12270, 12679, 13088, 13497, 13906, 14315, 14724, 15133, 15542, 15951, 16384};
@@ -200,7 +199,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_3)
 }
 
 // BNSD_BSND
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_4)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_4)
 {
     int64_t actual_seq_qlist[] = {37, 42, 2, 63, 6, 56, 40, 42};
     int64_t actual_seq_kvlist[] = {11, 11, 11, 11, 11, 11, 11, 11};
@@ -242,7 +241,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_4)
 }
 
 // numhead = 0
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_5)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_5)
 {
     int64_t actual_seq_qlist[] = {2048};
     int64_t actual_seq_kvlist[] = {2048};
@@ -284,7 +283,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_5)
 }
 
 // NTD_TND FAILED
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_6)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_6)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -326,7 +325,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_6)
 }
 
 // NTD_TND SUCCESS
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_7)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_7)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -368,7 +367,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_7)
 }
 
 // SH
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_8)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_8)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -410,7 +409,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_8)
 }
 
 // q/k/v = -2
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_9)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_9)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -452,7 +451,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_9)
 }
 
 // NSD
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_10)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_10)
 {
     int64_t actual_seq_qlist[] = {};
     int64_t actual_seq_kvlist[] = {};
@@ -494,7 +493,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_10)
 }
 
 // infer dataType
-TEST_F(PromptFlashAttentionProto, infer_dtype_0)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_11)
 {
     auto spaceRegistry = gert::DefaultOpImplSpaceRegistryV2::GetInstance().GetSpaceRegistry();
     ASSERT_NE(spaceRegistry, nullptr);
@@ -533,7 +532,7 @@ TEST_F(PromptFlashAttentionProto, infer_dtype_0)
 }
 
 // TND_NTD success
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_11)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_12)
 {
     int64_t actual_seq_qlist[] = {409, 818, 1227, 1636, 2045, 2454, 2863, 3272, 3681, 4090, 4499, 4908, 5317, 5726, 6135, 6544, 6953, 7362, 7771, 8180, 8589,
                 8998, 9407, 9816, 10225, 10634, 11043, 11452, 11861, 12270, 12679, 13088, 13497, 13906, 14315, 14724, 15133, 15542, 15951, 16384};
@@ -577,7 +576,7 @@ TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_11)
 }
 
 // TND_NTD failed
-TEST_F(PromptFlashAttentionProto, prompt_flash_attention_infershape_12)
+TEST_F(PromptFlashAttentionProto, PromptFlashAttention_infershape_13)
 {
     int64_t actual_seq_qlist[] = {409, 818, 1227, 1636, 2045, 2454, 2863, 3272, 3681, 4090, 4499, 4908, 5317, 5726, 6135, 6544, 6953, 7362, 7771, 8180, 8589,
                 8998, 9407, 9816, 10225, 10634, 11043, 11452, 11861, 12270, 12679, 13088, 13497, 13906, 14315, 14724, 15133, 15542, 15951, 16384};

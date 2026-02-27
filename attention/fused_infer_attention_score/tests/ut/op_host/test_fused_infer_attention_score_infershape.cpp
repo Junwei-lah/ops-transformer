@@ -29,7 +29,7 @@ protected:
     }
 };
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_0)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_0)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -97,7 +97,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_0)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_1)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_1)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -165,7 +165,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_1)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_2)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_2)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -233,7 +233,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_2)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_3)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_3)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -301,7 +301,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_3)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_4)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_4)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -369,7 +369,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_4)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_5)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_5)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -437,7 +437,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_5)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_6)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_6)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -505,7 +505,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_6)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_7)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_7)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -573,7 +573,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_7)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_SUCCESS, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_8)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_8)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
@@ -641,7 +641,7 @@ TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_8)
     ExecuteTestCase(infershapeContextPara, ge::GRAPH_FAILED, expectOutputShape);
 }
 
-TEST_F(FusedInferAttentionScoreProto, fused_infer_attention_score_infershape_9)
+TEST_F(FusedInferAttentionScoreProto, FusedInferAttentionScore_infershape_9)
 {
     gert::InfershapeContextPara infershapeContextPara(
         "FusedInferAttentionScore",
