@@ -324,7 +324,7 @@ ge::graphStatus QuantGroupedInplaceAddTiling::PostTiling()
 
 void QuantGroupedInplaceAddTiling::PrintQuantParams()
 {
-    int32_t enable = AlogCheckDebugLevel(static_cast<int32_t>(OP), DLOG_DEBUG);
+    int32_t enable = CheckLogLevel(static_cast<int32_t>(OP), DLOG_DEBUG);
     if (enable != 1) {
         return;
     }
