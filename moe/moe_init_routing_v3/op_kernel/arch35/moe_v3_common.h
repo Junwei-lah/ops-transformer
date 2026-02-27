@@ -43,6 +43,7 @@ constexpr int64_t GATHER = 0;
 constexpr int64_t SCATTER = 1;
 
 constexpr uint16_t FLOAT_REG_TENSOR_LENGTH = VECTOR_REG_WIDTH / sizeof(float);
+constexpr float HIFLOAT8_MAX_VALUE = 32768.0f;
 
 __aicore__ inline int64_t Ceil(int64_t a, int64_t b)
 {
