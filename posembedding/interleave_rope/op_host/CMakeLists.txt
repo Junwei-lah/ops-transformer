@@ -12,7 +12,6 @@ message(STATUS "=== Debug: start ops.posembedding.interleave_rope.op_host.CMakeL
 
 if (BUILD_OPEN_PROJECT)
     message(STATUS "=== Debug: BUILD is BUILD_OPEN_PROJECT")
-    set(interleave_rope_depends posembedding/rotary_position_embedding CACHE INTERNAL "Dependencies for rotary_position_embedding")
     target_sources(op_host_aclnnInner PRIVATE
         interleave_rope_def.cpp
     )

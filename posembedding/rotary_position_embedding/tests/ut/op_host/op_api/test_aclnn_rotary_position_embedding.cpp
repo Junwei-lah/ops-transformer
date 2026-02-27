@@ -13,7 +13,6 @@
 #include <float.h>
 #include "gtest/gtest.h"
 #include "../../../../op_host/op_api/aclnn_rotary_position_embedding.h"
-#include "../../../../op_host/op_api/aclnn_rotary_position_embedding_v2.h"
 #include "opdev/platform.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "op_api_ut_common/scalar_desc.h"
@@ -57,52 +56,6 @@ TEST_F(l2_rotary_position_embedding_test, Ascend910B2_rotary_position_embedding_
     int64_t mode = 2;
     auto out = TensorDesc({1, 1, 64}, ACL_FLOAT, ACL_FORMAT_ND);
     auto ut = OP_API_UT(aclnnRotaryPositionEmbedding, INPUT(x, cos, sin, mode), OUTPUT(out));
-    uint64_t workspaceSize = 0;
-    aclOpExecutor *executor = nullptr;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
-// dtype bf16
-TEST_F(l2_rotary_position_embedding_test, Ascend910B2_rotary_position_embedding_rotate_matrix_bf16_001)
-{
-    auto x = TensorDesc({1, 24, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-10, 10);
-    auto cos = TensorDesc({1, 1, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto sin = TensorDesc({1, 1, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto rotate = TensorDesc({128, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-1, 1);
-    int64_t mode = 0; 
-    auto out = TensorDesc({1, 24, 32, 128}, ACL_BF16, ACL_FORMAT_ND);
-    auto ut = OP_API_UT(aclnnRotaryPositionEmbeddingV2, INPUT(x, cos, sin, mode, rotate), OUTPUT(out));
-    uint64_t workspaceSize = 0;
-    aclOpExecutor *executor = nullptr;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
-TEST_F(l2_rotary_position_embedding_test, Ascend910B2_rotary_position_embedding_rotate_matrix_bf16_002_variable_s)
-{
-    auto x = TensorDesc({1, 24, 64, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-10, 10);
-    auto cos = TensorDesc({1, 1, 64, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto sin = TensorDesc({1, 1, 64, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto rotate = TensorDesc({128, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-1, 1);
-    int64_t mode = 0;
-    auto out = TensorDesc({1, 24, 64, 128}, ACL_BF16, ACL_FORMAT_ND);
-    auto ut = OP_API_UT(aclnnRotaryPositionEmbeddingV2, INPUT(x, cos, sin, mode, rotate), OUTPUT(out));
-    uint64_t workspaceSize = 0;
-    aclOpExecutor *executor = nullptr;
-    aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
-    EXPECT_EQ(getWorkspaceResult, ACLNN_SUCCESS);
-}
-
-TEST_F(l2_rotary_position_embedding_test, Ascend910B2_rotary_position_embedding_rotate_matrix_bf16_003_multi_batch)
-{
-    auto x = TensorDesc({2, 24, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-10, 10);
-    auto cos = TensorDesc({1, 1, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto sin = TensorDesc({1, 1, 32, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(0, 8);
-    auto rotate = TensorDesc({128, 128}, ACL_BF16, ACL_FORMAT_ND).ValueRange(-1, 1);
-    int64_t mode = 0;
-    auto out = TensorDesc({2, 24, 32, 128}, ACL_BF16, ACL_FORMAT_ND);
-    auto ut = OP_API_UT(aclnnRotaryPositionEmbeddingV2, INPUT(x, cos, sin, mode, rotate), OUTPUT(out));
     uint64_t workspaceSize = 0;
     aclOpExecutor *executor = nullptr;
     aclnnStatus getWorkspaceResult = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);

@@ -25,6 +25,11 @@ extern "C" {
 
 constexpr int64_t HALF_INTERLEAVE_MODE = 3;
 
+aclnnStatus aclnnInnerRotaryPositionEmbeddingGetWorkspaceSize(
+    const aclTensor* x, const aclTensor* cos, const aclTensor* sin, int64_t mode, aclTensor* out,
+    uint64_t* workspaceSize, aclOpExecutor** executor);
+aclnnStatus aclnnInnerRotaryPositionEmbedding(
+    void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream);
 aclnnStatus aclnnInnerInterleaveRopeGetWorkspaceSize(
     const aclTensor* x, const aclTensor* cos, const aclTensor* sin, aclTensor* out, uint64_t* workspaceSize,
     aclOpExecutor** executor);
@@ -36,7 +41,7 @@ aclnnStatus aclnnInterleaveRopeGetWorkspaceSize(
     aclOpExecutor** executor)
 {
     if (Ops::Transformer::AclnnUtil::IsRegbase()) {
-        return aclnnRotaryPositionEmbeddingGetWorkspaceSize(
+        return aclnnInnerRotaryPositionEmbeddingGetWorkspaceSize(
             x, cos, sin, HALF_INTERLEAVE_MODE, out, workspaceSize, executor);
     } else {
         return aclnnInnerInterleaveRopeGetWorkspaceSize(x, cos, sin, out, workspaceSize, executor);
@@ -46,7 +51,7 @@ aclnnStatus aclnnInterleaveRopeGetWorkspaceSize(
 aclnnStatus aclnnInterleaveRope(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor, aclrtStream stream)
 {
     if (Ops::Transformer::AclnnUtil::IsRegbase()) {
-        return aclnnRotaryPositionEmbedding(workspace, workspaceSize, executor, stream);
+        return aclnnInnerRotaryPositionEmbedding(workspace, workspaceSize, executor, stream);
     } else {
         return aclnnInnerInterleaveRope(workspace, workspaceSize, executor, stream);
     }

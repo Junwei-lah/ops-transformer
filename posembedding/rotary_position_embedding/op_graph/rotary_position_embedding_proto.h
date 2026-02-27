@@ -25,9 +25,8 @@ namespace ge {
  * float or bfloat16.
  * @li cos: A 4D tensor which is "cos" in rotary position embedding, format supports ND, data type must be the same as
  * "x", and shape must be the same as "sin".
- * @li rotate: An optional 2D tensor which is the transformation matrix for position transformation of the "x" in rotary
- * position embedding, format supports ND, data type must be the same as "x", both dimensions are the same and equal to
- * the last dimension of "x".
+ * @li sin: A 4D tensor which is "sin" in rotary position embedding, format supports ND, data type must be the same as
+ * "x", and shape must be the same as "cos".
  * @par Outputs:
  * y: A 4D tensor which is the result of rotary position embedding, format supports ND, data type must be the same as
  * "x", and shape must be the same as "x".
@@ -38,9 +37,9 @@ namespace ge {
  * @attention Constraints:
  * Let (B, S, N, D) represents the shape of the 4-D input "x". Under this representation, the shape constraints of each
  * parameter can be described as follows:
- * @li The D of "x", "cos", "sin", "rotate" and "y" must be equal. For Ascend 950 AI Processor, D should be less or
- * equal to 1024. For Atlas A2 Training Series Product/ Atlas 800I A2 Inference Product and Atlas A3 Training Series
- * Product, D should be less or equal to 896.
+ * @li The D of "x", "cos", "sin" and "y" must be equal. For Ascend 950 AI Processor, D should be less or equal to
+ * 1024. For Atlas A2 Training Series Product/ Atlas 800I A2 Inference Product and Atlas A3 Training Series Product, D
+ * should be less or equal to 896.
  * @li In half, interleave and interleave-half mode, D must be a multiple of 2. In quarter mode, D must be a multiple
  * of 4.
  * @li B, S, N of "cos" and "sin" must meet one of the following four conditions:
@@ -55,7 +54,6 @@ REG_OP(RotaryPositionEmbedding)
     .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_BFLOAT16}))
     .INPUT(cos, TensorType({DT_FLOAT16, DT_FLOAT, DT_BFLOAT16}))
     .INPUT(sin, TensorType({DT_FLOAT16, DT_FLOAT, DT_BFLOAT16}))
-    .OPTIONAL_INPUT(rotate, TensorType({DT_FLOAT16, DT_FLOAT, DT_BFLOAT16}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_BFLOAT16}))
     .ATTR(mode, Int, 0)
     .OP_END_FACTORY_REG(RotaryPositionEmbedding)
