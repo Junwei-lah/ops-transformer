@@ -1855,7 +1855,7 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
         <td>128或512</td>
     </tr>
     <tr>
-        <td colspan="5">不支持左padding、tensorlist、pse、PagedAttention、prefix、后量化。</td>
+        <td colspan="5">不支持左padding、tensorlist、pse、prefix、后量化。</td>
     </tr>
     </tbody>
 </table>
