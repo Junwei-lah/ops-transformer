@@ -250,7 +250,7 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
         (maxUbSize - rotaryDim * 10UL * dataTypeSize) / allSize; // ub每次能载入最大行数（包括所有计算数据）;
 
     uint64_t num_tokens_each_front_core = (totalDataNum + coreNum - 1) / coreNum;
-    uint64_t loop_time_each_front_core =
+    uint64_t loop_time_each_front_core = maxNPerLoopForUb == 0 ? 0 :
         (num_tokens_each_front_core + maxNPerLoopForUb - 1UL) / static_cast<uint64_t>(maxNPerLoopForUb);
 
     uint64_t num_tokens_front_core_each_loop =
@@ -260,7 +260,8 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
             0 :
             num_tokens_each_front_core - num_tokens_front_core_each_loop * (loop_time_each_front_core - 1UL);
     uint64_t num_tokens_each_tail_core = totalDataNum / coreNum;
-    uint64_t loop_time_each_tail_core = (num_tokens_each_tail_core + maxNPerLoopForUb - 1) / maxNPerLoopForUb;
+    uint64_t loop_time_each_tail_core = maxNPerLoopForUb == 0 ? 0 :
+        (num_tokens_each_tail_core + maxNPerLoopForUb - 1) / maxNPerLoopForUb;
     uint64_t num_tokens_tail_core_each_loop =
         loop_time_each_tail_core <= 1UL ? num_tokens_each_tail_core : maxNPerLoopForUb;
     uint64_t num_tokens_tail_core_last_loop =
@@ -274,8 +275,8 @@ static ge::graphStatus TilingCompute(gert::TilingContext *context, TilingParams 
             (maxUbSize - rotaryDim * 10UL * dataTypeSize) / ((rotaryDim * 6UL + headSize * 2UL) * dataTypeSize);
 
     uint64_t loop_for_one_token = numHeadsMax > numHeadsForUb ? 1UL : 0UL; // 取1时，对numheads循环，maxNPerLoopForUb == 0
-    uint64_t loop_along_qheads = (numQheads + numHeadsForUb - 1UL) / numHeadsForUb;
-    uint64_t loop_along_kheads = (numKheads + numHeadsForUb - 1UL) / numHeadsForUb;
+    uint64_t loop_along_qheads = numHeadsForUb == 0 ? 0 : (numQheads + numHeadsForUb - 1UL) / numHeadsForUb;
+    uint64_t loop_along_kheads = numHeadsForUb == 0 ? 0 : (numKheads + numHeadsForUb - 1UL) / numHeadsForUb;
     uint64_t num_qheads_each_loop = loop_along_qheads == 1UL ? numQheads : numHeadsForUb;
     uint64_t num_qheads_last_loop =
         loop_along_qheads == 1UL ? 0 : numQheads - num_qheads_each_loop * (loop_along_qheads - 1UL);
