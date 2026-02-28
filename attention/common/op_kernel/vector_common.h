@@ -1184,20 +1184,20 @@ __aicore__ inline void InvalidRows<T, UB_INPUTFORMAT>::DealInvalidRowsBelow(Loca
         int32_t s1BottomTok = params.actS1Size + params.preTokensPerBatch;
         uint32_t s1 = params.gS1Idx / params.gSize;
         uint32_t gIdx = params.gS1Idx % params.gSize;
-        uint32_t dealRowOffset = 0;
+        uint64_t dealRowOffset = 0;
         if (s1 < s1BottomTok) {
             // 如果s1 < 行无效开始行，偏移s1到行无效开始行
             s1 = s1BottomTok;
             dealRowOffset = s1BottomTok * params.gSize - params.gS1Idx;
             gIdx = 0;
         }
-        while (s1 >= s1BottomTok && s1 < params.actS1Size && dealRowOffset < params.dealRowCount) {
+        while (s1 < params.actS1Size && dealRowOffset < params.dealRowCount) {
             uint32_t gNum = params.gSize - gIdx;
             if (dealRowOffset + gNum > params.dealRowCount) {
                 gNum = params.dealRowCount - dealRowOffset;
             }
-            Duplicate(attenOutUb[dealRowOffset * params.columnCount], \
-                      static_cast<T>(AttentionCommon::ConstInfo::FLOAT_ZERO), params.columnCount * gNum);
+            Duplicate(attenOutUb[dealRowOffset * params.columnCount],
+                      static_cast<T>(FLOAT_ZERO), params.columnCount * gNum);
             AscendC::PipeBarrier<PIPE_V>();
             dealRowOffset += gNum;
             s1++;
