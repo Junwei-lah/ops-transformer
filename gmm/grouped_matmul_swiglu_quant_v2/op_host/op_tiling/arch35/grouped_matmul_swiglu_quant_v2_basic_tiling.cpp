@@ -25,13 +25,13 @@ using namespace Ops::Transformer::OpTiling;
 using namespace GroupedMatmulSwigluQuantParamsV2;
 using namespace optiling::GmmConstant;
 namespace optiling {
-void GroupedMatmulSwigluQuantDavidV2Tiling::Reset()
+void GroupedMatmulSwigluQuantV2Tiling950::Reset()
 {
     tilingData_.SetDataPtr(context_->GetRawTilingData()->GetData());
     return;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrsPertoken()
+bool GroupedMatmulSwigluQuantV2Tiling950::AnalyzeAttrsPertoken()
 {
     auto attrs = context_->GetAttrs();
     if (attrs != nullptr) {
@@ -64,7 +64,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrsPertoken()
     return true;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrs()
+bool GroupedMatmulSwigluQuantV2Tiling950::AnalyzeAttrs()
 {
     if (inputParams_.aQuantMode == optiling::QuantMode::PERTOKEN_MODE) {
         return AnalyzeAttrsPertoken();
@@ -116,7 +116,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeAttrs()
     return true;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeDtype()
+bool GroupedMatmulSwigluQuantV2Tiling950::AnalyzeDtype()
 {
     auto xDesc = context_->GetInputDesc(X_INDEX);
     OP_CHECK_IF(xDesc == nullptr, OP_LOGE(context_->GetNodeName(), "xDesc is nullptr."), return false);
@@ -163,27 +163,27 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeDtype()
     return CheckDtype();
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4(ge::DataType dtype) const
+bool GroupedMatmulSwigluQuantV2Tiling950::IsFp4(ge::DataType dtype) const
 {
     return dtype == ge::DT_FLOAT4_E2M1;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp8(ge::DataType dtype) const
+bool GroupedMatmulSwigluQuantV2Tiling950::IsFp8(ge::DataType dtype) const
 {
     return dtype == ge::DT_FLOAT8_E4M3FN || dtype == ge::DT_FLOAT8_E5M2;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp4Input() const
+bool GroupedMatmulSwigluQuantV2Tiling950::IsFp4Input() const
 {
     return IsFp4(inputParams_.aDtype) && IsFp4(inputParams_.bDtype);
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsFp8Input()
+bool GroupedMatmulSwigluQuantV2Tiling950::IsFp8Input()
 {
     return IsFp8(inputParams_.aDtype) && IsFp8(inputParams_.bDtype);
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDtype()
+bool GroupedMatmulSwigluQuantV2Tiling950::CheckDtype()
 {
     // 校验x和weight数据类型一致性：不能一个是fp4，一个是fp8
     bool xIsFp4 = IsFp4(inputParams_.aDtype);
@@ -227,7 +227,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDtype()
     return true;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::SetQuantModeForGMMSwigluQuant(const gert::Shape &wScaleShape,
+bool GroupedMatmulSwigluQuantV2Tiling950::SetQuantModeForGMMSwigluQuant(const gert::Shape &wScaleShape,
                                                                           const gert::Shape &xScaleShape)
 {
     auto wScaleDims = wScaleShape.GetDimNum();
@@ -251,7 +251,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::SetQuantModeForGMMSwigluQuant(const 
     return false;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDims() const
+bool GroupedMatmulSwigluQuantV2Tiling950::CheckDims() const
 {
     auto aInnerSize = inputParams_.transA ? inputParams_.mSize : inputParams_.kSize;
     auto bInnerSize = inputParams_.transB ? inputParams_.kSize : inputParams_.nSize;
@@ -283,7 +283,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDims() const
                 return false);
     return true;
 }
-bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputs()
+bool GroupedMatmulSwigluQuantV2Tiling950::AnalyzeInputs()
 {
     OP_CHECK_IF(!CheckCoreNum(),
             OP_LOGE(inputParams_.opName, "CheckCoreNum failed."), return false);
@@ -324,7 +324,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputs()
     return true;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckCoreNum() const
+bool GroupedMatmulSwigluQuantV2Tiling950::CheckCoreNum() const
 {
     auto aicNum = context_->GetCompileInfo<GMMSwigluV2CompileInfo>()->aicNum_;
     auto aivNum = context_->GetCompileInfo<GMMSwigluV2CompileInfo>()->aivNum_;
@@ -337,7 +337,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckCoreNum() const
     return true;
 }
 
-ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoOpTiling()
+ge::graphStatus GroupedMatmulSwigluQuantV2Tiling950::DoOpTiling()
 {
     tilingData_.gmmSwigluQuantParams.set_groupNum(inputParams_.groupNum);
     tilingData_.gmmSwigluQuantParams.set_groupListType(static_cast<uint8_t>(inputParams_.groupListType));
@@ -359,7 +359,7 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoOpTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoLibApiTiling()
+ge::graphStatus GroupedMatmulSwigluQuantV2Tiling950::DoLibApiTiling()
 {
     CalBasicBlock();
     auto baseM_modified = std::min(basicTiling_.baseM, static_cast<uint64_t>(128));
@@ -404,7 +404,7 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoLibApiTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::PostTiling()
+ge::graphStatus GroupedMatmulSwigluQuantV2Tiling950::PostTiling()
 {
     context_->SetBlockDim(aicoreParams_.aicNum);
     context_->SetScheduleMode(1);
@@ -417,7 +417,7 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::PostTiling()
     return ge::GRAPH_SUCCESS;
 }
 
-void GroupedMatmulSwigluQuantDavidV2Tiling::PrintQuantParams()
+void GroupedMatmulSwigluQuantV2Tiling950::PrintQuantParams()
 {
     int32_t enable = CheckLogLevel(static_cast<int32_t>(OP), DLOG_DEBUG);
     if (enable != 1) {
@@ -430,13 +430,13 @@ void GroupedMatmulSwigluQuantDavidV2Tiling::PrintQuantParams()
         << ", quant_dtype = " << static_cast<int32_t>(params.get_quantDtype());
     OP_LOGD(inputParams_.opName, "%s", oss.str().c_str());
 }
-uint64_t GroupedMatmulSwigluQuantDavidV2Tiling::GetTilingKey() const
+uint64_t GroupedMatmulSwigluQuantV2Tiling950::GetTilingKey() const
 {
     return GET_TPL_TILING_KEY(static_cast<uint64_t>(inputParams_.transB), static_cast<uint64_t>(inputParams_.transA),
                               static_cast<uint64_t>(inputParams_.kernelType));
 }
 
-void GroupedMatmulSwigluQuantDavidV2Tiling::SetKernelType()
+void GroupedMatmulSwigluQuantV2Tiling950::SetKernelType()
 {
     inputParams_.kernelType = 0UL;
     if (inputParams_.bQuantMode == optiling::QuantMode::MX_PERGROUP_MODE) {
@@ -448,13 +448,13 @@ void GroupedMatmulSwigluQuantDavidV2Tiling::SetKernelType()
     }
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::IsB8(ge::DataType dtype)
+bool GroupedMatmulSwigluQuantV2Tiling950::IsB8(ge::DataType dtype)
 {
     return dtype == ge::DT_FLOAT8_E4M3FN || dtype == ge::DT_FLOAT8_E5M2 || dtype == ge::DT_INT8 ||
            dtype == ge::DT_HIFLOAT8;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDtypePertoken()
+bool GroupedMatmulSwigluQuantV2Tiling950::CheckDtypePertoken()
 {
     OP_CHECK_IF(!(IsB8(inputParams_.aDtype) && IsB8(inputParams_.bDtype)),
                 OP_LOGE(inputParams_.opName,
@@ -484,7 +484,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::CheckDtypePertoken()
     return true;
 }
 
-bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputsPertoken()
+bool GroupedMatmulSwigluQuantV2Tiling950::AnalyzeInputsPertoken()
 {
     auto scaleStorageShape = context_->GetDynamicInputShape(SCALE_INDEX, 0);
     OP_CHECK_IF(scaleStorageShape == nullptr, OP_LOGE(context_->GetNodeName(), "scaleStorageShape is nullptr."),
@@ -511,7 +511,7 @@ bool GroupedMatmulSwigluQuantDavidV2Tiling::AnalyzeInputsPertoken()
     return true;
 }
 
-ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoOpTilingPertoken()
+ge::graphStatus GroupedMatmulSwigluQuantV2Tiling950::DoOpTilingPertoken()
 {
     uint32_t rowLen = inputParams_.nSize >> 1;
     uint32_t alignedRowLen = rowLen;
@@ -528,7 +528,7 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::DoOpTilingPertoken()
     return ge::GRAPH_SUCCESS;
 }
 
-void GroupedMatmulSwigluQuantDavidV2Tiling::PrintPertokenQuantParams()
+void GroupedMatmulSwigluQuantV2Tiling950::PrintPertokenQuantParams()
 {
     int32_t enable = CheckLogLevel(static_cast<int32_t>(OP), DLOG_DEBUG);
     if (enable != 1) {
@@ -544,7 +544,7 @@ void GroupedMatmulSwigluQuantDavidV2Tiling::PrintPertokenQuantParams()
     OP_LOGD(inputParams_.opName, "%s", oss.str().c_str());
 }
 
-ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::GetWorkspaceSize()
+ge::graphStatus GroupedMatmulSwigluQuantV2Tiling950::GetWorkspaceSize()
 {
     size_t *workspaces = context_->GetWorkspaceSizes(1);
     OP_CHECK_NULL_WITH_CONTEXT(context_, workspaces);
@@ -562,5 +562,5 @@ ge::graphStatus GroupedMatmulSwigluQuantDavidV2Tiling::GetWorkspaceSize()
     return ge::GRAPH_SUCCESS;
 }
 
-REGISTER_OPS_TILING_TEMPLATE(GroupedMatmulSwigluQuantV2, GroupedMatmulSwigluQuantDavidV2Tiling, 2);
+REGISTER_OPS_TILING_TEMPLATE(GroupedMatmulSwigluQuantV2, GroupedMatmulSwigluQuantV2Tiling950, 2);
 } // namespace optiling

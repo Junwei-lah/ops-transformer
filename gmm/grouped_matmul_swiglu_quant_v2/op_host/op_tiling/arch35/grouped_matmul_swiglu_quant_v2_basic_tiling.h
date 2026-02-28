@@ -27,13 +27,13 @@
 
 namespace optiling {
 using namespace Ops::Transformer::OpTiling;
-class GroupedMatmulSwigluQuantDavidV2Tiling : public GroupedQbmmTiling {
+class GroupedMatmulSwigluQuantV2Tiling950 : public GroupedQbmmTiling {
 public:
-    explicit GroupedMatmulSwigluQuantDavidV2Tiling(gert::TilingContext *context) : GroupedQbmmTiling(context)
+    explicit GroupedMatmulSwigluQuantV2Tiling950(gert::TilingContext *context) : GroupedQbmmTiling(context)
     {
         Reset();
     }
-    ~GroupedMatmulSwigluQuantDavidV2Tiling() override = default;
+    ~GroupedMatmulSwigluQuantV2Tiling950() override = default;
 
     void Reset(gert::TilingContext *context) override
     {
