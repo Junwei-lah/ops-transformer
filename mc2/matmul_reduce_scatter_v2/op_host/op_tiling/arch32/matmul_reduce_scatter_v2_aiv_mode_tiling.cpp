@@ -542,7 +542,7 @@ static ge::graphStatus MatmulReduceScatterV2CheckAttrAndSetTiling(gert::TilingCo
     OP_TILING_CHECK(attrs == nullptr, VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(), "AivMode attrs is null."),
                     return ge::GRAPH_FAILED);
 
-    // todo：Attr相关tilingdata的设置、校验、打印
+    // Attr相关tilingdata的设置、校验、打印
     auto groupPtr = attrs->GetAttrPointer<char>(static_cast<int>(ATTR_GROUP_INDEX));
     auto is_trans_a = attrs->GetAttrPointer<bool>(ATTR_IS_TRANS_A);
     auto is_trans_b = attrs->GetAttrPointer<bool>(ATTR_IS_TRANS_B);

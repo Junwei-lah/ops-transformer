@@ -39,7 +39,7 @@ constexpr uint32_t COMM_PAIRWISE = (COMM_MESH << 3U);
 constexpr uint32_t COMM_UNDEFINED = 0xFFFFFFFFU;
 constexpr uint8_t COMM_ALG_FULL_MESH_HOST = 6;
 constexpr uint64_t CHECK_VALUE_ODD = 2;
-constexpr uint32_t AIC_NUM_910D = 32;
+constexpr uint32_t AIC_NUM_950 = 32;
 constexpr uint64_t MC2_TILINGKEY_OFFSET =
     uint64_t(1000000000000000000UL);  // 10^18
 constexpr size_t RES_LEN = 64;

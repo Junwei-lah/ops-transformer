@@ -452,7 +452,7 @@ aclnnStatus aclnnFFNToAttention(
         std::vector<int64_t> tokenIdsShape{Y};
         std::vector<int64_t> expertOffsetsShape{Y};
         std::vector<int64_t> actualTokenNumShape{1};
-        std::vector<int64_t> attnRankTableShape{attention_worker_num};   // todo
+        std::vector<int64_t> attnRankTableShape{attention_worker_num};
 
 
         int64_t xShapeSize = GetShapeSize(xShape);

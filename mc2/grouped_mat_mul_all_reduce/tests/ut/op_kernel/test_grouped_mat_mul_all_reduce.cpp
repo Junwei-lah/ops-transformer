@@ -142,7 +142,7 @@ TEST_F(GroupedMatMulAllReduceTest, CaseFloat16Test1)
         msgI->groupNum = 2;
         msgI->stride = 0;
         msgI->useBufferType = 1;  // MC2_BUFFER_TYPE_OUTPUT
-        msgI->workspaceOff = 0;  // todo
+        msgI->workspaceOff = 0;
 
         msgI->sendOff = baseM * nList[i] * sizeof(half);
         msgI->recvOff = baseM * nList[i] * sizeof(half);

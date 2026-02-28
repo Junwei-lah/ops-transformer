@@ -130,7 +130,7 @@ double MatmulPerformanceModel::FindCubeUtilByL2Usage(uint64_t mSize,
       std::min(mBlockNum * nBlockNum, mmShapeInfo_.coreNum) /
       static_cast<double>(mmShapeInfo_.coreNum));
 
-  /*910D
+  /*950
   cube利用率计算公式：两个输入为M、N的调和平均数和K。MN调和平均数的阈值为820，K阈值为1280，小于这个阈值
   认为提供负增益，大于这个阈值认为提供正增益，但是正增益最高不超过1.4倍。乘方函数用来缓和增长率，减慢变化速度*/
   if (mmShapeInfo_.socType == SocVersion::SOC950) {

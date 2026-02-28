@@ -792,7 +792,7 @@ __aicore__ inline void MoeDistributeDispatchV2Layered<TemplateMC2TypeV2LayeredFu
     //计算exportCnt累加表,combineReduceInfo和tokenOffset
     CalExpCntAndOffset(realBS, currServerExpBegin, currServerExpEnd, tokenTopKInfoI32Lt);
     
-    //通过前面计算得到的三张表计算 innerCnt表和innerOffset表 TODO: for循环优化
+    //通过前面计算得到的三张表计算 innerCnt表和innerOffset表
     for (uint32_t expBlockId=0; expBlockId < moeExpertNumInServer_; expBlockId++) {
         uint32_t validCnt = (expBlockId % localMoeExpertNum_ == 0) ? 
                     expCntMap_(expBlockId) : (expCntMap_(expBlockId) - expCntMap_(expBlockId-1));

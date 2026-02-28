@@ -253,7 +253,6 @@ static bool CheckSupportSingleSplitKFp16Bf16(
            kDim >= splitKMultiThres * std::max(selfShape.GetDim(0), mat2Shape.GetDim(1));
 }
 
-// 1980/1951 支持fp16进 fp16/fp32出，非对齐case 只能NZ进出，对齐case支持ND进出
 static aclnnStatus SetMatmulOpSupportInfo(
     const aclTensor* self, const aclTensor* mat2, MmOpInfo& mmOpInfo, int8_t cubeMathType)
 {
@@ -485,7 +484,6 @@ MmOpInfo GetMatmulOpInfo(const aclTensor* self, const aclTensor* mat2, int8_t cu
     mmOpInfo.support_info = mmOpInfo.ori_info;
 
     // 不同芯片能力不同
-    // 1980 1951 shape是否对齐
     // fp16 fp32 选择，1980 vector支持fp32
     SetMatmulOpSupportInfo(self, mat2, mmOpInfo, cubeMathType);
 

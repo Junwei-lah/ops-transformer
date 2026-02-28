@@ -114,7 +114,7 @@ __aicore__ inline void GMMProcess<ComputeType>::Process(
     mnConfig.baseM = baseM;
     mnConfig.baseN = baseN;
 
-    // todo: eIndex 顺序
+    // eIndex 顺序
     mnConfig.k = mmH;
     mnConfig.n = mmN;
 

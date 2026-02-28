@@ -482,7 +482,7 @@ ge::graphStatus MatmulAllReduceTilingBase::GetWorkspaceSize()
     uint64_t gmcFloat = 0;
 
     // __DAV_C310__
-    // 910D需要自己申请一块workSpace存放mm的输出
+    // 950需要自己申请一块workSpace存放mm的输出
     if (npuArch_ == NpuArch::DAV_3510) {
         gmcFloat = static_cast<uint64_t>(MutableRCSTilingData().rankM) *
                    static_cast<uint64_t>(MutableRCSTilingData().rankN) *

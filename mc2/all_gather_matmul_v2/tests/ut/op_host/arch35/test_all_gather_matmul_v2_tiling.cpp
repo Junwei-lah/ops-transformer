@@ -1868,7 +1868,7 @@ TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_1976_4724_1449_fp16_
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_bf16_coreNum_is_0_910d)
+TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_bf16_coreNum_is_0_950)
 {
     struct AllGatherMatmulCompileInfo {} compileInfo;
 
@@ -1907,7 +1907,7 @@ TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_bf16_910d)
+TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_bf16_950)
 {
     struct AllGatherMatmulCompileInfo {} compileInfo;
 
@@ -1946,7 +1946,7 @@ TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues);
 }
 
-TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_hif8_hif8_y_float32_pertensor_910d)
+TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false_false_hif8_hif8_y_float32_pertensor_950)
 {
     struct AllGatherMatmulCompileInfo {} compileInfo;
 
@@ -1986,7 +1986,7 @@ TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_1001_6001_false
     Mc2ExecuteTestCase(tilingContextPara, hcomTopologyMockValues, ge::GRAPH_SUCCESS, expectTilingKey);
 }
 
-TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_8192_1280_false_true_hif8_hif8_y_float32_perblock_910d)
+TEST_F(AllGatherMatmulV2Arch35TilingTest, all_gather_matmul_4096_8192_1280_false_true_hif8_hif8_y_float32_perblock_950)
 {
     struct AllGatherMatmulCompileInfo {} compileInfo;
 
