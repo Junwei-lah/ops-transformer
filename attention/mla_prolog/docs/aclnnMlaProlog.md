@@ -1,6 +1,6 @@
 # aclnnMlaProlog
 
-[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/attention/mla_prolog)
+**该接口后续版本会废弃，请使用最新接口[aclnnMlaPrologV3WeightNz](../../mla_prolog_v3/docs/aclnnMlaPrologV3WeightNz.md)。
 
 ## 产品支持情况
 
