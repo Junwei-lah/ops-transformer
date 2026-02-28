@@ -31,7 +31,7 @@ OP_TYPE_REGISTER(MoeMaskedScatter);
 static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_UINT8, op::DataType::DT_INT8,
     op::DataType::DT_INT32, op::DataType::DT_INT16,   op::DataType::DT_INT64, op::DataType::DT_BF16};
-static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_910D = {
+static const std::initializer_list<op::DataType> AICORE_DTYPE_SUPPORT_LIST_950 = {
     op::DataType::DT_FLOAT, op::DataType::DT_FLOAT16, op::DataType::DT_DOUBLE, op::DataType::DT_UINT8,
     op::DataType::DT_INT8,  op::DataType::DT_INT16,   op::DataType::DT_INT32,  op::DataType::DT_INT64,
     op::DataType::DT_BOOL,  op::DataType::DT_BF16};
@@ -46,7 +46,7 @@ static bool IsAiCoreSupport(const aclTensor* self, const aclTensor* mask)
 {
     // 只需要判断dtype
     auto supportList = op::GetCurrentPlatformInfo().GetCurNpuArch()  == NpuArch::DAV_3510 ?
-                           AICORE_DTYPE_SUPPORT_LIST_910D :
+                           AICORE_DTYPE_SUPPORT_LIST_950 :
                            AICORE_DTYPE_SUPPORT_LIST;
     bool result = CheckType(self->GetDataType(), supportList);
     result = result && (mask->GetDataType() == op::DataType::DT_BOOL);
