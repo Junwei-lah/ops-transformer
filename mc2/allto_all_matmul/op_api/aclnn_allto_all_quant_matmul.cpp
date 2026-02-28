@@ -139,18 +139,11 @@ static bool Check3DScaleShape(const aclTensor* x2, const aclTensor* x1Scale,
     OP_CHECK_WRONG_DIMENSION(x2Scale, THREE_DIMS, return false);
     auto nVal = transposeX2 ? x2->GetViewShape().GetDim(0) : x2->GetViewShape().GetDim(1);
     auto x2ScaleNVal = transposeX2 ? x2Scale->GetViewShape().GetDim(0) : x2Scale->GetViewShape().GetDim(1);
-    auto x1ScaleKVal = x1Scale->GetViewShape().GetDim(1);
-    auto x2ScaleKVal = transposeX2 ? x2Scale->GetViewShape().GetDim(1) : x2Scale->GetViewShape().GetDim(0);
     auto x1ScaleLastDim = x1Scale->GetViewShape().GetDim(2);
     auto x2ScaleLastDim = x2Scale->GetViewShape().GetDim(2);
     if (x2ScaleNVal != nVal) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID,
         	"The n-axis of x2 and x2ScaleDim should be same, but x2's n-axis is: %ld and x2ScaleDim is: %ld.", nVal, x2ScaleNVal);
-        return false;
-    }
-    if (x1ScaleKVal != x2ScaleKVal) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID,
-        	"The k-axis of x1scale and x2scale should be same, but x1scale's k-axis is: %ld and x2Scale's k-axis is: %ld.", x1ScaleKVal, x2ScaleKVal);
         return false;
     }
     if (x1ScaleLastDim != TWO) {
@@ -508,7 +501,7 @@ extern "C" aclnnStatus aclnnAlltoAllQuantMatmulGetWorkspaceSize(const aclTensor*
         return ACLNN_ERR_PARAM_INVALID;
     }
     if (notContiguous && GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {    // 只有当非连续时，才会涉及到转连续等情况
-        transposeX2 = !transposeX2;
+        transposeX2 = true;
         // 把非连续x2转成连续
         transX2 = TransX2Tensor(x2);
         CHECK_RET(transX2 != nullptr, ACLNN_ERR_INNER_NULLPTR);

@@ -430,7 +430,7 @@ extern "C" aclnnStatus aclnnQuantMatmulAlltoAllGetWorkspaceSize(const aclTensor*
         return ACLNN_ERR_PARAM_INVALID;
     }
     if (notContiguous && GetCurrentPlatformInfo().GetCurNpuArch() == NpuArch::DAV_3510) {    // 只有当非连续时，才会涉及到转连续等情况
-        transposeX2 = !transposeX2;
+        transposeX2 = true;
         // 把非连续x2转成连续
         transX2 = TransX2Tensor(x2);
         CHECK_RET(transX2 != nullptr, ACLNN_ERR_INNER_NULLPTR);
