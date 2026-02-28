@@ -397,7 +397,7 @@ aclnnStatus aclnnIncreFlashAttentionV2(
   - dequantScale1、quantScale1、dequantScale2、quantScale2和quantOffset2仅支持nullptr。
   - numKeyValueHeads仅支持取值0。
 - 非连续场景下，参数key、value的tensorlist中tensor的个数等于query的B（由于tensorlist限制，非连续场景下B需要小于等于256）。shape除S外需要完全一致，且batch只能为1。
-- 参数query中的N和numHeads值相等，key、value的N和numKeyValueHeads值相等，并且numHeads是numKeyValueHeads的倍数关系，并且numHeads与numKeyValueHeads的比值不能大于64。
+- 参数query中的N和numHeads值相等，key、value的N和numKeyValueHeads值相等，并且numHeads是numKeyValueHeads的倍数关系。
 - 仅支持query的S轴等于1。
 - 当attenMask数据类型取INT8、UINT8时，其tensor中的值需要为0或1。
 - query、key、value输入均为INT8的场景暂不支持。

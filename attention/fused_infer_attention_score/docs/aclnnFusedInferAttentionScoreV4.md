@@ -630,7 +630,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
             <td>表示key/value的head个数</td>
             <td>
             <ul>
-                <li>需要满足numHeads整除numKeyValueHeads，numHeads与numKeyValueHeads的比值不能大于64。</li>
+                <li>需要满足numHeads整除numKeyValueHeads。</li>
                 <li>在BSND、TND、BNSD、NTD、BSND_BNSD、BNSD_BSND、NTD_TND场景下，还需要与shape中的key/value的N轴shape值相同，否则执行异常。</li>
             </ul>
             </td>

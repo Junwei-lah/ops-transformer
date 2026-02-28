@@ -836,11 +836,9 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
         - 当kv为tensorlist时，keyRope的shape中b需要与tensorlist长度保持一致，n、s需要与tensorlist中每个tensor的n、s相等，d为64;
         - 不支持pse。
 
-- numKeyValueHeads使用限制：需要满足numHeads整除numKeyValueHead。在BSND、BNSD、BNSD_BSND、TND场景下，还需要与shape中的key/value的N轴shape值相同，否则执行异常。
+- numKeyValueHeads使用限制：需要满足numHeads整除numKeyValueHeads。在BSND、BNSD、BNSD_BSND、TND场景下，还需要与shape中的key/value的N轴shape值相同，否则执行异常。
   - <term>Ascend 950PR/Ascend 950DT</term>：
     - 伪量化和全量化场景下numHeads与numKeyValueHeads的比值不能大于64; MLA decode场景下numHeads与numKeyValueHeads的比值不能大于128; 非量化和MLA prefill场景下当且仅当D轴等于64或者128时支持numHeads与numKeyValueHeads的比值大于64，其他D轴不支持。
-  - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
-    - numHeads与numKeyValueHeads的比值不能大于64。
 
 - sparseMode使用限制如下：
 
