@@ -13,11 +13,27 @@
 
 ## 功能说明
 
-- 接口功能：完成AlltoAll通信、Permute(保证通信后地址连续)和Matmul计算的融合，**先通信后计算**，支持非量化、K-C量化和K-C动态[量化模式](../../docs/zh/context/量化介绍.md)。
+- 算子功能：完成AlltoAll通信、Permute(保证通信后地址连续)和Matmul计算的融合，**先通信后计算**，支持非量化、K-C量化、K-C动态量化和mx[量化模式](../../docs/zh/context/量化介绍.md)。
 - 计算公式：假设x1输入shape为(BS, H)，rankSize为NPU卡数
 
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
-        - **动态量化场景：**
+    - **非量化场景：**
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        output = permutedOut @ x2 + bias \\
+        $$
+
+    - **K-C量化、mx量化场景：**
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        output_{quant} = x1 @ x2 \\
+        output = output_{quant} \times x1_{scale} \times x2_{scale} \\
+        output = output + bias
+        $$
+
+    - **K-C动态量化场景：**
+        - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
           $$
           commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
           permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
@@ -26,17 +42,7 @@
           output = output_{quant} \times x1_{scale} \times x2_{scale} \\
           output = output + bias
           $$
-        - **全量化场景：**
-          $$
-          commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
-          permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
-          output_{quant} = x1 @ x2 \\
-          output = output_{quant} \times x1_{scale} \times x2_{scale} \\
-          output = output + bias
-          $$
-
-    - <term>Ascend 950PR/Ascend 950DT</term>：
-        - **动态量化场景：**
+        - <term>Ascend 950PR/Ascend 950DT</term>：
           $$
           commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
           permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
@@ -66,7 +72,7 @@
     <td>x1</td>
     <td>输入</td>
     <td>融合算子的左矩阵，即公式中的输入x1。</td>
-    <td>FLOAT16、BFLOAT16、INT4</td>
+    <td>FLOAT16、BFLOAT16、INT4、FLOAT8_E4M3FN、FLOAT8_E5M2</td>
     <td>ND</td>
     </tr>
     <tr>
@@ -86,15 +92,15 @@
     <tr>
     <td>x1_scale</td>
     <td>可选输入</td>
-    <td>左矩阵的量化系数，当前仅在全量化场景下需要配置，对应公式中的x1Scale。</td>
-    <td>FLOAT32</td>
+    <td>左矩阵的量化系数，对应公式中的x1Scale。</td>
+    <td>FLOAT32、FLOAT8_E8M0</td>
     <td>ND</td>
     </tr>
     <tr>
     <td>x2_scale</td>
     <td>可选输入</td>
     <td>右矩阵的量化系数，对应公式中的x2Scale。</td>
-    <td>FLOAT32</td>
+    <td>FLOAT32、FLOAT8_E8M0</td>
     <td>ND</td>
     </tr>
     <tr>
@@ -147,7 +153,7 @@
     <tr>
     <td>all2all_axes</td>
     <td>可选属性</td>
-    <td>AlltoAll和Pemute数据交换的方向，支持配置空或者[-2, -1]，传入空时默认按[-2, -1]处理，表示将输入由(BS, H)转为(BS / rankSize, H * rankSize)。</td>
+    <td>AlltoAll和Pemute数据交换的方向，支持配置空或者[-2, -1]，传入空时默认按[-2, -1]处理，表示将输入由(BS, H)转为(BS/rankSize, H*rankSize)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
     <td>ND</td>
     </tr>
@@ -196,15 +202,22 @@
     <tr>
     <td>transpose_x2</td>
     <td>可选属性</td>
-    <td>标识右矩阵是否转置过，配置为True时右矩阵Shape为(N，H)。</td>
+    <td>标识右矩阵是否转置过，配置为True时右矩阵Shape为(N，H*rankSize)。</td>
     <td>bool</td>
     <td>-</td>
     </tr>
     <tr>
     <td>group_size</td>
     <td>可选属性</td>
-    <td>用于Matmul计算三个方向上的量化分组大小，预留参数，仅支持配置为0，取值不生效。groupSize输入由3个方向的groupSizeM，groupSizeN，groupSizeK三个值拼接组成，每个值占16位，共占用int64_t类型groupSize的低48位（groupSize中的高16位的数值无效），计算公式为：groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32。</td>
+    <td>用于Matmul计算三个方向上的量化分组大小，其值由3个方向的groupSizeM，groupSizeN，groupSizeK三个值拼接组成，每个值占16位，共占用int64_t类型groupSize的低48位（groupSize中的高16位的数值无效），计算公式为：groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32。</td>
     <td>INT</td>
+    <td>-</td>
+    </tr>
+    <tr>
+    <td>alltoall_out_flag</td>
+    <td>可选属性</td>
+    <td>用于标识是否需要保留AlltoAll和Permute后的结果。</td>
+    <td>bool</td>
     <td>-</td>
     </tr>
     </tbody></table>
@@ -227,14 +240,17 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
     - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 空tensor和非连续tensor的支持度根据不同设备型号有不同的限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何空tensor；不支持任何非连续tensor。
-    - <term>Ascend 950PR/Ascend 950DT</term>：仅支持非量化场景下输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持；仅支持量化场景下输入x2的转置非连续tensor，其它非连续tensor均不支持。
-* 输入x1必须是2维，其shape为(BS, H)，BS必须整除NPU卡数，BS和N的值不得超过2147483647(INT32_MAX)。
-* 输入x2必须是2维，其shape为(H\*rankSize, N)，H*rankSize范围根据芯片型号和场景不同有不同约束，详见[非量化aclnn约束说明](./docs/aclnnAlltoAllQuantMatmul.md#约束说明)
-  和[量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。
-* bias和x2_scale若非空，其维度必须为1维，shape为(N)。
-* x1_scale若非空，其维度必须为1维，shape为(BS/rankSize)。
+    - <term>Ascend 950PR/Ascend 950DT</term>：仅支持非量化场景下输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持；仅支持输入x2的转置非连续tensor，其它非连续tensor均不支持。
+* 输入x1必须是2维，其shape为(BS, H)，BS必须整除NPU卡数，BS和N的值不得超过2147483647(INT32_MAX)，不支持转置。
+* 输入x2必须是2维，其shape为(H\*rankSize, N)，H*rankSize范围根据芯片型号和场景不同有不同约束，详见[量化aclnn约束说明](./docs/aclnnAlltoAllQuantMatmul.md#约束说明)
+  和[非量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。当处于mx量化场景时，x2必须转置，其shape为(N, H\*rankSize)，transpose_x2配置为True。
+* bias若非空，其维度必须为1维，shape为(N)。
+* x1_scale若非空，在mx量化场景时，其维度为3维，shape为(BS, ceil(H/64), 2)；在K-C量化场景时，其维度为1维，shape为(BS)；在K-C动态量化场景时，其维度为1维，shape为(H*rankSize)。
+* x2_scale若非空，在mx量化场景时，其维度为3维，shape为(N, ceil(H/*rankSize/64), 2)；其它场景中其维度为1维，shape为(N)。
 * all2all_axes为1维数组，shape必须为(2)。
-* 目前支持左矩阵perToken量化和perToken动态量化，x1QuantMode=3或7；右矩阵perChannel量化，x2QuantMode=2。
+* 目前支持的量化模式，根据设备型号有不同限制：
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持K-C量化和K-C动态量化模式，x1QuantMode=3或7，x2QuantMode=2。
+    - <term>Ascend 950PR/Ascend 950DT</term>：支持K-C动态量化模式，x1QuantMode=7，x2QuantMode=2；mx量化模式，x1QuantMode=6，x2QuantMode=6。
 * 非量化场景x1、x2计算输入的数据类型要和output、alltoAllOutOptional计算输出的数据类型一致，传入的x1、x2与output均不为空指针。
 * 量化场景x1和alltoAllOutOptional的数据类型一致，传入的x1、x2、x2Scale与output均不为空指针。
 * x1、x2和bias计算输入的数据类型根据不同设备型号有不同的限制：
@@ -243,7 +259,7 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
         - 量化场景下，数据类型组合详见[量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。
     - <term>Ascend 950PR/Ascend 950DT</term>：
         - 非量化场景下，x1/x2计算输入的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16和FLOAT32；x1/x2计算输入的数据类型为BFLOAT16时，bias计算输入的数据类型支持BFLOAT16和FLOAT32。
-        - 量化场景下，支持K-C量化模式，x1、x2计算输入的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2，bias的数据类型为FLOAT16、BFLOAT16、FLOAT32，可自由组合。
+        - 量化场景下，支持K-C动态量化模式和mx量化模式，x1计算输入数据类型根据量化模式有所不同。在K-C动态量化模式下，x1计算输入的数据类型为FLOAT16、BFLOAT16；在mx量化模式下，x1计算输入的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2。x2计算输入的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2，bias的数据类型为FLOAT32或者bias为空，可自由组合。
 * 通算融合算子不支持并发调用，不同的通算融合算子也不支持并发调用。
 * 不支持跨超节点通信，只支持超节点内。
 
