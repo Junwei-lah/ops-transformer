@@ -1,0 +1,134 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/*!
+ * \file grouped_mat_mul_allto_allv_tiling_key.h
+ * \brief Quant Grouped MatMul AlltoAllV TilingKey 定义
+ */
+#ifndef QUANT_GROUPED_MAT_MUL_ALLTO_ALLV_TILING_KEY_H__
+#define QUANT_GROUPED_MAT_MUL_ALLTO_ALLV_TILING_KEY_H__
+
+#include "ascendc/host_api/tiling/template_argument.h"
+
+// 量化模式宏定义
+#define QUANT_MODE_NONE 0 // 无量化
+#define QUANT_MODE_TT 1   // TT
+#define QUANT_MODE_2 2
+#define QUANT_MODE_3 3
+#define QUANT_MODE_4 4
+#define QUANT_MODE_5 5
+#define QUANT_MODE_6 6
+
+// 通信量化模式宏定义
+#define COMM_QUANT_MODE_NONE 0 // 不量化
+#define COMM_QUANT_MODE_INT8 1 // INT8 量化
+#define COMM_QUANT_MODE_INT4 2 // INT4 量化
+
+/**
+ * TilingKey 定义
+ * 使用 ASCENDC_TPL_ARGS_DECL 宏实现 TilingKey 到模板参数的自动转换
+ *
+ * 参数说明：
+ * - TILINGKEY_GMM_WEIGHT_TRANS: GMM 计算权重转置场景 (0=不转置, 1=转置)
+ * - TILINGKEY_SHARED_MM_WEIGHT_TRANS: 共享专家 MM 计算权重转置场景 (0=不转置, 1=转置)
+ * - TILINGKEY_GMM_QUANT_MODE: GMM 量化模式 (0-6, 当前仅支持1)
+ * - TILINGKEY_SHARED_MM_QUANT_MODE: 共享专家 MM 量化模式 (0-6, 当前仅支持1)
+ */
+ASCENDC_TPL_ARGS_DECL(GroupedMatMulAlltoAllv,
+
+                      // 是否进行mm计算
+                      ASCENDC_TPL_BOOL_DECL(TILINGKEY_COMPUTE_MATMUL, 0, 1),
+
+                      // GMM 计算转置场景
+                      ASCENDC_TPL_BOOL_DECL(TILINGKEY_GMM_WEIGHT_TRANS, 0, 1),
+
+                      // 共享专家 MM 计算转置场景
+                      ASCENDC_TPL_BOOL_DECL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0, 1),
+
+                      // GMM 量化模式：0=NONE, 1=TT
+                      ASCENDC_TPL_UINT_DECL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_4_BW, ASCENDC_TPL_UI_LIST,
+                                            QUANT_MODE_NONE, QUANT_MODE_TT, QUANT_MODE_2, QUANT_MODE_3, QUANT_MODE_4,
+                                            QUANT_MODE_5, QUANT_MODE_6),
+
+                      // 共享专家 MM 量化模式: 0=NONE, 1=TT
+                      ASCENDC_TPL_UINT_DECL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_4_BW, ASCENDC_TPL_UI_LIST,
+                                            QUANT_MODE_NONE, QUANT_MODE_TT, QUANT_MODE_2, QUANT_MODE_3, QUANT_MODE_4,
+                                            QUANT_MODE_5, QUANT_MODE_6));
+
+/**
+ * TilingKey 选择器定义
+ * 定义所有有效的 TilingKey 组合, 注意如下注释有问题， 后续需要修正
+ */
+ASCENDC_TPL_SEL(
+    // 场景1: 无共享专家，GMM不转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_NONE)),
+
+    // 场景2: 有共享专家，GMM不转置，MM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT)),
+
+    // 场景3: 无共享专家，GMM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_NONE)),
+
+    // 场景4: 有共享专家，GMM转置，MM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT)),
+
+    // 场景1: 无共享专家，GMM不转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_NONE)),
+
+    // 场景2: 有共享专家，GMM不转置，MM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT)),
+
+    // 场景2: 有共享专家，GMM不转置，MM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT)),
+
+    // 场景3: 无共享专家，GMM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 0),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_NONE)),
+
+    // 场景4: 有共享专家，GMM转置，MM转置，不量化
+    ASCENDC_TPL_ARGS_SEL(ASCENDC_TPL_BOOL_SEL(TILINGKEY_COMPUTE_MATMUL, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_GMM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_BOOL_SEL(TILINGKEY_SHARED_MM_WEIGHT_TRANS, 1),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_GMM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT),
+                         ASCENDC_TPL_UINT_SEL(TILINGKEY_SHARED_MM_QUANT_MODE, ASCENDC_TPL_UI_LIST, QUANT_MODE_TT)),
+);
+
+#endif // QUANT_GROUPED_MAT_MUL_ALLTO_ALLV_TILING_KEY_H__

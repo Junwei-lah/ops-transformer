@@ -18,6 +18,7 @@
 
 #include <map>
 
+namespace optiling {
 namespace Mc2GroupedMatmul {
 constexpr uint32_t X_INDEX = 0;
 constexpr uint32_t WEIGHT_INDEX = 1;
@@ -186,5 +187,6 @@ template <typename T> auto FloorAlign(T x, T align) -> typename std::enable_if<s
     return align == 0 ? 0 : x / align * align;
 }
 } // namespace Mc2GroupedMatmul
+} // namespace optiling
 
 #endif // MC2_GROUPED_MATMUL_HOST_UTIL_H

@@ -19,12 +19,12 @@
 #include "log/error_code.h"
 #include "tiling_base/tiling_templates_registry.h"
 #include "tiling_base/tiling_type.h"
-#include "../../../op_kernel/3rd/gqmm_tiling_key.h"
+#include "../op_kernel/gqmm_tiling_key.h"
 
 using namespace Ops::Transformer::OpTiling;
 using namespace optiling::Mc2GroupedMatmulTiling;
 using namespace Mc2GroupedMatmulTilingData;
-using namespace Mc2GroupedMatmul;
+using namespace optiling::Mc2GroupedMatmul;
 using namespace optiling::Mc2GroupedMatmulTiling::GmmConstant;
 
 namespace optiling {

@@ -58,6 +58,8 @@ file(GLOB MC2_3RD_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/weight_quant_batch_matmul_v2/op_host/op_tiling/arch35/*.cpp
     # mm common
     ${CMAKE_CURRENT_SOURCE_DIR}/common/op_host/op_tiling/*.cpp
+    # gmm 
+    ${CMAKE_CURRENT_SOURCE_DIR}/grouped_matmul/op_tiling/*.cpp
 )
 
 # MC2_COMPILE used to avoid tefusion_llt

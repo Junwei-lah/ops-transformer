@@ -24,6 +24,8 @@ public:
     explicit GmmAlltoAllvTilingStruct(gert::TilingContext* context) : GmmAlltoAllvTilingBase(context){};
 
 protected:
+
+    ge::graphStatus GetShapeAttrsInfo() override;
     ge::graphStatus DoOpTiling() override;
     uint64_t GetTilingKey() const override;
     bool IsCapable() override;
