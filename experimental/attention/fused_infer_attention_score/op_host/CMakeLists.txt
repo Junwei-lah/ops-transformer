@@ -8,53 +8,20 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
 add_op_to_compiled_list()
+set(fused_infer_attention_score_depends  attention/common CACHE INTERNAL "Dependencies for fused_infer_attention_score")
+target_sources(op_host_aclnnInner PRIVATE
+    fused_infer_attention_score_def.cpp
+)
 
-set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT})
-if (BUILD_OPEN_PROJECT)
-   
-    set(fused_infer_attention_score_depends  attention/common CACHE INTERNAL "Dependencies for fused_infer_attention_score")
-    target_sources(op_host_aclnnInner PRIVATE
-        fused_infer_attention_score_def.cpp
-    )
-endif()
+add_ops_compile_options(
+    OP_NAME FusedInferAttentionScore
+    OPTIONS --cce-auto-sync=off
+            -Wno-deprecated-declarations
+            -Werror
+            -mllvm -cce-vf-remove-membar=false
+            -mllvm -cce-aicore-hoist-movemask=false
+            --op_relocatable_kernel_binary=true
+)
 
-if("${CONDITION_UNIT}" STREQUAL "ascend910_95")
-    add_ops_compile_options(
-        OP_NAME FusedInferAttentionScore
-        COMPUTE_UNIT ascend910_9599
-        OPTIONS -DENABLE_CV_COMM_VIA_SSBUF=true
-                --cce-auto-sync=off
-                -Wno-deprecated-declarations
-                -Werror
-                -mllvm -cce-vf-remove-membar=false
-                -mllvm -cce-aicore-hoist-movemask=false
-    )
-else()
-    add_ops_compile_options(
-        OP_NAME FusedInferAttentionScore
-        OPTIONS --cce-auto-sync=off
-                -Wno-deprecated-declarations
-                -Werror
-                -mllvm -cce-vf-remove-membar=false
-                -mllvm -cce-aicore-hoist-movemask=false
-                --op_relocatable_kernel_binary=true
-    )
-endif()
+add_modules_sources_with_soc(OPTYPE fused_infer_attention_score ACLNNTYPE aclnn_inner)
 
-if(NOT BUILD_OPS_RTY_KERNEL)
-    add_modules_sources_with_soc(OPTYPE fused_infer_attention_score ACLNNTYPE aclnn_inner)
-endif()
-
-if(NOT BUILD_OPS_RTY_KERNEL) #
-    add_tiling_modules()
-    target_sources(${OPHOST_NAME}_tiling_obj PRIVATE
-    ../../common/op_host/fia_tiling_shape.cpp
-    ../../common/op_host/fia_tiling_info.cpp
-    ../../common/op_host/split_core.cpp
-    ../../common/op_host/arch32/fia_tiling_nonquant_mla.cpp
-    ../../common/op_host/arch32/fia_tiling_nonquant.cpp
-    ../op_host/arch32/fused_infer_attention_score_tiling_v3.cpp
-    ../op_host/arch32/fused_infer_attention_score_tiling_info_parser.cpp
-    fallback_fused_infer_attention_score.cpp
-    )
-endif()

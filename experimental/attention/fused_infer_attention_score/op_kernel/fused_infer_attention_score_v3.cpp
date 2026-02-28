@@ -20,9 +20,7 @@
 // mla模板使用私有tiling结构，框架编译时根据一组DType预编译获取keylist，根据keylist找到对应的tiling结构
 // 在这组DType中，若没有mla模板的key，包含mla模板编译会报错：unknown type name 'FusedInferAttentionScoreTilingData'
 #if ((ORIG_DTYPE_QUERY == DT_FLOAT16) && (ORIG_DTYPE_ATTENTION_OUT == DT_FLOAT16) && (ORIG_DTYPE_KEY == DT_FLOAT16)) || \
-    ((ORIG_DTYPE_QUERY == DT_BF16) && (ORIG_DTYPE_ATTENTION_OUT == DT_BF16) && (ORIG_DTYPE_KEY == DT_BF16)) || \
-    ((ORIG_DTYPE_QUERY == DT_FLOAT16) && (ORIG_DTYPE_ATTENTION_OUT == DT_INT8) && (ORIG_DTYPE_KEY == DT_FLOAT16)) || \
-    ((ORIG_DTYPE_QUERY == DT_BF16) && (ORIG_DTYPE_ATTENTION_OUT == DT_INT8) && (ORIG_DTYPE_KEY == DT_BF16))
+    ((ORIG_DTYPE_QUERY == DT_BF16) && (ORIG_DTYPE_ATTENTION_OUT == DT_BF16) && (ORIG_DTYPE_KEY == DT_BF16))
 #ifdef NOT_DYNAMIC_COMPILE
 #include "../../common/op_kernel/arch32/fia_kernel_nonquant_mla.h"
 #include "../../common/op_kernel/arch32/fia_kernel_nonquant.h"
@@ -67,11 +65,6 @@ extern "C" __global__ __aicore__ void fused_infer_attention(
     __gm__ uint8_t *keyRopeAntiquantScale, __gm__ uint8_t *learnableSink, __gm__ uint8_t *attentionOut,
     __gm__ uint8_t *softmaxLse, __gm__ uint8_t *workspace, __gm__ uint8_t *tiling)
 {
-#if (__CCE_AICORE__ == 310) || (defined __DAV_310R6__)
-
-#elif (__CCE_AICORE__ == 200)
-
-#else
     TPipe tPipe;
 
     /*
@@ -245,7 +238,5 @@ extern "C" __global__ __aicore__ void fused_infer_attention(
                                false, FIA_LAYOUT::BSH, true);
 
 #endif
-#endif
-
 #endif
 }
