@@ -1,0 +1,166 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/*!
+ * \file moe_distribute_combine_teardown_tiling_arch35.cpp
+ * \brief
+ */
+
+#include "mc2_log.h"
+#include "moe_distribute_combine_teardown_tiling_arch35.h"
+namespace {
+constexpr uint32_t ATTR_GROUP_EP_INDEX = 0;
+constexpr uint32_t ATTR_EP_WORLD_SIZE_INDEX = 1;
+constexpr uint32_t ATTR_EP_RANK_ID_INDEX = 2;
+constexpr uint32_t ATTR_MOE_EXPERT_NUM_INDEX = 3;
+constexpr uint32_t ATTR_SHARED_EXPERT_NUM_INDEX = 5;
+constexpr uint32_t ATTR_SHARED_EXPERT_RANK_NUM_INDEX = 6;
+constexpr uint32_t ATTR_COMM_QUANT_MODE_INDEX = 8;
+constexpr size_t MAX_GROUP_NAME_LENGTH = 128UL;
+constexpr int64_t NON_QUANT = 0;
+constexpr uint32_t OP_TYPE_ALL_TO_ALL = 8U;
+constexpr uint32_t SYSTEM_NEED_WORKSPACE = 16U * 1024 * 1024;
+constexpr int64_t GROUP_EP_SIZE_2 = 2;
+constexpr int64_t GROUP_EP_SIZE_4 = 4;
+constexpr int64_t GROUP_EP_SIZE_8 = 8;
+constexpr int64_t MOE_EXPERT_NUM_32 = 32;
+constexpr int64_t MOE_EXPERT_NUM_64 = 64;
+constexpr int64_t MOE_EXPERT_NUM_128 = 128;
+constexpr int64_t MOE_EXPERT_NUM_PER_RANK_16 = 16;
+constexpr int64_t BS_SIZE_16 = 16;
+constexpr int64_t H_SIZE_4096 = 4096;
+constexpr int64_t K_SIZE_6 = 6;
+
+struct Mc2CcTilingInner {
+    uint8_t skipLocalRankCopy;
+    uint8_t skipBufferWindowCopy;
+    uint8_t stepSize;
+    uint8_t version;
+    char reserved[8];
+    uint8_t protocol;
+    uint8_t communicationEngine;
+    uint8_t srcDataType;
+    uint8_t dstDataType;
+    char groupName[128];
+    char algConfig[128];
+    uint32_t opType;
+    uint32_t reduceType;
+};
+} // namespace
+
+namespace MC2Tiling {
+bool MoeDistributeCombineTeardownTilingA5::IsCapable()
+{
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
+    if (ascendcPlatform.GetCurNpuArch() == NpuArch::DAV_3510) {
+        return true;
+    }
+    return false;
+}
+
+ge::graphStatus MoeDistributeCombineTeardownTilingA5::CheckAttrsWithoutRelation()
+{
+    auto attrs = context_->GetAttrs();
+
+    auto groupEpPtr = attrs->GetAttrPointer<char>(ATTR_GROUP_EP_INDEX);
+    auto epWorldSizePtr = attrs->GetAttrPointer<int64_t>(ATTR_EP_WORLD_SIZE_INDEX);
+    auto sharedExpertNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_SHARED_EXPERT_NUM_INDEX);
+    auto quantModePtr = attrs->GetAttrPointer<int64_t>(ATTR_COMM_QUANT_MODE_INDEX);
+
+    OP_TILING_CHECK((strnlen(groupEpPtr, MAX_GROUP_NAME_LENGTH) == 0) ||
+                        (strnlen(groupEpPtr, MAX_GROUP_NAME_LENGTH) == MAX_GROUP_NAME_LENGTH),
+                    OP_LOGE(nodeName_, "groupEp length should be [1, %lu), get %lu.", MAX_GROUP_NAME_LENGTH,
+                            strnlen(groupEpPtr, MAX_GROUP_NAME_LENGTH)),
+                    return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK(!((*epWorldSizePtr == GROUP_EP_SIZE_2) || (*epWorldSizePtr == GROUP_EP_SIZE_4) ||
+                      (*epWorldSizePtr == GROUP_EP_SIZE_8)),
+                    OP_LOGE(nodeName_, "epWorldSize should be in {2, 4, 8}, get %lu", *epWorldSizePtr),
+                    return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK((*sharedExpertNumPtr != 0),
+                    OP_LOGE(nodeName_, "sharedExpertNum shoud be 0, get %lu", *sharedExpertNumPtr),
+                    return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK((*quantModePtr != NON_QUANT),
+                    OP_LOGE(nodeName_, "quantMode shoud be equal to %lu, get %lu", NON_QUANT, *quantModePtr),
+                    return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus MoeDistributeCombineTeardownTilingA5::CheckAttrsComplex()
+{
+    auto attrs = context_->GetAttrs();
+
+    auto epWorldSizePtr = attrs->GetAttrPointer<int64_t>(ATTR_EP_WORLD_SIZE_INDEX);
+    auto epRankIdPtr = attrs->GetAttrPointer<int64_t>(ATTR_EP_RANK_ID_INDEX);
+    OP_TILING_CHECK((*epRankIdPtr < 0) || (*epRankIdPtr >= *epWorldSizePtr),
+                    OP_LOGE(nodeName_, "ep_rankId shoud be within the range of epWorldSize[0, %lu), get %lu",
+                            *epWorldSizePtr, *epRankIdPtr),
+                    return ge::GRAPH_FAILED);
+
+    auto moeExpertNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_MOE_EXPERT_NUM_INDEX);
+    OP_TILING_CHECK(!((*moeExpertNumPtr == MOE_EXPERT_NUM_32) || (*moeExpertNumPtr == MOE_EXPERT_NUM_64) ||
+                      (*moeExpertNumPtr == MOE_EXPERT_NUM_128)),
+                    OP_LOGE(nodeName_, "moeExpertNum shoud be in {32, 64, 128}, get %lu", *moeExpertNumPtr),
+                    return ge::GRAPH_FAILED);
+
+    auto sharedExpertRankNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_SHARED_EXPERT_RANK_NUM_INDEX);
+    OP_TILING_CHECK((*sharedExpertRankNumPtr != 0),
+                    OP_LOGE(nodeName_, "sharedExpertRankNum shoud be 0, get %lu", *sharedExpertRankNumPtr),
+                    return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK(
+        (*moeExpertNumPtr % (*epWorldSizePtr - *sharedExpertRankNumPtr) != 0),
+        OP_LOGE(nodeName_,
+                "moeExpertNum should follow moeExpertNum %% (epWorldSize - sharedExpertRankNum) = 0, got %ld",
+                (*moeExpertNumPtr % (*epWorldSizePtr - *sharedExpertRankNumPtr))),
+        return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK((*moeExpertNumPtr / (*epWorldSizePtr - *sharedExpertRankNumPtr) != MOE_EXPERT_NUM_PER_RANK_16),
+                    OP_LOGE(nodeName_, "moeExpertNumPerRank shoud be 16, get %lu",
+                            (*moeExpertNumPtr / (*epWorldSizePtr - *sharedExpertRankNumPtr))),
+                    return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus MoeDistributeCombineTeardownTilingA5::CheckBsHKSize(int64_t bs, int64_t h, int64_t k)
+{
+    OP_TILING_CHECK(bs != BS_SIZE_16, OP_LOGE(nodeName_, "Bs should be 16, get %ld", bs), return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK(h != H_SIZE_4096, OP_LOGE(nodeName_, "H should be 4096, get %ld", h), return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK((k != K_SIZE_6), OP_LOGE(nodeName_, "K should be 6, get %ld", k), return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus MoeDistributeCombineTeardownTilingA5::SetHcommCfg()
+{
+    OP_LOGD(nodeName_, "MoeDistributeCombineTeardown groupEp = %s", groupEp_.c_str());
+    uint32_t opType = OP_TYPE_ALL_TO_ALL;
+    std::string algConfigAllToAllStr = "AlltoAll=level0:fullmesh;level1:pairwise";
+    uint8_t aivEngineValue = mc2tiling::AIV_ENGINE;
+
+    AscendC::Mc2CcTilingConfig mc2CcTilingConfig(groupEp_, opType, algConfigAllToAllStr);
+    OP_TILING_CHECK(mc2CcTilingConfig.SetCommEngine(aivEngineValue) != 0,
+                    OP_LOGE(nodeName_, "mc2InitTiling SetCommEngine fail."),
+                    return ge::GRAPH_FAILED); // AIV_UB-MEM or AIV_URMA
+    OP_TILING_CHECK(mc2CcTilingConfig.GetTiling(tilingData_->mc2InitTiling) != 0,
+                    OP_LOGE(nodeName_, "mc2InitTiling compute fail."), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(mc2CcTilingConfig.GetTiling(tilingData_->mc2CcTiling) != 0,
+                    OP_LOGE(nodeName_, "mc2CcTiling compute fail."), return ge::GRAPH_FAILED);
+    reinterpret_cast<Mc2CcTilingInner *>(&tilingData_->mc2CcTiling)->protocol = 1; // 0: UB-MEM, 1: URMA
+
+    return ge::GRAPH_SUCCESS;
+}
+} // namespace MC2Tiling
