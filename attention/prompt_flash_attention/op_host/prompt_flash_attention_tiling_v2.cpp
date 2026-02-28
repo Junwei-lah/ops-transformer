@@ -2771,17 +2771,17 @@ bool PromptFlashAttentionTilingV2::CheckNTDLayoutCrossover(ContextParamsForPFATi
         return true;
     }
 
+    std::string layoutStr(contextKeyParams.layout);
     if (enablePFAMLA || enablePFARope) { // Prefill MLA
  	    OP_CHECK_IF(enablePerblockQuant || enablePertensorQuant,
- 	        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In prefill MLA scenario, when layout is NTD, full quant is not supported!"),
+ 	        OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In prefill MLA scenario, when layout is %s, full quant is not supported!", layoutStr.c_str()),
  	        return false);
  	}
 
-    std::string layoutStr(contextKeyParams.layout);
     if (!enablePFAMLA && !enablePFARope && !enableIFAMLA && !(enablePerblockQuant && layoutStr == "NTD_TND")) { // GQA
         OP_CHECK_IF((CHECK_D_LIMITED_SCENARIO(queryShapeInfo.d)),
-            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In GQA scenario, when layout is NTD, d size of query must be 64 or 128, but got d = %d.",
-            queryShapeInfo.d), return false);
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "In GQA scenario, when layout is %s, d size of query must be 64 or 128, but got d = %d.",
+            layoutStr.c_str(), queryShapeInfo.d), return false);
     }
     if (!enablePFAMLA && !enablePFARope && !enableIFAMLA && !enablePertensorQuant && !enablePerblockQuant && !enableIFAMLAFullQuant) { // GQA
         OP_CHECK_IF(isQKVDDifferent,
