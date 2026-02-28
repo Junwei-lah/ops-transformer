@@ -153,8 +153,6 @@ static ge::graphStatus ValidateScaleAndBias(const InferShapeContext *context, co
                 OPS_REPORT_CUBE_INNER_ERR(op_name, "The input shape (K,N) is not supported"),
                 return ge::GRAPH_FAILED);
     } else if (shape_scale->GetDimNum() == threeDimNum) {
-        OP_CHECK_IF(context->GetOptionalInputShape(pertokenScaleOptionIndex) == nullptr,
-            OPS_REPORT_CUBE_INNER_ERR(op_name, "pertoken_scale is not given."), return ge::GRAPH_FAILED);
         OP_CHECK_IF(shape_scale->GetDim(0) != xAndWParams.e || shape_scale->GetDim(2) != xAndWParams.n || shape_scale->GetDim(1) != 1,
             OPS_REPORT_CUBE_INNER_ERR(op_name, "scale 's size is not (E,1,N)."), return ge::GRAPH_FAILED);
         if (context->GetOptionalInputShape(biasOptionIndex) != nullptr) {
