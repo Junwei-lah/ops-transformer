@@ -109,6 +109,8 @@ protected:
     void SetTilingArgsGatherStatus();
     void SetMC2AllGatherDataInfo(Mc2Tiling::RCSTiling& rcsCfg, ::TCubeTiling& mmTiling, 
                                  ::TCubeTiling& tailTiling, uint32_t debugMode);
+    ge::graphStatus CheckHCCLSize();
+    ge::graphStatus AdjustHCCLLimit(Mc2Tiling::RCSTiling& rcsCfg, mc2tiling::Mc2QuantMode quantMmMode);
 
     mc2tiling::TilingArgs args_;
     NpuArch npuArch_;

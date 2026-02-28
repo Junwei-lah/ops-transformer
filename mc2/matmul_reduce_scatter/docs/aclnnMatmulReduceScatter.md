@@ -277,7 +277,9 @@ aclnnStatus aclnnMatmulReduceScatter(
 - bias暂不支持输入为非0的场景。
 - 输出为2维，其shape为(m/rank_size, n), rank_size为卡数。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡，并且仅支持hccs链路all mesh组网。
-- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持2、4、8、16、32卡，并且仅支持hccs链路double ring组网。
+- <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+  - 支持2、4、8、16、32卡，并且仅支持hccs链路double ring组网。
+  - reduceScatter(x1@x2+bias)集合通信数据总量不能超过16*256MB，集合通信数据总量计算方式为：m * n * sizeof(output_dtype)。由于shape不同，算子内部实现可能存在差异，实际支持的总通信量可能略小于该值。
 - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16、32、64卡，并且仅支持hccs链路all mesh组网。
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：一个模型中的通算融合MC2算子，仅支持相同通信域。
 

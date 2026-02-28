@@ -85,6 +85,9 @@ constexpr uint64_t GROUP_MNK_BIT_SIZE = 0xFFFF;
 
 constexpr auto DEFAULT_KEY_FOR_FITTING_MAP = "0_0";
 
+constexpr static uint64_t ALL_GATHER_HCCL_MEM_LIMIT = 256 * 1024 * 1024;
+constexpr static uint64_t ALL_GATHER_HCCL_NUM_LIMIT = 16;
+
 enum class Mc2QuantMode {
   DEFAULT = 0,
   PERTENSOR_MODE,
