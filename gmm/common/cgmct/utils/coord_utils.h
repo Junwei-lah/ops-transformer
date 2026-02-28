@@ -163,14 +163,14 @@ public:
             if (c0 == 0) {
                 return 0;
             }
-            if (isTransB) {
+            if constexpr (isTransB) {
                 return batchTileIdx * CeilAlign(n, OUTER_SIZE) * CeilAlign(k, c0) +
                        (nTileIdx * l1N + nSplitOffset) * c0 + kTileIdx * l1K * CeilAlign(n, OUTER_SIZE);
             }
             return batchTileIdx * CeilAlign(n, c0) * CeilAlign(k, OUTER_SIZE) + kTileIdx * l1K * c0 +
                    (nTileIdx * l1N + nSplitOffset) * CeilAlign(k, OUTER_SIZE);
         }
-        if (isTransB) {
+        if constexpr (isTransB) {
             return batchTileIdx * n * k + (nTileIdx * l1N + nSplitOffset) * k + kTileIdx * l1K;
         }
         return batchTileIdx * n * k + kTileIdx * l1K * n + (nTileIdx * l1N + nSplitOffset);
@@ -210,7 +210,8 @@ public:
 
     template <GroupedMatmul::QuantMode aQuantMode, bool enableLoadBalance = false>
     __aicore__ inline AscendC::Std::tuple<int64_t, int64_t, int64_t, int64_t, int64_t, int64_t>
-    GetQuantOffset(int64_t mTileIdx, int64_t nTileIdx, int64_t mSplitOffset = 0, int64_t nSplitOffset = 0)
+    GetQuantOffset(int64_t mTileIdx, int64_t nTileIdx, int64_t mSplitOffset = 0, int64_t nSplitOffset = 0,
+                   int64_t bC0Align = MATMUL_MNK_ALIGN_INT8)
     {
         int64_t mOffset = mTileIdx * l1M + mSplitOffset;
         int64_t nOffset = nTileIdx * l1N + nSplitOffset;
@@ -220,11 +221,8 @@ public:
         } else {
             Get<0>(offset) = mOffset * k;
         }
-        if constexpr (isTransB) {
-            Get<1>(offset) = nOffset * k;
-        } else {
-            Get<1>(offset) = nOffset;
-        }
+        
+        Get<1>(offset) = GetBOffset(nTileIdx, 0, 0, bC0Align, nSplitOffset);
         Get<5>(offset) = mOffset * n + nOffset; // 5: idx of y
         if constexpr (aQuantMode == GroupedMatmul::QuantMode::PERGROUP_MODE ||
                       aQuantMode == GroupedMatmul::QuantMode::PERBLOCK_MODE) {
