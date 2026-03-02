@@ -76,9 +76,9 @@ private:
                                         LocalTensor<float> reduceMaxTensor, LocalTensor<float> quantScaleTensor, 
                                         int32_t actualMoveSize, int32_t actualMoveToken, int32_t tokenPerMove, int32_t moveIdx,
                                         event_t eventId);
-    __aicore__ inline void QuantToken(__gm__ AType *dataSrc, int32_t dataOffset, int32_t tokenPerCore,
+    __aicore__ inline void QuantToken(__gm__ AType *dataSrc, int32_t dataOffset, int32_t coreTokenOffset,
                                         int32_t dataLen, int32_t commIdx);
-    __aicore__ inline void QuantTokenSegment(__gm__ AType *dataSrc, int32_t dataOffset, int32_t tokenPerCore,
+    __aicore__ inline void QuantTokenSegment(__gm__ AType *dataSrc, int32_t dataOffset, int32_t coreTokenOffset,
                                         int32_t dataLen, int32_t commIdx);
     __aicore__ inline void SmoothQuantProc(event_t eventId, int32_t dataSegmentOffset, int32_t smoothScaleCastOffset, int32_t actualMoveSize,
         LocalTensor<float> copyTensor, LocalTensor<float> smoothScaleTensor);
@@ -172,6 +172,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::AIVInit()
     }
 }
 
+    // A16W4的tiling
 template <TemplateA2AMMClass>
 __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::CatlassMatmul()
 {
@@ -182,7 +183,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::CatlassMatmul()
         constexpr bool ENABLE_SHUFFLE_K = false;
         constexpr bool aicCalBias = (QuantType == MC2_NON_QUANT) && hasBias;  // 计算量化后的矩阵乘，bias不由CatlassMatmul负责
 
-        using ElementA = BType; //非量化场景、量化场景，A、B的入参类型一致；伪量化场景，A需要动态量化成BType
+        using ElementA = BType; // 非量化场景、量化场景，A、B的入参类型一致；伪量化场景，A需要动态量化成BType
         using ElementB = BType;
         using ElementC = std::conditional_t<QuantType != MC2_NON_QUANT, int32_t, CType>;  // 非量化场景，Btype和CType一致；量化场景计算结果为int32_t
         using ElementBias = BiasType;
@@ -231,64 +232,38 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::CatlassMatmul()
 
         GM_ADDR srcGM = (QuantType == MC2_DYNAMIC_QUANT) ? reinterpret_cast<GM_ADDR>(quantAGM_) : reinterpret_cast<GM_ADDR>(gmPeerMem_);  // 动态量化时，需要更改左矩阵读取位置
         GM_ADDR matmulResultGM = (QuantType == MC2_NON_QUANT) ? cGM_ : reinterpret_cast<GM_ADDR>(dequantCGM_);  // 量化矩阵乘法时，需要修改c矩阵存放地址
-        if constexpr (AscendC::IsSameType<AscendC::int4b_t, BType>::value) {
-            if (m0 == 128) {
-                using L1TileShape = GemmShape<128, 256, 1024>;
-                using L0TileShape = GemmShape<128, 256, 256>;
-                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-                MatmulKernel matmul_op;
-                typename MatmulKernel::Params params{processSize,
-                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                        reinterpret_cast<GM_ADDR>(biasGM_),
-                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-                matmul_op(params);
-            } else {
-                using L1TileShape = GemmShape<256, 128, 1024>;
-                using L0TileShape = GemmShape<256, 128, 256>;
-                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-                MatmulKernel matmul_op;
-                typename MatmulKernel::Params params{processSize,
-                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                        reinterpret_cast<GM_ADDR>(biasGM_),
-                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-                matmul_op(params);
-            }
-        } else {
-            if (m0 == 128) {
-                using L1TileShape = GemmShape<128, 256, 256>;
-                using L0TileShape = GemmShape<128, 256, 64>;
-                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-                MatmulKernel matmul_op;
-                typename MatmulKernel::Params params{processSize,
-                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                        reinterpret_cast<GM_ADDR>(biasGM_),
-                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-                matmul_op(params);
-            } else {
-                using L1TileShape = GemmShape<256, 128, 256>;
-                using L0TileShape = GemmShape<256, 128, 64>;
-                using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
-                using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
-                MatmulKernel matmul_op;
-                typename MatmulKernel::Params params{processSize,
-                                        reinterpret_cast<GM_ADDR>(srcGM), layoutA,
-                                        reinterpret_cast<GM_ADDR>(bGM_), layoutB,
-                                        reinterpret_cast<GM_ADDR>(biasGM_),
-                                        reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
-                                        pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
-                matmul_op(params);
-            }
-        }
+        constexpr uint32_t L1TileShapeK = std::is_same<BType, int4b_t>::value ? 1024 :
+            std::is_same<BType, int8_t>::value ? 512 : 256;  // 不同的matmul数据类型对应的L1TileShape不同
+        constexpr uint32_t L0TileShapeK = std::is_same<BType, int4b_t>::value ? 256 :
+            std::is_same<BType, int8_t>::value ? 128 : 64;  // 不同的matmul数据类型对应的L0TileShape不同
         
+        if (m0 == 128) {
+            using L1TileShape = GemmShape<128, 256, L1TileShapeK>;
+            using L0TileShape = GemmShape<128, 256, L0TileShapeK>;
+            using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+            using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+            MatmulKernel matmul_op;
+            typename MatmulKernel::Params params{processSize,
+                                    reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                    reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                    reinterpret_cast<GM_ADDR>(biasGM_),
+                                    reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                    pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+            matmul_op(params);
+        } else {
+            using L1TileShape = GemmShape<256, 128, L1TileShapeK>;
+            using L0TileShape = GemmShape<256, 128, L0TileShapeK>;
+            using BlockMmadOpt = Gemm::Block::BlockMmad<DispatchPolicy, L1TileShape, L0TileShape, AType_, BType_, CType_, BiasType_, TileCopy>;
+            using MatmulKernel = Gemm::Kernel::AlltoAllMatmulKernel<void, void, BlockMmadOpt, void, BlockScheduler30, aicCalBias>;
+            MatmulKernel matmul_op;
+            typename MatmulKernel::Params params{processSize,
+                                    reinterpret_cast<GM_ADDR>(srcGM), layoutA,
+                                    reinterpret_cast<GM_ADDR>(bGM_), layoutB,
+                                    reinterpret_cast<GM_ADDR>(biasGM_),
+                                    reinterpret_cast<GM_ADDR>(matmulResultGM), layoutC,
+                                    pValue, 3, 0, static_cast<int32_t>(rankSize), MAX_BLOCK_COUNT};
+            matmul_op(params);
+        }
     }
 }
 
@@ -334,17 +309,9 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantPerToken(LocalTen
 
 template <TemplateA2AMMClass>
 __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantToken(__gm__ AType *dataSrc, int32_t dataOffset,
-    int32_t tokenPerCore, int32_t dataLen, int32_t commIdx)
+    int32_t coreTokenOffset, int32_t dataLen, int32_t commIdx)
 {
-    int32_t ubTokenAlignedPingPongSize = ubPingPongSize / tokenSize * tokenSize;
-    int32_t pingPongMoveCount = (dataLen + ubTokenAlignedPingPongSize - 1) / ubTokenAlignedPingPongSize;
-    int32_t actualMoveSize = ubTokenAlignedPingPongSize;
-    int32_t tokenPerMove = actualMoveSize / tokenSize;
-    int32_t actualMoveToken = tokenPerMove; /* ub_ping_pong_size已经与tokenSize对齐，因此必然每次搬运整数倍token */
     int32_t tokenNum = dataLen / tokenSize;
-    //动态量化为INT8场景，每个元素1字节；量化为INT4场景，每两个元素1字节
-    uint32_t actualMoveBytes = std::is_same_v<BType, int8_t> ? actualMoveSize : actualMoveSize / 2;
-    uint32_t sizeScale = std::is_same_v<BType, int8_t> ? 1 : 2;
     LocalTensor<float> ubTensor = uBuf_.Get<float>();
     /* 用于存储计算完成的量化系数 */
     LocalTensor<float> quantScaleTensor = ubTensor;
@@ -360,6 +327,16 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantToken(__gm__ ATyp
     uint32_t ub_offset = Block32B<float>::AlignUp(midElementCnt);
     LocalTensor<float> copyTensor0 = smoothScaleTensor[copyTensorOffset];
     LocalTensor<float> copyTensor1 = smoothScaleTensor[ub_offset];
+
+    int32_t copyTensorRemainUbSize = midElementCnt - Block32B<float>::AlignUp(tokenSize) - BLOCK_ALIGN_BYTES / sizeof(float);
+    int32_t ubTokenAlignedPingPongSize = copyTensorRemainUbSize / tokenSize * tokenSize;
+    int32_t pingPongMoveCount = (dataLen + ubTokenAlignedPingPongSize - 1) / ubTokenAlignedPingPongSize;
+    int32_t actualMoveSize = ubTokenAlignedPingPongSize;
+    int32_t tokenPerMove = tokenNum < actualMoveSize / tokenSize ? tokenNum : actualMoveSize / tokenSize;
+    int32_t actualMoveToken = tokenPerMove; /* ub_ping_pong_size已经与tokenSize对齐，因此必然每次搬运整数倍token */
+    //动态量化为INT8场景，每个元素1字节；量化为INT4场景，每两个元素1字节
+    uint32_t actualMoveBytes = std::is_same_v<BType, int8_t> ? actualMoveSize : actualMoveSize / 2;
+    uint32_t sizeScale = std::is_same_v<BType, int8_t> ? 1 : 2;
 
     /* 用于存储计算quantScale的token取abs的结果 */
     int32_t absOffset = Block32B<float>::AlignUp(ubTokenAlignedPingPongSize); /* 从GM拷贝的数据用abs_offset_a大小空间，case为float后用abs_offset大小的空间 */
@@ -412,7 +389,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantToken(__gm__ ATyp
     }
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID1);
-    CopyUbufToGmAlignB16(reinterpret_cast<__gm__ float *>(quantScaleGM_) + aicIdx * tokenPerCore + commIdx * mPerLoop,
+    CopyUbufToGmAlignB16(reinterpret_cast<__gm__ float *>(quantScaleGM_) + coreTokenOffset + commIdx * mPerLoop,
         quantScaleTensor, 1, tokenNum * sizeof(float), 0, 0);
 }
 
@@ -525,7 +502,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantPerSegment(LocalT
 
 template <TemplateA2AMMClass>
 __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantTokenSegment(__gm__ AType *dataSrc, int32_t dataOffset,
-    int32_t tokenPerCore, int32_t dataLen, int32_t commIdx)
+    int32_t coreTokenOffset, int32_t dataLen, int32_t commIdx)
 {
     int32_t tokenNum = dataLen / tokenSize; /* 当前核实际处理的token数 */
     LocalTensor<float> ubTensor = uBuf_.Get<float>();
@@ -573,7 +550,7 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantTokenSegment(__gm
         QuantPerSegment(copyTensor0, copyTensor1, absTensor0, absTensor1, smoothScaleTensor0, smoothScaleTensor1, castOffset, dataSrc,
             dataTokenOffset, smoothScaleCastOffset, sizeScale, quantScaleReciproal);
     }
-    CopyUbufToGmAlignB16(reinterpret_cast<__gm__ float *>(quantScaleGM_) + aicIdx * tokenPerCore + commIdx * mPerLoop,
+    CopyUbufToGmAlignB16(reinterpret_cast<__gm__ float *>(quantScaleGM_) + coreTokenOffset + commIdx * mPerLoop,
         quantScaleTensor, 1, tokenNum * sizeof(float), 0, 0);
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID0);
     WaitFlag<HardEvent::MTE3_MTE2>(EVENT_ID1);
@@ -582,26 +559,34 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::QuantTokenSegment(__gm
 template <TemplateA2AMMClass>
 __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Quant(uint64_t flagIdx, int32_t commIdx) {
     __gm__ AType* dataSrc = (__gm__ AType *)buff[rank];
-    /* 当前复用allToAll的核数去完成量化 */
-    if (aicIdx >= allToAllSendCoreNum) {
-        return;
-    }
     int32_t totalDataSize = min(x1DataSize, allToAllSizeAllRanksPerLoop); // 实际需要处理的数据量
-    int32_t dataSrcCoreOffset = (aicIdx % allToAllSendCoreNum) * allToAllSizePerCore;  // 一共first_stem_core_num个核，每个核分段处理一部分数据
-    // data_per_core是按照m0的粒度，均分给每个核处理的数据量。在尾块处理时，部分核会分不到数据
-    int32_t dataLen = dataSrcCoreOffset + allToAllSizePerCore > totalDataSize ? totalDataSize - dataSrcCoreOffset : allToAllSizePerCore;
-    if (dataLen < 0) {
+    int32_t quantSizePerCore =  (totalDataSize / quantCoreNum) / tokenSize * tokenSize; //每核均分的数据量
+    int32_t remainTokenNum = (totalDataSize - quantSizePerCore * quantCoreNum) / tokenSize; //每个核均分quantSizePerCore之后，剩余的token由前remainTokenNum个核各多分担一个
+    uint32_t globalAivIdx = aicIdx * 2 + aivIdx;
+    int32_t dataSrcCoreOffset = 0;
+    int32_t dataLen = 0;
+    int32_t coreTokenOffset = 0;
+    int32_t tokenPercore = quantSizePerCore / tokenSize;
+    if (globalAivIdx < remainTokenNum) {
+        dataSrcCoreOffset = (globalAivIdx % quantCoreNum) * (quantSizePerCore + tokenSize);
+        dataLen = dataSrcCoreOffset + (quantSizePerCore + tokenSize) > totalDataSize ? totalDataSize - dataSrcCoreOffset : quantSizePerCore + tokenSize;
+        coreTokenOffset = (globalAivIdx % quantCoreNum) * (tokenPercore + 1);
+    } else {
+        dataSrcCoreOffset = remainTokenNum * (quantSizePerCore + tokenSize) + (globalAivIdx % quantCoreNum - remainTokenNum) * (quantSizePerCore);
+        dataLen = dataSrcCoreOffset + quantSizePerCore > totalDataSize ? totalDataSize - dataSrcCoreOffset : quantSizePerCore;
+        coreTokenOffset = remainTokenNum * (tokenPercore + 1) + (globalAivIdx % quantCoreNum - remainTokenNum) * tokenPercore;
+    }
+    if (dataLen <= 0) {
         return;
     }
     int64_t dataSrcOffset = flagIdx * pingPongBlockSize;
     int32_t dataOffset = dataSrcOffset + dataSrcCoreOffset;
-    int32_t tokenPerCore = mPerLoop / allToAllSendCoreNum;
     if (isSegmentK) {
         // token过大，分段量化
-        QuantTokenSegment(dataSrc, dataOffset, tokenPerCore, dataLen, commIdx);
+        QuantTokenSegment(dataSrc, dataOffset, coreTokenOffset, dataLen, commIdx);
     } else {
         // token较小，一次量化多个
-        QuantToken(dataSrc, dataOffset, tokenPerCore, dataLen, commIdx);
+        QuantToken(dataSrc, dataOffset, coreTokenOffset, dataLen, commIdx);
     }
     
 }

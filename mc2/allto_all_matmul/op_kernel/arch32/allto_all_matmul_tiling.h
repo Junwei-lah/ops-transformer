@@ -33,6 +33,7 @@ struct AlltoAllMatmulInfo {
     bool hasBias;
     bool isAlltoallOut;  // 判断是否需要alltoallout
     bool isSmoothQuant; // x1是否需要smoothQuant
+    uint32_t quantCoreNum;
 };
 
 struct CoCTiling {

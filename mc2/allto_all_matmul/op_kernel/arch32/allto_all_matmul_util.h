@@ -144,6 +144,7 @@ public:
         pValue = info.cocTiling.pValue;
 
         ubPingPongSize = info.cocTiling.ubMoveNum / 2;
+        quantCoreNum = info.allToAllMatmulInfo.quantCoreNum;
     }
 
     template <typename T>
@@ -302,6 +303,7 @@ public:
     bool isSegmentK;
     bool isAlltoallOut;
     bool isSmoothQuant;
+    uint32_t quantCoreNum;
 };
 
 __aicore__ inline void SetAndWaitAivSync(uint64_t flagIdx, int32_t pipeDepth = 2)
