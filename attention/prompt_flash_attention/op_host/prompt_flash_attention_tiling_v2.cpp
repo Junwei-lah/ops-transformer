@@ -704,7 +704,7 @@ bool PromptFlashAttentionTilingV2::CheckQueryOutParamsConsistency(const ContextP
     return true;
 }
 
-bool PromptFlashAttentionTilingV2::CheckKVDataType(ContextParamsForPFATiling& contextKeyParams) 
+bool PromptFlashAttentionTilingV2::CheckKVDataType(ContextParamsForPFATiling& contextKeyParams) const
 {
     ge::DataType keyDataType = contextKeyParams.kDataType;
     ge::DataType valueDataType = contextKeyParams.vDataType;
@@ -724,7 +724,7 @@ bool PromptFlashAttentionTilingV2::CheckKVDataType(ContextParamsForPFATiling& co
     return true;
 }
 
-bool PromptFlashAttentionTilingV2::CheckRopeDataType(ContextParamsForPFATiling& contextKeyParams) 
+bool PromptFlashAttentionTilingV2::CheckRopeDataType(ContextParamsForPFATiling& contextKeyParams) const
 {
     if (enablePertensorQuant || enablePerblockQuant || enableIFAMLAFullQuant) {
         return true;
@@ -1199,7 +1199,7 @@ bool PromptFlashAttentionTilingV2::CheckPostQuantParams(const ContextParamsForPF
     return true;
 }
 
-bool PromptFlashAttentionTilingV2::CheckAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams) 
+bool PromptFlashAttentionTilingV2::CheckAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams) const
 {
     const gert::StorageShape* antiquantScaleShape = contextKeyParams.antiquantScaleShape;
     // 伪量化收编至ifa tiling，pfa接口kv若传入伪量化dtype均会在此被拦截
@@ -2053,7 +2053,7 @@ bool PromptFlashAttentionTilingV2::CheckKVScaleShape4MLAFullQuant(ContextParamsF
     return true;
 }
 
-bool PromptFlashAttentionTilingV2::CheckMLAFullQuant(ContextParamsForPFATiling& contextKeyParams)
+bool PromptFlashAttentionTilingV2::CheckMLAFullQuant(ContextParamsForPFATiling& contextKeyParams) const
 {
     // check layout
     std::string layoutStr(contextKeyParams.layout);
@@ -3265,7 +3265,7 @@ bool PromptFlashAttentionTilingV2::EnableMTE2BmmPipe(PromptFlashAttentionTilingD
     return res;
 }
 
-void PromptFlashAttentionTilingV2::EnableBmmDoubleBuffer(TCubeTiling& bmmTilingData) 
+void PromptFlashAttentionTilingV2::EnableBmmDoubleBuffer(TCubeTiling& bmmTilingData) const
 {
     if ((bmmTilingData.get_depthA1() == 1) && (bmmTilingData.get_depthB1() == 1)) {
         bmmTilingData.set_depthA1(2); // 2 : depthA1
@@ -3632,7 +3632,7 @@ int64_t PromptFlashAttentionTilingV2::SumOfArithmeticSeries(int64_t an, int64_t 
 }
 
 int64_t PromptFlashAttentionTilingV2::GetCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength,
-        int64_t sInner, int64_t sOuter, int64_t token) 
+        int64_t sInner, int64_t sOuter, int64_t token) const
 {
     // 以nextToken视角计算完全被nextToken掩盖的基本块数
     int64_t blockNums = 0;
@@ -4625,7 +4625,7 @@ ge::graphStatus PromptFlashAttentionTilingV2::AdjustTilingData(ContextParamsForP
     return ge::GRAPH_SUCCESS;
 }
 
-bool PromptFlashAttentionTilingV2::IsFlashDecode(ContextParamsForPFATiling& contextKeyParams, uint64_t bng) 
+bool PromptFlashAttentionTilingV2::IsFlashDecode(ContextParamsForPFATiling& contextKeyParams, uint64_t bng) const
 {
     float flashDecodeBNRatio = 0.4F; // 0.4, 经验值
     if (maxActualseqKV < SINNER_FACTOR_DOUBLE) {
@@ -4968,7 +4968,7 @@ void PromptFlashAttentionTilingV2::PFATilingDataconvert(PromptFlashAttentionTili
     inputParams.set_antiquantParaSeqSize(1);
 }
 
-ge::graphStatus PromptFlashAttentionTilingV2::PromptFlashAttentionSetTilingData() 
+ge::graphStatus PromptFlashAttentionTilingV2::PromptFlashAttentionSetTilingData() const
 {
     return ge::GRAPH_SUCCESS;
 }

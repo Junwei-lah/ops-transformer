@@ -3740,7 +3740,7 @@ ge::graphStatus PromptFlashAttentionTilingArch38::AdjustTilingData(ContextParams
     return ge::GRAPH_SUCCESS;
 }
 
-bool PromptFlashAttentionTilingArch38::IsFlashDecode() 
+bool PromptFlashAttentionTilingArch38::IsFlashDecode() const
 {
     return false;
 }

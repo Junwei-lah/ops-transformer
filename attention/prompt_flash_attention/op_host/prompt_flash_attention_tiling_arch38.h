@@ -187,7 +187,7 @@ protected:
     void SetLayoutType();
     void PFATilingDataconvert(PromptFlashAttentionTilingData& tilingData);
     void SetMultiCoreParamsRegbase(int64_t totalSize, int64_t actualUsedCoreNum);
-    bool IsFlashDecode();
+    bool IsFlashDecode() const;
     ge::graphStatus SplitBNS(PromptFlashAttentionTilingData& tilingData, uint64_t bng);
     bool CheckAlibiPseShiftTypeAndShape(ContextParamsForPFATiling& contextKeyParams, uint32_t n);
     ge::graphStatus SetQKVStartIdx(ContextParamsForPFATiling& contextKeyParams);
