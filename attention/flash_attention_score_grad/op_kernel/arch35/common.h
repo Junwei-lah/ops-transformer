@@ -232,6 +232,20 @@ struct FagConstInfo {
     int64_t mm4Kb;
     int64_t dRopeSize = 64; // rope旋转的维度
     uint32_t continuousBlockNum = 0; // 核内连续块数量
+    // swizzle相关
+    int64_t mSwizzleBlockNum = 0;
+    int64_t mSwizzleBlockNumTail = 0;
+    int64_t nSwizzleBlockNum = 0;
+    int64_t nSwizzleBlockNumTail = 0;
+    int64_t leftUpTotalRound = 0;
+    int64_t leftDownTotalRound = 0;
+    int64_t rightUpTotalRound = 0;
+    int64_t rightDownTotalRound = 0;
+    int64_t leftSingleColTotalRound = 0;
+    int64_t leftTotalRound = 0;
+    int64_t batchTotalRound = 0;
+    // 核数
+    uint32_t aicCoreNum = 0;
 };
 
 // fp8反量化因子

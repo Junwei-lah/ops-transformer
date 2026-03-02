@@ -49,6 +49,10 @@ constexpr uint8_t SYNC_DETER_FLAG = 11;
 constexpr uint32_t MIN_SWIZZLE_S1 = 16384;
 // Swizzle块数量，16K对应8块，随S增大倍数增大
 constexpr uint32_t BASE_SWIZZLE_BLOCK_NUM = 8;
+constexpr uint32_t M_SWIZZLE_SIZE = 32768;
+constexpr uint32_t N_SWIZZLE_SIZE = 32768;
+constexpr uint32_t SWIZZLE_CONTINUOUS_BLOCK_NUM = 16;
+constexpr uint8_t MULTIPLY_COEF = 8;
 
 // shift left by three bits
 constexpr uint8_t kShiftToMultiplyByEight = 3;
