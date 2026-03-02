@@ -17,18 +17,32 @@
 - 计算公式：假设x1的shape为(BS, H1)，x2的shape为(H1, H2)，rankSize为NPU卡数。
 
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
-    $$
-    computeOut = (x1 @ x2) * x1Scale * x2Scale  + bias \\
-    permutedOut = computeOut.view(BS, rankSize, H2 / rankSize).permute(1, 0, 2) \\
-    output = AlltoAll(permutedOut).view(rankSize * BS, H2 / rankSize)
-    $$
+
+    - K-C量化场景：
+
+      $$
+      computeOut = (x1 @ x2) * x1Scale * x2Scale  + bias \\
+      permutedOut = computeOut.view(BS, rankSize, H2 / rankSize).permute(1, 0, 2) \\
+      output = AlltoAll(permutedOut).view(rankSize * BS, H2 / rankSize)
+      $$
 
   - <term>Ascend 950PR/Ascend 950DT</term>：
-    $$
-    computeOut = (x1 @ x2 + bias) * x1Scale * x2Scale \\
-    permutedOut = computeOut.view(BS, rankSize, H2 / rankSize).permute(1, 0, 2) \\
-    output = AlltoAll(permutedOut).view(rankSize * BS, H2 / rankSize)
-    $$
+
+    - K-C量化场景：
+
+      $$
+      computeOut = (x1 @ x2 + bias) * x1Scale * x2Scale \\
+      permutedOut = computeOut.view(BS, rankSize, H2 / rankSize).permute(1, 0, 2) \\
+      output = AlltoAll(permutedOut).view(rankSize * BS, H2 / rankSize)
+      $$
+
+    - mx量化场景：
+
+      $$
+      computeOut = (x1* x1Scale)@(x2* x2Scale) + bias \\
+      permutedOut = computeOut.view(BS, rankSize, H2 / rankSize).permute(1, 0, 2) \\
+      output = AlltoAll(permutedOut).view(rankSize * BS, H2 / rankSize)
+      $$
 
 ## 函数原型
 
