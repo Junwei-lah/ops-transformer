@@ -27,6 +27,8 @@ struct PipelineContext {
     ComputationContextType* computationContext;
     // transpose
     MC2TransposeContext* transposeContext;
+    // scaleTranspose
+    MC2TransposeContext* scaleTransposeContext;
     // communication
     MC2AlltoAllContext* communicationContext;
     // quantization

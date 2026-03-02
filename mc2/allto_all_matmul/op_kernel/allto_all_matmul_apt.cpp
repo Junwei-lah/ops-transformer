@@ -21,6 +21,8 @@
 #include "./arch35/allto_all_matmul_tiling_data.h"
 #include "./arch35/allto_all_matmul_arch35.h"
 #include "./arch35/allto_all_kc_quant_matmul_arch35.h"
+#include "./arch35/allto_all_mx_quant_matmul_arch35.h"
+#include "./arch35/allto_all_mx_quant_matmul_pipeline.h"
 
 using namespace AscendC;
 using namespace MC2KernelTemplate;
@@ -71,6 +73,32 @@ using namespace AlltoAllMatmulImpl;
     } while (0)
 #endif
 
+#ifndef ALLTO_ALL_MX_QUANT_MATMUL_IMPL
+#define ALLTO_ALL_MX_QUANT_MATMUL_IMPL(tilingData, pipe)                                                               \
+    do {                                                                                                               \
+        DEFINE_MC2_HCCL_FOR_COMMUNICATION(false, HcclServerType::HCCL_SERVER_TYPE_CCU, MC2AlltoAllContext,             \
+            AlltoAllQuantMatmulTilingData, MC2AlltoAllPrimitives, 0, 1, CommunicationType);                            \
+        CommunicationType commImplName(&tilingData);                                                                   \
+        DEFINE_MC2_TRANSPOSE_FOR_MATH_COMPUTATION(DTYPE_X1, TransposeType);                                            \
+        TransposeType transposeImplName(&pipe);                                                                        \
+        DEFINE_MC2_TRANSPOSE_FOR_MATH_COMPUTATION(AscendC::fp8_e8m0_t, ScaleTransposeType);                            \
+        ScaleTransposeType scaleTransposeImplName(&pipe);                                                              \
+        DEFINE_MC2_MATMUL_CONTEXT_FOR_MATMUL_COMPUTATION_MX_QUANT(ComputationContextType);                             \
+        DEFINE_MC2_MATMUL_FOR_MATMUL_COMPUTATION_MX_QUANT(ComputationType);                                            \
+        ComputationType matmulImplName(&pipe);                                                                         \
+        using SchedulerContextType =                                                                                   \
+            PipelineContext<ComputationContextType>;                                                                   \
+        using SchedulerType =                                                                                          \
+            AlltoAllMxQuantMatmulPipeLine<CommunicationType, TransposeType, ScaleTransposeType,                        \
+                                                      ComputationType, SchedulerContextType>;                          \
+        SchedulerType SchedulerImpl(&commImplName, &transposeImplName, &scaleTransposeImplName, &matmulImplName);      \
+        AlltoAllMxQuantMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllQuantMatmulTilingData> op(            \
+            &SchedulerImpl);                                                                                           \
+        op.Init(x1, x2, bias, y, all2all_out, x1_scale, x2_scale, workspaceGM, &tilingData, &pipe);                    \
+        op.Process();                                                                                                  \
+    } while (0)
+#endif
+
 template <uint32_t QUANTMODE, bool X2TRANSPOSE, uint32_t DTYPEBIAS>
 __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias, GM_ADDR x1_scale, GM_ADDR x2_scale,
                                             GM_ADDR comm_scale, GM_ADDR x1_offset, GM_ADDR x2_offset, GM_ADDR y,
@@ -94,8 +122,10 @@ __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
 #else
     REGISTER_TILING_DEFAULT(AlltoAllQuantMatmulTilingData);
     GET_TILING_DATA_WITH_STRUCT(AlltoAllQuantMatmulTilingData, tilingData, tilingGM);
-    #if !(((ORIG_DTYPE_X1 == DT_FLOAT8_E4M3FN) || (ORIG_DTYPE_X1 == DT_FLOAT8_E5M2)) && \
+    #if (((ORIG_DTYPE_X1 == DT_FLOAT8_E4M3FN) || (ORIG_DTYPE_X1 == DT_FLOAT8_E5M2)) && \
         ((ORIG_DTYPE_X2 == DT_FLOAT8_E4M3FN) || (ORIG_DTYPE_X2 == DT_FLOAT8_E5M2)))
+        ALLTO_ALL_MX_QUANT_MATMUL_IMPL(tilingData, pipe);
+    #else
         if constexpr (QUANTMODE == KC_QUANT_FP8E5M2_MODE) {
             ALLTO_ALL_KC_QUANT_MATMUL_IMPL(tilingData, pipe, float8_e5m2_t);
         } else if constexpr (QUANTMODE == KC_QUANT_FP8E4M3_MODE) {
