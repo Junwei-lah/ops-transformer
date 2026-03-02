@@ -131,6 +131,19 @@ function(pack_built_in)
       DESTINATION latest_manager
   )
 
+  # 打包 npu_ops_transformer whl 文件
+  set(WHL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/torch_extension/dist")
+  file(GLOB WHL_FILES "${WHL_SOURCE_DIR}/npu_ops_transformer-*.whl")
+
+  if(WHL_FILES)
+      install(FILES ${WHL_FILES}
+          DESTINATION python/site-packages
+      )
+      message(STATUS "Including whl package: ${WHL_FILES}")
+  else()
+      message(WARNING "Whl package not found in ${WHL_SOURCE_DIR}")
+  endif()
+
   string(FIND "${ASCEND_COMPUTE_UNIT}" ";" SEMICOLON_INDEX)
   if (SEMICOLON_INDEX GREATER -1)
       # 截取分号前的字串

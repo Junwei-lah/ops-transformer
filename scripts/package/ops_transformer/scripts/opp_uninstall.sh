@@ -180,12 +180,45 @@ remove_init_py() {
   [ -e ${built_in_impl_path}/dynamic/__init__.py ] && rm ${built_in_impl_path}/dynamic/__init__.py > /dev/null 2>&1
 }
 
+remove_whl_package() {
+  local python_dir="${TARGET_VERSION_DIR}/python/site-packages"
+
+  if [ -d "${python_dir}/npu_ops_transformer" ]; then
+    logandprint "[INFO]: Removing npu_ops_transformer whl package from ${python_dir}"
+
+    # 尝试使用 pip 卸载
+    if command -v pip3 &>/dev/null; then
+      pip3 uninstall -y npu_ops_transformer --target="${python_dir}" 2>/dev/null
+    fi
+
+    # 直接删除目录（确保清理干净）
+    rm -rf "${python_dir}/npu_ops_transformer" 2>/dev/null
+    rm -f ${python_dir}/npu_ops_transformer-*.whl 2>/dev/null
+    rm -rf ${python_dir}/npu_ops_transformer-*.egg-info 2>/dev/null
+    rm -rf ${python_dir}/npu_ops_transformer-*.dist-info 2>/dev/null
+
+    # 如果目录为空，删除它
+    if [ -d "${python_dir}" ] && [ -z "$(ls -A ${python_dir} 2>/dev/null)" ]; then
+      rm -rf "${python_dir}"
+      # 如果 python 目录也为空，删除它
+      local python_parent="${TARGET_VERSION_DIR}/python"
+      if [ -d "${python_parent}" ] && [ -z "$(ls -A ${python_parent} 2>/dev/null)" ]; then
+        rm -rf "${python_parent}"
+      fi
+    fi
+
+    logandprint "[INFO]: npu_ops_transformer whl package removed"
+  fi
+}
+
 remove_ops_transformer() {
   if [ "$(id -u)" != 0 ] && [ ! -w "${TARGET_OPP_BUILT_IN}" ]; then
     chmod u+w -R "${TARGET_OPP_BUILT_IN}" 2>/dev/null
   fi
 
   remove_init_py
+
+  remove_whl_package
 
   remove_module
 

@@ -565,6 +565,30 @@ function build_kernel(){
     build ops_transformer_kernel
 }
 
+function build_torch_extension_whl() {
+    local torch_ext_dir="${CURRENT_DIR}/torch_extension"
+    local original_dir=$(pwd)
+    if [ -d "${torch_ext_dir}" ]; then
+        log "[INFO] Building torch_extension whl package..."
+        cd "${torch_ext_dir}"
+
+        # 检查 build 模块是否可用
+        if ! python3 -c "import build" 2>/dev/null; then
+            log "[WARNING] Python build module not found, skipping whl build"
+            cd "${original_dir}"
+            return 0
+        fi
+
+        python3 -m build --wheel -n 2>&1 || {
+            log "[ERROR] Failed to build torch_extension whl package"
+            cd "${original_dir}"
+            return 1
+        }
+        cd "${original_dir}"
+        log "[INFO] torch_extension whl package built successfully"
+    fi
+}
+
 build_lib() {
   echo $dotted_line
   echo "Start to build libs ${BUILD_LIBS[@]}"
@@ -1644,6 +1668,8 @@ elif [[ "$ENABLE_BUILT_CUSTOM" == "TRUE" ]]; then      # --ops, --vendor 新命�
     fi
     build_package
 elif [[ "$ENABLE_BUILD_PKG" == "TRUE" ]]; then      # --pkg 新命令新使用
+    # 构建 torch_extension whl 包
+    build_torch_extension_whl || exit 1
     IFS=';' read -ra SOC_ARRAY <<< "$ASCEND_SOC_UNITS"  # 分割字符串为数组
     CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_BUILD_PKG=ON"
     for soc in "${SOC_ARRAY[@]}"; do
@@ -1664,9 +1690,11 @@ else
         cp ${BUILD_DIR}/*.run ${CURRENT_DIR}/output
     elif [ "${BUILD}" == "kernel" ];then
         CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_OPS_HOST=OFF -DENABLE_OPS_KERNEL=ON -DBUILD_OPS_RTY_KERNEL=ON"
-        cmake_config 
+        cmake_config
         build_kernel
     elif [ "${BUILD}" == "package" ];then
+        # 构建 torch_extension whl 包
+        build_torch_extension_whl || exit 1
         CUSTOM_OPTION="${CUSTOM_OPTION}  -DENABLE_BUILT_IN=ON -DENABLE_OPS_HOST=ON -DENABLE_OPS_KERNEL=ON"
         build_package
     elif [ -n "${BUILD}" ];then
