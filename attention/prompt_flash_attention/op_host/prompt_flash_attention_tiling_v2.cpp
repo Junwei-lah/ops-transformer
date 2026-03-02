@@ -2176,8 +2176,10 @@ bool PromptFlashAttentionTilingV2::CheckPrefix(ContextParamsForPFATiling& contex
 
     // check actSharedPrefix
     if (!isMaxWorkspace && (contextKeyParams.actualSharedPrefixLen != nullptr) &&
-        (contextKeyParams.actualSharedPrefixLen->GetStorageShape().GetShapeSize() > 0) &&
-        CheckActSharedPrefix(contextKeyParams, prefixShapeInfo.s, keyShapeInfo.s)) {
+        (contextKeyParams.actualSharedPrefixLen->GetStorageShape().GetShapeSize() > 0)) {
+        if (!CheckActSharedPrefix(contextKeyParams, prefixShapeInfo.s, keyShapeInfo.s)) {
+            return false;
+        }
         tilingData.promptAttentionBaseParams.set_isActualSharedPrefixLenNull(0);
     } else {
         tilingData.promptAttentionBaseParams.set_isActualSharedPrefixLenNull(1);
@@ -2855,8 +2857,12 @@ bool PromptFlashAttentionTilingV2::CheckLearnSink(ContextParamsForPFATiling &con
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "When learnable sink is used, shape of learnable sink(%ld) must be same with query's N(%ld).", 
             contextKeyParams.learnableSink->GetStorageShape().GetDim(0), queryShapeInfo.n),
         return false);
-    OP_CHECK_IF(contextKeyParams.learnableSinkDataType != ge::DT_BF16, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
-            "When learnable sink is used, dataType of learnable sink(%s) must be bf16.", GetPfaDataTypeStr(contextKeyParams.learnableSinkDataType).c_str()),
+    OP_CHECK_IF(contextKeyParams.learnableSinkDataType != contextKeyParams.inputDataType, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
+            "DataType of learnable sink(%s) is not equal to datatype of query(%s).", GetPfaDataTypeStr(contextKeyParams.learnableSinkDataType).c_str(), 
+            GetPfaDataTypeStr(contextKeyParams.inputDataType).c_str()),
+        return false);
+    OP_CHECK_IF(contextKeyParams.learnableSinkDataType != ge::DT_BF16 && contextKeyParams.learnableSinkDataType != ge::DT_FLOAT16, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
+            "When learnable sink is used, dataType of learnable sink(%s) must be bf16 or fp16.", GetPfaDataTypeStr(contextKeyParams.learnableSinkDataType).c_str()),
         return false);
     OP_CHECK_IF(queryShapeInfo.d != 192 && queryShapeInfo.d != 128 && queryShapeInfo.d != 64, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "When learnable sink is used, query headdim must be one of {192, 128, 64}."),
