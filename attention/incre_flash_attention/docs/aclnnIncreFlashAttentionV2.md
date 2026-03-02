@@ -1,6 +1,6 @@
 # aclnnIncreFlashAttentionV2
 
-**该接口后续版本会废弃，请使用最新接口[aclnnIncreFlashAttentionV4](./aclnnIncreFlashAttentionV4.md)。
+**须知：该接口后续版本会废弃，请使用最新接口[aclnnIncreFlashAttentionV4](./aclnnIncreFlashAttentionV4.md)。**
 
 ## 产品支持情况
 

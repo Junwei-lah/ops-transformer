@@ -1,6 +1,6 @@
 # aclnnPromptFlashAttentionV2
 
-**该接口后续版本会废弃，请使用最新接口[aclnnPromptFlashAttentionV3](./aclnnPromptFlashAttentionV3.md)。
+**须知：该接口后续版本会废弃，请使用最新接口[aclnnPromptFlashAttentionV3](./aclnnPromptFlashAttentionV3.md)。**
 
 ## 产品支持情况
 
