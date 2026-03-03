@@ -1,6 +1,6 @@
 # aclnnGroupedMatmulV2
 
-[📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/gmm/grouped_matmul)
+**须知：该接口后续版本会废弃，请使用最新aclnnGroupedMatmulV5接口。**
 
 ## 产品支持情况
 

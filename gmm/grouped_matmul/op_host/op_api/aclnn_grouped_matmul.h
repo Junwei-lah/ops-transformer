@@ -38,7 +38,9 @@ extern "C" {
  * @param [out] executor: 返回op执行器，包含算子计算流程。
  * @return aclnnStatus: 返回状态码。
  */
-__attribute__((visibility("default"))) aclnnStatus aclnnGroupedMatmulGetWorkspaceSize(
+__attribute__((visibility("default"), deprecated("aclnnGroupedMatmulGetWorkspaceSize is scheduled to be deprecated in a post-December 2026 version update, "
+"and will be replaced by the aclnnGroupedMatmulV5GetWorkspaceSize. We apologize for any inconvenience caused and appreciate your timely migration to the new interface.")))
+aclnnStatus aclnnGroupedMatmulGetWorkspaceSize(
     const aclTensorList* x, const aclTensorList* weight, const aclTensorList* biasOptional,
     const aclTensorList* scaleOptional, const aclTensorList* offsetOptional,
     const aclTensorList* antiquantScaleOptional, const aclTensorList* antiquantOffsetOptional,
@@ -53,7 +55,9 @@ __attribute__((visibility("default"))) aclnnStatus aclnnGroupedMatmulGetWorkspac
  * @param [in] stream: acl stream流。
  * @return aclnnStatus: 返回状态码。
  */
-__attribute__((visibility("default"))) aclnnStatus aclnnGroupedMatmul(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
+__attribute__((visibility("default"), deprecated("aclnnGroupedMatmul is scheduled to be deprecated in a post-December 2026 version update, "
+"and will be replaced by the aclnnGroupedMatmulV5. We apologize for any inconvenience caused and appreciate your timely migration to the new interface.")))
+aclnnStatus aclnnGroupedMatmul(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
                                          aclrtStream stream);
 
 #ifdef __cplusplus
