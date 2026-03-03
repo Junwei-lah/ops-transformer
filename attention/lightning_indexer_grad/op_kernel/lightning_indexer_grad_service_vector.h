@@ -276,7 +276,7 @@ __aicore__ inline void LIGVector<LIGT>::ScatterAdd(GlobalTensor<int32_t> sparseI
         int64_t singleIndice = indiceUb.GetValue(i);
         uint64_t scatterAddOffset = i * constInfo.headDim;
         uint64_t dkeyOffset;
-        if (unlikely(constInfo.deterministic))
+        if (unlikely(constInfo.deterministic)) {
             if constexpr (LIGT::layout == LIG_LAYOUT::BSND) {
                 dkeyOffset = singleIndice * constInfo.headDim + currentCoreIndex / 2 * constInfo.seqlenK * constInfo.headDim;
             } else if constexpr (LIGT::layout == LIG_LAYOUT::TND) {
@@ -314,7 +314,7 @@ __aicore__ inline void LIGVector<LIGT>::DeterministicMerge(GlobalTensor<float> d
         return;
     }
     int64_t dkCoreWorkspaceUbSize = determinLen * constInfo.headDim;
-    LocalTensor<float> dkCoreWorkspaceUb = unifiedBuffer.GetWithOffset<float>(dkCoreWorkspaceUbSize, reluInPingUbOffset);
+    LocalTensor<float> dkCoreWorkspaceUb = unifiedBuffer.GetWithOffset<float>(dkCoreWorkspaceUbSize, gatherPingUbOffset);
     AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMTE2);
     for (int i = 0; i < constInfo.splitCores; i++) {
         AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMTE2);
