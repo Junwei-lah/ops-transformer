@@ -600,8 +600,19 @@ static std::map<int, std::vector<std::vector<int>>> g_alltoAllMatmulNPU910BEight
 
 bool AlltoAllMatmulTiling910b::IsCapable()
 {
-    OP_LOGI(opName_, "Start with AllToAllMatmul tiling.");
-    return true;
+    fe::PlatFormInfos *platformInfoPtr = context_->GetPlatformInfo();
+    OP_TILING_CHECK(platformInfoPtr == nullptr, OP_LOGE(opName_, "fail to get platfoem info"), return false);
+    fe::PlatFormInfos &platformInfo = *platformInfoPtr;
+    std::string socVersionStr;
+    (void)platformInfo.GetPlatformResWithLock("version", "Short_SoC_version", socVersionStr);
+    OP_LOGD(opName_, "Current SocVersion is : %s", socVersionStr.c_str());
+    QuantMode mode = MatmulAlltoAllTilingUtil::GetQuantMode(context_, opName_);
+    if (socVersionStr == "Ascend910B") {
+        OP_LOGI(opName_, "Start with AllToAllMatmul tiling.");
+        return true;
+    }
+    OP_LOGD(opName_, "Skip AlltoAllMatmulTiling910b tiling when the SocVersion is unsupported.");
+    return false;
 }
 
 enum class QuantModeType : int64_t {

@@ -17,16 +17,43 @@
 #include <lib/matmul_intf.h>
 #include "common.h"
 #include "./arch35/template_head.h"
+#include "./arch35/allto_all_matmul_arch35.h"
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 2201
+#include "./arch32/allto_all_matmul_tiling_data_910_93.h"
+#include "./arch32/allto_all_matmul_tiling_key_910_93.h"
+#endif
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3101
 #include "./arch35/allto_all_matmul_tiling_key.h"
 #include "./arch35/allto_all_matmul_tiling_data.h"
-#include "./arch35/allto_all_matmul_arch35.h"
 #include "./arch35/allto_all_kc_quant_matmul_arch35.h"
 #include "./arch35/allto_all_mx_quant_matmul_arch35.h"
 #include "./arch35/allto_all_mx_quant_matmul_pipeline.h"
+#endif
 
 using namespace AscendC;
 using namespace MC2KernelTemplate;
 using namespace AlltoAllMatmulImpl;
+
+#ifndef ALLTO_ALL_MATMUL_A3_FP_IMPL
+#define ALLTO_ALL_MATMUL_A3_FP_IMPL(tilingData, pipe)                                                                  \
+    do {                                                                                                               \
+        DEFINE_MC2_HCCL_FOR_COMMUNICATION(false, HcclServerType::HCCL_SERVER_TYPE_AICPU, MC2AlltoAllContext,           \
+            AlltoAllMatmulTilingDataA3, MC2AlltoAllPrimitives, 0, 1, CommunicationType);                               \
+        CommunicationType commImplName(&tilingData);                                                                   \
+        DEFINE_MC2_TRANSPOSE_FOR_MATH_COMPUTATION(DTYPE_X1, TransposeType);                                            \
+        TransposeType transposeImplName(&pipe);                                                                        \
+        DEFINE_MC2_MATMUL_CONTEXT_FOR_MATMUL_COMPUTATION_A3_FP(ComputationContextType);                                \
+        DEFINE_MC2_MATMUL_FOR_MATMUL_COMPUTATION_A3_FP(ComputationType);                                               \
+        ComputationType matmulImplName(&pipe);                                                                         \
+        using SchedulerContextType = PipelineContext<ComputationContextType>;                                          \
+        using SchedulerType = MC2KernelPipelineCommTransComputeTemplate<CommunicationType, TransposeType,              \
+                                                                        ComputationType, SchedulerContextType>;        \
+        SchedulerType SchedulerImpl(&commImplName, &transposeImplName, &matmulImplName);                               \
+        AlltoAllMatmulArch35<SchedulerType, SchedulerContextType, AlltoAllMatmulTilingDataA3> op(&SchedulerImpl);      \
+        op.Init(x1, x2, bias, y, all2all_out, workspaceGM, &tilingData, &pipe);                                        \
+        op.Process();                                                                                                  \
+    } while (0)
+#endif
 
 #ifndef ALLTO_ALL_MATMUL_APT_FP_IMPL
 #define ALLTO_ALL_MATMUL_APT_FP_IMPL(tilingData, pipe)                                                                 \
@@ -107,6 +134,20 @@ __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
     TPipe pipe;
 
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 2201
+    REGISTER_TILING_DEFAULT(AlltoAllMatmulTilingDataA3);
+    GET_TILING_DATA_WITH_STRUCT(AlltoAllMatmulTilingDataA3, tilingData, tilingGM);
+
+    if constexpr (DTYPEBIAS == DTYPE_BIAS_SAME_WITH_X) {
+        using DtypeBias = DTYPE_X1;
+        ALLTO_ALL_MATMUL_A3_FP_IMPL(tilingData, pipe);
+    } else if constexpr (DTYPEBIAS == DTYPE_BIAS_FP32) {
+        using DtypeBias = float;
+        ALLTO_ALL_MATMUL_A3_FP_IMPL(tilingData, pipe);
+    }
+#endif
+
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3101
 #if ((ORIG_DTYPE_X1 == ORIG_DTYPE_X2) && ((ORIG_DTYPE_X1 == DT_FLOAT16) || (ORIG_DTYPE_X1 == DT_BF16)))
     REGISTER_TILING_DEFAULT(AlltoAllMatmulTilingData);
     GET_TILING_DATA_WITH_STRUCT(AlltoAllMatmulTilingData, tilingData, tilingGM);
@@ -132,5 +173,6 @@ __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
             ALLTO_ALL_KC_QUANT_MATMUL_IMPL(tilingData, pipe, float8_e4m3_t);
         }
     #endif
+#endif
 #endif
 }

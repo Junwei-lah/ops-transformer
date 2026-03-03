@@ -32,6 +32,12 @@ if (BUILD_OPEN_PROJECT)  # custom
                     -cce-aicore-dcci-before-kernel-end=false
                     -DENABLE_CV_COMM_VIA_SSBUF=true
         )
+    elseif("${CONDITION_UNIT}" STREQUAL "ascend910_93")
+        add_ops_compile_options(
+            OP_NAME AlltoAllMatmul
+            OPTIONS --cce-auto-sync=off
+                    -DAICORE_EXCEPTION_RESTART
+    )
     endif()
 else() # 回黄host
     add_mc2_modules_sources(OPTYPE allto_all_matmul allto_all_matmul ACLNNTYPE aclnn aclnn_inner)

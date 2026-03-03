@@ -18,7 +18,9 @@
 
 #include "../communication/comm_stage.h"
 #include "../computation/compute_stage.h"
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3101
 #include "../quantization/quantize_stage.h"
+#endif
 #include "./template/pipeline_template_comm_trans_compute.h"
 #include "./template/pipeline_template_compute_trans_comm.h"
 #include "./template/pipeline_template_comm_trans_quantize_compute.h"

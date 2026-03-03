@@ -15,7 +15,7 @@
 
 #ifndef MC2_MATMUL_BASE_H
 #define MC2_MATMUL_BASE_H
-#if defined(__CCE_AICORE__) && __CCE_AICORE__ == 220
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 2201
 #include "../../../arch32/3rd_head_arch32.h"
 #else
 #include "../../../arch35/3rd_head_arch35.h"
