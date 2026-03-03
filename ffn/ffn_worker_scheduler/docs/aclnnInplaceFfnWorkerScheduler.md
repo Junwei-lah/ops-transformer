@@ -85,6 +85,7 @@
     1. 初始化，根据入参ScheduleContext中的session_num和sync_group_size计算分组个数。
     2. 若分组个数为1，表示全同步处理数据，待全部session数据准备就绪后，进行数据整理。
     3. 若分组个数不为1，表示非全同步处理数据，待group内的session数据准备就绪后，进行数据整理。
+
 $$
 \text{Initialize:} \quad\text{group\_num} = \frac{\text{session\_num}}{\text{sync\_group\_size}}
 $$
@@ -103,34 +104,34 @@ $$
 
 ```Cpp
 aclnnStatus aclnnInplaceFfnWorkerSchedulerGetWorkspaceSize(
-    aclTensor* scheduleContextRef,
-    int32_t syncGroupSize,
-    int32_t executeMode,
-    uint64_t* workspaceSize,
+    aclTensor*      scheduleContextRef,
+    int32_t         syncGroupSize,
+    int32_t         executeMode,
+    uint64_t*       workspaceSize,
     aclOpExecutor** executor)
 ```
 
 ```Cpp
 aclnnStatus aclnnInplaceFfnWorkerScheduler(
-    void* workspace,
-    uint64_t workspaceSize,
+    void*          workspace,
+    uint64_t       workspaceSize,
     aclOpExecutor* executor,
-    aclrtStream stream)
+    aclrtStream    stream)
 ```
 
 ## aclnnInplaceFfnWorkerSchedulerGetWorkspaceSize
 
 - **参数说明：**
 
-  <table style="undefined;table-layout: fixed; width: 1565px"><colgroup>
-  <col style="width: 146px">
+  <table style="undefined;table-layout: fixed; width: 1540px"><colgroup>
+  <col style="width: 210px">
   <col style="width: 135px">
-  <col style="width: 326px">
-  <col style="width: 246px">
-  <col style="width: 275px">
-  <col style="width: 101px">
-  <col style="width: 190px">
-  <col style="width: 146px">
+  <col style="width: 320px">
+  <col style="width: 320px">
+  <col style="width: 130px">
+  <col style="width: 120px">
+  <col style="width: 160px">
+  <col style="width: 145px">
   </colgroup>
   <thead>
     <tr>
@@ -145,17 +146,17 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
     </tr></thead>
   <tbody>
     <tr>
-      <td>scheduleContextRef</td>
+      <td>scheduleContextRef（aclTensor*）</td>
       <td>输入/输出</td>
       <td>FFN侧接收的待处理数据，表示ScheduleContext信息，详细结构参见调用示例</td>
       <td>不支持空tensor。</td>
       <td>INT8</td>
       <td>ND</td>
-      <td>1维，shape为(1024)</td>
+      <td>1维，(1024)</td>
       <td>×</td>
     </tr>
     <tr>
-      <td>syncGroupSize</td>
+      <td>syncGroupSize（int32_t）</td>
       <td>输入</td>
       <td>每个同步组处理的session个数。</td>
       <td>取值范围为(0，session_num]，session_num表示待处理数据的最大会话数，即调用示例中结构体ScheduleContext中CommonArea域的session_num字段。</td>
@@ -165,7 +166,7 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
       <td>-</td>
     </tr>
     <tr>
-      <td>executeMode</td>
+      <td>executeMode（int32_t）</td>
       <td>输入</td>
       <td>执行模式。</td>
       <td>只支持模式0， 表示执行完一次退出。</td>
@@ -175,7 +176,7 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
       <td>-</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -185,7 +186,7 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>
@@ -199,14 +200,14 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
 
 - **返回值：**
 
-    aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-    
-    第一段接口完成入参校验，出现以下场景时报错：
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+  
+  第一段接口完成入参校验，出现以下场景时报错：
 
-  <table style="undefined;table-layout: fixed; width: 1134px"><colgroup>
-  <col style="width: 319px">
-  <col style="width: 144px">
-  <col style="width: 671px">
+  <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
+  <col style="width: 291px">
+  <col style="width: 135px">
+  <col style="width: 723px">
   </colgroup>
   <thead>
     <tr>
@@ -239,10 +240,11 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
 ## aclnnInplaceFfnWorkerScheduler
 
 - **参数说明：**
-  <table style="undefined;table-layout: fixed; width: 598px"><colgroup>
-  <col style="width: 144px">
-  <col style="width: 125px">
-  <col style="width: 700px">
+
+  <table style="undefined;table-layout: fixed; width: 1151px"><colgroup>
+  <col style="width: 184px">
+  <col style="width: 134px">
+  <col style="width: 833px">
   </colgroup>
   <thead>
     <tr>
@@ -279,10 +281,13 @@ aclnnStatus aclnnInplaceFfnWorkerScheduler(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
   - aclnnInplaceFfnWorkerScheduler默认为确定性实现，暂不支持非确定性实现，确定性计算配置也不会生效。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <memory>

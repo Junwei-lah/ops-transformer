@@ -1,6 +1,7 @@
 # aclnnSwinTransformerLnQkvQuant
 
 ## 产品支持情况
+
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
 | <term>Ascend 950PR/Ascend 950DT</term>                             |    ×     |
@@ -11,6 +12,7 @@
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
+
 - 接口功能：Swin Transformer 网络模型 完成 Q、K、V 的计算。  
 - 计算公式：  
 
@@ -18,6 +20,7 @@
   其中，weight 是 Q、K、V 三个矩阵权重的拼接。
 
 ## 函数原型
+
 每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnSwinTransformerLnQkvQuantGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnSwinTransformerLnQkvQuant”接口执行计算。
 
 ```cpp
@@ -44,6 +47,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuantGetWorkspaceSize(
   uint64_t        *workspaceSize, 
   aclOpExecutor   **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnSwinTransformerLnQkvQuant(
   void          *workspace, 
@@ -53,15 +57,17 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
 ```
 
 ## aclnnSwinTransformerLnQkvQuantGetWorkspaceSize
+
 - **参数说明**：
-  <table style="undefined;table-layout: fixed; width: 1552px"><colgroup>
+
+  <table style="undefined;table-layout: fixed; width: 1524px"><colgroup>
   <col style="width: 166px">
   <col style="width: 121px">
   <col style="width: 336px">
-  <col style="width: 290px">
+  <col style="width: 250px">
   <col style="width: 149px">
   <col style="width: 128px">
-  <col style="width: 218px">
+  <col style="width: 230px">
   <col style="width: 144px">
   </colgroup>
   <thead>
@@ -77,7 +83,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
     </tr></thead>
   <tbody>
     <tr>
-      <td>x</td>
+      <td>x（aclTensor *）</td>
       <td>输入</td>
       <td>表示待进行归一化计算的目标张量。</td>
       <td>-</td>
@@ -87,7 +93,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>gamma</td>
+      <td>gamma（aclTensor *）</td>
       <td>输入</td>
       <td>表示layernorm计算中尺度缩放的大小。</td>
       <td>-</td>
@@ -97,7 +103,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>beta</td>
+      <td>beta（aclTensor *）</td>
       <td>输入</td>
       <td>表示layernorm计算中尺度偏移的大小。</td>
       <td>-</td>
@@ -107,7 +113,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>weight</td>
+      <td>weight（aclTensor *）</td>
       <td>输入</td>
       <td>表示目标张量转换使用的权重矩阵。</td>
       <td>-</td>
@@ -117,7 +123,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>bias</td>
+      <td>bias（aclTensor *）</td>
       <td>输入</td>
       <td>表示目标张量转换使用的偏移矩阵。</td>
       <td>-</td>
@@ -127,7 +133,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>quantScale</td>
+      <td>quantScale（aclTensor *）</td>
       <td>输入</td>
       <td>表示目标张量量化使用的缩放参数。</td>
       <td>-</td>
@@ -137,7 +143,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>quantOffset</td>
+      <td>quantOffset（aclTensor *）</td>
       <td>输入</td>
       <td>表示目标张量量化使用的偏移参数。</td>
       <td>-</td>
@@ -147,7 +153,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>dequantScale</td>
+      <td>dequantScale（aclTensor *）</td>
       <td>输入</td>
       <td>表示目标张量乘以权重矩阵之后反量化使用的缩放参数。</td>
       <td>-</td>
@@ -157,7 +163,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>headNum</td>
+      <td>headNum（int64_t）</td>
       <td>输入</td>
       <td>表示转换使用的通道数。</td>
       <td>支持取值为[1,32]。</td>
@@ -167,7 +173,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>seqLength</td>
+      <td>seqLength（int64_t）</td>
       <td>输入</td>
       <td>表示转换使用的通道深度。</td>
       <td>支持取值为32/64。</td>
@@ -177,17 +183,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>seqLength</td>
-      <td>输入</td>
-      <td>表示转换使用的通道深度。</td>
-      <td>支持取值为32/64。</td>
-      <td>int</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td>epsilon</td>
+      <td>epsilon（double）</td>
       <td>输入</td>
       <td>layernorm 计算除0保护值。</td>
       <td>为了保证精度，取值建议小于等于1e-4。</td>
@@ -197,7 +193,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>oriHeight</td>
+      <td>oriHeight（int64_t）</td>
       <td>输入</td>
       <td>layernorm 中S轴transpose的维度；oriHeight*oriWeight需等于输入x的第二维S的大小，且为hWinSize的整数倍。</td>
       <td>-</td>
@@ -207,7 +203,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>oriWeight</td>
+      <td>oriWeight（int64_t）</td>
       <td>输入</td>
       <td>layernorm 中S轴transpose的维度；oriHeight*oriWeight需等于输入x的第二维S的大小，且为wWinSize的整数倍。</td>
       <td>-</td>
@@ -217,7 +213,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>hWinSize</td>
+      <td>hWinSize（int64_t）</td>
       <td>输入</td>
       <td>使用的特征窗高度大小。</td>
       <td>支持取值为[7,32]。</td>
@@ -227,7 +223,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>wWinSize</td>
+      <td>wWinSize（int64_t）</td>
       <td>输入</td>
       <td>使用的特征窗宽度大小。</td>
       <td>支持取值为[7,32]。</td>
@@ -237,7 +233,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>weightTranspose</td>
+      <td>weightTranspose（bool）</td>
       <td>输入</td>
       <td>weight矩阵是否转置。</td>
       <td>当前不支持取值为False场景。</td>
@@ -247,7 +243,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>queryOutputOut</td>
+      <td>queryOutputOut（aclTensor *）</td>
       <td>输出</td>
       <td>表示转换之后的张量，公式中的Q。</td>
       <td>-</td>
@@ -257,7 +253,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>keyOutputOut</td>
+      <td>keyOutputOut（aclTensor *）</td>
       <td>输出</td>
       <td>表示转换之后的张量，公式中的K。</td>
       <td>-</td>
@@ -267,7 +263,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>valueOutputOut</td>
+      <td>valueOutputOut（aclTensor *）</td>
       <td>输出</td>
       <td>表示转换之后的张量，公式中的V。</td>
       <td>-</td>
@@ -277,7 +273,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t）</td>
       <td>出参</td>
       <td>返回需要在Device侧申请的workspace大小。</td>
       <td>-</td>
@@ -287,7 +283,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor **）</td>
       <td>出参</td>
       <td>返回op执行器，包含了算子计算流程。</td>
       <td>-</td>
@@ -303,10 +299,10 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，出现以下场景时报错：
-  <table style="undefined;table-layout: fixed; width: 887px"><colgroup>
-  <col style="width: 300px">
-  <col style="width: 200px">
-  <col style="width: 700px">
+  <table style="undefined;table-layout: fixed; width: 1149px"><colgroup>
+  <col style="width: 291px">
+  <col style="width: 135px">
+  <col style="width: 723px">
   </colgroup>
   <thead>
     <tr>
@@ -329,12 +325,13 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
   </table>
 
 ## aclnnSwinTransformerLnQkvQuant
+
 - **参数说明**：
 
-  <table style="undefined;table-layout: fixed; width: 1000px"><colgroup>
-  <col style="width: 230px">
-  <col style="width: 150px">
-  <col style="width: 750px">
+  <table style="undefined;table-layout: fixed; width: 1151px"><colgroup>
+  <col style="width: 184px">
+  <col style="width: 134px">
+  <col style="width: 833px">
   </colgroup>
   <thead>
     <tr>
@@ -371,6 +368,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - 确定性计算：
   - aclnnSwinTransformerLnQkvQuant默认确定性实现。
 - seqLength只支持32/64。
@@ -380,6 +378,7 @@ aclnnStatus aclnnSwinTransformerLnQkvQuant(
 - weight需要转置。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp

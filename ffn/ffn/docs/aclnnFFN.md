@@ -16,7 +16,7 @@
 
 ## 功能说明
 
-- 算子功能：该FFN算子提供MoeFFN和FFN的计算功能。在没有专家分组（expertTokens为空）时是FFN，有专家分组时是MoeFFN，统称为FFN，属于Moe结构。MoE（Mixture-of-Experts，混合专家系统）是一种用于训练万亿参数量级模型的技术。MoE将预测建模任务分解为若干子任务，在每个子任务上训练一个专家模型（Expert Model），开发一个门控模型（Gating Model），该模型会根据输入数据分配一个或多个专家，最终综合多个专家计算结果作为预测结果。Mixture-of-Experts结构的模型是将输入数据分配给最相关的一个或者多个专家，综合涉及的所有专家的计算结果来确定最终结果。
+- 接口功能：该FFN算子提供MoeFFN和FFN的计算功能。在没有专家分组（expertTokens为空）时是FFN，有专家分组时是MoeFFN，统称为FFN，属于Moe结构。MoE（Mixture-of-Experts，混合专家系统）是一种用于训练万亿参数量级模型的技术。MoE将预测建模任务分解为若干子任务，在每个子任务上训练一个专家模型（Expert Model），开发一个门控模型（Gating Model），该模型会根据输入数据分配一个或多个专家，最终综合多个专家计算结果作为预测结果。Mixture-of-Experts结构的模型是将输入数据分配给最相关的一个或者多个专家，综合涉及的所有专家的计算结果来确定最终结果。
 - 计算公式：
 
   - **非量化场景：**
@@ -78,16 +78,26 @@ aclnnStatus aclnnFFN(
 
 
 ## aclnnFFNGetWorkspaceSize
+
+**说明：**  
+M表示token个数，对应transform中的BS（B：Batch，表示输入样本批量大小，S：  Seq-Length，表示输入样本序列长度）；  
+K1表示第一个matmul的输入通道数，对应transform中的H（Head-Size，表示隐藏层的大小）；  
+N1表示第一个matmul的输出通道数；K2表示第二个matmul的输入通道数；  
+N2表示第二个matmul的输出通道数，对应transform中的H；  
+E表示有专家场景的专家数。  
+G表示伪量化per-group场景下，antiquantOffset、antiquantScale的组数。
+
 - **参数说明**
-  <table style="undefined;table-layout: fixed; width: 1550px">
+
+  <table style="undefined;table-layout: fixed; width: 1650px">
   <colgroup>
-  <col style="width: 180px"> <!-- 参数名 -->
+  <col style="width: 200px"> <!-- 参数名 -->
   <col style="width: 120px"> <!-- 输入/输出 -->
   <col style="width: 280px">  <!-- 描述 -->
-  <col style="width: 320px">  <!-- 使用说明 -->
+  <col style="width: 300px">  <!-- 使用说明 -->
   <col style="width: 250px">  <!-- 数据类型 -->
   <col style="width: 120px">  <!-- 数据格式 -->
-  <col style="width: 140px"> <!-- 维度(shape) -->
+  <col style="width: 240px"> <!-- 维度(shape) -->
   <col style="width: 140px">  <!-- 非连续Tensor -->
   </colgroup>
   <thead>
@@ -104,7 +114,7 @@ aclnnStatus aclnnFFN(
   </thead>
   <tbody>
     <tr>
-      <td>x</td>
+      <td>x（aclTensor*）</td>
       <td>输入</td>
       <td>计算输入，公式中的输入x。</td>
       <td>
@@ -119,7 +129,7 @@ aclnnStatus aclnnFFN(
       <td>√</td>
     </tr>
     <tr>
-      <td>weight1</td>
+      <td>weight1（aclTensor*）</td>
       <td>输入</td>
       <td>专家的权重数据，公式中的W1。</td>
       <td>
@@ -130,11 +140,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16、INT8、INT4</td>
       <td>ND</td>
-      <td>有专家[E,K1,N1]；无专家[K1,N1]</td>
+      <td>有专家[E,K1,N1]<br>无专家[K1,N1]</td>
       <td>√</td>
     </tr>
     <tr>
-      <td>weight2</td>
+      <td>weight2（aclTensor*）</td>
       <td>输入</td>
       <td>专家的权重数据，公式中的W2。</td>
       <td>
@@ -145,11 +155,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16、INT8、INT4</td>
       <td>ND</td>
-      <td>有专家[E,K2,N2]；无专家[K2,N2]</td>
+      <td>有专家[E,K2,N2]<br>无专家[K2,N2]</td>
       <td>√</td>
     </tr>
     <tr>
-      <td>expertTokens</td>
+      <td>expertTokens（aclIntArray*）</td>
       <td>可选输入</td>
       <td>各专家的token数。</td>
       <td>
@@ -165,7 +175,7 @@ aclnnStatus aclnnFFN(
       <td>-</td>
     </tr>
     <tr>
-      <td>bias1</td>
+      <td>bias1（aclTensor*）</td>
       <td>可选输入</td>
       <td>权重数据修正值，公式中的b1。</td>
       <td>
@@ -176,11 +186,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、FLOAT32、INT32</td>
       <td>ND</td>
-      <td>有专家[E,N1]；无专家[N1]</td>
+      <td>有专家[E,N1]<br>无专家[N1]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>bias2</td>
+      <td>bias2（aclTensor*）</td>
       <td>可选输入</td>
       <td>权重数据修正值，公式中的b2。</td>
       <td>
@@ -191,11 +201,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、FLOAT32、INT32</td>
       <td>ND</td>
-      <td>有专家[E,N2]；无专家[N2]</td>
+      <td>有专家[E,N2]<br>无专家[N2]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>scale</td>
+      <td>scale（aclTensor*）</td>
       <td>可选输入</td>
       <td>量化参数，量化缩放系数。</td>
       <td>
@@ -206,11 +216,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT32</td>
       <td>ND</td>
-      <td>per-tensor 一维,有专家[E]，无专家[1]；per-channel 有专家[E,N1]，无专家[N1]</td>
+      <td>per-tensor 一维，有专家[E]，无专家[1]<br>per-channel 有专家[E,N1]，无专家[N1]</td>
       <td>√</td>
     </tr>
     <tr>
-      <td>offset</td>
+      <td>offset（aclTensor*）</td>
       <td>可选输入</td>
       <td>量化参数，量化偏移量。</td>
       <td>
@@ -221,11 +231,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT32</td>
       <td>ND</td>
-      <td>1维,有专家[E]，无专家[1]</td>
+      <td>1维,有专家[E]<br>无专家[1]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>deqScale1</td>
+      <td>deqScale1（aclTensor*）</td>
       <td>可选输入</td>
       <td>量化参数，第一个matmul的反量化缩放系数。</td>
       <td>
@@ -236,11 +246,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>UINT64、INT64、FLOAT32、BFLOAT16</td>
       <td>ND</td>
-      <td>有专家[E,N1]；无专家[N1]</td>
+      <td>有专家[E,N1]<br>无专家[N1]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>deqScale2</td>
+      <td>deqScale2（aclTensor*）</td>
       <td>可选输入</td>
       <td>量化参数，第二个matmul的反量化缩放系数。</td>
       <td>
@@ -251,11 +261,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>UINT64、INT64、FLOAT32、BFLOAT16</td>
       <td>ND</td>
-      <td>有专家[E,N2]；无专家[N2]</td>
+      <td>有专家[E,N2]<br>无专家[N2]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>antiquantScale1</td>
+      <td>antiquantScale1（aclTensor*）</td>
       <td>可选输入</td>
       <td>伪量化参数，第一个matmul的缩放系数。</td>
       <td>
@@ -266,11 +276,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
-      <td>per-channel 有专家[E,N1]，无专家[N1]；per-group 有专家[E,G,N1],无专家[G,N1]</td>
+      <td>per-channel 有专家[E,N1]，无专家[N1]<br>per-group 有专家[E,G,N1]，无专家[G,N1]</td>
       <td>√</td>
     </tr>
     <tr>
-      <td>antiquantScale2</td>
+      <td>antiquantScale2（aclTensor*）</td>
       <td>可选输入</td>
       <td>伪量化参数，第二个matmul的缩放系数。</td>
       <td>
@@ -281,11 +291,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
-      <td>per-channel 有专家[E,N2]，无专家[N2]；per-group 有专家[E,G,N2],无专家[G,N2]</td>
+      <td>per-channel 有专家[E,N2]，无专家[N2]<br>per-group 有专家[E,G,N2]，无专家[G,N2]</td>
       <td>√</td>
     </tr>
     <tr>
-      <td>antiquantOffset1</td>
+      <td>antiquantOffset1（aclTensor*）</td>
       <td>可选输入</td>
       <td>伪量化参数，第一个matmul的偏移量。</td>
       <td>
@@ -296,11 +306,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
-      <td>per-channel 有专家[E,N1],无专家[N1]；per-group 有专家[E,G,N1],无专家[G,N1]</td>
+      <td>per-channel 有专家[E,N1]，无专家[N1]<br>per-group 有专家[E,G,N1]，无专家[G,N1]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>antiquantOffset2</td>
+      <td>antiquantOffset2（aclTensor*）</td>
       <td>可选输入</td>
       <td>伪量化参数，第二个matmul的偏移量。</td>
       <td>
@@ -311,11 +321,11 @@ aclnnStatus aclnnFFN(
       </td>
       <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
-      <td>per-channel 有专家[E,N2],无专家[N2]；per-group 有专家[E,G,N2],无专家[G,N2]</td>
+      <td>per-channel 有专家[E,N2]，无专家[N2]<br>per-group 有专家[E,G,N2]，无专家[G,N2]</td>
       <td>-</td>
     </tr>
     <tr>
-      <td>activation</td>
+      <td>activation（char*）</td>
       <td>输入</td>
       <td>使用的激活函数，公式中的activation。</td>
       <td>
@@ -331,7 +341,7 @@ aclnnStatus aclnnFFN(
       <td>-</td>
     </tr>
     <tr>
-      <td>innerPrecise</td>
+      <td>innerPrecise（int64_t）</td>
       <td>可选输入</td>
       <td>高精度或者高性能选择。</td>
       <td>
@@ -347,7 +357,7 @@ aclnnStatus aclnnFFN(
       <td>-</td>
     </tr>
     <tr>
-      <td>y</td>
+      <td>y（aclTensor*）</td>
       <td>输出</td>
       <td>计算输出，公式中的输出y。</td>
       <td>
@@ -362,7 +372,7 @@ aclnnStatus aclnnFFN(
       <td>-</td>
     </tr>
     <tr>
-      <td>workspaceSize</td>
+      <td>workspaceSize（uint64_t*）</td>
       <td>输出</td>
       <td>返回Device侧需申请的workspace大小。</td>
       <td>
@@ -377,7 +387,7 @@ aclnnStatus aclnnFFN(
       <td>-</td>
     </tr>
     <tr>
-      <td>executor</td>
+      <td>executor（aclOpExecutor**）</td>
       <td>输出</td>
       <td>返回op执行器，包含算子计算流程。</td>
       <td>
@@ -394,11 +404,6 @@ aclnnStatus aclnnFFN(
   </tbody>
   </table>
 
->**说明：**
-    >M表示token个数，对应transform中的BS（B：Batch，表示输入样本批量大小，S：Seq-Length，表示输入样本序列长度）；K1表示第一个matmul的输入通道数，对应transform中的H（Head-Size，表示隐藏层的大小）；N1表示第一个matmul的输出通道数；K2表示第二个matmul的输入通道数；N2表示第二个matmul的输出通道数，对应transform中的H；E表示有专家场景的专家数。
-
->**说明：**
-  >G表示伪量化per-group场景下，antiquantOffset、antiquantScale的组数。
 
 - **返回值**
 
