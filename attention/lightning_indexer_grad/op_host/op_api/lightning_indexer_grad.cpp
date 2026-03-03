@@ -37,12 +37,12 @@ OP_TYPE_REGISTER(LightningIndexerGrad);
 const std::array<const aclTensor *, LIGHTNING_INDEXER_GRAD_OUTPUT_CNT> LightningIndexerGrad(
     const aclTensor *query, const aclTensor *key, const aclTensor *dy, const aclTensor *sparseIndices,
     const aclTensor *weights, const aclTensor *actualSeqQLenOptional, const aclTensor *actualSeqKvLenOptional,
-    int64_t headNum, const char *inputLayout, int64_t sparseMode, int64_t preTokens, int64_t nextTokens, bool determinstic, 
+    int64_t headNum, const char *inputLayout, int64_t sparseMode, int64_t preTokens, int64_t nextTokens, bool deterministic, 
     aclOpExecutor *executor)
 {
     L0_DFX(LightningIndexerGrad, query, key, dy, sparseIndices, weights,
             actualSeqQLenOptional, actualSeqKvLenOptional, headNum, inputLayout, sparseMode, preTokens,
-            nextTokens, determinstic);
+            nextTokens, deterministic);
     DataType outputDtype = query->GetDataType();
     auto dqOut = executor->AllocTensor(outputDtype, op::Format::FORMAT_ND, op::Format::FORMAT_ND);
     auto dkOut = executor->AllocTensor(outputDtype, op::Format::FORMAT_ND, op::Format::FORMAT_ND);
@@ -53,7 +53,7 @@ const std::array<const aclTensor *, LIGHTNING_INDEXER_GRAD_OUTPUT_CNT> Lightning
                                     actualSeqQLenOptional, actualSeqKvLenOptional),
                            OP_OUTPUT(dqOut, dkOut, dweightsOut),
                            OP_ATTR(headNum, inputLayout, sparseMode, preTokens,
-                                    nextTokens, determinstic));
+                                    nextTokens, deterministic));
     if (ret != ACLNN_SUCCESS) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "LightningIndexerGrad InferShape failed.");
         return {nullptr, nullptr, nullptr};
@@ -65,7 +65,7 @@ const std::array<const aclTensor *, LIGHTNING_INDEXER_GRAD_OUTPUT_CNT> Lightning
                                                 actualSeqQLenOptional, actualSeqKvLenOptional),
                                     OP_OUTPUT(dqOut, dkOut, dweightsOut),
                                     OP_ATTR(headNum, inputLayout, sparseMode, preTokens,
-                                                nextTokens, determinstic));
+                                                nextTokens, deterministic));
     if (ret != ACLNN_SUCCESS) {
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "LightningIndexerGrad launch kernel failed.");
         return {nullptr, nullptr, nullptr};

@@ -70,8 +70,9 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
     opParamInfo.sparseMode = *attrs->GetInt(ATTR_SPARSEMODE_INDEX);
     opParamInfo.preTokens = *attrs->GetInt(ATTR_PRETOKENS_INDEX);
     opParamInfo.nextTokens = *attrs->GetInt(ATTR_NEXTTOKENS_INDEX);
-    opParamInfo.determinstic = *attrs->GetBool(ATTR_DETERMINSTIC_INDEX);
-    
+    bool deterministic =  *attrs->GetBool(ATTR_DETERMINSTIC_INDEX) || (context_->GetDeterministic() == 1);
+    opParamInfo.deterministic = deterministic;
+
     uint32_t dyShapeDim = opParamInfo.dy.shape->GetStorageShape().GetDimNum();
     uint32_t dataType = static_cast<uint32_t>(queryDataType);
     uint32_t inputLayout = -1;
@@ -84,7 +85,7 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
         headNumK = static_cast<uint32_t>(opParamInfo.key.shape->GetStorageShape().GetDim(DIM_IDX_THREE));
         groupNum = headNumQ / headNumK;
         topK = static_cast<uint32_t>(opParamInfo.dy.shape->GetStorageShape().GetDim(dyShapeDim - 1));
-        dkSize = batch * seqlenK * headNumK * headDim;        
+        dkSize = batch * seqlenK * headNumK * headDim;
         inputLayout = LAYOUT_BSND;
     } else if (std::string(opParamInfo.layout) == "TND") {
         opParamInfo.actualSeqLengthsQ.tensor = context_->GetOptionalInputTensor(ACTUAL_SEQ_Q_INDEX);
@@ -106,6 +107,7 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
         OP_LOGE(context_, "only support layout is BSND and TND.\n", opParamInfo.layout);
         return ge::GRAPH_FAILED; 
     }
+    uint32_t dkCoreSize = batch * seqlenK * headDim;
 
     // check headDim, groupNum, headNumK
     OP_CHECK_IF((headDim != MAX_HEADIM) || (groupNum != MAX_GROUPNUM) || (headNumK != LIMIT_HEADNUMK),
@@ -126,10 +128,14 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
     tilingData_->set_usedCoreNum(blockDim * 2);
     tilingData_->set_dkSize(dkSize);
     tilingData_->set_sparseMode(static_cast<uint64_t>(opParamInfo.sparseMode));
+    tilingData_->set_deterministic(static_cast<uint64_t>(opParamInfo.deterministic));
 
     // set workspace 
     tilingData_->set_dkWorkSpaceOffset(workspaceOffset);
     workspaceOffset = (workspaceOffset + dkSize * sizeof(float) + GM_ALIGN) / GM_ALIGN * GM_ALIGN;
+
+    tilingData_->set_dkCoreWorkspaceOffset(workspaceOffset);
+    workspaceOffset = (workspaceOffset + aivNum * dkCoreSize * sizeof(float) + GM_ALIGN) / GM_ALIGN * GM_ALIGN;
 
     uint64_t keyGatherWorkspaceSize = MAX_HEADIM * MAX_TOPK * sizeof(uint16_t) * DOUBLE_BUFFER;
     tilingData_->set_keyGatherWorkspaceOffset(workspaceOffset);

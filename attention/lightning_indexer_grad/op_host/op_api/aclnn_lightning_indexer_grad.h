@@ -29,7 +29,7 @@ extern "C" {
 aclnnStatus aclnnLightningIndexerGradGetWorkspaceSize(
     const aclTensor *query, const aclTensor *key, const aclTensor *dy, const aclTensor *sparseIndices,
     const aclTensor *weights, const aclTensor *actualSeqQLenOptional, const aclTensor *actualSeqKvLenOptional,
-    int64_t headNum, char *inputLayout, int64_t sparseMode, int64_t preTokens, int64_t nextTokens, bool determinstic, 
+    int64_t headNum, char *inputLayout, int64_t sparseMode, int64_t preTokens, int64_t nextTokens, bool deterministic, 
     const aclTensor *dqOut, const aclTensor *dkOut, const aclTensor *dweightsOut, uint64_t *workspaceSize, aclOpExecutor **executor);
 
 /**

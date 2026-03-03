@@ -34,6 +34,7 @@ struct RunInfo {
     uint64_t loopTimes;
     uint64_t taskId;
     uint64_t realTopk;
+    bool isRemainderCore;
 };
 
 struct ConstInfo {
@@ -48,11 +49,17 @@ struct ConstInfo {
     uint32_t usedCoreNum;
     int64_t dkSize;
     int64_t dkWorkSpaceOffset;
+    int64_t dkCoreWorkspaceOffset;
     int64_t keyGatherWorkspaceOffset;
     int64_t reluInWorkspaceOffset;
     int64_t reluGradWorkspaceOffset;
     int64_t scatterAddWorkspaceOffset;
     uint64_t sparseMode;
+    bool deterministic;
+    int64_t determinLooptimes;
+    int64_t determinLen;
+    int64_t determinBeginPos;
+    uint32_t splitCores;
 };
 
 template <typename TYPE, LIG_LAYOUT LAYOUT_T = LIG_LAYOUT::BSND, typename... Args>

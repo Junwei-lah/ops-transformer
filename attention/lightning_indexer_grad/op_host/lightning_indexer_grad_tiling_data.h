@@ -60,7 +60,7 @@ struct LigParaInfo {
     int64_t sparseMode = 0;
     int64_t preTokens = 0;
     int64_t nextTokens = 0;
-    bool determinstic = false;
+    bool deterministic = false;
 };
 
 // ------------------算子原型索引常量定义----------------
@@ -122,11 +122,13 @@ public:
     uint32_t usedCoreNum = 0;
     int64_t dkSize = 0;
     int64_t dkWorkSpaceOffset = 0;
+    int64_t dkCoreWorkspaceOffset = 0;
     int64_t keyGatherWorkspaceOffset = 0;
     int64_t reluInWorkspaceOffset = 0;
     int64_t reluGradWorkspaceOffset = 0;
     int64_t scatterAddWorkspaceOffset = 0;
     uint64_t sparseMode;
+    bool deterministic = false;
     ge::DataType queryDataType = ge::DT_FLOAT16;
 
 private:
