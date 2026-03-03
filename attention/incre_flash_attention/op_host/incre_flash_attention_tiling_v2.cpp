@@ -2696,6 +2696,35 @@ ge::graphStatus IFATilingV2::ProcessAntiQuant() {
         return ge::GRAPH_FAILED;
       }
     }
+    OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && inputLayout_ == IfaLayout::TND),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "the layout of input does not support TND."),
+                return ge::GRAPH_FAILED);
+    if (isPFAFlag_) {
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && (inputQType_ != ge::DT_BF16 || outputType_ != ge::DT_BF16)),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "the data type of query and output only support BF16."),
+                return ge::GRAPH_FAILED);
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && pageAttentionKvLayoutType_ != KvCacheLayout::KV_CACHE_NZ && sOfQuery_ > 16),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "S of query should not be greater than 16."),
+                return ge::GRAPH_FAILED);
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && !batchContinuousFlag_),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "tensorlist is not supported."),
+                return ge::GRAPH_FAILED);
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && (ifaContext_->queryPaddingSize.tensor || ifaContext_->kvPaddingSize.tensor)),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "leftpadding is not supported."),
+                return ge::GRAPH_FAILED);
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT8 && pageAttentionFlag_),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario,"
+                        "page attention is not supported."),
+                return ge::GRAPH_FAILED);
+      OP_CHECK_IF((inputKvType_ == ge::DT_INT4 || inputKvType_ == ge::DT_INT32),
+                OP_LOGE(ifaContext_->opName, "In keyAntiquant/valueAntiquant split mode scenario, int4 and int32 data types are not supported for the key and value."),
+                return ge::GRAPH_FAILED);
+    }
   } else {
     OP_CHECK_IF((antiquantScaleTensor !=nullptr && antiquantScaleDesc == nullptr),
              OP_LOGE(ifaContext_->opName, "antiquantScaleTensor exist, but it's datatype doesn't exist."),
