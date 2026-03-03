@@ -2384,7 +2384,7 @@ bool FlashAttentionScoreTilingBase::SetSparseStartIdx(const std::vector<int64_t>
         sparseStartIdx[idx] = lastValidPartitionResult[idx];
     }
 
-    if (AlogCheckDebugLevel(OP, DLOG_DEBUG) == 1) {
+    if (CheckLogLevel(OP, DLOG_DEBUG) == 1) {
         PrintSparseMaxMinLoadPerCore(sparseValidArray, sparseStartIdx, validCoreNum,
                                      CeilDivision(loadTotal, validCoreNum));
     }

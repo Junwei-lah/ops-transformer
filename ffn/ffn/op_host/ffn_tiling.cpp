@@ -719,7 +719,7 @@ void FFNTiling::PrintMatMulTiling(const char *opName, TCubeTiling &matmulTiling)
 
 void FFNTiling::PrintFFNTiling(const gert::TilingContext *context, bool debugLevel)
 {
-    if (debugLevel && AlogCheckDebugLevel(OP, DLOG_DEBUG) != 1) {
+    if (debugLevel && CheckLogLevel(OP, DLOG_DEBUG) != 1) {
         return;
     }
 
