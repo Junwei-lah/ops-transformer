@@ -211,6 +211,8 @@ ge::graphStatus ScatterPaKvCacheTiling::TemplateNormal()
     if (CheckDimValid() != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
+    numBlocks_ = inputKeyCacheInShape_.GetDim(DIM0);
+    blockSize_ = inputKeyCacheInShape_.GetDim(DIM1);
     numTokens_ = inputKeyShape_.GetDim(DIM0);
     kHandleNumPerCore_ = inputKeyShape_.GetDim(DIM1) * inputKeyShape_.GetDim(DIM2);
     vHandleNumPerCore_ =

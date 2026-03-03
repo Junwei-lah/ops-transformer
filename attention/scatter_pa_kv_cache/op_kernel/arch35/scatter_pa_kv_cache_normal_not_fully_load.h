@@ -52,6 +52,7 @@ private:
     GlobalTensor<IndexDtype> slotMappingGm_;
 
     int64_t blockIdx_{0};
+    int64_t maxTokens_ = 0;
 };
 
 template <typename T, typename IndexDtype, int64_t InOutMode>
@@ -79,6 +80,7 @@ __aicore__ inline void ScatterPaKvCacheNormalNotFullyLoad<T, IndexDtype, InOutMo
                                            tilingData_->kTailHandleNum;
         pipe_->InitBuffer(valueQueue_, 1, RoundUp(vMaxHandleNumPerLoop) * sizeof(T));
     }
+    maxTokens_ = tilingData_->numBlocks * tilingData_->blockSize;
 }
 
 template <typename T, typename IndexDtype, int64_t InOutMode>
@@ -172,6 +174,9 @@ __aicore__ inline void ScatterPaKvCacheNormalNotFullyLoad<T, IndexDtype, InOutMo
     for (int64_t idx = 0; idx < curBlockFactor; idx++) {
         int64_t kblockOffset = idx * tilingData_->kHandleNumPerCore;
         int64_t startIdx = slotMappingGm_.GetValue(idx);
+        if (startIdx < 0 || startIdx >= maxTokens_) {
+            continue;
+        }
         int64_t kStartIdx = startIdx * tilingData_->kHandleNumPerCore;
         // key main loop
         for (int64_t i = 0; i < tilingData_->kLoopNum; i++) {

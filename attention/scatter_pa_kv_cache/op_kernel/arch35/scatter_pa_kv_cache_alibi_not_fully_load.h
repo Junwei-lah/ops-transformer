@@ -15,11 +15,8 @@
 #ifndef SCATTER_PA_KV_CACHE_ALIBI_NOT_FULLY_LOAD_H_
 #define SCATTER_PA_KV_CACHE_ALIBI_NOT_FULLY_LOAD_H_
 
-#include <algorithm>
-#include "common.h"
-#include "kernel_tiling/kernel_tiling.h"
 #include "kernel_operator.h"
-#include "platform/platform_info_def.h"
+#include "common.h"
 
 namespace ScatterPaKvCache {
 using namespace AscendC;

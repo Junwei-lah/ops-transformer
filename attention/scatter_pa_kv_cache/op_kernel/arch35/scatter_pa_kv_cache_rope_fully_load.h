@@ -15,12 +15,8 @@
 #ifndef SCATTER_PA_KV_CACHE_ROPE_FULLY_LOAD_H_
 #define SCATTER_PA_KV_CACHE_ROPE_FULLY_LOAD_H_
 
-#include <algorithm>
-#include <string>
-#include "common.h"
-#include "kernel_tiling/kernel_tiling.h"
 #include "kernel_operator.h"
-#include "platform/platform_info_def.h"
+#include "common.h"
 
 namespace ScatterPaKvCache {
 using namespace AscendC;
@@ -110,8 +106,8 @@ __aicore__ inline void ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::
     GM_ADDR value_cache_out)
 {
     blockIdx_ = GetBlockIdx();
-    seqLen_ = tilingData_->keyStride0 / tilingData_->keyStride1;
-    numHead_ = tilingData_->keyStride1 / tilingData_->keyStride2;
+    seqLen_ = tilingData_->seqLen;
+    numHead_ = tilingData_->numHead;
     kvBlockOffset_ = GetBlockIdx() * tilingData_->blockFactor;
     inputKeyGm_.SetGlobalBuffer((__gm__ T *)(key));
     slotMappingGm_.SetGlobalBuffer((__gm__ IndexDtype *)(slot_mapping) + GetBlockIdx() * tilingData_->blockFactor);
@@ -196,9 +192,6 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::ReduceMeanKey(int64_t i
         }
     }
     Div(tmpLocal, tmpLocal, divideLocal, tilingData_->kHeadSize);
-    event_t eventIdVToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
-    SetFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
-    WaitFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
     DataCopyExtParams outKeyCacheParams{1, static_cast<uint32_t>(tilingData_->kHeadSize * sizeof(T)), 0, 0, 0};
     LocalTensor<IndexDtype> slotMappingLocal = slotMappingBuf_.Get<IndexDtype>();
     int64_t kStartIdx = slotMappingLocal.GetValue(iter) + count_;
@@ -220,6 +213,9 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::ReduceMeanKey(int64_t i
             WaitFlag<HardEvent::V_MTE3>(eventVtoMTE3);
             DataCopyPad(outputKeyCacheGm_[kStartIdx * tilingData_->kHeadSize], inputKeyLocal, outKeyCacheParams);
         } else {
+            event_t eventIdVToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
+            SetFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
+            WaitFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
             DataCopyPad(outputKeyCacheGm_[kStartIdx * tilingData_->kHeadSize], tmpLocal, outKeyCacheParams);
         }
     }
@@ -292,9 +288,6 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::ReduceMeanValue(int64_t
         }
     }
     Div(tmpLocal, tmpLocal, divideLocal, tilingData_->vHeadSize);
-    event_t eventIdVToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
-    SetFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
-    WaitFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
     DataCopyExtParams outValueCacheParams{1, static_cast<uint32_t>(tilingData_->vHeadSize * sizeof(T)), 0, 0, 0};
     LocalTensor<IndexDtype> slotMappingLocal = slotMappingBuf_.Get<IndexDtype>();
     int64_t vStartIdx = slotMappingLocal.GetValue(iter) + count_;
@@ -316,6 +309,9 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::ReduceMeanValue(int64_t
             WaitFlag<HardEvent::V_MTE3>(eventVtoMTE3);
             DataCopyPad(outputValueCacheGm_[vStartIdx * tilingData_->vHeadSize], inputValueLocal, outValueCacheParams);
         } else {
+            event_t eventIdVToMTE3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
+            SetFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
+            WaitFlag<HardEvent::V_MTE3>(eventIdVToMTE3);
             DataCopyPad(outputValueCacheGm_[vStartIdx * tilingData_->vHeadSize], tmpLocal, outValueCacheParams);
         }
     }
@@ -428,7 +424,7 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::CopyOutKey(int64_t iter
             break;
         }
         int64_t kStartIdx = kSlot + k;
-        if (kStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
+        if (kStartIdx < 0 || kStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
             continue;
         }
         DataCopyPad(outputKeyCacheGm_[kStartIdx * tilingData_->kHeadSize],
@@ -454,7 +450,7 @@ ScatterPaKvCacheRopeFullyLoad<T, IndexDtype, InOutMode>::CopyOutValue(int64_t it
             break;
         }
         int64_t vStartIdx = vSlot + k;
-        if (vStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
+        if (vStartIdx < 0 || vStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
             continue;
         }
         DataCopyPad(outputValueCacheGm_[vStartIdx * tilingData_->vHeadSize],

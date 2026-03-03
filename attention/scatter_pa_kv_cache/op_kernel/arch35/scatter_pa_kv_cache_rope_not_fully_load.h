@@ -16,12 +16,8 @@
 #ifndef SCATTER_PA_KV_CACHE_ROPE_NOT_FULLY_LOAD_H_
 #define SCATTER_PA_KV_CACHE_ROPE_NOT_FULLY_LOAD_H_
 
-#include <algorithm>
-#include <string>
-#include "common.h"
-#include "kernel_tiling/kernel_tiling.h"
 #include "kernel_operator.h"
-#include "platform/platform_info_def.h"
+#include "common.h"
 
 namespace ScatterPaKvCache {
 using namespace AscendC;
@@ -99,8 +95,8 @@ __aicore__ inline void ScatterPaKvCacheRopeNotFullyLoad<T, IndexDtype, InOutMode
     GM_ADDR value_cache_out)
 {
     blockIdx_ = GetBlockIdx();
-    seqLen_ = tilingData_->keyStride0 / tilingData_->keyStride1;
-    numHead_ = tilingData_->keyStride1 / tilingData_->keyStride2;
+    seqLen_ = tilingData_->seqLen;
+    numHead_ = tilingData_->numHead;
     kvBlockOffset_ = GetBlockIdx() * tilingData_->blockFactor;
     inputKeyGm_.SetGlobalBuffer((__gm__ T *)(key));
 
@@ -413,7 +409,7 @@ __aicore__ inline void ScatterPaKvCacheRopeNotFullyLoad<T, IndexDtype, InOutMode
             break;
         }
         int64_t kStartIdx = startIdx + k + count_;
-        if (kStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
+        if (kStartIdx < 0 || kStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
             continue;
         }
         UpdateKeyCache(k, kStartIdx * tilingData_->kHeadSize, keyOffset);
@@ -519,7 +515,7 @@ __aicore__ inline void ScatterPaKvCacheRopeNotFullyLoad<T, IndexDtype, InOutMode
             break;
         }
         int64_t vStartIdx = startIdx + k + count_;
-        if (vStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
+        if (vStartIdx < 0 || vStartIdx >= tilingData_->numBlocks * tilingData_->blockSize) {
             continue;
         }
         UpdateValueCache(k, vStartIdx * tilingData_->vHeadSize, valueOffset);
