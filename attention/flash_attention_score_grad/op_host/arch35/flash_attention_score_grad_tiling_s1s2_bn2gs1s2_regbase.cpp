@@ -543,6 +543,36 @@ ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::QuantScaleShapeVal
         OP_CHECK_IF(fBaseParams.layoutType != INPUT_FORMAT_BS2N2GD,
             OP_LOGE(context_, "Scenario HIFP8, layout must be BSND."),
             return ge::GRAPH_FAILED);
+        auto deqScaleDsShape = context_->GetOptionalInputShape(static_cast<size_t>(InputIndex::D_SCALE_DS_IDX));
+        auto deqScalePShape = context_->GetOptionalInputShape(static_cast<size_t>(InputIndex::D_SCALE_P_IDX));
+        bool tmpDsNull = deqScaleDsShape == nullptr;
+        bool tmpPNull = deqScalePShape == nullptr;
+        OP_LOGD(context_, "tmpDsNull = %d, tmpPNull = %d.", tmpDsNull, tmpPNull);
+        OP_CHECK_IF((deqScaleDsShape == nullptr || deqScalePShape == nullptr),
+            OP_LOGE(context_, "Scenario HIFP8, ds_scale or p_scale must not be null."),
+            return ge::GRAPH_FAILED);
+        auto deqScaleDsStorageShape = deqScaleDsShape->GetStorageShape();
+        auto deqScalePStorageShape = deqScalePShape->GetStorageShape();
+        int64_t deqScaleDsDimNum = deqScaleDsStorageShape.GetDimNum();
+        int64_t deqScalePDimNum = deqScalePStorageShape.GetDimNum();
+        if (deqScaleDsDimNum == 1) {
+            int64_t deqScaleDsDim0 = deqScaleDsStorageShape.GetDim(INPUT_DIM_0);
+            OP_CHECK_IF((deqScaleDsDim0 != 1),
+                OP_LOGE(context_, "Scenario HIFP8, ds_scale shape must be [1]."),
+                return ge::GRAPH_FAILED);
+        } else {
+            OP_LOGE(context_, "Scenario HIFP8, ds_scale shape must be [1].");
+            return ge::GRAPH_FAILED;
+        }
+        if (deqScalePDimNum == 1) {
+            int64_t deqScalePDim0 = deqScalePStorageShape.GetDim(INPUT_DIM_0);
+            OP_CHECK_IF((deqScalePDim0 != 1),
+                OP_LOGE(context_, "Scenario HIFP8, p_scale shape must be [1]."),
+                return ge::GRAPH_FAILED);
+        } else {
+            OP_LOGE(context_, "Scenario HIFP8, p_scale shape must be [1].");
+            return ge::GRAPH_FAILED;
+        }
     }
 
     return ge::GRAPH_SUCCESS;
@@ -601,7 +631,7 @@ ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetShapeAttrsInfo(
     bool hasKeyRope = keyRope != nullptr && keyRopeShape->GetDimNum() != 0;
     if (hasQueryRope ^ hasKeyRope) {
         OP_LOGE(context_, "query_rope and key_rope should be present or absent at the same time, check this.");
-        return false;
+        return ge::GRAPH_PARAM_INVALID;
     }
     fBaseParams.hasRope = hasQueryRope && hasKeyRope;
     int64_t qRopeD = 0;
@@ -744,7 +774,7 @@ ge::graphStatus FlashAttentionScoreGradTilingUs1s2Bs2Regbase::GetShapeAttrsInfo(
     if (fBaseParams.hasRope) {
         if (qRopeD != kRopeD || qRopeD != ROPE_D_64) {
             OP_LOGE(context_, "query_rope and key_rope only support 64D, check this.");
-            return false;
+            return ge::GRAPH_PARAM_INVALID;
         }
     }
 

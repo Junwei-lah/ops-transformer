@@ -120,7 +120,10 @@ enum class InputIndex : uint32_t {
     D_SCALE_DY,
     D_SCALE_O,
     QUERY_ROPE_IDX,
-    KEY_ROPE_IDX
+    KEY_ROPE_IDX,
+    SINK_IDX,
+    D_SCALE_DS_IDX,
+    D_SCALE_P_IDX
 };
 
 enum class AttenMaskCompressMode : uint8_t {
