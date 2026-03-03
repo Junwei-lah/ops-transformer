@@ -1009,6 +1009,15 @@ bool CheckSpecConditions(const gert::TilingContext *context)
     bool isLayoutSupported = (inputLayoutStr == "TND");
     bool isPageAttention = (context->GetOptionalInputShape(BLOCK_TABLE_INDEX) != nullptr);
     bool isLearnableSink = (context->GetOptionalInputTensor(LEARNABLE_SINK_INDEX) != nullptr);
+    bool isLearnableSinkFlag = true;
+    if (isLearnableSink && isLayoutSupported) {
+        int64_t tempQHeadDim = tempQ->GetStorageShape().GetDim(DIM_2);
+        auto sinkDataType = context->GetOptionalInputDesc(LEARNABLE_SINK_INDEX)->GetDataType();
+        if (tempQHeadDim == 64 && sinkDataType == ge::DT_BF16) {
+            isLearnableSinkFlag = false;
+        }
+    }
+
     bool sparseModeSupported = (sparseMode == 0) || (sparseMode == 3) || (sparseMode == 4);
     bool isRopeSplitMla = (qRope != nullptr) && (kRope != nullptr);
     
@@ -1018,7 +1027,7 @@ bool CheckSpecConditions(const gert::TilingContext *context)
     bool nonMhaConditions = !isMha && (innerPrecise == 0);
     bool specConditionFlag = false;
     bool quantScale2Flag = context->GetOptionalInputTensor(QUANT_SCALE2_INDEX) != nullptr ? true : false;
-    if (isLayoutSupported && !isRopeSplitMla && sparseModeSupported &&
+    if (isLayoutSupported && isLearnableSinkFlag && !isRopeSplitMla && sparseModeSupported &&
         (nonMhaConditions || mhaConditions) && !quantScale2Flag) {
         int64_t tempQD = tempQ->GetStorageShape().GetDim(DIM_2);
         if (!isPageAttention) {
