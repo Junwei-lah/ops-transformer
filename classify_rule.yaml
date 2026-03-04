@@ -264,7 +264,6 @@ pfa@ops-transformer:
                 - ops/ops-transformer/attention/fused_infer_attention_score/op_host  
                 - ops/ops-transformer/attention/fused_infer_attention_score/op_kernel  
                 - ops/ops-transformer/attention/fused_infer_attention_score/examples/test_aclnn_fused_infer_attention_score.cpp  
-                - ops/ops-transformer/attention/fused_infer_attention_score/examples/test_aclnn_fused_infer_attention_score_vx.cpp  
             kernel_style: null  
         unrelease:
             test_code:  
