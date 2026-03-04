@@ -82,7 +82,7 @@ A1 = (epWorldSize / 8) * 512B
 TOKEN_SIZE = (H * sizeof(dtype) + align8(K) * sizeof(uint32) * 4) * 1B
 MAXBS_TOKEN_SIZE = maxBs * TOKEN_SIZE * 1B
 IPC_DATA_SIZE_PER_EXP = epWorldSize * align512(MAXBS_TOKEN_SIZE) * 1B
-RDMA_DATA_SIZE = epWorldSize / 8 * align4096(MAXBS_TOKEN_SIZE) * 1B
+RDMA_DATA_SIZE = epWorldSize / 8 * align4096(MAXBS_TOKEN_SIZE + 32B) * 1B
 COMBINE_TOKENFLAG_SIZE = align32((maxBs + (aivNum / (epWorldSize / 8) + 1)) * sizeof(uint64_t)) *1B
 
 # WindowIn
@@ -163,7 +163,7 @@ public:
         halfWorldSize_ = worldSize / 2U;
         uint64_t maxTokenStructBytes =
             axisH * 2UL + EXTRA_TOKEN_INFO_NUM * RoundUp(axisK, B32_PER_BLOCK) * sizeof(uint32_t); // token的数据类型BF16或FP16，都是2B
-        serverSizeOnRdmaData_ = RoundUp(maxBs * maxTokenStructBytes, RDMA_BUFFER_ALIGN);
+        serverSizeOnRdmaData_ = RoundUp(maxBs * maxTokenStructBytes + UB_32B_ALIGN, RDMA_BUFFER_ALIGN);
         rankSizeOnIpcData_ = RoundUp(maxBs * maxTokenStructBytes, IPC_BUFF_ALIGN);
         // rdma addr
         rdmaFlagAddrStart_ = (bufferId_ & 0x1) ? (winSize / 2UL) : 0UL;
