@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (BUILD_OPEN_PROJECT)
-    target_sources(op_host_aclnnInner PRIVATE
+    target_sources(op_host_aclnnExc PRIVATE
     moe_fused_topk_def.cpp
     )
     add_ops_compile_options(
@@ -21,5 +21,5 @@ if (BUILD_OPEN_PROJECT)
 endif()
 
 if(NOT BUILD_OPS_RTY_KERNEL)
-    add_modules_sources(OPTYPE moe_fused_topk ACLNNTYPE aclnn_inner)
+    add_modules_sources(OPTYPE moe_fused_topk ACLNNTYPE aclnn_exclude)
 endif()
