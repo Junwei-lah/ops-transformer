@@ -22,7 +22,7 @@
 #include "./arch32/allto_all_matmul_tiling_data_910_93.h"
 #include "./arch32/allto_all_matmul_tiling_key_910_93.h"
 #endif
-#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3101
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3510
 #include "./arch35/allto_all_matmul_tiling_key.h"
 #include "./arch35/allto_all_matmul_tiling_data.h"
 #include "./arch35/allto_all_kc_quant_matmul_arch35.h"
@@ -147,7 +147,7 @@ __global__ __aicore__ void allto_all_matmul(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias
     }
 #endif
 
-#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3101
+#if defined(__NPU_ARCH__) && __NPU_ARCH__ == 3510
 #if ((ORIG_DTYPE_X1 == ORIG_DTYPE_X2) && ((ORIG_DTYPE_X1 == DT_FLOAT16) || (ORIG_DTYPE_X1 == DT_BF16)))
     REGISTER_TILING_DEFAULT(AlltoAllMatmulTilingData);
     GET_TILING_DATA_WITH_STRUCT(AlltoAllMatmulTilingData, tilingData, tilingGM);
