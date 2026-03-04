@@ -425,12 +425,12 @@ ge::graphStatus MoeInitRoutingV3Arch35TilingClass::GetWorkspaceSize()
     OP_LOGD(context_, "Entered MoeInitRoutingV3Arch35TilingClass::GetWorkspaceSize()");
     // 计算workspace大小
     workspaceSize_ = 0;
-    int64_t sortWorkspaceSize = totalLength_ * (int64_t)sizeof(float) * NUM_TWO * NUM_THREE; // 排序需要的空间
+    int64_t sortWorkspaceSize = totalLength_ * static_cast<int64_t>(sizeof(float) * NUM_TWO * NUM_THREE); // 排序需要的空间
     int64_t coreSyncWorkspaceSize = tilingDataPtr_->coreNum * SORT32_ALIGN_ELEMENT * NUM_TWO; // 多核同步需要的空间
-    int64_t scatterWorkspaceSize = totalLength_ * (int64_t)sizeof(int32_t);
-    int64_t expertTokensCountWorkspaceSize = (expertEnd_ - expertStart_) * (int64_t)sizeof(int32_t);
-    int64_t expertTokenTotalCountWorkspace = AlignBytes(1, (int64_t)sizeof(int32_t));
-    int64_t quantTempWorkspaceSize = aivCoreNum_ * cols_ * (int64_t)sizeof(float);
+    int64_t scatterWorkspaceSize = totalLength_ * static_cast<int64_t>(sizeof(int32_t));
+    int64_t expertTokensCountWorkspaceSize = (expertEnd_ - expertStart_) * static_cast<int64_t>(sizeof(int32_t));
+    int64_t expertTokenTotalCountWorkspace = AlignBytes(1, static_cast<int64_t>(sizeof(int32_t)));
+    int64_t quantTempWorkspaceSize = aivCoreNum_ * cols_ * static_cast<int64_t>(sizeof(float));
     workspaceSize_ += sortWorkspaceSize + coreSyncWorkspaceSize + scatterWorkspaceSize +
                       expertTokensCountWorkspaceSize + expertTokenTotalCountWorkspace;
     if (quantMode_ >= QUANT_MODE_DYNAMIC && quantMode_ != QUANT_MODE_HIF8_CAST &&
@@ -1146,7 +1146,6 @@ MultipleParams MoeInitRoutingV3Arch35TilingClass::GetMultipleParams()
     } else if (quantMode_ == QUANT_MODE_HIF8_PERTENSOR) {
         params.colMultiple = HIF8_PERTENSOR_QUANT_COLS_BUFFER;
         params.rowMultiple = NUM_FOUR;
-        
     } 
     return params;
 }
