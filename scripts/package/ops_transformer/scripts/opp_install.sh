@@ -22,6 +22,7 @@ PERM_DENIED="0x0093"
 PERM_DENIED_DES="Permission denied."
 
 # run package's files info
+OPS_SOURCE_DIR="$PWD/ops_transformer"
 CURR_PATH=$(dirname $(readlink -f $0))
 VERSION_INFO_FILE="${CURR_PATH}/../version.info"
 FILELIST_FILE="${CURR_PATH}/filelist.csv"
@@ -317,6 +318,37 @@ create_softlink_for_files_and_dirs() {
   create_softlink_for_files ${src_dir} ${dst_dir}
 }
 
+install_whl_package() {
+ 	local _package_path="$1"
+ 	local _package_name="$2"
+ 	local _pythonlocalpath="$3"
+ 	logandprint "[INFO]: start install python module package ${_package_name}."
+ 	if [ -f "$_package_path" ]; then
+ 	  pip3 install --disable-pip-version-check --upgrade --no-deps --force-reinstall "${_package_path}" -t "${_pythonlocalpath}" 1> /dev/null
+ 	  local ret=$?
+ 	  if [ $ret -ne 0 ]; then
+ 	    logandprint "[WARNING]: install ${_package_name} failed, error code: $ret."
+ 	    exit 1
+ 	  else
+ 	    logandprint "[INFO]: ${_package_name} installed successfully!"
+ 	  fi
+ 	  chmod -R "${_BUILTIN_PERM}" "${_pythonlocalpath}"/es_transformer 2> /dev/null
+ 	  chmod -R "${_BUILTIN_PERM}" "${_pythonlocalpath}"/es_transformer-*.dist-info 2> /dev/null
+ 	else
+ 	  logandprint "[ERROR]: ERR_NO:0x0080;ERR_DES:install ${_package_name} failed, can not find the matched package for this platform."
+ 	  exit 1
+ 	fi
+}
+ 	 
+install_es_whl() {
+ 	local es_whl_path="${OPS_SOURCE_DIR}/es_packages/whl/es_transformer-1.0.0-py3-none-any.whl"
+ 	local python_es_whl_name="es_transformer"
+  chmod u+w "${TARGET_VERSION_DIR}/python" 2> /dev/null
+ 	local whl_install_dir_path="${TARGET_VERSION_DIR}/python/site-packages"
+ 	chmod u+w "${whl_install_dir_path}" 2> /dev/null
+ 	install_whl_package "${es_whl_path}" "${python_es_whl_name}" "${whl_install_dir_path}"
+}
+
 add_init_py() {
   local opp_builtin_mod=""
   local built_in_impl_path=${TARGET_OPP_BUILT_IN}/op_impl/ai_core/tbe/impl/ops_transformer
@@ -396,6 +428,8 @@ install_opp() {
   add_init_py
 
   install_whl_package
+
+  install_es_whl
 
   logandprint "[INFO]: upgradePercentage:50%"
 }

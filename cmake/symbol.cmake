@@ -51,20 +51,53 @@ function(gen_ophost_symbol)
   )
 endfunction()
 
+function(gen_es_transformer_lib_builtin)
+  merge_graph_headers(TARGET merge_temp_ops_proto ALL OUT_DIR ${ASCEND_GRAPH_CONF_DST})
+  add_library(
+    proto_temp_transformer SHARED
+    ${ASCEND_GRAPH_CONF_DST}/ops_proto_transformer.cpp
+  )
+  add_dependencies(proto_temp_transformer merge_temp_ops_proto)
+  target_link_libraries(
+    proto_temp_transformer
+    PRIVATE $<BUILD_INTERFACE:intf_pub_cxx17>
+            c_sec
+            -Wl,--no-as-needed
+            register
+            $<$<TARGET_EXISTS:opsbase>:opsbase>
+            -Wl,--as-needed
+  )
+  target_link_directories(proto_temp_transformer
+    PRIVATE
+    ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64
+  )
+  add_es_library_and_whl(
+    ES_LINKABLE_AND_ALL_TARGET es_transformer
+    OPP_PROTO_TARGET proto_temp_transformer
+    OUTPUT_PATH ${CMAKE_BINARY_DIR}/es_packages
+  )
+  install(
+    DIRECTORY ${CMAKE_BINARY_DIR}/es_packages
+    DESTINATION ${VERSION_INFO_INSTALL_DIR}
+    OPTIONAL
+  )
+endfunction()
+
 # graph_plugin shared
 function(gen_opgraph_symbol)
-  add_library(${OPGRAPH_NAME} SHARED
+  gen_es_transformer_lib_builtin()
+
+  add_library(
+    ${OPGRAPH_NAME} SHARED
     $<$<TARGET_EXISTS:${GRAPH_PLUGIN_NAME}_obj>:$<TARGET_OBJECTS:${GRAPH_PLUGIN_NAME}_obj>>
   )
   merge_graph_headers(TARGET merge_ops_proto ALL OUT_DIR ${ASCEND_GRAPH_CONF_DST})
   add_dependencies(${OPGRAPH_NAME} merge_ops_proto)
-
   target_sources(
     ${OPGRAPH_NAME}
     PRIVATE
     ${ASCEND_GRAPH_CONF_DST}/ops_proto_transformer.cpp
   )
-  
   target_link_libraries(
     ${OPGRAPH_NAME}
     PRIVATE $<BUILD_INTERFACE:intf_pub_cxx17>
@@ -77,13 +110,28 @@ function(gen_opgraph_symbol)
             rt2_registry_static
             -Wl,--no-whole-archive
             -Wl,-Bsymbolic
-    )
-
+            # ge_compiler
+  )
   target_link_directories(${OPGRAPH_NAME}
     PRIVATE
     ${ASCEND_DIR}/${SYSTEM_PREFIX}/lib64
+    ${CMAKE_BINARY_DIR}/es_packages/lib64
   )
 
+  if(TARGET ${GRAPH_PLUGIN_NAME}_obj)
+    message(STATUS "Link es graph to graph plugin obj")
+    unset(GRAPH_SOURCE)
+    get_target_property(GRAPH_SOURCE ${GRAPH_PLUGIN_NAME}_obj SOURCES)
+    if(GRAPH_SOURCE)
+      add_dependencies(${GRAPH_PLUGIN_NAME}_obj
+        build_es_transformer
+      )
+      target_link_libraries(${GRAPH_PLUGIN_NAME}_obj
+        PRIVATE
+        es_transformer
+      )
+    endif()
+  endif()
   set_target_properties(${OPGRAPH_NAME} PROPERTIES OUTPUT_NAME "opgraph_transformer")
   install(TARGETS ${OPGRAPH_NAME}
     LIBRARY DESTINATION ${OPGRAPH_LIB_INSTALL_DIR}
