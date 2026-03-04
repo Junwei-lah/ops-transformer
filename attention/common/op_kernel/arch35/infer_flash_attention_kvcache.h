@@ -23,7 +23,7 @@
 #include "kernel_operator_list_tensor_intf.h"
 #include "infer_flash_attention_comm.h"
 #include "infer_flash_attention_sparse.h"
-
+#define NUM_128 128
 using namespace matmul;
 
 TEMPLATE_INTF
@@ -427,6 +427,9 @@ __aicore__ inline void ComputeS1LoopInfo(RunParamStr<isInfer>& runParam, const C
         runParam.s1LoopTimes = s1LoopTimes;
     } else { // 最后一个bn, 从数组下一个元素取值
         runParam.s1LoopTimes = nextGs1Idx == 0 ? s1LoopTimes : nextGs1Idx;
+    }
+    if (constInfo.isGqa && constInfo.gSize > NUM_128 && layout == LayOutTypeEnum::LAYOUT_TND) {
+        runParam.s1LoopTimes = s1LoopTimes;
     }
 }
 
