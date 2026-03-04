@@ -27,7 +27,7 @@
     #if __has_include("../../allto_allv_grouped_mat_mul/op_kernel/allto_allv_gmm.h")
     #include "../../allto_allv_grouped_mat_mul/op_kernel/allto_allv_gmm.h"
     #else
-    #include "../../allto_allv_grouped_mat_mul_apt/op_kernel/allto_allv_gmm.h"
+    #include "../../allto_allv_grouped_mat_mul/allto_allv_gmm.h"
     #endif
 #else
     #if __has_include("../../allto_allv_grouped_mat_mul/op_kernel/allto_allv_gmm.h")
