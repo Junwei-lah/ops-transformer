@@ -94,16 +94,6 @@ bool FlashAttentionScoreTilingRegbase::AnalyzeDtype()
             bmm1OutDtype = matmul_tiling::DataType::DT_FLOAT;
             calcTypeSize = ge::GetSizeByDataType(ge::DT_FLOAT);
             break;
-        case ge::DT_FLOAT8_E5M2:
-            tilingKeyDType = (DtypeEnum)4; // 4 means DtypeEnum::FLOAT8_E5M2;
-            bmm1OutDtype = matmul_tiling::DataType::DT_FLOAT;
-            calcTypeSize = ge::GetSizeByDataType(ge::DT_FLOAT);
-            break;
-        case ge::DT_FLOAT8_E4M3FN:
-            tilingKeyDType = (DtypeEnum)5; // 5 means DtypeEnum::FLOAT8_E4M3;
-            bmm1OutDtype = matmul_tiling::DataType::DT_FLOAT;
-            calcTypeSize = ge::GetSizeByDataType(ge::DT_FLOAT);
-            break;    
         case ge::DT_FLOAT:
             bmmDtype = matmul_tiling::DataType::DT_FLOAT;
             bmm1OutDtype = matmul_tiling::DataType::DT_FLOAT;
@@ -512,11 +502,17 @@ ge::graphStatus FlashAttentionScoreTilingRegbase::GetShapeAttrsInfo()
     OP_CHECK_IF(!AnalyzeAttrs() || !AnalyzeDtype() || !AnalyzeLayout() || !AnalyzeOptionalInput(),
                OPS_REPORT_VECTOR_INNER_ERR(opName, "fail to analyze context info."), return ge::GRAPH_FAILED);
 
-    OP_CHECK_IF((inputDtypeBytes == DATA_TYPE_FP8) &&
-                (hasAttenMask || hasPse || hasDropOut || hasRope || dSize > 128 || dSizeV > 128),
-                OPS_REPORT_VECTOR_INNER_ERR(opName, "FP8 cannot have optional inputs, the value of d must be less than or equal to 128."
-                "[hasAttenMask:%d, hasPse:%d, hasDropOut:%d, hasRope:%d, dSize:%d, dSizeV:%d]", hasAttenMask, hasPse,
-                hasDropOut, hasRope, dSize, dSizeV), return ge::GRAPH_FAILED);
+    OP_CHECK_IF((inputDtype == ge::DT_HIFLOAT8) && (hasAttenMask || hasPse || hasDropOut || hasRope ||
+                tilingKeyLayout != LayoutType::LAYOUT_BSND ||
+                bSize != 1 || n1Size != n2Size || dSize != 128 || dSizeV != 128 ||
+                !((s1Size == 57600 && s2Size == 57600 && n1Size == 5) || (s1Size == 7200 && s2Size == 512 && n1Size == 40))),
+                OPS_REPORT_VECTOR_INNER_ERR(opName, "HIFLOAT8 can only support layout:BSND without any optional inputs, "
+                "and the input shape must be: "
+                "query:[1, 57600, 5, 128] key:[1, 57600, 5, 128] value:[1, 57600, 5, 128] or "
+                "query:[1, 7200, 40, 128] key:[1, 512, 40, 128] value:[1, 512, 40, 128]."
+                "[hasAttenMask:%d, hasPse:%d, hasDropOut:%d, hasRope:%d, input_layout:%s, bSize:%d, s1Size:%d, s2Size:%d, "
+                "n1Size:%d, n2Size:%d, dSize:%d, dSizeV:%d]", hasAttenMask, hasPse, hasDropOut, hasRope, inputLayout,
+                bSize, s1Size, s2Size, n1Size, n2Size, dSize, dSizeV), return ge::GRAPH_FAILED);
 
     if (hasRope && (dSize != 128 || dSizeRope != 64)) {
         OPS_REPORT_VECTOR_INNER_ERR(opName, "MLA concat only support dSize=128, dSizeRope=64.");

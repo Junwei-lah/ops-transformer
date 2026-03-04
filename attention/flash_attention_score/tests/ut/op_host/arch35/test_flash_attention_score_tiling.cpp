@@ -410,7 +410,7 @@ TEST_F(FlashAttentionScoreTiling, FlashAttentionScore_950_tiling_4)
     int64_t expectTilingKey = 2904821760729023248;
     std::string expectTilingData = "2 0 0 3 3 128 256 0 16 16 0 4503599628435849216 65536 65536 0 0 0 257 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 18 18 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
-    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED, expectTilingKey, expectTilingData, expectWorkspaces);
 }
 
 // FP8 e5m2 + band + attenmask=SS pse=BN BSH
@@ -728,11 +728,11 @@ TEST_F(FlashAttentionScoreTiling, FlashAttentionScore_950_tiling_9)
         "FlashAttentionScore",
         {
          // q: B=2, S1=128, N1=9, D=16
-        {{{2, 128, 9, 16}, {2, 128, 9, 16}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
+        {{{1, 7200, 40, 128}, {1, 7200, 40, 128}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
          // k: B=2, S2=256, N2=3, D=16
-         {{{2, 256, 3, 16}, {2, 256, 3, 16}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
+         {{{1, 512, 40, 128}, {1, 512, 40, 128}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
          // v: B=2, S2=256, N2=3, DV=16
-         {{{2, 256, 3, 16}, {2, 256, 3, 16}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
+         {{{1, 512, 40, 128}, {1, 512, 40, 128}}, ge::DT_HIFLOAT8, ge::FORMAT_ND},
          // real_shift
         //  {{{2, 9, 1, 256}, {2, 9, 1, 256}}, ge::DT_FLOAT, ge::FORMAT_ND},
         {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
@@ -753,11 +753,11 @@ TEST_F(FlashAttentionScoreTiling, FlashAttentionScore_950_tiling_9)
          // kv_start_idx
          {{{}, {}}, ge::DT_INT64, ge::FORMAT_ND},         
          // dScaleQ
-         {{{2, 9, 1, 1}, {2, 9, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 40, 57, 1}, {1, 40, 57, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // dScaleK
-         {{{2, 3, 1, 1}, {2, 3, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 40, 2, 1}, {1, 40, 2, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // dScaleV
-         {{{2, 3, 1, 1}, {2, 3, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 40, 1, 1}, {1, 40, 1, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // queryRope
          {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // keyRope
@@ -766,20 +766,20 @@ TEST_F(FlashAttentionScoreTiling, FlashAttentionScore_950_tiling_9)
         {
          // 输出Tensor
          // softmaxMax: B=2, N1=9, S1=128, 8
-         {{{2, 9, 128, 8}, {2, 9, 128, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 40, 7200, 1}, {1, 40, 7200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // softmaxSum: B=2, N1=9, S1=128, 8
-         {{{2, 9, 128, 8}, {2, 9, 128, 8}}, ge::DT_FLOAT, ge::FORMAT_ND},
+         {{{1, 40, 7200, 1}, {1, 40, 7200, 1}}, ge::DT_FLOAT, ge::FORMAT_ND},
          // softmaxOut
-         {{{2, 128, 9, 16}, {2, 128, 9, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+         {{{1, 7200, 40, 128}, {1, 7200, 40, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND},
          // attentionOut
-         {{{2, 128, 9, 16}, {2, 128, 9, 16}}, ge::DT_FLOAT16, ge::FORMAT_ND}
+         {{{1, 7200, 40, 128}, {1, 7200, 40, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND}
          },
         {
         {"scale_value", Ops::Transformer::AnyValue::CreateFrom<float>(0.25f)},
          {"keep_prob", Ops::Transformer::AnyValue::CreateFrom<float>(1.0f)},
          {"pre_tockens", Ops::Transformer::AnyValue::CreateFrom<int64_t>(65536)},
          {"next_tockens", Ops::Transformer::AnyValue::CreateFrom<int64_t>(65536)},
-         {"head_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(9)},
+         {"head_num", Ops::Transformer::AnyValue::CreateFrom<int64_t>(40)},
          {"input_layout", Ops::Transformer::AnyValue::CreateFrom<std::string>("BSND")},
          {"inner_precise", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
          {"sparse_mode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
@@ -790,8 +790,8 @@ TEST_F(FlashAttentionScoreTiling, FlashAttentionScore_950_tiling_9)
          {"softmax_out_layout", Ops::Transformer::AnyValue::CreateFrom<std::string>("same_as_input")}
          },
                 &compileInfo, "Ascend950", 64, 262144, 8192);
-    int64_t expectTilingKey = 2904821760729285392;
-    std::string expectTilingData = "2 0 0 3 3 128 256 0 16 16 0 4503599628435849216 65536 65536 0 0 0 257 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 18 18 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1 0 0 0 0 0 0 0 ";
+    int64_t expectTilingKey = 2904821761534591760;
+    std::string expectTilingData = "1 0 0 40 1 7200 512 0 128 128 0 4503599628435849216 65536 65536 0 0 0 257 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 64 2280 57 36 12 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

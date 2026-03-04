@@ -21,9 +21,15 @@
   注意力的正向计算公式如下：
 
   $$
-  attention\_out=pScale*Softmax(scale*(query*dSq)*(key^T*dSk))*(value*dSv)
+  p=pScale*Softmax(scale*(query*key^T*(dSq*dSk)))
   $$
-
+  $$
+  attention\_out=p*value*dSv*dSp
+  $$
+  其中
+  $$
+  dSp=1/pScale
+  $$
 
 ## 函数原型
 
@@ -366,9 +372,35 @@ aclnnStatus aclnnQuantFlashAttentionScore(
   - B：batchsize必须相等。
   - D：Head-Dim必须满足(qD == kD && kD >= vD)。
   - inputLayout必须一致。
-- 关于数据shape的约束：
-  - 当前只支持全计算，输入inputLayout仅支持BSND，shape[B, S, N, D]仅支持[1, 57600, 5, 128]、[1, 7200, 40, 128]两组取值。
-  - 不支持任何可选输入。
+- 关于数据shape的约束, 目前支持以下场景：
+    <table style="undefined;table-layout: fixed; width: 1050px"><colgroup>
+    <col style="width: 150px">
+    <col style="width: 300px">
+    <col style="width: 300px">
+    <col style="width: 300px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Layout</th>
+        <th>QueryShape</th>
+        <th>KeyShape</th>
+        <th>ValueShape</th>
+      </tr></thead>
+    <tbody>
+      <tr>
+        <td>BSND</td>
+        <td>[1, 57600, 5, 128]</td>
+        <td>[1, 57600, 5, 128]</td>
+        <td>[1, 57600, 5, 128]</td>
+      </tr>
+      <tr>
+        <td>BSND</td>
+        <td>[1, 7200, 40, 128]</td>
+        <td>[1, 512, 40, 128]</td>
+        <td>[1, 512, 40, 128]</td>
+      </tr>
+    </tbody>
+    </table>
 - query、key、value数据排布格式支持从多种维度解读，其中B（Batch）表示输入样本批量大小、S（Seq-Length）表示输入样本序列长度、N（Head-Num）表示多头数、D（Head-Dim）表示隐藏层最小的单元尺寸。
 - 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 
@@ -461,23 +493,23 @@ int main() {
 
   // 2. 构造输入与输出，需要根据API的接口自定义构造
   int64_t B = 1;
-  int64_t N1 = 1;
-  int64_t N2 = 1;
-  int64_t S1 = 256;
+  int64_t N1 = 40;
+  int64_t N2 = 40;
+  int64_t S1 = 7200;
   int64_t S2 = 512;
   int64_t D = 128;
 
   int64_t q_size = B * S1 * N1 * D;
   int64_t kv_size = B * S2 * N2 * D;
   int64_t softmax_size = B * N1 * S1;
-  int64_t d_scale_q_size = B * N1 * S1 / 128;
+  int64_t d_scale_q_size = B * N1 * (S1 + 127) / 128;
   int64_t d_scale_k_size = B * N1 * S2 / 256;
   int64_t d_scale_v_size = B * N1 * S2 / 512;
 
   std::vector<int64_t> qShape = {B, S1, N1, D};
   std::vector<int64_t> kShape = {B, S2, N2, D};
   std::vector<int64_t> vShape = {B, S2, N2, D};
-  std::vector<int64_t> dScaleQShape = {B, N1, S1 / 128, 1};
+  std::vector<int64_t> dScaleQShape = {B, N1, (S1 + 127) / 128, 1};
   std::vector<int64_t> dScaleKShape = {B, N2, S2 / 256, 1};
   std::vector<int64_t> dScaleVShape = {B, N2, S2 / 512, 1};
   std::vector<int64_t> pScaleShape = {1};
@@ -510,9 +542,9 @@ int main() {
   aclTensor* softmaxSum = nullptr;
   aclTensor* softmaxOut = nullptr;
  
-  std::vector<float> qHostData(q_size, 1.0);
-  std::vector<float> kHostData(kv_size, 1.0);
-  std::vector<float> vHostData(kv_size, 1.0);
+  std::vector<uint8_t> qHostData(q_size, 1.0);
+  std::vector<uint8_t> kHostData(kv_size, 1.0);
+  std::vector<uint8_t> vHostData(kv_size, 1.0);
   std::vector<float> dScaleQHostData(d_scale_q_size, 1.0);
   std::vector<float> dScaleKHostData(d_scale_k_size, 1.0);
   std::vector<float> dScaleVHostData(d_scale_v_size, 1.0);
@@ -535,7 +567,7 @@ int main() {
   CHECK_RET(ret == ACL_SUCCESS, return ret);
   ret = CreateAclTensor(pScaleHostData, pScaleShape, &pScaleDeviceAddr, aclDataType::ACL_FLOAT, &pScale);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
-  ret = CreateAclTensor(attentionOutHostData, attentionOutShape, &attentionOutDeviceAddr, aclDataType::ACL_FLOAT, &attentionOut);
+  ret = CreateAclTensor(attentionOutHostData, attentionOutShape, &attentionOutDeviceAddr, aclDataType::ACL_BF16, &attentionOut);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
   ret = CreateAclTensor(softmaxMaxHostData, softmaxMaxShape, &softmaxMaxDeviceAddr, aclDataType::ACL_FLOAT, &softmaxMax);
   CHECK_RET(ret == ACL_SUCCESS, return ret);
@@ -545,9 +577,8 @@ int main() {
   double scaleValue = 0.088388;
   int64_t preTokens = 65536;
   int64_t nextTokens = 65536;
-  int64_t headNum = 1;
+  int64_t headNum = 40;
   int64_t sparseMode = 0;
-  double pScale = 1;
   char layOut[5] = {'B', 'S', 'N', 'D', 0};
 
   // 3. 调用CANN算子库API，需要修改为具体的Api名称
@@ -594,7 +625,6 @@ int main() {
   aclrtFree(qDeviceAddr);
   aclrtFree(kDeviceAddr);
   aclrtFree(vDeviceAddr);
-  aclrtFree(attenmaskDeviceAddr);
   aclrtFree(attentionOutDeviceAddr);
   aclrtFree(softmaxMaxDeviceAddr);
   aclrtFree(softmaxSumDeviceAddr);
