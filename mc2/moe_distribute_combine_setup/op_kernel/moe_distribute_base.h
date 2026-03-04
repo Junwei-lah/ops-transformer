@@ -26,6 +26,7 @@
 #include "adv_api/hccl/hccl.h"
 
 constexpr uint32_t MAX_RANK_NUM = 64U; // 最大卡数
+constexpr uint32_t MAX_OP_NUM = 8U;    // MC2最大通信算子数
 constexpr uint32_t WRITE_SQE_SIZE = 64U;
 constexpr uint32_t WRITE_WITH_NOTIFY_SQE_SIZE = 96U;
 constexpr uint32_t WIN_PICI_OFFSET = 1024U * 1024U;
@@ -142,6 +143,9 @@ struct HcclCombinOpParam {
     uint64_t ckeAddr; // CKE寄存器其实地址
     uint64_t msAddr;  // MS地址，预留
     uint64_t msSize;  // 可写的MS个数，预留
+
+    uint32_t opType[MAX_OP_NUM];
+    uint8_t algorithmType[MAX_OP_NUM];
 
     HcclAiRMAWQ sqs[MAX_RANK_NUM];
     HcclAiRMACQ cqs[MAX_RANK_NUM];
