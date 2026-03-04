@@ -532,7 +532,8 @@ namespace SplitFuse {
             bool notNextMask = true;
             int32_t delStartRow = 0;
             int32_t delEndRow = qSeqlen;
-
+            bool startsWithMaskTile = false;
+            bool startsWithMaskThenNomaskFlag = false;
             if constexpr (IS_FD) {
                 noSkipKvS = kvSeqlen;
                 if (maskType != 0U) {
@@ -740,7 +741,9 @@ namespace SplitFuse {
                                         qNBlockSize, 
                                         curStackTileMod,
                                         isLastStackTile,
-                                        isSplitKV);
+                                        isSplitKV,
+                                        false,
+                                        startsWithMaskThenNomaskFlag);
                                 } else {
                                     epilogueOnlineSoftmax(
                                         gP[gmOffsetP], 
@@ -755,7 +758,9 @@ namespace SplitFuse {
                                         qNBlockSize, 
                                         curStackTileMod,
                                         isLastStackTile, 
-                                        false);
+                                        false,
+                                        false,
+                                        startsWithMaskThenNomaskFlag);
                                 }
                             }
                         } else if constexpr (MASK_TYPE == FaiKernel::MaskType::MASK_SWA) {
@@ -770,6 +775,8 @@ namespace SplitFuse {
                                     (nextTokenStartLen <= kvSStartIdx && nextTokenEndLen >= kvSEndIdx);
                                 bool doTriUMask = (doTriUPreMask || doTriUNextMask);
                                 if (doTriUMask) {
+                                    startsWithMaskTile = true;
+                                    startsWithMaskThenNomaskFlag = true;
                                     epilogueOnlineSoftmax(
                                         gP[gmOffsetP],
                                         gS[gmOffsetS],
@@ -793,10 +800,10 @@ namespace SplitFuse {
                                         nextTokenEndLen,
                                         isLastStackTile);
                                 } else {
-                                    bool isLastNoMaskStackTile = (nextTokenStartLen > kvSeqlen) || (nextTokenStartLen < 0);
+                                    bool isLastNoMaskStackTile = (nextTokenStartLen >= kvSeqlen) || (nextTokenStartLen < 0);
                                     uint32_t alignedKvSeqlenLimit = isLastNoMaskStackTile ? kvSeqlen : nextTokenStartLen;
                                     alignedKvSeqlenLimit = NpuArch::Detail::Alignment::RoundDown(alignedKvSeqlenLimit, MAX_KV_STACK_LEN);
-                                    uint32_t noMaskStackSeqNum = (alignedKvSeqlenLimit - startIdx * MAX_KV_STACK_LEN) / MAX_KV_STACK_LEN;
+                                    uint32_t noMaskStackSeqNum = (alignedKvSeqlenLimit - kvStart * MAX_KV_STACK_LEN) / MAX_KV_STACK_LEN;
                                     Arch::CrossCoreWaitFlag(qkReady);
                                     epilogueOnlineSoftmax(
                                         gP[gmOffsetP],
@@ -806,12 +813,15 @@ namespace SplitFuse {
                                         layOutS,
                                         actualBlockShapeQK,
                                         (stackSeqCount == 0),
-                                        (isLastNoMaskStackTile ? (stackSeqCount == noMaskStackSeqNum) : (stackSeqCount == noMaskStackSeqNum - 1)),
+                                        ((isLastNoMaskStackTile && (kvSLoopNumTotal - kvStart != 2 || kvSIdx - kvStart == 1)) ? (stackSeqCount == noMaskStackSeqNum) : (stackSeqCount == noMaskStackSeqNum - 1)),
                                         qSBlockSize,
                                         qNBlockSize,
                                         curStackTileMod,
                                         isLastStackTile,
-                                        false);
+                                        false,
+                                        startsWithMaskTile,
+                                        startsWithMaskThenNomaskFlag);
+                                        startsWithMaskTile = false;
                                 }
                             }
                         } else if constexpr (MASK_TYPE == FaiKernel::MaskType::FULL_MASK) {
@@ -857,7 +867,8 @@ namespace SplitFuse {
                                     qNBlockSize, 
                                     curStackTileMod,
                                     isLastStackTile,
-                                    isSplitKV);
+                                    isSplitKV,
+                                    false);
                             } else {
                                 epilogueOnlineSoftmax(
                                     gP[gmOffsetP], 
@@ -872,7 +883,9 @@ namespace SplitFuse {
                                     qNBlockSize, 
                                     curStackTileMod,
                                     isLastStackTile,
-                                    false);
+                                    false,
+                                    false,
+                                    startsWithMaskThenNomaskFlag);
                             }
                         }
                         Arch::CrossCoreSetFlag<0x2, PIPE_MTE3>(softmaxReady);
