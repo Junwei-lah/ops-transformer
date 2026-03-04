@@ -31,7 +31,7 @@
 #include "../../common/inc/kernel/mc2_kernel_utils.h"
 #endif
 
-#include "./arch32/moe_distribute_a2_base.h"
+#include "moe_distribute_a2_base.h"
 
 namespace MoeDistributeDispatchA2Impl {
 #define TemplateMC2TypeA2layeredClass typename XType, typename ExpandXOutType,bool StaticQuant, bool DynamicQuant, bool IsSmoothScaleExist
