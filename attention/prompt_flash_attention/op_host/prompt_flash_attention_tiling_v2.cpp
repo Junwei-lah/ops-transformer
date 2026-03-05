@@ -955,29 +955,28 @@ bool PromptFlashAttentionTilingV2::CheckPerTensorQuantParams(const ContextParams
     const gert::StorageShape* deqScale1Shape = contextKeyParams.deqScale1Shape;
     const gert::StorageShape* quantScale1Shape = contextKeyParams.scale1Shape;
     const gert::StorageShape* deqScale2Shape = contextKeyParams.deqScale2Shape;
+    const gert::StorageShape* quantScale2Shape = contextKeyParams.scale2Shape;
     const ge::DataType inputParamsType = contextKeyParams.inputDataType;
 
+    OP_CHECK_IF((quantScale2Shape != nullptr), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "Postquant is not supported in per-tensor quant scenario."), return false);
     OP_CHECK_IF((inputParamsType != ge::DT_INT8), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "InputParamsType must be INT8 in per-tensor quant scenario, now is %s", 
-            GetPfaDataTypeStr(contextKeyParams.inputDataType).c_str()),
-        return false);
+            GetPfaDataTypeStr(contextKeyParams.inputDataType).c_str()), return false);
     std::string layoutStr(contextKeyParams.layout);
     const std::vector<std::string> unsupportedLayoutList = {"BNSD_NBSD", "BSND_NBSD", "BSH_NBSD", "BSH_BNSD",
         "BSND_BNSD", "TND", "NTD", "NTD_TND", "TND_NTD"};
     OP_CHECK_IF(std::find(unsupportedLayoutList.begin(), unsupportedLayoutList.end(), layoutStr) != unsupportedLayoutList.end(),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "%s is not supported in per-tensor quant scenario.", layoutStr.c_str()),
-        return false);
+            "%s is not supported in per-tensor quant scenario.", layoutStr.c_str()), return false);
     OP_CHECK_IF((deqScale1Shape == nullptr) || (quantScale1Shape == nullptr) || (deqScale2Shape == nullptr),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "DeqScale1, quantScale1 or deqScale2 is nullptr in per-tensor quant scenario."),
-        return false);
+            "DeqScale1, quantScale1 or deqScale2 is nullptr in per-tensor quant scenario."), return false);
     OP_CHECK_IF((deqScale1Shape != nullptr && deqScale1Shape->GetStorageShape().GetShapeSize() == 0) ||
                 (quantScale1Shape != nullptr && quantScale1Shape->GetStorageShape().GetShapeSize() == 0) ||
                 (deqScale2Shape != nullptr && deqScale2Shape->GetStorageShape().GetShapeSize() == 0),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
-            "DeqScale1, quantScale1 or deqScale2 is empty tensor in per-tensor quant scenario."),
-        return false);
+            "DeqScale1, quantScale1 or deqScale2 is empty tensor in per-tensor quant scenario."), return false);
     OP_CHECK_IF(enablePFARope, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "Rope is not supported in per-tensor quant scenario."), return false);
     OP_CHECK_IF(enableAlibiPse, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, 
