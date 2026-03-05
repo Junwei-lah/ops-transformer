@@ -1122,7 +1122,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </colgroup>
         <thead>
         <tr>
-            <th>pesType</th>
+            <th>pseType</th>
             <th colspan="3" style="text-align: center;">支持的场景</th>
             <th>pseShiftOptional的数据类型约束</th>
             <th >shape约束</th>
@@ -1130,7 +1130,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </tr>
         </thead>
         <tbody>
-            <td rowspan="6">1</td>
+            <td rowspan="6">0/1</td>
             <tr>
                 <td rowspan="3">P_S1(pse shape第三维)&gt;1时</td>
                 <td rowspan="3">query的数据类型</td>
