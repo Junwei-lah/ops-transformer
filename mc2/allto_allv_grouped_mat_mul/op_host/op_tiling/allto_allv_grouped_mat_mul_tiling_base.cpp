@@ -529,7 +529,7 @@ ge::graphStatus AlltoAllvGmmTilingBase::CheckMmYShapeInfo()
         OP_LOGE(context_->GetNodeName(), "mmX, mmWeight and mmY should all be nullptr or all be not nullptr!");
         return ge::GRAPH_FAILED;
     }
-    if (context_->GetOutputShape(OUTPUT_MM_Y_INDEX) != nullptr) {
+    if (context_->GetOutputShape(OUTPUT_MM_Y_INDEX) != nullptr && outputMmYStorageShape->GetStorageShape().GetDimNum() != DIM_ZERO) {
         // check dim
         if (context_->GetOutputShape(OUTPUT_MM_Y_INDEX)->GetStorageShape().GetDimNum() != DIM_TWO) {
             OP_LOGE(context_->GetNodeName(), "The dim of mmY(BS, N2) should be 2, but got %lu!",
