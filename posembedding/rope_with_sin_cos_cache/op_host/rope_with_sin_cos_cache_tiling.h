@@ -29,6 +29,7 @@ TILING_DATA_FIELD_DEF(uint64_t, rotary_dim);
 TILING_DATA_FIELD_DEF(uint64_t, mrope_section0);
 TILING_DATA_FIELD_DEF(uint64_t, mrope_section1);
 TILING_DATA_FIELD_DEF(uint64_t, mrope_section2);
+TILING_DATA_FIELD_DEF(uint64_t, mrope_section3);
 TILING_DATA_FIELD_DEF(uint64_t, q_leading_dimension);
 TILING_DATA_FIELD_DEF(uint64_t, k_leading_dimension);
 TILING_DATA_FIELD_DEF(uint64_t, isNeoxStyle);

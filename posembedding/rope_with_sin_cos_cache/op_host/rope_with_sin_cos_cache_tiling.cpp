@@ -41,6 +41,7 @@ static constexpr uint32_t TILING_BF16 = 20;
 static constexpr uint32_t TILING_FP16 = 21;
 static constexpr uint32_t TILING_FP32 = 22;
 static constexpr uint32_t HAlignSize = 64;
+static constexpr uint32_t MRopeSectionMaxSize = 4;
 
 constexpr size_t DIM_0 = 0;
 constexpr size_t DIM_1 = 1;
@@ -58,6 +59,7 @@ struct TilingParams {
     uint64_t mrope_section0 = 0;
     uint64_t mrope_section1 = 0;
     uint64_t mrope_section2 = 0;
+    uint64_t mrope_section3 = 0;
     uint64_t q_leading_dimension = 0;
     uint64_t k_leading_dimension = 0;
     uint64_t isNeoxStyle = 0;
@@ -119,6 +121,7 @@ static void SetTiling(TilingParams& params, RopeWithSinCosCacheTilingData& tilin
     tiling.set_mrope_section0(params.mrope_section0);
     tiling.set_mrope_section1(params.mrope_section1);
     tiling.set_mrope_section2(params.mrope_section2);
+    tiling.set_mrope_section3(params.mrope_section3);
     tiling.set_q_leading_dimension(params.q_leading_dimension);
     tiling.set_k_leading_dimension(params.k_leading_dimension);
     tiling.set_isNeoxStyle(params.isNeoxStyle);
@@ -154,6 +157,7 @@ static void PrintTilingData(const gert::TilingContext* context, RopeWithSinCosCa
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: mrope_section0 is %ld.", tiling.get_mrope_section0());
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: mrope_section1 is %ld.", tiling.get_mrope_section1());
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: mrope_section2 is %ld.", tiling.get_mrope_section2());
+    OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: mrope_section3 is %ld.", tiling.get_mrope_section3());
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: q_leading_dimension is %ld.", tiling.get_q_leading_dimension());
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: k_leading_dimension is %ld.", tiling.get_k_leading_dimension());
     OP_LOGD(context->GetNodeName(), "RopeWithSinCosCache_tiling: isNeoxStyle is %ld.", tiling.get_isNeoxStyle());
@@ -342,6 +346,7 @@ static ge::graphStatus TilingRopeWithSinCosCache(gert::TilingContext* context)
         params.mrope_section0 = attrMRopeSectionData[0];
         params.mrope_section1 = attrMRopeSectionData[1];
         params.mrope_section2 = attrMRopeSectionData[2];
+        params.mrope_section3 = attrMRopeSection->GetSize() == MRopeSectionMaxSize ? attrMRopeSectionData[3] : 0;
     }
 
     const uint64_t* attrQStride = attrs->GetAttrPointer<uint64_t>(4);
@@ -359,6 +364,11 @@ static ge::graphStatus TilingRopeWithSinCosCache(gert::TilingContext* context)
     const uint64_t* attrCacheMode = attrs->GetAttrPointer<uint64_t>(INPUT_CACHE_MODE_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, attrCacheMode);
     params.cacheMode = static_cast<uint64_t>(*attrCacheMode);
+    OP_CHECK_IF((attrMRopeSection->GetSize() == MRopeSectionMaxSize) && (params.cacheMode != 0),
+                OP_LOGE(context->GetNodeName(),
+                        "cacheMode is only support to be 0 but got %lu when the size of mRopeSection equals %u.",
+                        params.cacheMode, MRopeSectionMaxSize),
+                return ge::GRAPH_FAILED);
 
     TilingKeyChose(context, params);
     TilingCompute(context, params);

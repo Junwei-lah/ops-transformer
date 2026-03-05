@@ -166,14 +166,35 @@ RopeWithSinCosCacheFP16<T>::GetCosSinCache(LocalTensor<T> inQueueCosSinCacheBefo
         uint64_t pos1 = position_id_GM.GetValue(offsetPos + this->num_tokens);
         uint64_t pos2 = position_id_GM.GetValue(offsetPos + 2 * this->num_tokens);
         if (this->cacheMode == 0) {
-            uint8_t padding2 = ((this->mrope_section0 + this->mrope_section1) * sizeof(T) % BLOCK_SIZE) / sizeof(T);
-            this->VToMTE2Sync();
-            DataCopyPad(inQueueCosSinCacheBeforeCastLocal[this->mrope_section0 +
-                                                        static_cast<uint16_t>(this->mrope_section1) - padding2],
-                        cos_sin_cache_GM[pos2 * this->rotary_dim +
-                                        static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) + cosSinOffset],
-                        {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, padding2, 0, 0});
-
+            if (this->mrope_section3 == 0) {
+                uint8_t padding2 = ((this->mrope_section0 + this->mrope_section1) * sizeof(T) % BLOCK_SIZE) / sizeof(T);
+                this->VToMTE2Sync();
+                DataCopyPad(inQueueCosSinCacheBeforeCastLocal[this->mrope_section0 +
+                                                            static_cast<uint16_t>(this->mrope_section1) - padding2],
+                            cos_sin_cache_GM[pos2 * this->rotary_dim +
+                                            static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) + cosSinOffset],
+                            {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, padding2, 0, 0});
+            } else if (this->mrope_section3 > 0){
+                //第四段
+                uint64_t pos3 = position_id_GM.GetValue(offsetPos + 3 * this->num_tokens);
+                uint8_t padding3 = ((this->mrope_section0 + this->mrope_section1 + this->mrope_section2) * sizeof(T) % BLOCK_SIZE) / sizeof(T);
+                this->VToMTE2Sync();
+                DataCopyPad(inQueueCosSinCacheBeforeCastLocal[static_cast<uint16_t>(this->mrope_section0 +
+                                                            this->mrope_section1 + this->mrope_section2) - padding3],
+                            cos_sin_cache_GM[pos3 * this->rotary_dim +
+                                            static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1 + this->mrope_section2) + cosSinOffset],
+                            {1, static_cast<uint16_t>(this->mrope_section3 * sizeof(T)), 0, 0}, {true, padding3, 0, 0});
+                //第三段
+                uint8_t padding2 = ((this->mrope_section0 + this->mrope_section1) * sizeof(T) % BLOCK_SIZE) / sizeof(T);
+                DataCopyPad(
+                    copyBuf0Local,
+                    cos_sin_cache_GM[pos2 * this->rotary_dim + static_cast<uint16_t>(this->mrope_section0 + this->mrope_section1) + cosSinOffset],
+                    {1, static_cast<uint16_t>(this->mrope_section2 * sizeof(T)), 0, 0}, {true, padding2, 0, 0});
+                this->MTE2ToVSync();
+                Copy(inQueueCosSinCacheBeforeCastLocal[this->mrope_section0 + this->mrope_section1 - padding2], copyBuf0Local,
+                    this->mrope_section2 + padding2, 1, {1, 1, 0, 0});
+                this->VToMTE2Sync();
+            }
             uint8_t padding1 = (this->mrope_section0 * sizeof(T) % BLOCK_SIZE) / sizeof(T);
             DataCopyPad(
                 copyBuf0Local,

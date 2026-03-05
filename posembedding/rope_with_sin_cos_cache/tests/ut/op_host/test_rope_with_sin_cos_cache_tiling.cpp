@@ -62,7 +62,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_bf16_true)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 20;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -93,7 +93,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_fp16_true)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 21;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -124,7 +124,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_fp32_true)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 22;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 1 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -155,7 +155,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_bf16_false)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 20;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -186,7 +186,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_fp16_false)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 21;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -217,7 +217,7 @@ TEST_F(RopeWithSinCosCacheTiling, test_tiling_fp32_false)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
         &compile_info);
     uint64_t expectTilingKey = 21;
-    string expectTilingData = "48 48 2 4 128 128 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 0 0 0 0 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }
@@ -248,7 +248,38 @@ TEST_F(RopeWithSinCosCacheTiling, test_v2_tiling_fp32_false_cache1)
          {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(1)}},
         &compile_info);
     uint64_t expectTilingKey = 21;
-    string expectTilingData = "48 48 2 4 128 128 16 24 24 256 512 0 1 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    string expectTilingData = "48 48 2 4 128 128 16 24 24 0 256 512 0 1 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
+    std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
+}
+
+TEST_F(RopeWithSinCosCacheTiling, test_v2_tiling_fp32_false_cache0_sectionsize4)
+{
+    RopeWithSinCosCacheCompileInfo compile_info = {};
+    vector<int64_t> mropeParams{16, 16, 16, 16};
+    gert::TilingContextPara tilingContextPara(
+        "RopeWithSinCosCache",
+        {
+            {{{48, 48}, {48, 48}}, ge::DT_INT64, ge::FORMAT_ND},
+            {{{48, 256}, {48, 256}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{48, 512}, {48, 512}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{48, 128}, {48, 128}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {
+            {{{48, 256}, {48, 256}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+            {{{48, 512}, {48, 512}}, ge::DT_FLOAT16, ge::FORMAT_ND},
+        },
+        {{"numQHeads", Ops::Transformer::AnyValue::CreateFrom<int64_t>(2)},
+         {"numKHeads", Ops::Transformer::AnyValue::CreateFrom<int64_t>(4)},
+         {"headSize", Ops::Transformer::AnyValue::CreateFrom<int64_t>(128)},
+         {"mropeSection", Ops::Transformer::AnyValue::CreateFrom<vector<int64_t>>(mropeParams)},
+         {"qstride", Ops::Transformer::AnyValue::CreateFrom<int64_t>(256)},
+         {"kstride", Ops::Transformer::AnyValue::CreateFrom<int64_t>(512)},
+         {"isNeoxStyle", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+         {"cacheMode", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)}},
+        &compile_info);
+    uint64_t expectTilingKey = 21;
+    string expectTilingData = "48 48 2 4 128 128 16 16 16 16 256 512 0 0 48 0 1 0 1 0 1 0 0 0 0 1 1 2 0 4 0 ";
     std::vector<size_t> expectWorkspaces = {16 * 1024 * 1024};
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces);
 }

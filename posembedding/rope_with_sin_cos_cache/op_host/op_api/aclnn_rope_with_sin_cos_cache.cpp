@@ -56,9 +56,9 @@ static const std::initializer_list<op::DataType> positions_dtype_list = {op::Dat
 
 static const std::initializer_list<op::DataType> emptyDtypes = {};
 
-static const std::initializer_list<std::vector<int64_t>> mrope_support_list = {{16, 24, 24}, {8, 12, 12}, {24, 20, 20}}; // 支持的mrope输入
+static const std::initializer_list<std::vector<int64_t>> mropeSupportList = {{16, 24, 24}, {8, 12, 12}, {24, 20, 20}, {16, 16, 16, 16}}; // 支持的mrope输入
 
-static const std::initializer_list<int64_t> cache_mode_support_list = {0, 1};
+static const std::initializer_list<int64_t> cacheModeSupportList = {0, 1};
 
 static const std::initializer_list<DataType>& GetSupportDtypeList()
 {
@@ -190,17 +190,42 @@ static aclnnStatus CheckParams(const aclTensor *positions, const aclTensor *quer
 
     // 4. 检查mrope模式下是否满足mropeSection[0] + mropeSection[1] + mropeSection[2] == rotaryDim/2
     if (mropeSection != nullptr) {
-        int64_t mrope_section0 = static_cast<int64_t>((*mropeSection)[0]);
-        int64_t mrope_section1 = static_cast<int64_t>((*mropeSection)[1]);
-        int64_t mrope_section2 = static_cast<int64_t>((*mropeSection)[2]);
-        std::vector<int64_t> mrope_in = {mrope_section0, mrope_section1, mrope_section2};
-        int64_t rotary_dim = cosSinCache->GetViewShape()[1];
-        OP_CHECK(mrope_section0 <= 0 ||
-                     (mrope_section0 + mrope_section1 + mrope_section2 == rotary_dim / 2 &&
-                      CheckMropeSection(mrope_in, mrope_support_list)), // kernel中mropesection[0]>0为mrope模式，否则rope模式
-                 OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The input mropeSection must be in the supported list "
-                                                  "and mropeSection[0] + mropeSection[1] + mropeSection[2] should be equal to rotaryDim/2."),
+        uint64_t mropeSectionSize = 0U;
+        aclGetIntArraySize(mropeSection, &mropeSectionSize);
+        OP_CHECK((mropeSectionSize == 3 || mropeSectionSize == 4),
+                 OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                         "[aclnnRopeWithSinCosCache] Expected mropeSectionSize is 3 or 4, "
+                         "but got %ld.",
+                         mropeSectionSize),
                  return ACLNN_ERR_PARAM_INVALID);
+        std::vector<int64_t> mropeSectionIn;
+        int64_t mropeSectionSum = 0;
+        mropeSectionIn.reserve(mropeSectionSize);
+        for (size_t i = 0; i < mropeSectionSize; ++i) {
+            OP_CHECK(static_cast<int64_t>((*mropeSection)[i]) >= 0,
+                     OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                             "[aclnnRopeWithSinCosCache] The value of mropeSection must be non-negative, "
+                             "but got %ld.",
+                             static_cast<int64_t>((*mropeSection)[i])),
+                     return ACLNN_ERR_PARAM_INVALID);
+            int64_t val = static_cast<int64_t>((*mropeSection)[i]);
+            mropeSectionIn.push_back(val);
+            mropeSectionSum += val;
+        }
+        int64_t rotary_dim = cosSinCache->GetViewShape()[1];
+        // kernel中mropesection[0]>0为mrope模式，否则rope模式
+        if (mropeSectionIn[0] > 0) {
+            OP_CHECK(mropeSectionSum * 2 == rotary_dim,
+                     OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                             "[aclnnRopeWithSinCosCache] The accumulated value of mropeSection"
+                             "should be equal to rotaryDim/2, but got %ld.",
+                             mropeSectionSum),
+                     return ACLNN_ERR_PARAM_INVALID);
+            OP_CHECK(CheckMropeSection(mropeSectionIn, mropeSupportList),
+                     OP_LOGE(ACLNN_ERR_PARAM_INVALID, "[aclnnRopeWithSinCosCache] The input mropeSection "
+                                                      "must be in the supported list."),
+                     return ACLNN_ERR_PARAM_INVALID);
+        }
     }
     return ACLNN_SUCCESS;
 }
@@ -285,8 +310,8 @@ aclnnStatus aclnnRopeWithSinCosCacheV2GetWorkspaceSize(
         aclnnRopeWithSinCosCacheV2, DFX_IN(positions, queryIn, keyIn, cosSinCache, mropeSection, headSize, isNeoxStyle, cacheMode),
         DFX_OUT(queryOut, keyOut));
 
-    OP_CHECK(CheckCacheMode(cacheMode, cache_mode_support_list),
-             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "cacheMode only support 0 or 1, but got %ld", cacheMode),
+    OP_CHECK(CheckCacheMode(cacheMode, cacheModeSupportList),
+             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "[aclnnRopeWithSinCosCache] cacheMode only support 0 or 1, but got %ld", cacheMode),
              return ACLNN_ERR_PARAM_INVALID);
 
     return aclnnRopeWithSinCosCacheGetWorkspaceSizeCommon(positions, queryIn, keyIn, cosSinCache, mropeSection,
