@@ -1130,7 +1130,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </tr>
         </thead>
         <tbody>
-            <td rowspan="6">0/1</td>
+            <td rowspan="6">0</td>
             <tr>
                 <td rowspan="3">P_S1(pse shape第三维)&gt;1时</td>
                 <td rowspan="3">query的数据类型</td>
@@ -1139,7 +1139,6 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td rowspan="3">(B,Q_N,P_S1,P_S2)、(1,Q_N,P_S1,P_S2)</td>
                 <td rowspan="3">
                 <ul>
-                <li>仅FA训练支持pseType=1。</li>
                 <li>query数据类型为FLOAT16且pseShift存在时，强制走高精度模式，对应的限制继承自高精度模式的限制。</li>
                 <li>P_S1需大于等于query的S长度，P_S2需大于等于key的S长度。prefix场景P_S2需大于等于actualSharedPrefixLen与key的S长度之和。</li>
                 <li>P_S2建议padding到32对齐，提升性能</li>
@@ -1162,7 +1161,6 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td rowspan="2">(B,Q_N,1,P_S2)、(1,Q_N,1,P_S2)</td>
                 <td rowspan="2">
                 <ul>
-                <li>仅FA训练支持pseType=1。</li>
                 <li>P_S2需大于等于key的S长度。prefix场景P_S2需大于等于actualSharedPrefixLen与key的S长度之和。</li>
                 <li>P_S2建议padding到32对齐，提升性能</li>
                 </ul>
@@ -1171,6 +1169,13 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             <tr>
                 <td>BFLOAT16</td>
                 <td>BFLOAT16</td>
+            </tr>
+            <tr>
+                <td rowspan="1">1</td>
+                <td colspan="3">不支持FA推理场景，仅支持FA训练场景</td>
+                <td colspan="1">-</td>
+                <td colspan="1">-</td>
+                <td colspan="1">-</td>
             </tr>
             <tr> 
                 <td rowspan="2">2/3</td>
