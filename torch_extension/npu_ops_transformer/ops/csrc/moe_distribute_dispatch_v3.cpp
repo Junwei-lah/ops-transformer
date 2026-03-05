@@ -9,7 +9,7 @@
  */
 
 /*!
- * \file moe_distribute_dispatch_v2.cpp
+ * \file moe_distribute_dispatch_v3.cpp
  * \brief
  */
 
@@ -23,25 +23,26 @@ const int DIM_ONE = 1;
 const int DIM_TWO = 2;
 
 /**
- * @brief ACLNN Warpper for aclnnMoeDistributeDispatchV2
+ * @brief Warpper for moe_distribute_dispatch_v5
  */
-tensor_list npu_moe_distribute_dispatch_v2(const at::Tensor &x, const at::Tensor &expert_ids,
-                                           std::string group_ep, int64_t ep_world_size, int64_t ep_rank_id,
-                                           int64_t moe_expert_num,
+tensor_list npu_moe_distribute_dispatch_v3(const at::Tensor &context, const at::Tensor &x, 
+                                           const at::Tensor &expert_ids,
+                                           int64_t ep_world_size, int64_t ep_rank_id,
+                                           int64_t moe_expert_num, int64_t ccl_buffer_size,
                                            const c10::optional<at::Tensor> &scales,
                                            const c10::optional<at::Tensor> &x_active_mask,
                                            const c10::optional<at::Tensor> &expert_scales,
                                            const c10::optional<at::Tensor> &elastic_info,
                                            const c10::optional<at::Tensor> &performance_info,
-                                           std::string group_tp, int64_t tp_world_size, int64_t tp_rank_id,
+                                           int64_t tp_world_size, int64_t tp_rank_id,
                                            int64_t expert_shard_type, int64_t shared_expert_num, int64_t shared_expert_rank_num,
                                            int64_t quant_mode, int64_t global_bs, int64_t expert_token_nums_type,
                                            std::string comm_alg, int64_t zero_expert_num, int64_t copy_expert_num, int64_t const_expert_num,
                                            c10::optional<int64_t> y_dtype, c10::optional<int64_t> x_dtype,
                                            c10::optional<int64_t> scales_dtype)
 {
-
     TORCH_CHECK((x.dim() == DIM_TWO) && (expert_ids.dim() == DIM_TWO), "The x and expert_ids should be 2D");
+    TORCH_CHECK((ep_world_size > 0), "The ep_world_sizes should be greater than 0, current is: ", ep_world_size);
     TORCH_CHECK((ep_rank_id >= 0) && (ep_rank_id < ep_world_size),
                 "ep_rank_id should be in [0, ep_world_size), but got",
                 " ep_world_size: ", ep_world_size,
@@ -114,9 +115,6 @@ tensor_list npu_moe_distribute_dispatch_v2(const at::Tensor &x, const at::Tensor
         output_dtype = x.scalar_type();
     }
 
-    char *group_ep_ptr = const_cast<char *>(group_ep.data());
-    std::string group_tp_str = std::string(group_tp);
-    char *group_tp_ptr = const_cast<char *>(group_tp_str.c_str());
     at::Tensor expand_x = at::empty({std::max(a, a * tp_world_size), h}, at::TensorOptions().dtype(output_dtype)
         .device(c10::DeviceType::PrivateUse1).memory_format(c10::MemoryFormat::Contiguous));  
     at::Tensor dynamic_scales{nullptr};
@@ -149,9 +147,9 @@ tensor_list npu_moe_distribute_dispatch_v2(const at::Tensor &x, const at::Tensor
     std::string comm_alg_str = std::string(comm_alg);
     char *comm_alg_ptr = const_cast<char *>(comm_alg_str.c_str());
 
-    ACLNN_CMD(aclnnMoeDistributeDispatchV4, x, expert_ids, scales, x_active_mask, expert_scales,
-              elastic_info, performance_info, group_ep_ptr, ep_world_size, ep_rank_id, moe_expert_num,
-              group_tp_ptr, tp_world_size, tp_rank_id, expert_shard_type, shared_expert_num, shared_expert_rank_num,
+    ACLNN_CMD(aclnnMoeDistributeDispatchV5, context, x, expert_ids, scales, x_active_mask, expert_scales,
+              elastic_info, performance_info, ep_world_size, ep_rank_id, moe_expert_num, ccl_buffer_size,
+              tp_world_size, tp_rank_id, expert_shard_type, shared_expert_num, shared_expert_rank_num,
               quant_mode, global_bs_real, expert_token_nums_type, comm_alg_ptr, zero_expert_num, copy_expert_num,
               const_expert_num, expand_x, dynamic_scales, assist_info_forcombine, expert_token_nums,
               ep_recv_counts, tp_recv_counts, expand_scales);
@@ -163,6 +161,6 @@ tensor_list npu_moe_distribute_dispatch_v2(const at::Tensor &x, const at::Tensor
 // Bind the C++ function to Python module
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
-    m.def("npu_moe_distribute_dispatch_v2", &npu_moe_distribute_dispatch_v2, "moe_distribute_dispatch_v2");
+    m.def("npu_moe_distribute_dispatch_v3", &npu_moe_distribute_dispatch_v3, "moe_distribute_dispatch_v3");
 }
 } // op_api

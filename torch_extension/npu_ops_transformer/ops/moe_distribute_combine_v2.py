@@ -52,7 +52,6 @@ class MoeDistributeCombineV2OpBuilder(OpBuilder):
             dim_tuple = (expert_ids.size(0), expand_x.size(1))
             return expand_x.new_empty(dim_tuple)
 
-
 # Instantiate the builder
 moe_distribute_combine_v2_op_builder = MoeDistributeCombineV2OpBuilder()
 op_module = moe_distribute_combine_v2_op_builder.load()  # Compiles/loads the .so file
