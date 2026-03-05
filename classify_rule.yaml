@@ -204,6 +204,7 @@ transformer-5@ops-transformer:
                 - ops/ops-transformer/attention/common/op_kernel/arch35/flash_attention_score_antiquant_kernel.h
                 - ops/ops-transformer/attention/common/op_kernel/arch35/flash_attention_score_antiquant_processor.h
                 - ops/ops-transformer/attention/common/op_kernel/arch35/flash_attention_score_antiquant_baseapi.h
+                - ops/ops-transformer/attention/common/op_kernel/array.h
                 - ops/ops-transformer/attention/common/op_kernel/memory_copy.h
                 - ops/ops-transformer/attention/common/op_kernel/CopyInL1.h
                 - ops/ops-transformer/attention/common/op_kernel/FixpipeOut.h
@@ -211,6 +212,8 @@ transformer-5@ops-transformer:
                 - ops/ops-transformer/attention/incre_flash_attention/op_host/incre_flash_attention_tiling_v2.h
                 - ops/ops-transformer/attention/incre_flash_attention/op_kernel/arch32/incre_flash_attention_preload_mla.h
                 - ops/ops-transformer/attention/incre_flash_attention/op_kernel/arch32/ifa_service_matmul_full_quant.h
+                - ops/ops-transformer/attention/incre_flash_attention/op_kernel/arch35/service/antiquant_preprocessor_q.h
+                - ops/ops-transformer/attention/prompt_flash_attention/op_kernel/arch35/vf/vf_antiquant.h
             opensource_style: null  
             kernel_style: null  
         unrelease:
