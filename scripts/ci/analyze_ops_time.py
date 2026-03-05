@@ -18,6 +18,15 @@ import logging
 from pathlib import Path
 from collections import defaultdict
 
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+build_dir = os.path.join(script_dir, "../../build/")
+build_dir = os.path.abspath(build_dir)
+workdir = os.path.join(build_dir, "binary")
+workdir = os.path.abspath(workdir)
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -84,7 +93,7 @@ def find_txt_files(filter_names: list = None):
     txt_files = []
     
     # Get build/binary directory under current directory
-    base_dir = os.path.join('.', 'build', 'binary')
+    base_dir = workdir
     
     if not os.path.exists(base_dir):
         logger.error(f"Directory {base_dir} does not exist")
@@ -150,7 +159,7 @@ def process_txt_file(txt_files, merge_names):
             else:
                 data_row = {
                     'op_name': new_kernel_name,
-                    'duration': parsed_data['duration'],
+                    'duration': int(float(parsed_data['duration'])),
                     'size': parsed_data['size'],
                     'soc': parsed_data['soc'],
                 }
@@ -178,7 +187,7 @@ def main():
     for (soc, op_name), values in merge_dict.items():
         merged_row = {
             'op_name': f"{remove_apt_suffix(op_name)},1-0",
-            'duration': values['duration'],
+            'duration': int(values['duration']),
             'size': values['size'],
             'soc': soc
         }
@@ -190,7 +199,7 @@ def main():
     # Write to CSV file
     if data_list:
         soc_version = data_list[0]['soc']
-        csv_filename = os.path.join('.', 'build', f'ops_cost_{soc_version}.csv')
+        csv_filename = os.path.join(build_dir, f'ops_cost_{soc_version}.csv')
         fieldnames = ['op_name', 'duration', 'size', 'soc']
         
         with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
