@@ -15,11 +15,11 @@
 
 - 算子功能：MoE的routing计算，根据[aclnnMoeGatingTopKSoftmaxV2](../moe_gating_top_k_softmax_v2/docs/aclnnMoeGatingTopKSoftmaxV2.md)的计算结果做routing处理，支持不量化和动态量化模式。本接口针对V2接口[aclnnMoeInitRoutingV2](../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)做了如下功能变更，请根据实际情况选择合适的接口：
 
-    1.增加动态量化功能，支持输出expendX的 int8动态量化输出
+    1.增加动态量化功能，支持输出expendX的 int8动态量化输出。
 
-    2.增加参数activeExpertRangeOptional，支持筛选有效范围内的expertId
+    2.增加参数activeExpertRangeOptional，支持筛选有效范围内的expertId。
 
-    3.删除属性expertTokensBeforeCapacityFlag、删除输出expertTokensBeforeCapacityOut (使用expertTokensCountOrCumsumOut进行输出)
+    3.删除属性expertTokensBeforeCapacityFlag、删除输出expertTokensBeforeCapacityOut（使用expertTokensCountOrCumsumOut进行输出）。
 
 - 计算公式：  
 
@@ -170,8 +170,8 @@
         <td>quantMode</td>
         <td>属性</td>
         <td>取值为0、1、-1、2、3。
-          <li>0：表示静态 quant 场景。</li>
-          <li>1：表示动态 quant 场景。</li>
+          <li>0：表示静态quant场景。</li>
+          <li>1：表示动态quant场景。</li>
           <li>-1：表示不量化场景。</li>
           <li>2：表示MXFP8量化场景，expandedXOut量化到FLOAT8_E5M2。</li>
           <li>3：表示MXFP8量化场景，expandedXOut量化到FLOAT8_E4M3FN。</li>
@@ -240,10 +240,10 @@
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持1、-1，分别代表动态量化场景和不量化场景。
     - <term>Ascend 950PR/Ascend 950DT</term>：支持-1、1、2、3，分别表示不量化、动态量化、MXFP8量化到FLOAT8_E5m2、MXFP8量化到FLOAT8_E4M3FN。
   
-- 其他限制：该算子部分产品支持两种性能模板，进入两种性能模板需要分别额外满足以下条件，不满足条件则进入通用模板：
+- 其他限制：该算子部分产品支持两种性能模板，进入两种性能模板需要分别额外满足以下条件，不满足条件则进入通用模板。
   - 支持性能模板的产品：
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>
-    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品。</term>
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品。</term>
 
   - 进入低时延性能模板需要同时满足以下条件：
     - x、expertIdx、scaleOptional 输入 Shape 要求分别为：(1, 7168)、(1, 8)、(256, 7168)。

@@ -31,7 +31,7 @@
 
   expertIdxOptional: (R, K)
 
-  biasOptional：(E, H)
+  biasOptional: (E, H)
   
   i : 0 ~ R * K - 1
 
