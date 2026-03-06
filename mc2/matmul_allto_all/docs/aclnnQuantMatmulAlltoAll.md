@@ -358,6 +358,9 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
         <td>通信域长度非法。</td>
     </tr>
     <tr>
+        <td>输入输出Tensor维度不合法。</td>
+    </tr>
+    <tr>
         <td>输入输出format为私有格式。</td>
     </tr>
       </tbody>
@@ -475,6 +478,7 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
           | FLOAT8_E5M2 | FLOAT8_E5M2 | FLOAT32 | FLOAT32 | 6 | 6 | FLOAT8_E8M0 | FLOAT8_E8M0 |
     * 维度约束：
       * H1范围仅支持[1, 65535]。
+      * mx量化场景下，x2必须转置，shape为(H2, H1)，transposeX2为True。
 * 通算融合算子不支持并发调用，不同的通算融合算子也不支持并发调用。
 * 不支持跨超节点通信，只支持超节点内。
 

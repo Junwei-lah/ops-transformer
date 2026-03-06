@@ -219,6 +219,9 @@ aclnnStatus aclnnMatmulAlltoAll(
         <td>通信域长度非法。</td>
     </tr>
     <tr>
+        <td>输入输出Tensor维度不合法。</td>
+    </tr>
+    <tr>
         <td>输入输出format为私有格式。</td>
     </tr>
       </tbody>
