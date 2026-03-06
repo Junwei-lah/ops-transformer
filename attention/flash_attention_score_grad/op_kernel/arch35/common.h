@@ -331,7 +331,9 @@ struct FagRunInfo {
     bool isFirstBlock = true;
     bool isKeyReuse = false;
     bool isValueReuse = false;
-    bool isNextKeyReuse = true;
+    bool isNextKeyReuse = false;
+    bool isLastProcessBlock = false;
+    bool isFirstProcessBlock = false;
     
     int64_t maxsumOffset;
 };

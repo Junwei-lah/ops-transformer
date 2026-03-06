@@ -217,9 +217,9 @@ __aicore__ inline void FlashAttentionScoreGradPresfmgRegbase<PRE_FUNCTION_ARGS_T
             InitOutput<T1>(dkGm[dkOffset], initdkSize, 0);
             InitOutput<T1>(dvGm[dvOffset], initdvSize, 0);
         } else {
-            InitOutput<float>(dqWorkSpaceGm[dqOffset], initdqSize, 0);
-            // InitOutput<float>(dkWorkSpaceGm[dkOffset], initdkSize, 0);
-            // InitOutput<float>(dvWorkSpaceGm[dvOffset], initdvSize, 0);
+            if (tilingData->s1s2BNGS1S2SplitCoreParams.s2Outer > 1) {
+                InitOutput<float>(dqWorkSpaceGm[dqOffset], initdqSize, 0);
+            }
         }
 
         if constexpr (IsSameType<T1, hifloat8_t>::value) {

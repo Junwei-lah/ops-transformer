@@ -183,6 +183,10 @@ __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::AllocEventID()
 TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::FreeEventID()
 {
+    WaitFlag<HardEvent::MTE1_MTE2>(0);
+    WaitFlag<HardEvent::MTE1_MTE2>(1);
+    WaitFlag<HardEvent::MTE1_MTE2>(2);
+    WaitFlag<HardEvent::MTE1_MTE2>(3);
     WaitFlag<HardEvent::MTE1_MTE2>(4);
     WaitFlag<HardEvent::MTE1_MTE2>(5);
     WaitFlag<HardEvent::MTE1_MTE2>(6);
@@ -303,12 +307,11 @@ __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::IterateMmDsP(LocalTenso
     
     LocalTensor<INPUT_TYPE> vL1Tensor = vL1Buf[runInfo.quantRunInfo.s2Idx].Get().GetTensor<INPUT_TYPE>();
     LocalTensor<INPUT_TYPE> kL1Tensor = kL1Buf[runInfo.quantRunInfo.s2Idx].Get().GetTensor<INPUT_TYPE>();
-    if (runInfo.isValueReuse && runInfo.quantRunInfo.s1Idx == 0) {
+    if (!runInfo.isValueReuse && runInfo.quantRunInfo.s1Idx == 0) {
         WaitFlag<HardEvent::MTE1_MTE2>(runInfo.quantRunInfo.s2Idx);
         CopyInKeyToL1(kL1Tensor, kOffset, realM, HEAD_DIM_ALIGN, constInfo.commonConstInfo.n2GD);
         CopyInValueToL1(vL1Tensor, vOffset, realM, HEAD_DIM_ALIGN, constInfo.commonConstInfo.n2Dv);
         SetFlag<HardEvent::MTE2_MTE1>(runInfo.quantRunInfo.s2Idx);
-        WaitFlag<HardEvent::MTE2_MTE1>(runInfo.quantRunInfo.s2Idx);
     }
 
     LocalTensor<INPUT_TYPE> qL1Tensor = commonL1Buf[queryId].Get().GetTensor<INPUT_TYPE>();
@@ -316,12 +319,10 @@ __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::IterateMmDsP(LocalTenso
     WaitFlag<HardEvent::MTE1_MTE2>(4 + queryId);
     CopyInQueryToL1(qL1Tensor, qOffset, realN, HEAD_DIM_ALIGN, constInfo.commonConstInfo.n2D);
     SetFlag<HardEvent::MTE2_MTE1>(4 + queryId);
-    WaitFlag<HardEvent::MTE2_MTE1>(4 + queryId);
 
     WaitFlag<HardEvent::MTE1_MTE2>(4 + dyId);
     CopyInDYToL1(dyL1Tensor, dYOffset, realN, HEAD_DIM_ALIGN, constInfo.commonConstInfo.n2GDv);
     SetFlag<HardEvent::MTE2_MTE1>(4 + dyId);
-    WaitFlag<HardEvent::MTE2_MTE1>(4 + dyId);
 
     MMParam param = {
         realM,                                       // singleM
@@ -336,18 +337,29 @@ __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::IterateMmDsP(LocalTenso
     LocalTensor<INPUT_TYPE> L0ATensorSecond = L0ATensor[128 * 128];
 
     WaitFlag<HardEvent::M_MTE1>(l0Id + 4);
+    if (!runInfo.isValueReuse && runInfo.quantRunInfo.s1Idx == 0) {
+        WaitFlag<HardEvent::MTE2_MTE1>(runInfo.quantRunInfo.s2Idx);
+    }
     LoadDataToL0A<INPUT_TYPE>(L0ATensor, kL1Tensor, param, 0, HEAD_DIM_ALIGN, realM);
     LoadDataToL0A<INPUT_TYPE>(L0ATensorSecond, vL1Tensor, param, 0, HEAD_DIM_ALIGN, realM);
-    if (!runInfo.isKeyReuse && (runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && (runInfo.quantRunInfo.s2Idx == 3))
+    if ((!runInfo.isKeyReuse || runInfo.isLastProcessBlock) && (runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && (runInfo.quantRunInfo.s2Idx == 3))
     {
         SetFlag<HardEvent::MTE1_MTE2>(3);
+    }
+    if ((!runInfo.isKeyReuse && runInfo.isFirstProcessBlock) && (runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && (runInfo.quantRunInfo.s2Idx <= 2))
+    {
+        SetFlag<HardEvent::MTE1_MTE2>(runInfo.quantRunInfo.s2Idx);
     }
 
     Buffer<BufferType::L0B, SyncType::NO_SYNC> l0bBuffer = l0bBuf[l0Id].Get();
     LocalTensor<INPUT_TYPE> L0BTensor = l0bBuffer.GetTensor<INPUT_TYPE>();
     LocalTensor<INPUT_TYPE> L0BTensorSecond = L0BTensor[128 * 128];
+
+    WaitFlag<HardEvent::MTE2_MTE1>(4 + queryId);
     LoadDataToL0B<INPUT_TYPE>(L0BTensor, qL1Tensor, param, 0, HEAD_DIM_ALIGN, realN);
     SetFlag<HardEvent::MTE1_MTE2>(4 + queryId);
+
+    WaitFlag<HardEvent::MTE2_MTE1>(4 + dyId);
     LoadDataToL0B<INPUT_TYPE>(L0BTensorSecond, dyL1Tensor, param, 0, HEAD_DIM_ALIGN, realN);
     SetFlag<HardEvent::MTE1_MTE2>(4 + dyId);
 
@@ -436,12 +448,14 @@ __aicore__ inline void FAGBlockCubeQuant<TEMPLATE_ARGS>::IterateMmDsK(LocalTenso
         LocalTensor<INPUT_TYPE> L0BTensorSecond = L0BTensor[128 * 128];
         LoadDataToL0B<INPUT_TYPE>(L0BTensor, kL1Tensor, param, 0, kSizeFirst, (uint32_t)HEAD_DIM_ALIGN);
         LoadDataToL0B<INPUT_TYPE>(L0BTensorSecond, kL1TensorSecond, param, 0, kSizeSecond, (uint32_t)HEAD_DIM_ALIGN);
-        if (!runInfo.isNextKeyReuse && (runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && runInfo.quantRunInfo.s2Idx == 0){
-            SetFlag<HardEvent::MTE1_MTE2>(0);
-            SetFlag<HardEvent::MTE1_MTE2>(1);
-        }
-        if (!runInfo.isNextKeyReuse && (runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && runInfo.quantRunInfo.s2Idx == 2){
-            SetFlag<HardEvent::MTE1_MTE2>(2);
+
+        if (!runInfo.isNextKeyReuse || runInfo.isLastProcessBlock) {
+            if ((runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && runInfo.quantRunInfo.s2Idx == 0) {
+                SetFlag<HardEvent::MTE1_MTE2>(0);
+                SetFlag<HardEvent::MTE1_MTE2>(1);
+            } else if ((runInfo.quantRunInfo.s1Idx == runInfo.quantRunInfo.innerS1LoopNum - 1) && runInfo.quantRunInfo.s2Idx == 2){
+                SetFlag<HardEvent::MTE1_MTE2>(2);
+            }
         }
     } else {
         uint32_t kBufferId = commonBufferId;

@@ -120,6 +120,41 @@ __aicore__ inline void CalDenseIndex(int64_t k, int64_t m, int64_t n, int64_t b,
     return;
 }
 
+__aicore__ inline void CalDenseIndexForSingleN(int64_t k, int64_t m, int64_t b, int64_t j, int64_t r, int64_t R, CoordinateInfo &coordinate)
+{
+    int64_t n = 1;
+    int64_t ID = (j - 1) * R + r;
+    int64_t num = m * n;
+    
+    int64_t delta1 = (ID -1) / num + 1;
+    int64_t delta = ID % num;
+    delta = delta == 0 ? num : delta;
+
+    int64_t g = Gcd(m, R);
+    int64_t t1 = R / g;
+    int64_t t2 = m / g;
+
+    int64_t x = ((delta - 1) % m) + 1;
+    int64_t y = (delta - 1) / m + 1;
+
+    if (t1 < n) {
+        int64_t n1 = (n % t1);
+        n1 = n1 == 0 ? t1 : n1;
+        if (y <= n - n1) {
+            int64_t delta_adj = Ceil<int64_t>(y, t1);
+            delta += delta_adj;
+            if (delta > delta_adj * t2 * R) {
+                delta -= t2 * R;
+            }
+            x = ((delta - 1) % m) + 1;
+            y = (delta - 1) / m + 1;
+        }
+    }
+    coordinate.batchId = delta1;
+    coordinate.s1Idx = x;
+    coordinate.s2Idx = y;
+}
+
 __aicore__ inline void CalGQADenseIndex(int64_t k, int64_t m, int64_t n, int64_t b, int64_t core_id, int64_t round_id,
                                         int64_t g, CoordinateInfo &coordinate)
 {

@@ -325,7 +325,8 @@ __aicore__ inline void FAGBlockVecQuant<TEMPLATE_ARGS>::CopyDqkv2GM(FagRunInfo &
     dataCopyParams.srcStride = 64 * sizeof(CALC_TYPE) / 32;
     dataCopyParams.dstStride = constInfo.copyOutDStride;
 
-    if (mode == 0 || !runInfo.isValueReuse) {
+    bool needAtomic = ((mode == 0 && (constInfo.s2Outer != 1 || (constInfo.s2Outer == 1 && runInfo.quantRunInfo.s2Idx == 0 ))) || ((constInfo.s2Outer != 1 && runInfo.isValueReuse) || !(runInfo.isFirstProcessBlock && constInfo.s2Outer == 1 && runInfo.quantRunInfo.s1Idx == 0)));
+    if (needAtomic) {
         SetAtomicAdd<CALC_TYPE>();
     }
 
@@ -334,7 +335,7 @@ __aicore__ inline void FAGBlockVecQuant<TEMPLATE_ARGS>::CopyDqkv2GM(FagRunInfo &
         WaitFlag<AscendC::HardEvent::V_MTE3>(DQKV_UB_TO_GM_INNER_CORE_SYNC_EVENTS[2]);
         DataCopyPad(outGm2[offset], outTensor2, dataCopyParams);
     }
-    if (mode == 0 || !runInfo.isValueReuse) {
+    if (needAtomic) {
         SetAtomicNone();
     }
 }
