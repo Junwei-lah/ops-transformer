@@ -71,6 +71,8 @@ def grouped(gen_path, soc, group_size):
             op_name_real = op_name.replace('_apt', '')
         if op_name == 'allto_all_matmul_apt' and op_name.endswith('_apt'):
             op_name_real = op_name.replace('_apt', '')
+        if op_name == 'matmul_allto_all_apt' and op_name.endswith('_apt'):
+            op_name_real = op_name.replace('_apt', '')
         if op_name_real in black_list:
             continue
         for i in range(count):
