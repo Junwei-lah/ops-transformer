@@ -1130,14 +1130,14 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </tr>
         </thead>
         <tbody>
-            <td rowspan="5">0</td>
+            <td rowspan="6">0</td>
             <tr>
-                <td rowspan="2">P_S1(pse shape第三维)&gt;1时</td>
-                <td rowspan="2">query的数据类型</td>
+                <td rowspan="3">P_S1(pse shape第三维)&gt;1时</td>
+                <td rowspan="3">query的数据类型</td>
                 <td>FLOAT16</td>
                 <td>FLOAT16</td>
-                <td rowspan="2">(B,Q_N,P_S1,P_S2)、(1,Q_N,P_S1,P_S2)</td>
-                <td rowspan="2">
+                <td rowspan="3">(B,Q_N,P_S1,P_S2)、(1,Q_N,P_S1,P_S2)</td>
+                <td rowspan="3">
                 <ul>
                 <li>query数据类型为FLOAT16且pseShift存在时，强制走高精度模式，对应的限制继承自高精度模式的限制。</li>
                 <li>P_S1需大于等于query的S长度，P_S2需大于等于key的S长度。prefix场景P_S2需大于等于actualSharedPrefixLen与key的S长度之和。</li>
@@ -1148,6 +1148,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             <tr>
                 <td>BFLOAT16</td>
                 <td>BFLOAT16</td>
+            </tr>
+            <tr> 
+                <td>INT8</td> 
+                <td>FLOAT16</td> 
             </tr>
             <tr>
                 <td rowspan="2">P_S1(pse shape第三维)=1时</td>
