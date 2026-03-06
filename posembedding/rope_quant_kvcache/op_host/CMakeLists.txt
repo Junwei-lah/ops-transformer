@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------------------------------------
 
 if (BUILD_OPEN_PROJECT)
-    target_sources(op_host_aclnn PRIVATE
+    target_sources(op_host_aclnnExc PRIVATE
         rope_quant_kvcache_def.cpp
     )
     add_ops_compile_options(
@@ -21,5 +21,5 @@ if (BUILD_OPEN_PROJECT)
 endif()
 
 if(NOT BUILD_OPS_RTY_KERNEL)
-    add_modules_sources(OPTYPE rope_quant_kvcache ACLNNTYPE aclnn)
+    add_modules_sources(OPTYPE rope_quant_kvcache ACLNNTYPE aclnn_exclude)
 endif()
