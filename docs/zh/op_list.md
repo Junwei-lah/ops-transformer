@@ -487,26 +487,6 @@
   </tr>
   <tr>
     <td>mc2</td>
-    <td><a href="../../mc2/elastic_receivable_info_collect/README.md">elastic_receivable_info_collect</a></td>
-    <td>✓</td>
-    <td>✓</td>
-    <td>✓</td>
-    <td>✗</td>
-    <td>AI Core</td>
-    <td>收集一个通信域内的所有卡发送的数据并整理输出，以检测通信链路是否正常。</td>
-  </tr>
-  <tr>
-    <td>mc2</td>
-    <td><a href="../../mc2/elastic_receivable_test/README.md">elastic_receivable_test</a></td>
-    <td>✓</td>
-    <td>✓</td>
-    <td>✓</td>
-    <td>✓</td>
-    <td>AI Core</td>
-    <td>对一个通信域内的所有卡发送数据并写状态位，以检测通信链路是否正常。</td>
-  </tr>
-  <tr>
-    <td>mc2</td>
     <td><a href="../../mc2/grouped_mat_mul_all_reduce/README.md">grouped_mat_mul_all_reduce</a></td>
     <td>✓</td>
     <td>✓</td>
@@ -627,13 +607,13 @@
   </tr>
   <tr>
     <td>mc2</td>
-    <td><a href="../../mc2/moe_distribute_buffer_reset/README.md">moe_distribute_buffer_reset</a></td>
+    <td><a href="../../mc2/moe_distribute_dispatch_v3/README.md">moe_distribute_dispatch_v3</a></td>
     <td>✓</td>
     <td>✓</td>
     <td>✓</td>
     <td>✓</td>
     <td>AI Core</td>
-    <td>故障检测流程中，对EP通信域做数据区与状态区的清理。</td>
+    <td>对Token数据进行量化（可选），当存在TP域通信时，先进行EP（Expert Parallelism）域的AllToAllV通信，再进行TP（Tensor Parallelism）域的AllGatherV通信；当不存在TP域通信时，进行EP（Expert Parallelism）域的AllToAllV通信。</td>
   </tr>
   <tr>
     <td>mc2</td>

@@ -990,7 +990,6 @@ static ge::graphStatus CheckAttrs(const gert::TilingContext *context, const char
     // 校验tp=2时单个moe卡上专家数是否等于1
     OP_TILING_CHECK((tpWorldSize > 1) && (localMoeExpertNum > 1), OP_LOGE(nodeName, "Cannot support multi-moeExpert %u "
         "in a rank when tpWorldSize = %u > 1", localMoeExpertNum, tpWorldSize), return ge::GRAPH_FAILED);
-    // 校验tp=2时是否没有动态缩容参数
     OP_TILING_CHECK((tpWorldSize > 1) && (tilingData.moeDistributeDispatchV2Info.hasElasticInfo), OP_LOGE(nodeName, "Cannot support elasticInfo"
         " when tpWorldSize = %u > 1", tpWorldSize), return ge::GRAPH_FAILED);
     // 校验输入x的dim 0并设bs

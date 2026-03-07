@@ -1174,7 +1174,6 @@ static bool CheckAttrs(const gert::TilingContext *context, MoeDistributeCombineV
     OP_TILING_CHECK((localMoeExpertNum > 1) && (tpWorldSize > 1),
         OP_LOGE(nodeName, "Cannot support multi-moeExpert %u in a rank when tpWorldSize = %u > 1",
         localMoeExpertNum, tpWorldSize), return false);
-    // 校验tp=2时是否没有动态缩容参数
     OP_TILING_CHECK((tpWorldSize > 1) && (tilingData.moeDistributeCombineV2Info.hasElasticInfo), OP_LOGE(nodeName, "Cannot support elasticInfo "
         "when tpWorldSize = %u > 1", tpWorldSize), return false);
     tilingData.moeDistributeCombineV2Info.moeExpertPerRankNum = localMoeExpertNum;

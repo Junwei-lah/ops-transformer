@@ -476,7 +476,7 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
     <details>
     <summary><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：</summary>
 
-    - commAlg 支持""，"fullmesh_v1"，"fullmesh_v2", "hierarchy"四种输入方式。""：默认值，不使能fullmesh_v2模板；"fullmesh_v1"：不使能fullmesh_v2模板；"fullmesh_v2"：使能fullmesh_v2模板，该模板仅支持tpWorldSize为1场景；"hierarchy": 使能跨超模板，该模板仅支持tpWorldSize为1、共享专家为0的场景，且不支持可变BS、二维mask、特殊专家、动态缩容、performanceInfo场景。
+    - commAlg 支持""，"fullmesh_v1"，"fullmesh_v2", "hierarchy"三种输入方式。""：默认值，不使能fullmesh_v2模板；"fullmesh_v1"：不使能fullmesh_v2模板；"fullmesh_v2"：使能fullmesh_v2模板，该模板仅支持tpWorldSize为1场景；"hierarchy": 使能跨超模板，该模板仅支持tpWorldSize为1、共享专家为0的场景，且不支持可变BS、二维mask、特殊专家、performanceInfo场景。
     - xActiveMaskOptional 要求为1D或2D Tensor（1D时shape为(Bs, )，2D时shape为(Bs, K)）；1D时true需排在false前，2D时token对应K个值全为false则不参与通信。
     - expertScalesOptional 当前版本不支持，传空指针即可。
     - epWorldSize 取值范围[2, 768]；当commAlg="hierarchy"场景时，取值范围为[16, 256]，且为16的整数倍。
@@ -491,7 +491,7 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
     - 有TP域通信时tpRecvCountsOut为1D shape Tensor，shape为(tpWorldSize,)。
     - expandScalesOut 当前版本不支持该输出。
     - quantMode 支持0（非量化）、2（动态量化）。
-    - elasticInfoOptional 可选择传入有效数据或填空指针，传入空指针时表示不使能动态缩容功能；当传入有效数据时，要求是一个1D的Tensor，shape为 <code>(4 + 2 * epWorldSize, )</code>。Tensor中的前四个数字分别表示是否缩容，缩容后实际rank数，缩容后共享专家使用的rank数，缩容后moe专家的个数，后2 * epWorldSize表示2个rank映射表，缩容后本卡中因部分rank异常而从EP通信域中剔除，第一个Table的映射关系为Table1[epRankId]=localEpRankId或-1，localEpRankId表示新EP通信域中的rank Index，-1表示epRankId这张卡从通信域中被剔除，第二个Table映射关系为Table2[localEpRankId] = epRankId。
+    - elasticInfoOptional 当前版本不支持，传空指针即可。
     - zeroExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1, 合法的零专家的ID的值是<code>[moeExpertNum, moeExpertNum + zeroExpertNum)</code>。
     - copyExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1，专家ID范围<code>[moeExpertNum + zeroExpertNum, moeExpertNum + zeroExpertNum + copyExpertNum)</code>。
     - constExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1，专家ID范围<code>[moeExpertNum + zeroExpertNum + copyExpertNum, moeExpertNum + zeroExpertNum + copyExpertNum + constExpertNum)</code>。
@@ -516,7 +516,7 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
     - 有TP域通信时tpRecvCountsOut为1D shape Tensor，shape为(tpWorldSize,)。
     - expandScalesOut 当前版本不支持该输出。
     - quantMode 支持0（非量化）、1（静态量化）、2（pertoken动态量化）、3（pergroup动态量化）、4（mxfp8动态量化）。
-    - elasticInfoOptional 可选择传入有效数据或填空指针，传入空指针时表示不使能动态缩容功能；当传入有效数据时，要求是一个1D的Tensor，shape为 <code>(4 + 2 * epWorldSize, )</code>。Tensor中的前四个数字分别表示是否缩容，缩容后实际rank数，缩容后共享专家使用的rank数，缩容后moe专家的个数，后2 * epWorldSize表示2个rank映射表，缩容后本卡中因部分rank异常而从EP通信域中剔除，第一个Table的映射关系为Table1[epRankId]=localEpRankId或-1，localEpRankId表示新EP通信域中的rank Index，-1表示epRankId这张卡从通信域中被剔除，第二个Table映射关系为Table2[localEpRankId] = epRankId。
+    - elasticInfoOptional 当前版本不支持，传空指针即可。
     - zeroExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1, 合法的零专家的ID的值是<code>[moeExpertNum, moeExpertNum + zeroExpertNum)</code>。
     - copyExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1，专家ID范围<code>[moeExpertNum + zeroExpertNum, moeExpertNum + zeroExpertNum + copyExpertNum)</code>。
     - constExpertNum 取值范围:[0, MAX_INT32)，MAX_INT32 = 2^31 - 1，专家ID范围<code>[moeExpertNum + zeroExpertNum + copyExpertNum, moeExpertNum + zeroExpertNum + copyExpertNum + constExpertNum)</code>。
@@ -616,16 +616,14 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
 
 - **参数一致性约束**：
   - 所有卡的`groupEp`、`epWorldSize`、`moeExpertNum`、`groupTp`、`tpWorldSize`、`expertShardType`、`sharedExpertNum`、`sharedExpertRankNum`、`globalBs`、`commAlg`参数及`HCCL_BUFFSIZE`取值需保持一致，且与CombineV4系列算子对应参数一致。
-  - 动态缩容后的部署信息通过`elasticInfoOptional`参数传递给算子，无需修改其他参数，缩容参数仅在 tpWorldSize 取值为 1 时生效。动态缩容后，MOE专家卡上的本卡部署MOE专家数需与缩容前保持一致，不支持缩容后无MOE专家卡。
 
 - **产品特定约束**：
   - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：该场景下单卡包含双DIE（简称为“晶粒”或“裸片”），因此参数说明中的“本卡”均表示单DIE。
-  - 动态缩容功能不支持在TP并行场景下使能。
 
 - **Shape变量约束**：
   | 变量         | 定义与取值范围                                                                 |
   | :----------- | :----------------------------------------------------------------------------- |
-  | A            | 表示本卡需要分发的最大token数量，取值范围如下：<ul> <li>不使能动态缩容场景时：<ul> <li>对于共享专家，要满足A = Bs * epWorldSize * sharedExpertNum / sharedExpertRankNum。</li> <li>对于MoE专家，当globalBs为0时，要满足A >= Bs * epWorldSize * min(localExpertNum, K)；当globalBs非0时，要满足A >= globalBs * min(localExpertNum, K)。</li> </ul> </li> <li>使能动态缩容场景时：<ul><li>当globalBs为0时，A >= max(Bs * epWorldSize * sharedExpertNum / sharedExpertRankNum, Bs * epWorldSize * min(localExpertNum, K))；</li> <li>当globalBs非0时，A >= max(Bs * epWorldSize * sharedExpertNum / sharedExpertRankNum, globalBS * min(localExpertNum, K))；</li> </ul> </li> </ul> |
+  | A            | 表示本卡需要分发的最大token数量，取值范围如下：<ul> <li>对于共享专家，要满足A = Bs * epWorldSize * sharedExpertNum / sharedExpertRankNum。</li> <li>对于MoE专家，当globalBs为0时，要满足A >= Bs * epWorldSize * min(localExpertNum, K)；当globalBs非0时，要满足A >= globalBs * min(localExpertNum, K)。|
   | H（hidden size） | 表示hidden size隐藏层大小。<ul><li><term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：依commAlg取值，"fullmesh"支持(0, 7168]且为32的整数倍；"hierarchy"并且驱动版本≥25.0.RC1.1时支持(0, 10*1024]且为32的整数倍；</li> <li><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：依commAlg取值，当commAlg="hierarchy"时，H取值范围为[1024, 7168]，且为32的整数倍；其余场景下取值范围[1024, 8192]。</li></ul> |
   | Bs           | 表示本卡最终输出token数。<ul><li><term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：依commAlg取值，"fullmesh"取值范围为 (0 < Bs ≤ 256)；"hierarchy"并且驱动版本≥25.0.RC1.1时取值范围为 (0 < Bs ≤ 512)；</li><li><term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：0 < Bs ≤512。</li></ul> |
   | K    | 表示选取topK个专家，取值范围为0 < K ≤16，且<code>0 < K ≤ moeExpertNum+zeroExpertNum+copyExpertNum+constExpertNum</code>。<br> <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：当commAlg为"fullmesh_v2"时，取值范围为0 < K ≤ 12。|
@@ -790,7 +788,6 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
         void *residualXDeviceAddr = nullptr;
         void *sharedExpertXDeviceAddr = nullptr;
 
-        //动态缩容和零专家场景输入
         void *elasticInfoDeviceAddr = nullptr;
         void *oriXDeviceAddr = nullptr;
         void *constExpertAlpha1DeviceAddr = nullptr;
@@ -958,7 +955,6 @@ aclnnStatus aclnnMoeDistributeDispatchV4(
         aclOpExecutor *combineExecutor = nullptr;
         void *combineWorkspaceAddr = nullptr;
         /**************************************** 调用dispatch warm up********************************************/
-        // 模拟动态缩容场景，需要先运行一遍正常情况建立通信域；调用第一阶段接口
         ret = aclnnMoeDistributeDispatchV4GetWorkspaceSize(x, expertIds, (quantMode > 0 ? scales : nullptr), nullptr,
                 expertScales, nullptr, nullptr,// performanceInfoOptional
                 hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE,

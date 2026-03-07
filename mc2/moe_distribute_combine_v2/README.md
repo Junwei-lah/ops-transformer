@@ -341,12 +341,8 @@
 
 - 参数说明里shape格式说明：
     - `A`：表示本卡可能接收的最大token数量，取值范围如下：
-        - 不使能动态缩容场景时：
-            - 对于共享专家，要满足`A` = `Bs` * `epWorldSize` * `sharedExpertNum` / `sharedExpertRankNum`。
-            - 对于MoE专家，当`globalBs`为0时，要满足`A` >= `Bs` * `epWorldSize` * min(`localExpertNum`, `K`)；当`globalBs`非0时，要满足`A` >= `globalBs` * min(`localExpertNum`, `K`)。
-        - 使能动态缩容场景时：
-            - 当`globalBs`为0时，`A` >= max(`Bs` * `epWorldSize` * `sharedExpertNum` / `sharedExpertRankNum`, `Bs` * `epWorldSize` * min(`localExpertNum`, `K`))；
-            - 当`globalBs`非0时，`A` >= max(`Bs` * `epWorldSize` * `sharedExpertNum` / `sharedExpertRankNum`, `globalBs` * min(`localExpertNum`, `K`))；
+        - 对于共享专家，要满足`A` = `Bs` * `epWorldSize` * `sharedExpertNum` / `sharedExpertRankNum`。
+        - 对于MoE专家，当`globalBs`为0时，要满足`A` >= `Bs` * `epWorldSize` * min(`localExpertNum`, `K`)；当`globalBs`非0时，要满足`A` >= `globalBs` * min(`localExpertNum`, `K`)。
     - `K`：表示选取topK个专家，取值范围为0 < `K` ≤ 16同时满足0 < `K` ≤ `moeExpertNum` + `zeroExpertNum` + `copyExpertNum` + `constExpertNum`。
     - `localExpertNum`：表示本卡专家数量。
         - 对于共享专家卡，`localExpertNum` = 1
@@ -390,7 +386,6 @@
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     - 该场景下单卡包含双DIE（简称为“晶粒”或“裸片”），因此参数说明里的“本卡”均表示单DIE。
-    - 动态缩容功能不支持在TP并行场景下使能，即仅在 `tpWorldSize` 取值为 1 时生效。
     - 参数说明里shape格式说明：
         - `H`：表示hidden size隐藏层大小，取值范围[1024, 8192]。
         - `Bs`：表示batch sequence size，即本卡最终输出的token数量，取值范围为[1, 512]。

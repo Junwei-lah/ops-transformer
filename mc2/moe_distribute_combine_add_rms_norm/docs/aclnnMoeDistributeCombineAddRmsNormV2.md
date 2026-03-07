@@ -15,7 +15,7 @@
 
 ## 功能说明
 
-- 算子功能：当存在TP域通信时，先进行ReduceScatterV通信，再进行AllToAllV通信，最后将接收的数据整合（乘权重再相加）；当不存在TP域通信时，进行AllToAllV通信，最后将接收的数据整合（乘权重再相加），之后完成Add + RmsNorm融合。算子支持动态缩容场景，支持在创建通信域后，出现故障卡，将故障卡从通信域剔除，算子可以正常执行，无需重新编译；支持特殊专家场景。
+- 算子功能：当存在TP域通信时，先进行ReduceScatterV通信，再进行AllToAllV通信，最后将接收的数据整合（乘权重再相加）；当不存在TP域通信时，进行AllToAllV通信，最后将接收的数据整合（乘权重再相加），之后完成Add + RmsNorm融合。算子支持特殊专家场景。
 
 - 计算公式：
 
@@ -30,7 +30,6 @@ $$
 > 注意：该接口必须与`aclnnMoeDistributeDispatchV3`配套使用，相当于按`aclnnMoeDistributeDispatchV3`接口收集数据的路径原路返还。
 
 相较于`aclnnMoeDistributeCombineAddRmsNorm`接口，该接口变更如下：
-- 新增支持动态缩容场景：支持在创建通信域后，剔除故障卡，算子可正常执行（无需重新编译），通过传入`elasticInfoOptional`参数使能该特性。
 - 新增支持特殊专家场景：
   - **zeroExpert ≠ 0**：通过传入大于0的`zeroExpertNum`参数使能。
 
@@ -282,7 +281,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
     <td>elasticInfoOptional</td>
     <td>输入</td>
     <td>EP通信域动态缩容信息。</td>
-    <td><ul><li>可传有效数据或空指针（空指针表示不使能缩容）。</li><li>传入有效数据时为1D Tensor, shape为 (4 + 2 * epWorldSize, )，前4位为缩容配置，后2*epWorldSize为rank映射表。</li></td>
+    <td>可传有效数据或空指针（空指针表示不使能缩容）。</td>
     <td>INT32</td>
     <td>ND</td>
     <td>-</td>
@@ -679,11 +678,9 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
 
 - 参数一致性约束
   - 调用接口过程中使用的expertIds、xActiveMaskOptional、elasticInfoOptional、groupEp、epWorldSize、moeExpertNum、groupTp、tpWorldSize、expertShardType、sharedExpertNum、sharedExpertRankNum、globalBs、commAlg、zeroExpertNum、     copyExpertNum、constExpertNum参数、HCCL_BUFFSIZE取值所有卡需保持一致，网络中不同层中也需保持一致，且和DispatchV3对应参数也保持一致。
-  - 动态缩容后的部署信息通过elasticInfoOptional参数传递给算子，无需修改其他参数。动态缩容后，MOE专家卡上的本卡部署MOE专家数需与缩容前保持一致。
 
 - 产品特定约束 
   - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：该场景下单卡包含双DIE（简称为“晶粒”或“裸片”），因此参数说明里的“本卡”均表示单DIE。
-  - 动态缩容功能不支持在TP并行场景下使能。
 
 - Shape变量约束：
     - A：表示本卡需要分发的最大token数量，取值范围如下：
@@ -751,7 +748,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
     };
 
     constexpr uint32_t EP_WORLD_SIZE = 8;
-    constexpr uint32_t TP_WORLD_SIZE = 1; //如果使用动态缩容场景 TP_WORLD_SIZE仅支持为1
+    constexpr uint32_t TP_WORLD_SIZE = 1;
     constexpr uint32_t DEV_NUM = EP_WORLD_SIZE * TP_WORLD_SIZE;
 
     int64_t GetShapeSize(const std::vector<int64_t> &shape)
@@ -843,7 +840,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
         void *sharedExpertXDeviceAddr = nullptr;
         void *gammaDeviceAddr = nullptr;
 
-        // 动态缩容和零专家场景输入
         void *elasticInfoDeviceAddr = nullptr;
         void *oriXDeviceAddr = nullptr;
         void *constExpertAlpha1DeviceAddr = nullptr;
@@ -853,7 +849,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
         void *yOutDeviceAddr = nullptr;
         void *rstdOutDeviceAddr = nullptr;
         void *xOutDeviceAddr = nullptr;
-
 
         aclTensor *x = nullptr;
         aclTensor *expertIds = nullptr;
@@ -955,7 +950,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
         std::vector<int16_t> sharedExpertXHostData(sharedExpertXShapeSize, 1);
         std::vector<int16_t> gammaHostData(gammaShapeSize, 1);
 
-        // 动态缩容example：模拟坏掉rankId为2、3、4、5四张卡
         int32_t isElastic = 1;
         int32_t rankNumAfterElastic = 4;
         int32_t sharedExpertRankNumAfterElastic = 0;
@@ -969,25 +963,10 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
             0, 1, 6, 7, -1, -1, -1, -1
         };
 
-        // 动态缩容example：模拟坏掉rankId为2、3两张卡
-        // int32_t isElastic = 1;
-        // int32_t rankNumAfterElastic = 6;
-        // int32_t sharedExpertRankNumAfterElastic = 0;
-        // int32_t moeExpertNumAfterElastic = 6;
-        // std::unordered_set<int16_t> availableRank {
-        //     0, 1, /*2, 3,*/ 4, 5, 6, 7
-        // };
-        // std::vector<int32_t> elasticInfoHostData {
-        //     isElastic, rankNumAfterElastic, sharedExpertRankNumAfterElastic, moeExpertNumAfterElastic,
-        //     0, 1, -1, -1, 2, 3, 4, 5,
-        //     0, 1, 4, 5, 6, 7, -1, -1
-        // };
-        
         std::vector<int16_t> oriXHostData(oriXSize, 1);
         std::vector<int16_t> constExpertAlpha1HostData(constExpertAlpha1Size, 0);
         std::vector<int16_t> constExpertAlpha2HostData(constExpertAlpha2Size, 0);
         std::vector<int16_t> constExpertVHostData(constExpertVSize, 0);
-
 
         std::vector<int16_t> yOutHostData(yOutShapeSize, 0);
         std::vector<float> rstdOutHostData(rstdOutShapeSize, 0);
@@ -1050,7 +1029,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
         void *combineWorkspaceAddr = nullptr;
 
         /**************************************** 调用dispatch warm up********************************************/
-        // 模拟动态缩容场景，需要先运行一遍正常情况建立通信域；调用第一阶段接口
         ret = aclnnMoeDistributeDispatchV3GetWorkspaceSize(x, expertIds, (quantMode > 0 ? scales : nullptr), nullptr, 
                 expertScales, nullptr, hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE,
                 args.tpRankId, expertShardType, sharedExpertNum,sharedExpertRankNum, quantMode, globalBS,
@@ -1074,7 +1052,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
             return ret);
 
         /**************************************** 调用dispatch ********************************************/
-        // 动态缩容场景下，仅在支持的卡上调用aclnnMoeDistributeDispatchV3接口
         if (availableRank.find(args.rankId) != availableRank.end()) {
             // 调用第一阶段接口
             ret = aclnnMoeDistributeDispatchV3GetWorkspaceSize(x, expertIds, (quantMode > 0 ? scales : nullptr), nullptr, 
@@ -1101,7 +1078,6 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
         }
 
         /**************************************** 调用combineAddRmsNorm ********************************************/
-        // 动态缩容场景下，仅在支持的卡上调用aclnnMoeDistributeCombinAddRmsNormV2接口
         if (availableRank.find(args.rankId) != availableRank.end()) {
             // 调用第一阶段接口
             ret = aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize(
