@@ -312,7 +312,9 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
         <td>可选输入</td>
         <td>表示对key/value进行伪量化的因子</td>
         <td><ul><li>不支持空Tensor。</li>
-        <li>支持per-tensor、per-channel、per-token。</li></ul></td>
+        <li>支持per-tensor、per-channel、per-token。</li>
+            <li>建议使用KV伪量化参数分离模式。</li>
+            </ul></td>
         <td>Q_S=1：FLOAT16、BFLOAT16、FLOAT32Q_S&gt;1：FLOAT16</td>
         <td>ND</td>
         <td>见<a href="#AntiQuant">伪量化参数</a></td>
@@ -323,7 +325,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
         <td>可选输入</td>
         <td>表示对key/value进行伪量化的偏移，配置此项为非对称量化，反之为非对称量化</td>
         <td><ul><li>不支持空Tensor。</li>
-        <li>支持per-tensor、per-channel、per-tokenshape与antiquantScaleOptional保持一致。</li></ul></td>
+        <li>支持per-tensor、per-channel、per-tokenshape与antiquantScaleOptional保持一致。</li><li>建议使用KV伪量化参数分离模式。</li></ul></td>
         <td>与antiquantScaleOptional保持一致</td>
         <td>ND</td>
         <td>与antiquantScaleOptional保持一致</td>

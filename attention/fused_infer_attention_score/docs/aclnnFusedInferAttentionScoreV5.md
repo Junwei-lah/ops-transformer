@@ -328,36 +328,23 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
     <tr>
         <td>antiquantScaleOptional</td>
         <td>输入</td>
-        <td>伪量化因子。</td>
-        <td>
-        <ul>
-            <li>不支持空Tensor。</li>
-            <li>支持per-tensor，per-channel，per-token。</li>
-            <li>不使用该功能时可传入nullptr。</li>
-            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li>
-        </ul>
-        </td>
-        <td>FLOAT16、BFLOAT16、FLOAT32</td>
-        <td>ND</td>
-        <td>见<a href="#AntiQuant">伪量化参数 antiquantScale和antiquantOffset约束</a></td>
+        <td>伪量化因子</td>
+        <td>不支持</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
         <td>-</td>
     </tr>
     <tr>
         <td>antiquantOffsetOptional</td>
         <td>输入</td>
-        <td>伪量化偏移。</td>
-        <td>
-        <ul>
-            <li>不支持空Tensor。</li>
-            <li>支持per-tensor，per-channel，per-token。</li>
-            <li>使用时，数据类型与shape必须与antiquantScaleOptional保持一致。</li>
-            <li>不使用该功能时可传入nullptr。</li>
-            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li>
-        </ul>
-        </td>
-        <td>FLOAT16、BFLOAT16、FLOAT32</td>
-        <td>ND</td>
-        <td>与antiquantScaleOptional保持一致</td>
+        <td>伪量化偏移</td>
+        <td>不支持</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
         <td>-</td>
     </tr> 
     <tr>
@@ -787,16 +774,10 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
     <tr>
         <td>antiquantMode</td>
         <td>输入</td>
-        <td>伪量化的方式。</td>
-        <td>
-        <ul>
-            <li>传入0时表示为per-channel（per-channel包含per-tensor）。</li>
-            <li>传入1时表示per-token。</li>
-            <li>不特意指定时建议传入0。</li>
-            <li>传入0和1之外的其他值会执行异常。</li>
-        </ul>
-        </td>
-        <td>INT64</td>
+        <td>伪量化的方式</td>
+        <td>不支持</td>
+        <td>-</td>
+        <td>-</td>
         <td>-</td>
         <td>-</td>
         <td>-</td>
@@ -1317,52 +1298,25 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
 - <a id="AntiQuant"></a>伪量化参数约束
     <table style="undefined;table-layout: fixed;  width: 1380px">
         <colgroup>
-            <col style="width: 12px">
             <col style="width: 200px">
             <col style="width: 150px">
             <col style="width: 100px">
-            <col style="width: 150px">
+            <col style="width: 160px">
             <col style="width: 380px">
             <col style="width: 280px">
         </colgroup>
         <thead>
             <tr>
-                <th>分离/不分离</th>
                 <th>量化方式</th>
                 <th>KV数据类型</th>
                 <th>场景</th>
-                <th>antiquantMode/keyAntiquantMode和valueAntiquantMode</th>
-                <th>antiquantSacle/keyAntiquantScale和valueAntiquantScale</th>
-                <th>antiquantOffset/keyAntiquantOffset和valueAntiquantOffset</th>
+                <th>keyAntiquantMode和valueAntiquantMode</th>
+                <th>keyAntiquantScale和valueAntiquantScale</th>
+                <th>keyAntiquantOffset和valueAntiquantOffset</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td rowspan="2">不分离</td>
-                <td>per-channel（per-tensor）</td>
-                <td rowspan="2">仅支持kv_dtype为INT8</td>
-                <td rowspan="2">-</td>
-                <td>0</td>
-                <td>
-                    <ul>
-                        <li>per-channel模式：shape可支持(2, N, 1, D)，(2, N, D)，(2, H)，N为numKeyValueHeads。参数数据类型和query数据类型相同</li>
-                        <li>per-tensor模式,shape为(2)，数据类型和query数据类型相同</li>
-                    </ul>
-                </td>
-                <td rowspan="2">
-                    <ul>
-                        <li>非对称量化模式下， antiquantScale和antiquantOffset参数需同时存在。shape、数据类型和antiquantSacle保持一致</li>
-                        <li>对称量化模式下，antiquantOffset可以为空（即nullptr）</li>
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <td>per-token</td>
-                <td>1</td>
-                <td>shape为(2, B, S), 数据类型固定为FLOAT32</td>
-            </tr>
-            <tr>
-                <td rowspan="11">分离</td>
                 <td rowspan="2">per-channel（per-tensor）</td>
                 <td rowspan="2">支持kv_dtype为INT8、INT4(INT32)、HIFLOAT8、FLOAT8_E4M3FN</td>
                 <td>Q_S>1</td>
@@ -1375,8 +1329,6 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 </td>
                 <td rowspan="10">
                     <ul>
-                        <li>非对称量化模式下， antiquantScale和antiquantOffset参数需同时存在。shape、数据类型和antiquantSacle保持一致</li>
-                        <li>对称量化模式下，antiquantOffset可以为空（即nullptr）</li>
                         <li>keyAntiquantOffset 和 valueAntiquantOffset要么都为空，要么都不为空</li>
                         <li>
                             keyAntiquantOffset 和 valueAntiquantOffset都不为空时：
@@ -1449,13 +1401,12 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td>-</td>
                 <td>6</td>
                 <td>shape为(1, B, N, S, D/32)，数据类型固定为FLOAT8_E8M0</td>
-                <td>不支持带antiquantOffset</td>
             </tr>
             <tr>
                 <td colspan="8">
                     <ul>
-                        <li>当伪量化参数 和 KV分离量化参数同时传入时，以KV分离量化参数为准</li>
-                        <li>INT4（INT32）、FLOAT4_E2M1伪量化场景不支持后量化</li>
+                        <li>INT4(INT32)、FLOAT4_E2M1伪量化场景不支持后量化</li>
+                        <li>INT8伪量化场景下，当keyAntiquantMode=0且valueAntiquantMode=1时，query和output仅支持FP16</li>
                     </ul>
                 <td>
             <tr>
@@ -1543,13 +1494,13 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                 <td>pseShift</td>
             </tr>
             <tr>
-                <td>antiquantScale、antiquantOffset（keyAntiquantScale、keyAntiquantOffset、valueAntiquantScale、valueAntiquantOffset）
+                <td>keyAntiquantScale、keyAntiquantOffset、valueAntiquantScale、valueAntiquantOffset
                 </td>
                 <td>
                     <ul>
                         <li>伪量化per-token模式、伪量化per-token叠加per-head模式antiquantScale和antiquantOffset输入最后一维需要大于等于maxBlockNumPerSeq
                             * blockSize</li>
-                        <li>伪量化per-token-group模式，antiquantScale输入最后一维需要大于等于maxBlockNumPerSeq * blockSize</li>
+                        <li>伪量化per-token-group模式，keyAntiquantScale/valueAntiquantScale输入最后一维需要大于等于maxBlockNumPerSeq * blockSize</li>
                     </ul>
                 </td>
                 <td>-</td>
