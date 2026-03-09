@@ -210,8 +210,8 @@ aclnnStatus aclnnMoeInitRoutingV3(
       <td>x</td>
       <td>输入</td>
       <td>MOE的输入，即token特征输入</td>
-      <td>shape为(NUM_ROWS, H)</td>
-      <td>FLOAT16、BFLOAT16、FLOAT32、INT8</td>
+      <td>shape为(NUM_ROWS, H)，quantMode=6时支持输入类型为HIFLOAT8</td>
+      <td>FLOAT16、BFLOAT16、FLOAT32、INT8、HIFLOAT8</td>
       <td>ND</td>
       <td>2</td>
       <td>-</td>
@@ -328,7 +328,7 @@ aclnnStatus aclnnMoeInitRoutingV3(
       <td>quantMode</td>
       <td>输入</td>
       <td>表示不同量化场景</td>
-      <td>取值为0、1、-1、2、3（不同产品支持情况有差异，见表后描述）
+      <td>取值为0、1、-1、2、3、6、7、8（不同产品支持情况有差异，见表后描述）
         <br>0：表示静态 quant 场景;
         <br>1：表示动态 quant 场景;
         <br>-1：表示不量化场景;
@@ -373,9 +373,9 @@ aclnnStatus aclnnMoeInitRoutingV3(
         <li>Dropless场景shape为[NUM_ROWS * K, H]。</li>
         <li>Active场景shape为[min(activeNum, NUM_ROWS * K), H]。</li>
         <li>Drop/Pad场景下要求是一个3D的Tensor，shape为[expertNum, expertCapacity, H]。</li>
-        <li>非量化场景下数据类型同x，量化场景quantMode为0、1时数据类型支持INT8，quantMode为2、3时数据类型分别支持FLOAT8_E5M2、FLOAT8_E4M3FN。</li>
+        <li>非量化场景下数据类型同x，量化场景quantMode为0、1时数据类型支持INT8，quantMode为2、3时数据类型分别支持FLOAT8_E5M2、FLOAT8_E4M3FN，quantMode为6、7、8时数据类型支持HIFLOAT8。</li>
       </ul></td>
-      <td>FLOAT16、BFLOAT16、FLOAT32、INT8、FLOAT8_E5M2、FLOAT8_E4M3FN</td>
+      <td>FLOAT16、BFLOAT16、FLOAT32、INT8、FLOAT8_E5M2、FLOAT8_E4M3FN、HIFLOAT8</td>
       <td>ND</td>
       <td>2</td>
       <td>-</td>
@@ -418,7 +418,7 @@ aclnnStatus aclnnMoeInitRoutingV3(
         <li>静态量化场景下不输出。</li>
         <li>MXFP8量化场景下，输出FLOAT8_E8M0类型，Shape为[NUM_ROWS*K, M]，其中M=CeilAlign(CeilDiv(H,32),2)，NUM_ROWS*K的前availableIdxNum行为有效数据。</li>
         <li>HIF直转8量化场景下，输出FLOAT32类型，Shape为[NUM_ROWS*K, ]，当scaleOptional输入时，前availableIdxNum个元素为有效数据。</li>
-          <li>HIF8 PERTENSOR量化场景下，expandedScaleOut不输出。</li>
+        <li>HIF8 PERTENSOR量化场景下，expandedScaleOut不输出。</li>
         <li>HIF8 PERTOKEN量化场景下，输出FLOAT32类型，Shape为[NUM_ROWS*K, 1]。</li></ul>
       </td>
       <td>FLOAT32、FLOAT8_E8M0</td>
