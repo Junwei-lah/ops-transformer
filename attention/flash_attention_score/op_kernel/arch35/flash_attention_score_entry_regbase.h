@@ -26,8 +26,8 @@
     do {                                                                                                       \
         __gm__ uint8_t *user = GetUserWorkspace(workspace);                                                    \
         TPipe tPipe;                                                                                           \
-        using CubeBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FABlockCube<__VA_ARGS__>, BaseApi::FABlockCubeDummy<__VA_ARGS__>>::type; \
-        using VecBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FABlockVecDummy<__VA_ARGS__>, BaseApi::FABlockVecTrain<__VA_ARGS__>>::type; \
+        using CubeBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FANoQuantBlockCube<__VA_ARGS__>, BaseApi::FANoQuantBlockCubeDummy<__VA_ARGS__>>::type; \
+        using VecBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FANoQuantBlockVecDummy<__VA_ARGS__>, BaseApi::FANoQuantBlockVecTrain<__VA_ARGS__>>::type; \
         templateClass<CubeBlockType, VecBlockType> op;                                                         \
         op.InitBaseAPI(query, key, value, pse, dropMask, paddingMask, attenMask, prefix, actualSeqLengths,     \
                 actualSeqLengthsKv, nullptr, nullptr, nullptr, deqScaleQ, deqScaleK, deqScaleV, pScale, nullptr,       \
@@ -52,8 +52,8 @@
             dropMaskAdapter.Process();                                                                         \
             tPipe.Reset();                                                                                     \
         }                                                                                                      \
-        using CubeBlockType = typename BaseApi::FABlockCube<__VA_ARGS__>;                                      \
-        using VecBlockType = typename BaseApi::FABlockVecTrain<__VA_ARGS__>;                                   \
+        using CubeBlockType = typename BaseApi::FANoQuantBlockCube<__VA_ARGS__>;                                      \
+        using VecBlockType = typename BaseApi::FANoQuantBlockVecTrain<__VA_ARGS__>;                                   \
         templateClass<CubeBlockType, VecBlockType> op;                                                         \
         op.InitBaseAPI(query, key, value, pse, dropMask, paddingMask, attenMask, prefix, actualSeqLengths,     \
                 actualSeqLengthsKv, nullptr, nullptr, nullptr, deqScaleQ, deqScaleK, deqScaleV, pScale, nullptr,       \
@@ -73,8 +73,8 @@
             dropMaskAdapter.Process();                                                                         \
             tPipe.Reset();                                                                                     \
         }                                                                                                      \
-        using CubeBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FABlockCube<__VA_ARGS__>, BaseApi::FABlockCubeDummy<__VA_ARGS__>>::type; \
-        using VecBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FABlockVecDummy<__VA_ARGS__>, BaseApi::FABlockVecTrain<__VA_ARGS__>>::type; \
+        using CubeBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FANoQuantBlockCube<__VA_ARGS__>, BaseApi::FANoQuantBlockCubeDummy<__VA_ARGS__>>::type; \
+        using VecBlockType = typename std::conditional<g_coreType == AscendC::AIC, BaseApi::FANoQuantBlockVecDummy<__VA_ARGS__>, BaseApi::FANoQuantBlockVecTrain<__VA_ARGS__>>::type; \
         templateClass<CubeBlockType, VecBlockType> op;                                                         \
         op.InitBaseAPI(query, key, value, pse, dropMask, paddingMask, attenMask, prefix, actualSeqLengths,     \
                 actualSeqLengthsKv, nullptr, nullptr, nullptr, deqScaleQ, deqScaleK, deqScaleV, pScale, nullptr,       \

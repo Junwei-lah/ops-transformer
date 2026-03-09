@@ -19,7 +19,7 @@
 #include "attenmask.h"
 #include "pse.h"
 #include "flash_attention_block_cube_noquant_mla.h"
-#include "flash_attention_score_block_vec_infer.h"
+#include "flash_attention_noquant_block_vec_infer.h"
 
 using namespace fa_base_matmul;
 
