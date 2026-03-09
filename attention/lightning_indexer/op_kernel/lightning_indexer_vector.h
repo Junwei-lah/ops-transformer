@@ -388,6 +388,7 @@ __aicore__ inline void SparseTopK(const LocalTensor<float> &dst, const LocalTens
     srcList.src2 = needsMerging;
     // 执行合并排序
     AscendC::MrgSort<float>(tmp, srcList, params);
+    AscendC::PipeBarrier<PIPE_V>();
     // 将结果复制到目标张量
     AscendC::DataCopy(dst, tmp, topk * VALUE_AND_INDEX_NUM);
 }
