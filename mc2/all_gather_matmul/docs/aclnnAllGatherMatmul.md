@@ -166,7 +166,7 @@ aclnnStatus aclnnAllGatherMatmul(
         <td>gatherOut</td>
         <td>输出</td>
         <td>仅输出AllGather通信后的结果，即计算公式中的gatherOut。</td>
-        <td><ul><li>支持空Tensor。</li><li>与x1的数据类型保持一致。</li></ul></td>
+        <td><ul><li>与x1的数据类型保持一致。</li></ul></td>
         <td>FLOAT16、BFLOAT16</td>
         <td>ND</td>
         <td>2</td>
@@ -289,7 +289,6 @@ aclnnStatus aclnnAllGatherMatmul(
 - <term>Ascend 950PR/Ascend 950DT</term>：
   - 支持2、4、8、16、32、64卡，并且仅支持HCCS链路all mesh组网。
   - allgather(x1)集合通信数据总量不能超过16*256MB，集合通信数据总量计算方式为：m * k * sizeof(x1_dtype) * 卡数。由于shape不同，算子内部实现可能存在差异，实际支持的总通信量可能略小于该值。
-- <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：一个模型中的通算融合MC2算子，仅支持相同通信域。
 
 ## 调用示例
 
