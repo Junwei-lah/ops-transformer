@@ -197,6 +197,7 @@ struct RunInfo<true> {
     uint64_t pseShiftOffset;              // vector1 pse 的 offset
     int64_t queryLeftPaddingSize;
     int64_t kvLeftPaddingSize;
+    int64_t actualSeqLengthOfMlaPerBatch = 0; // 在mla场景下Q的actualSeqLength
     // lse 输出offset
     int64_t softmaxLseOffset;
 

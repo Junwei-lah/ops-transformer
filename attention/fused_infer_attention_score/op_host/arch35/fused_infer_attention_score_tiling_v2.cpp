@@ -759,7 +759,7 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
     int64_t t = 0;
     bool lseFlag = *attrs->GetAttrPointer<bool>(SOFTMAX_LSE_FLAG_INDEX);
     bool usingIFA = false;
-    if (inputLayoutStr == "BNSD" || inputLayoutStr == "BNSD_BSND") {
+    if (inputLayoutStr == "BNSD" || inputLayoutStr == "BNSD_BSND" || inputLayoutStr == "BNSD_NBSD") {
         s = tempQ->GetStorageShape().GetDim(QUERY_DIM_2);
     } else if (inputLayoutStr == "TND" || inputLayoutStr == "TND_NTD") {
         if (isMaxWorkspace) {

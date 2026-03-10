@@ -53,6 +53,7 @@ struct AttenMaskInfo {
     GM_ADDR prefixNAddr;
     int64_t attenMaskOffsetPre;
     AttenMaskComputeMode computeMode = AttenMaskComputeMode::NORMAL_MODE;
+    int64_t attenMaskS1Offset;
 };
 
 template <bool isInfer = false, bool hasRope = false>
@@ -182,7 +183,7 @@ __aicore__ inline int64_t ComputeOffsetForNoCompress(const RunInfo<isInfer> &run
                 s1Offset = s1Offset % constInfo.s1Size; 
             } else if (hasRope && (dTemplateType == DTemplateType::Aligned576)) {
                 if (constInfo.layoutType == (uint32_t)LayOutTypeEnum::LAYOUT_BNSD) {
-                    s1Offset = 0;
+                    s1Offset = attenMaskInfo.attenMaskS1Offset;
                 } else {
                     s1Offset = s1Offset / constInfo.gSize;
                 }
@@ -430,7 +431,7 @@ __aicore__ inline int64_t ComputeAttenMaskInnerOffset(const RunInfo<isInfer> &ru
         }
         if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576) && isInfer) {
             if (constInfo.layoutType == (uint32_t)LayOutTypeEnum::LAYOUT_BNSD) {
-                s1Offset = 0;
+                s1Offset = attenMaskInfo.attenMaskS1Offset;
             } else {
                 if (runInfo.nextTokensPerBatch < 0) {
                     s1Offset -= runInfo.nextTokensPerBatch;

@@ -107,6 +107,7 @@ private:
     __aicore__ inline void InitLseOutputSingleCore(ConstInfo<isInfer, hasRope> &constInfo);
     __aicore__ inline void GetActualSeqLenKV(ConstInfo<isInfer, hasRope> &constInfo, GlobalTensor<INPUT_T> &keyGm, 
         __gm__ int64_t *actualSeqKvlenAddr, int64_t boIdx, int64_t &actualSeqKvLen);
+    __aicore__ inline void MlaBnsdWithActqLseCopyOut(LocalTensor<float> &lseUb, RunInfo<isInfer> &runInfo, ConstInfo<isInfer, hasRope> &constInfo, DataCopyExtParams &intriParams1);
     __aicore__ inline void SoftmaxLseCopyOut(LocalTensor<float> &softmaxSumTmp, LocalTensor<float> &softmaxMaxTmp,
                                              RunInfo<isInfer> &runInfo, ConstInfo<isInfer, hasRope> &constInfo);
     __aicore__ inline void CombineSplitKVRes(ConstInfo<isInfer, hasRope> &constInfo, uint64_t attenOutOffset, uint32_t bIdx, uint32_t n2Idx);
@@ -504,6 +505,52 @@ __aicore__ inline void FANoQuantBlockVecInfer<TEMPLATE_ARGS>::GetActualSeqLenKV(
 }
 
 TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void FANoQuantBlockVecInfer<TEMPLATE_ARGS>::MlaBnsdWithActqLseCopyOut(LocalTensor<float> &lseUb, 
+    RunInfo<isInfer> &runInfo, ConstInfo<isInfer, hasRope> &constInfo, DataCopyExtParams &intriParams1)
+{
+    int64_t gIdxStart = 0;
+    int64_t s1IdxStart = 0;
+    int64_t gIdxEnd = 0;
+    int64_t s1IdxEnd = 0;
+    // 处理第一个S
+    uint32_t headS1 = 0;
+    uint32_t needDealHeadS1 = 0;
+    this->MlaBnsdWithActqPreProcess(runInfo, constInfo, gIdxStart, s1IdxStart, 
+        gIdxEnd, s1IdxEnd, headS1, needDealHeadS1);
+                                       
+    int64_t startOffset = 0;             // gm起始位置偏移
+    int64_t startOffsetOfUb = 0;         // ub起始位置偏移
+    int64_t dealedCount = 0;             // 已处理的行数
+ 
+    // 下面DataCopyPad需要注意blockCount不能为0
+    if (needDealHeadS1 > 0) {
+        intriParams1.blockCount = static_cast<uint16_t>(needDealHeadS1);
+        DataCopyPad(this->softmaxLseGm[runInfo.softmaxLseOffset + startOffset], lseUb[startOffsetOfUb], intriParams1);
+    }
+    if (gIdxEnd != gIdxStart) {
+        startOffset = headS1;
+        startOffsetOfUb = headS1 * 8; // 8：fp32对齐
+        dealedCount += headS1;
+        intriParams1.blockCount = static_cast<uint16_t>(runInfo.actualSeqLengthOfMlaPerBatch);
+        for (int64_t i = 1; i * constInfo.s1Size + headS1 <= runInfo.halfS1RealSize; i++) {
+            DataCopyPad(this->softmaxLseGm[runInfo.softmaxLseOffset + startOffset], lseUb[startOffsetOfUb], intriParams1);
+            startOffset += constInfo.s1Size;
+            startOffsetOfUb += constInfo.s1Size * 8; // 8：fp32对齐
+            dealedCount += constInfo.s1Size;
+        }
+        if (runInfo.vec2S1RealSize - dealedCount > 0) {
+            int64_t tmpBlockCount = runInfo.vec2S1RealSize - dealedCount;
+            tmpBlockCount = tmpBlockCount < runInfo.actualSeqLengthOfMlaPerBatch ?
+                tmpBlockCount : runInfo.actualSeqLengthOfMlaPerBatch;
+            if (tmpBlockCount > 0) {
+                intriParams1.blockCount = static_cast<uint16_t>(tmpBlockCount);
+                DataCopyPad(this->softmaxLseGm[runInfo.softmaxLseOffset + startOffset], lseUb[startOffsetOfUb], intriParams1);
+            }
+        }
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void FANoQuantBlockVecInfer<TEMPLATE_ARGS>::SoftmaxLseCopyOut(
     LocalTensor<float> &softmaxSumTmp, LocalTensor<float> &softmaxMaxTmp, RunInfo<isInfer> &runInfo, ConstInfo<isInfer, hasRope> &constInfo)
 {
@@ -555,7 +602,11 @@ __aicore__ inline void FANoQuantBlockVecInfer<TEMPLATE_ARGS>::SoftmaxLseCopyOut(
             tmpSoftmaxLseOffset = ++oSoftmaxLseOffset;
         }
     } else {
-        DataCopyPad(this->softmaxLseGm[runInfo.softmaxLseOffset], lseUb, intriParams1);
+        if (isMlaNoQuant && layout == LayOutTypeEnum::LAYOUT_BNSD && !constInfo.isActualLenDimsNull) {
+            MlaBnsdWithActqLseCopyOut(lseUb, runInfo, constInfo, intriParams1);
+        } else {
+            DataCopyPad(this->softmaxLseGm[runInfo.softmaxLseOffset], lseUb, intriParams1);
+        }
     }
     softmaxLseQueue.FreeTensor(lseUb);
 }

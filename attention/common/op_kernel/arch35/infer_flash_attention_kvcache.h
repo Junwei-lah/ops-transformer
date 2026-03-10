@@ -549,8 +549,8 @@ __aicore__ inline void LoopSOuterOffsetInit(RunParamStr<isInfer>& runParam, cons
 
                 if (constInfo.subBlockIdx == 1) {
                     int64_t firstCurGIdx = curGIdx;
-                    curGIdx = (firstCurGIdx + runParam.halfS1RealSize) % constInfo.gSize;
-                    curS1Idx += (firstCurGIdx + runParam.halfS1RealSize) / constInfo.gSize;
+                    curGIdx = (firstCurGIdx + runParam.firstHalfS1RealSize) % constInfo.gSize;
+                    curS1Idx += (firstCurGIdx + runParam.firstHalfS1RealSize) / constInfo.gSize;
                 }
 
                 runParam.attentionOutOffset = attentionOutSeqOffset + // b
@@ -867,6 +867,7 @@ __aicore__ inline void InitTaskParamByRun(const RunParamStr<isInfer>& runParam, 
     if constexpr (hasRope && (dTemplateType == DTemplateType::Aligned576)) { // IFA MLA
         runInfo.nextTokensOfMlaPerBatch = runParam.nextTokensOfMlaPerBatch;
         runInfo.preTokensOfMlaPerBatch = runParam.preTokensOfMlaPerBatch;
+        runInfo.actualSeqLengthOfMlaPerBatch = runParam.actualSeqLengthOfMlaPerBatch;
     }
 }
 
