@@ -1150,6 +1150,15 @@ while [[ $# -gt 0 ]]; do
         CLANG="true"
         shift
         ;;
+    --tiling-key|--tiling_key)	 
+        TILING_KEY="$2" 
+        shift 2 
+        ;; 
+    --tiling_key=*) 
+        OPTARG=$1	 
+        TILING_KEY=${OPTARG#*=}	 
+        shift	 
+        ;;
     --kernel_template_input=*)
         OPTARG=$1
         KERNEL_TEMPLATE_INPUT=${OPTARG#*=}
@@ -1411,6 +1420,10 @@ if [ -n "${EXAMPLE}" ];then
     CUSTOM_OPTION="${CUSTOM_OPTION} -DTESTS_EXAMPLE_OPS_TEST=${EXAMPLE}"
 
     BUILD=ops_test_example
+fi
+
+if [ -n "${TILING_KEY}" ];then	 
+    CUSTOM_OPTION="${CUSTOM_OPTION} -DTILING_KEY=${TILING_KEY}"	 
 fi
 
 if [ -n "${KERNEL_TEMPLATE_INPUT}" ];then
