@@ -259,7 +259,7 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::ProcessVec1(
     } else if constexpr (useNz) {
         ProcessVec1Nz(outputBuf, bmm1ResBuf, runInfo, constInfo);
     } else {
-    ProcessVec1Nd(outputBuf, bmm1ResBuf, runInfo, constInfo);
+        ProcessVec1Nd(outputBuf, bmm1ResBuf, runInfo, constInfo);
     }
 }
 
@@ -516,12 +516,12 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::BroadCastAnd
         WaitFlag<HardEvent::V_MTE3>(v2Mte3Id);
         DataCopy(sumGm[gmOffset], sumTensor, calculateSize);
     } else {
-    LocalTensor<float> sumOutTensor = sumBrdcst.template AllocTensor<float>();
-    FaVectorApi::BroadcastMaxSum(sumOutTensor, sumTensor, runInfo.halfS1RealSize);
-    sumBrdcst.template EnQue(sumOutTensor);
-    sumBrdcst.template DeQue<float>();
-    DataCopy(sumGm[gmOffset], sumOutTensor, calculateSize);
-    sumBrdcst.template FreeTensor(sumOutTensor);
+        LocalTensor<float> sumOutTensor = sumBrdcst.template AllocTensor<float>();
+        FaVectorApi::BroadcastMaxSum(sumOutTensor, sumTensor, runInfo.halfS1RealSize);
+        sumBrdcst.template EnQue(sumOutTensor);
+        sumBrdcst.template DeQue<float>();
+        DataCopy(sumGm[gmOffset], sumOutTensor, calculateSize);
+        sumBrdcst.template FreeTensor(sumOutTensor);
     }
 
     // Copy max to gm
@@ -534,13 +534,13 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::BroadCastAnd
         DataCopy(maxGm[gmOffset], maxOutTensor, calculateSize);
         maxBrdcst.template FreeTensor(maxOutTensor);
     } else {
-    LocalTensor<float> maxTensor = softmaxMaxBuf[runInfo.multiCoreIdxMod3].template Get<float>();
-    FaVectorApi::BroadcastMaxSum(maxOutTensor, maxTensor, runInfo.halfS1RealSize);
-    maxBrdcst.template EnQue(maxOutTensor);
-    maxBrdcst.template DeQue<float>();
-    DataCopy(maxGm[gmOffset], maxOutTensor, calculateSize);
-    maxBrdcst.template FreeTensor(maxOutTensor);
-}
+        LocalTensor<float> maxTensor = softmaxMaxBuf[runInfo.multiCoreIdxMod3].template Get<float>();
+        FaVectorApi::BroadcastMaxSum(maxOutTensor, maxTensor, runInfo.halfS1RealSize);
+        maxBrdcst.template EnQue(maxOutTensor);
+        maxBrdcst.template DeQue<float>();
+        DataCopy(maxGm[gmOffset], maxOutTensor, calculateSize);
+        maxBrdcst.template FreeTensor(maxOutTensor);
+    }
 }
 
 TEMPLATES_DEF_BASE_NO_DEFAULT
@@ -905,8 +905,8 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::ProcessVec2O
                     uint32_t deScaleKvOffset = (runInfo.deScaleKvOffset - 1 < 0) ? 0 : runInfo.deScaleKvOffset - 1;
                     deSCalePreVValue = this->deScaleVGm.GetValue(deScaleKvOffset);
                 } else {
-                if constexpr (isMlaFullQuant) {
-                    deSCalePreVValue = this->deScaleVGm.GetValue(0);
+                    if constexpr (isMlaFullQuant) {
+                        deSCalePreVValue = this->deScaleVGm.GetValue(0);
                     } else {
                         if (((runInfo.s2StartIdx >> 7) + runInfo.s2LoopCount + runInfo.s2StartIdx / s2BaseSize) & 1) {   // 7：KV基本块大小128，按照256分块计算deScaleKv偏移
                             deSCalePreVValue = this->deScaleVGm.GetValue(runInfo.deScaleKvOffset);
@@ -1206,20 +1206,20 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::ProcessVec2(
                         if constexpr (useDn) {
                             deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
                         } else {
-                        if (((runInfo.s2StartIdx >> 7) + runInfo.s2LoopCount + runInfo.s2StartIdx / s2BaseSize) & 1) {
-                            deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset);
-                        } else {
-                            deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
+                            if (((runInfo.s2StartIdx >> 7) + runInfo.s2LoopCount + runInfo.s2StartIdx / s2BaseSize) & 1) {
+                                deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset);
+                            } else {
+                                deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
                             }
                         }
                     } else {
                         if constexpr (useDn) {
                             deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
-                    } else {
-                        if (((runInfo.s2StartIdx >> 7) + runInfo.s2LoopCount) & 1) {
-                            deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset);
                         } else {
-                            deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
+                            if (((runInfo.s2StartIdx >> 7) + runInfo.s2LoopCount) & 1) {
+                                deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset);
+                            } else {
+                                deSCalePreVValue = deScaleVGm.GetValue(runInfo.deScaleKvOffset - 1);
                             }
                         }
                     }
@@ -1571,31 +1571,31 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::InitLocalBuf
             }
         }
     } else { 
-    SoftmaxInitBuffer();
-    if constexpr (isMlaFullQuant) {
+        SoftmaxInitBuffer();
+        if constexpr (isMlaFullQuant) {
             if constexpr (!useDn) {
-        if constexpr (hasPseOuter) {
-            if constexpr (IsSameType<INPUT_T, float>::value) {
-                tPipe->InitBuffer(pseInQue, 1, 32768);
+                if constexpr (hasPseOuter) {
+                    if constexpr (IsSameType<INPUT_T, float>::value) {
+                        tPipe->InitBuffer(pseInQue, 1, 32768);
+                    } else {
+                        tPipe->InitBuffer(pseInQue, 1, 16384);
+                    }
+                }
+
+                if constexpr (hasAtten) {
+                    tPipe->InitBuffer(attenMaskInQue[0], 1, 4096); // 4096: GS1方向需要循环处理，一个vector计算softmax的数据量最大为32*128，对应mask(bool/int8/uint8)的数据量为4096Bytes
+                    tPipe->InitBuffer(attenMaskInQue[1], 1, 4096); // 4096：同上
+                }
+
+                tPipe->InitBuffer(commonTBuf, 512); // 实际只需512Bytes
+            }
+            if constexpr (bmm2Write2Ub) {
+                tPipe->InitBuffer(stage2OutBuf, 64 / CV_RATIO * dTemplateAlign64 * sizeof(T)); // 64: s1RealSize
             } else {
-                tPipe->InitBuffer(pseInQue, 1, 16384);
+                tPipe->InitBuffer(stage2OutBuf, 32768);
             }
-        }
-
-        if constexpr (hasAtten) {
-            tPipe->InitBuffer(attenMaskInQue[0], 1, 4096); // 4096: GS1方向需要循环处理，一个vector计算softmax的数据量最大为32*128，对应mask(bool/int8/uint8)的数据量为4096Bytes
-            tPipe->InitBuffer(attenMaskInQue[1], 1, 4096); // 4096：同上
-        }
-
-        tPipe->InitBuffer(commonTBuf, 512); // 实际只需512Bytes
-            }
-        if constexpr (bmm2Write2Ub) {
-            tPipe->InitBuffer(stage2OutBuf, 64 / CV_RATIO * dTemplateAlign64 * sizeof(T)); // 64: s1RealSize
-        } else {
-            tPipe->InitBuffer(stage2OutBuf, 32768);
-        }
-        tPipe->InitBuffer(stage1OutQue[0], 1, 4224); // 4224: (s1BaseSize / CV_RATIO + 1) * s2BaseSize * sizeof(INPUT_T)
-        tPipe->InitBuffer(stage1OutQue[1], 1, 4224); // 4224: 同上
+            tPipe->InitBuffer(stage1OutQue[0], 1, 4224); // 4224: (s1BaseSize / CV_RATIO + 1) * s2BaseSize * sizeof(INPUT_T)
+            tPipe->InitBuffer(stage1OutQue[1], 1, 4224); // 4224: 同上
         } else if constexpr (useNz) {
             tPipe->InitBuffer(commonTBuf, 512);
             tPipe->InitBuffer(stage2OutBuf, 32768);

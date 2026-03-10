@@ -30,7 +30,8 @@ using namespace fa_base_matmul;
 namespace BaseApi {
 namespace BlockCubeMlaFullquant {
 template <LayOutTypeEnum LAYOUT>
-__aicore__ inline constexpr GmFormat GetQueryGmFormat() {
+__aicore__ inline constexpr GmFormat GetQueryGmFormat()
+{
     if constexpr (LAYOUT == LayOutTypeEnum::LAYOUT_BSH) {
         return GmFormat::BSNGD;
     } else if constexpr (LAYOUT == LayOutTypeEnum::LAYOUT_SBH) {
@@ -45,7 +46,8 @@ __aicore__ inline constexpr GmFormat GetQueryGmFormat() {
 }
 
 template <LayOutTypeEnum LAYOUT>
-__aicore__ inline constexpr GmFormat GetKVGmFormat() {
+__aicore__ inline constexpr GmFormat GetKVGmFormat()
+{
     if constexpr (LAYOUT == LayOutTypeEnum::LAYOUT_BSH) {
         return GmFormat::BSND;
     } else if constexpr (LAYOUT == LayOutTypeEnum::LAYOUT_SBH) {
@@ -303,7 +305,8 @@ __aicore__ inline void FABlockCubeMlaFullquant<TEMPLATE_ARGS>::InitCubeInput(
 }
 
 TEMPLATES_DEF_NO_DEFAULT
-__aicore__ inline void FABlockCubeMlaFullquant<TEMPLATE_ARGS>::InitLocalBuffer() {
+__aicore__ inline void FABlockCubeMlaFullquant<TEMPLATE_ARGS>::InitLocalBuffer()
+{
     if constexpr (isMlaFullQuant) {
         constexpr uint32_t dRopeBaseSize = dBaseSize - dVBaseSize;
         constexpr uint32_t mm1QSize = s1BaseSize * dVBaseSize * sizeof(INPUT_T);
