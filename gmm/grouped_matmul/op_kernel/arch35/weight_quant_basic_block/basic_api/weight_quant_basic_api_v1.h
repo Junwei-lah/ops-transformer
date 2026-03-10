@@ -41,7 +41,8 @@ namespace WeightQuantBatchMatmulV2::Arch35 {
 struct BasicApiParamsV1 {
     uint64_t isBias;
     uint64_t gmKOffset;
-    uint64_t l1KSize;
+    uint64_t l1KaSize;
+    uint64_t l1KbSize;
     uint64_t l0NSize;
     uint64_t l0MSize;
 };
@@ -115,9 +116,9 @@ __aicore__ inline void WQBMM_BASIC_API_V1_CLASS::Iterate(bool isLastGmK, bool is
                                                          const BasicApiParamsV1 &basicApiParams)
 {
     uint64_t l0KSize = (basicApiParams.l0MSize <= 128 && basicApiParams.l0NSize <= 128) ? 256 : 128;
-    for (uint64_t l1KOffset = 0; l1KOffset < basicApiParams.l1KSize; l1KOffset += l0KSize) {
-        bool isLastL1K = l1KOffset + l0KSize >= basicApiParams.l1KSize;
-        uint64_t realL0k = isLastL1K ? basicApiParams.l1KSize - l1KOffset : l0KSize;
+    for (uint64_t l1KOffset = 0; l1KOffset < basicApiParams.l1KbSize; l1KOffset += l0KSize) {
+        bool isLastL1K = l1KOffset + l0KSize >= basicApiParams.l1KbSize;
+        uint64_t realL0k = isLastL1K ? basicApiParams.l1KbSize - l1KOffset : l0KSize;
         uint64_t loopId = l0LoopIdx_ % L0_BUF_NUM; // 等价于 l0LoopIdx_ % L0_BUF_NUM，减少scalar
         WaitFlag<HardEvent::M_MTE1>(eventIdMToMte1_ + loopId);
         LoadAL1ToL0A(realL0k, loopId, l1KOffset, basicApiParams, aL1, aMxScaleL1);
@@ -139,7 +140,8 @@ __aicore__ inline void WQBMM_BASIC_API_V1_CLASS::LoadAL1ToL0A(uint64_t baseK, ui
 {
     AscendC::LoadData2DParamsV2 aL0Load2dParams;
     aL0Load2dParams.mStartPosition = 0;
-    aL0Load2dParams.kStartPosition = CeilDivide(static_cast<uint64_t>(l1KOffset * sizeof(xType)), 32UL); // 单位32B
+    aL0Load2dParams.kStartPosition =
+        CeilDivide((l1KOffset + basicApiParams.gmKOffset) % basicApiParams.l1KaSize * sizeof(xType), 32UL); // 单位32B
     aL0Load2dParams.mStep =
         CeilDivide(basicApiParams.l0MSize, static_cast<uint64_t>(AscendC::BLOCK_CUBE)); // 单位16元素
     aL0Load2dParams.kStep = CeilDivide(baseK, 32UL);                                    // 单位32B

@@ -67,9 +67,6 @@ struct BasicBlockOffsetParam {
     uint64_t kAlign;
     uint64_t nAlign;
 
-    int8_t scaleAFactor;
-    int8_t scaleBFactor;
-
     GM_ADDR yGmAddr;
 };
 

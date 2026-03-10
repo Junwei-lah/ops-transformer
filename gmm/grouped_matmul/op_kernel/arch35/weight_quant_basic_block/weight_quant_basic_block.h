@@ -307,22 +307,22 @@ GMM_WQ_BASIC_BLOCK_TEMPLATE_PARAM
 __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::ComputeBasicBlockAic(const BasicBlockOffsetParam &offsetParam)
 {
     // 当前方案下，不会出现N方向计算量小于载入量的情况，所以没有N的循环
-    for (uint64_t kbL1Offset = 0; kbL1Offset < offsetParam.kSize; kbL1Offset += offsetParam.kbL1Size, cvLoopIdx_++) {
-        uint64_t kbL1RealSize = (kbL1Offset + offsetParam.kbL1Size) >= offsetParam.kSize
-                                    ? offsetParam.kSize - kbL1Offset
+    for (uint64_t kbGmOffset = 0; kbGmOffset < offsetParam.kSize; kbGmOffset += offsetParam.kbL1Size, cvLoopIdx_++) {
+        uint64_t kbL1RealSize = (kbGmOffset + offsetParam.kbL1Size) >= offsetParam.kSize
+                                    ? offsetParam.kSize - kbGmOffset
                                     : offsetParam.kbL1Size;
         if constexpr (IsMxA8W4<xType, wqmmConfig.antiQuantType>()) {
-            cubeCompute_.WaitScaleMTE1ToMTE2(kbL1Offset);
-            cubeCompute_.CopyMxScaleGmToL1(offsetParam, kbL1Offset, cvLoopIdx_);
+            cubeCompute_.WaitScaleMTE1ToMTE2(kbGmOffset);
+            cubeCompute_.CopyMxScaleGmToL1(offsetParam, kbGmOffset);
         }
-        cubeCompute_.WaitMTE1ToMTE2(cvLoopIdx_);
-        cubeCompute_.CopyAAndBiasGmToL1(offsetParam, kbL1Offset, kbL1RealSize, offsetParam.nL1Size, cvLoopIdx_);
+        cubeCompute_.WaitMTE1ToMTE2(kbGmOffset, offsetParam);
+        cubeCompute_.CopyAAndBiasGmToL1(offsetParam, kbGmOffset, cvLoopIdx_);
         WaitAivToAic();
-        cubeCompute_.LaunchMatmul(weightL1_[(cvLoopIdx_ & 1) * weightL1DbOffset_], kbL1Offset, kbL1RealSize,
-                                  offsetParam, cvLoopIdx_);  // mte1 mmad fixp流水
-        cubeCompute_.SetMTE1ToMTE2(cvLoopIdx_);
+        cubeCompute_.LaunchMatmul(weightL1_[(cvLoopIdx_ & 1) * weightL1DbOffset_], kbGmOffset, kbL1RealSize, cvLoopIdx_,
+                                  offsetParam); // mte1 mmad fixp流水
+        cubeCompute_.SetMTE1ToMTE2(kbGmOffset, offsetParam);
         if constexpr (IsMxA8W4<xType, wqmmConfig.antiQuantType>()) {
-            cubeCompute_.SetScaleMTE1ToMTE2(kbL1Offset, offsetParam);
+            cubeCompute_.SetScaleMTE1ToMTE2(kbGmOffset, offsetParam);
         }
         SetAicToAiv();
     }
@@ -356,7 +356,7 @@ GMM_WQ_BASIC_BLOCK_TEMPLATE_PARAM
 __aicore__ inline void GMM_WQ_BASIC_BLOCK_CLASS::End(const BasicBlockOffsetParam &offsetParam)
 {
     if ASCEND_IS_AIC {
-        cubeCompute_.EndSync(cvLoopIdx_);
+        cubeCompute_.EndSync();
     } else {
         if (cvLoopIdx_ > 0) {
             WaitAicToAiv();
