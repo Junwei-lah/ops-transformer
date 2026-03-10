@@ -174,7 +174,11 @@ int ExecuteIncreFlashAttention(TensorResources& resources, aclrtStream stream,
     constexpr const char LAYER_OUT_STR[] = "BNSD";
     constexpr size_t LAYER_OUT_LEN = sizeof(LAYER_OUT_STR);  
     char layerOut[LAYER_OUT_LEN];
-    memcpy(layerOut, LAYER_OUT_STR, LAYER_OUT_LEN);
+    errno_t memRet = memcpy_s(layerOut, LAYER_OUT_LEN, LAYER_OUT_STR, LAYER_OUT_LEN);
+    if (memRet != EOK) {
+        LOG_PRINT("memcpy_s failed. ERROR: %d\n", memRet);
+        return memRet;
+    }
 
     aclOpExecutor* executor;
     int ret = aclnnIncreFlashAttentionV4GetWorkspaceSize(
