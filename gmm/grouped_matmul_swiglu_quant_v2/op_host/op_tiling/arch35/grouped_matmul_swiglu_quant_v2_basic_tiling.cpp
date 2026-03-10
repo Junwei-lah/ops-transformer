@@ -430,22 +430,10 @@ void GroupedMatmulSwigluQuantV2Tiling950::PrintQuantParams()
         << ", quant_dtype = " << static_cast<int32_t>(params.get_quantDtype());
     OP_LOGD(inputParams_.opName, "%s", oss.str().c_str());
 }
+
 uint64_t GroupedMatmulSwigluQuantV2Tiling950::GetTilingKey() const
 {
-    return GET_TPL_TILING_KEY(static_cast<uint64_t>(inputParams_.transB), static_cast<uint64_t>(inputParams_.transA),
-                              static_cast<uint64_t>(inputParams_.kernelType));
-}
-
-void GroupedMatmulSwigluQuantV2Tiling950::SetKernelType()
-{
-    inputParams_.kernelType = 0UL;
-    if (inputParams_.bQuantMode == optiling::QuantMode::MX_PERGROUP_MODE) {
-        return;
-    }
-    if (inputParams_.bQuantMode == optiling::QuantMode::PERCHANNEL_MODE &&
-        inputParams_.aQuantMode == optiling::QuantMode::PERTOKEN_MODE) {
-        inputParams_.kernelType = 1UL;
-    }
+    return GET_TPL_TILING_KEY(static_cast<uint64_t>(inputParams_.transB), static_cast<uint64_t>(inputParams_.transA));
 }
 
 bool GroupedMatmulSwigluQuantV2Tiling950::IsB8(ge::DataType dtype)

@@ -33,7 +33,7 @@
 using namespace AscendC;
 using namespace matmul;
 
-template <int8_t QUANT_B_TRANS, int8_t QUANT_A_TRANS, int8_t KERNEL_TYPE>
+template <int8_t QUANT_B_TRANS, int8_t QUANT_A_TRANS>
 __global__ __aicore__ void grouped_matmul_swiglu_quant_v2(GM_ADDR x, GM_ADDR xScale, GM_ADDR groupList, GM_ADDR weight,
                                                           GM_ADDR weightScale, GM_ADDR weightAssistanceMatrix,
                                                           GM_ADDR bias, GM_ADDR smoothScale, GM_ADDR y, GM_ADDR yScale,
@@ -45,13 +45,11 @@ __global__ __aicore__ void grouped_matmul_swiglu_quant_v2(GM_ADDR x, GM_ADDR xSc
     // enable overflow mode to avoid nan/inf value
     AscendC::SetCtrlSpr<FLOAT_OVERFLOW_MODE_CTRL, FLOAT_OVERFLOW_MODE_CTRL>(0);
 #if ORIG_DTYPE_X_SCALE == DT_FLOAT8_E8M0
-    if (QUANT_B_TRANS == GMM_SWIGLU_QUANT_NO_TRANS && QUANT_A_TRANS == GMM_SWIGLU_QUANT_NO_TRANS &&
-        KERNEL_TYPE == GMM_SWIGLU_QUANT_DEQUANT_FIXP) { // transX = false, transW = false
+    if (QUANT_B_TRANS == GMM_SWIGLU_QUANT_NO_TRANS && QUANT_A_TRANS == GMM_SWIGLU_QUANT_NO_TRANS) { // transX = false, transW = false
         GmmSwigluAswt<Cgmct::Gemm::layout::RowMajor, Cgmct::Gemm::layout::RowMajor>(
             x, weight, weightScale, xScale, weightAssistanceMatrix, smoothScale, groupList, y, yScale, workspace,
             tiling);
-    } else if (QUANT_B_TRANS == GMM_SWIGLU_QUANT_TRANS && QUANT_A_TRANS == GMM_SWIGLU_QUANT_NO_TRANS &&
-               KERNEL_TYPE == GMM_SWIGLU_QUANT_DEQUANT_FIXP) { // transX = false, transW = true
+    } else if (QUANT_B_TRANS == GMM_SWIGLU_QUANT_TRANS && QUANT_A_TRANS == GMM_SWIGLU_QUANT_NO_TRANS) { // transX = false, transW = true
         GmmSwigluAswt<Cgmct::Gemm::layout::RowMajor, Cgmct::Gemm::layout::ColumnMajor>(
             x, weight, weightScale, xScale, weightAssistanceMatrix, smoothScale, groupList, y, yScale, workspace,
             tiling);
