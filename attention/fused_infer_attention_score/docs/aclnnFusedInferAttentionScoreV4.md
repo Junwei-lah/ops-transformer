@@ -565,6 +565,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV4(
         <ul>
             <li>仅支持非量化场景。</li>
             <li>仅支持V_D=128/64。</li>
+            <li>不支持pse/左padding/公共前缀/后量化。</li>
         </ul>
         </td>
         <td>BFLOAT16、FLOAT16</td>
