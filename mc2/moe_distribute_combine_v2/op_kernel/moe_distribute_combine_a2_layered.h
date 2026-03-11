@@ -367,10 +367,10 @@ __aicore__ inline void MoeDistributeCombineA2Layered<TemplateMC2TypeA2layeredFun
     offsetOuterGlobal_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(sendCount) + offset_outer_offset);
 
     PipeBarrier<PIPE_ALL>();
-    AscendC::LocalTensor<uint64_t> tempLocal = tBuf.Get<uint64_t>();
-    magicValue_ = addrInfo_.UpdateAndGetMagicValue(tempLocal);
+    magicValue_ = addrInfo_.GetMagicValue();
     sumTarget_ = magicValue_;
     if (coreIdx_ == 0U) {
+        AscendC::LocalTensor<uint64_t> tempLocal = tBuf.Get<uint64_t>();
         tempLocal(0) = sumTarget_;
         auto copyParam = AscendC::DataCopyExtParams{1, 1 * sizeof(uint64_t), 0, 0, 0};
         AscendC::SyncFunc<AscendC::HardEvent::S_MTE3>();
@@ -1060,9 +1060,6 @@ __aicore__ inline void MoeDistributeCombineA2Layered<TemplateMC2TypeA2layeredFun
             AlltoAllServerDispatch();
         } else {
             SyncAll<true>();
-        }
-        if (coreIdx_ == 0U) {
-            addrInfo_.UpdateBufferId();
         }
         Preload();
         WaitDispatch();

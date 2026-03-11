@@ -99,8 +99,7 @@ COMBINE_TOKENFLAG_SIZE = align32((maxBs + (aivNum / (epWorldSize / 8) + 1)) * si
 | IPC Flag  | Combine Sync Flag 1: GM2IPC                  | (W/2 - 2)MB                                  | 8 * 32B = 256B                            | GetLocalIpcSyncFlagAddr, GetRemoteIpcSyncFlagAddr             |
 | IPC Flag  | Combine Sync Flag 2: SumToWindow--server 0-n | (W/2 - 2)MB + 288B                           | COMBINE_TOKENFLAG_SIZE * epWorldSize / 8B | GetIpcTokenFlagAddr                                           |
 | IPC Flag  | Dispatch Sync flag                           | (W/2 - 1)MB                                  | 8 * 32B = 256B                            | GetLocalIpcSyncFlagAddr, GetRemoteIpcSyncFlagAddr             |
-| IPC Flag  | Dispatch Magic Value                         | W/2MB - 256 * 32B                            | aivNum * 32B                              | UpdateAndGetMagicValue                                        |
-| IPC Flag  | Combine Magic Value                          | W/2MB - 128 * 32B                            | aivNum * 32B                              | UpdateAndGetMagicValue                                        |
+| IPC Flag  | Magic Value, BufferId = Magic Value & 0x1    | W/2MB - 128 * 32B                            | aivNum * 32B                              | UpdateMagicValue, GetMagicValue                               |
 | Pong RDMA | Arrived Flag                                 | W/2MB                                        | A1                                        | GetLocalRecvBuffFlagAddr, GetRemoteRecvBuffFlagAddr           |
 | Pong RDMA | Inner Flag                                   | W/2MB + A1                                   | A1                                        | GetLocalRecvBuffInnerFlagAddr, GetRemoteRecvBuffInnerFlagAddr |
 | Pong RDMA | Inner Data                                   | W/2MB + 2 * A1                               | 1MB - 2 * A1                              | GetLocalRecvBuffInnerDataAddr, GetRemoteRecvBuffInnerDataAddr |
@@ -119,7 +118,6 @@ COMBINE_TOKENFLAG_SIZE = align32((maxBs + (aivNum / (epWorldSize / 8) + 1)) * si
 | -         | -                                            | -                                            | -                                         | -                             |
 | Pong RDMA | Inner Data                                   | W/2MB + 2 * A1                               | 1M - 2 * A1                               | GetLocalSendBuffInnerDataAddr |
 | Pong RDMA | RDMA Data                                    | (W/2 + 1)MB                                  | RDMA_DATA_SIZE                            | GetLocalSendBuffDataAddr      |
-| -         | BufferId                                     | W MB - 32B                                   | 32B                                       | UpdateBufferId                |
 ## WindowOut-Combine--RDMAData
 |           |                                              | Start Addr                                   | Size                                      | Function                 |
 |-----------|----------------------------------------------|----------------------------------------------|-------------------------------------------|--------------------------|
@@ -131,19 +129,33 @@ class MoeDistributeA2AddrInfo {
 protected:
     constexpr static uint32_t BUFFER_NUM = 2U;                     // 多buf
     constexpr static uint64_t STATE_OFFSET = 512UL;                // 状态空间偏移地址
-    constexpr static uint64_t STATUS_SIZE_LAYERED = 1024 * 1024UL; // 1M
-    constexpr static uint64_t RDMA_BUFFER_ALIGN = 4 * 1024UL;
+    constexpr static uint64_t RDMA_STATUS_SIZE = 1024 * 1024UL;    // 1M
+    constexpr static uint64_t BUFFER_ALIGN = 512UL;
     constexpr static uint32_t SERVER_RANK_SIZE = 8;
     constexpr static uint32_t UB_32B_ALIGN = 32U;
     constexpr static uint32_t B32_PER_BLOCK = UB_32B_ALIGN / sizeof(int32_t); // 8
     constexpr static uint32_t EXTRA_TOKEN_INFO_NUM = 4U; // 专家信息 权重信息 量化Scale 到达标志位
-    constexpr static uint64_t IPC_DISPATCH_MAGIC_OFFSET = 2 * 1024 * 1024UL - 256 * 32UL; // 只使用了aivNum * 32B，理论为2 * 1024 * 1024UL - 2 * aivNum * 32UL
-    constexpr static uint64_t IPC_COMBINE_MAGIC_OFFSET = 2 * 1024 * 1024UL - 128 * 32UL; // 理论为2 * 1024 * 1024UL - aivNum * 32UL
+    constexpr static uint64_t IPC_MAGIC_OFFSET = 2 * 1024 * 1024UL - 128 * 32UL; // 理论为2 * 1024 * 1024UL - aivNum * 32UL
     constexpr static uint64_t IPC_DISPATCH_FLAG_OFFSET = 1 * 1024 * 1024UL;
     constexpr static uint64_t IPC_COMBINE_FLAG_OFFSET = 0UL;
     constexpr static uint64_t IPC_TOKEN_CNT_OFFSET = 0UL;
-    constexpr static uint64_t IPC_NON_DATA_BYTES = 4 * 1024 * 1024UL;
-    constexpr static uint64_t IPC_BUFF_ALIGN = 512UL;
+    constexpr static uint64_t IPC_HALF_NON_DATA_BYTES = 2 * 1024 * 1024UL;
+
+private:
+    __aicore__ inline void UpdateMagicValue()
+    {
+        GM_ADDR magicAddrStart = shareAddrs[curRankId_ % SERVER_RANK_SIZE] + ipcFlagAddrStart_[0] + IPC_MAGIC_OFFSET + aivId_ * UB_32B_ALIGN;
+        AscendC::GlobalTensor<uint64_t> magicGt;
+        magicGt.SetGlobalBuffer((__gm__ uint64_t *)(magicAddrStart));
+        auto tempLocal = AscendC::LocalTensor<uint64_t>{AscendC::TPosition::LCM, 0, UB_32B_ALIGN / sizeof(uint64_t)};
+        AscendC::DataCopy(tempLocal, magicGt, UB_32B_ALIGN / sizeof(uint64_t));
+        AscendC::SyncFunc<AscendC::HardEvent::MTE2_S>();
+        tempLocal(0) += 1UL;
+        AscendC::SyncFunc<AscendC::HardEvent::S_MTE3>();
+        AscendC::DataCopy(magicGt, tempLocal, UB_32B_ALIGN / sizeof(uint64_t));
+        AscendC::PipeBarrier<PIPE_ALL>();
+        magicValue_ = tempLocal(0);
+    }
 
 public:
     __aicore__ inline void Init(uint32_t rankId, uint32_t maxBs, uint32_t worldSize, uint32_t axisH, uint32_t axisK, uint32_t localMoeExpertNum, uint32_t aivNum)
@@ -153,9 +165,6 @@ public:
         auto hcclContext = AscendC::GetHcclContext<AscendC::HCCL_GROUP_ID_0>();
         context_.Init(hcclContext);
         auto winSize = ((__gm__ HcclA2CombineOpParam *)hcclContext)->winSize;
-        // Get BufferId
-        bufferChosenGlobal_.SetGlobalBuffer((__gm__ uint32_t *)(context_.GetWindowsOutAddr(curRankId_) + winSize - UB_32B_ALIGN));
-        bufferId_ = bufferChosenGlobal_(0);
         aivId_ = AscendC::GetBlockIdx();
         localMoeExpertNum_ = localMoeExpertNum;
         worldSize_ = worldSize;
@@ -163,33 +172,34 @@ public:
         halfWorldSize_ = worldSize / 2U;
         uint64_t maxTokenStructBytes =
             axisH * 2UL + EXTRA_TOKEN_INFO_NUM * RoundUp(axisK, B32_PER_BLOCK) * sizeof(uint32_t); // token的数据类型BF16或FP16，都是2B
-        serverSizeOnRdmaData_ = RoundUp(maxBs * maxTokenStructBytes + UB_32B_ALIGN, RDMA_BUFFER_ALIGN);
-        rankSizeOnIpcData_ = RoundUp(maxBs * maxTokenStructBytes, IPC_BUFF_ALIGN);
-        // rdma addr
-        rdmaFlagAddrStart_ = (bufferId_ & 0x1) ? (winSize / 2UL) : 0UL;
-        rdmaDataAddrStart_ = rdmaFlagAddrStart_ + STATUS_SIZE_LAYERED;
-
+        serverSizeOnRdmaData_ = RoundUp(maxBs * maxTokenStructBytes + UB_32B_ALIGN, BUFFER_ALIGN);
+        rankSizeOnIpcData_ = RoundUp(maxBs * maxTokenStructBytes, BUFFER_ALIGN);
         // ipc addr
-        ipcFlagAddrStart_[0] = winSize / 2UL - IPC_NON_DATA_BYTES / 2UL;
-        ipcFlagAddrStart_[1] = winSize - IPC_NON_DATA_BYTES / 2UL;
-        ipcDataAddrStart_[0] = (ipcFlagAddrStart_[0] - rankSizeOnIpcData_ * localMoeExpertNum_ * halfWorldSize_) /
-                               IPC_BUFF_ALIGN * IPC_BUFF_ALIGN;
-        ipcDataAddrStart_[1] = (ipcFlagAddrStart_[1] - rankSizeOnIpcData_ * localMoeExpertNum_ * halfWorldSize_) /
-                               IPC_BUFF_ALIGN * IPC_BUFF_ALIGN;
+        ipcFlagAddrStart_[0] = winSize / 2UL - IPC_HALF_NON_DATA_BYTES;
+        ipcFlagAddrStart_[1] = winSize - IPC_HALF_NON_DATA_BYTES;
+        uint64_t halfIpcDataSize = rankSizeOnIpcData_ * localMoeExpertNum_ * halfWorldSize_;
+        ipcDataAddrStart_[0] = RoundUp(ipcFlagAddrStart_[0] - halfIpcDataSize, BUFFER_ALIGN);
+        ipcDataAddrStart_[1] = RoundUp(ipcFlagAddrStart_[1] - halfIpcDataSize, BUFFER_ALIGN);
+
         for (int i = 0; i < SERVER_RANK_SIZE; i++) {
             uint32_t targetRank = curRankId_ / SERVER_RANK_SIZE * SERVER_RANK_SIZE + i;
             shareAddrs[i] = context_.GetWindowsInAddr(targetRank);
         }
         localWindowInGM_ = context_.GetWindowsInAddr(curRankId_);
 
+        // rdma addr
+        UpdateMagicValue();
+        // Get BufferId
+        uint64_t bufferId = magicValue_ & 0x1;
+        rdmaFlagAddrStart_ = (bufferId & 0x1) ? (winSize / 2UL) : 0UL;
+        rdmaDataAddrStart_ = rdmaFlagAddrStart_ + RDMA_STATUS_SIZE;
     }
-    __aicore__ inline void UpdateBufferId()
+
+    __aicore__ inline uint64_t GetMagicValue() const
     {
-        bufferChosenGlobal_(0) = bufferId_ ^ 1;
-        AscendC::DataCacheCleanAndInvalid<uint32_t, AscendC::CacheLine::SINGLE_CACHE_LINE,
-                                          AscendC::DcciDst::CACHELINE_OUT>(bufferChosenGlobal_);
-        AscendC::PipeBarrier<PIPE_ALL>();
+        return magicValue_;
     }
+
     // ===== Sender =====
     // Local——本卡，SendBuffer——用来发送的Buffer，Flag——存放Flag
     __aicore__ inline GM_ADDR GetLocalSendBuffFlagAddr() const
@@ -238,30 +248,15 @@ public:
     }
 
 protected:
-    __aicore__ inline uint64_t UpdateAndGetMagicValue(AscendC::LocalTensor<uint64_t> tempLocal, GM_ADDR magicAddrStart)
-    {
-        AscendC::GlobalTensor<uint64_t> magicGt;
-        magicGt.SetGlobalBuffer((__gm__ uint64_t *)(magicAddrStart));
-        AscendC::DataCopy(tempLocal, magicGt, UB_32B_ALIGN / sizeof(uint64_t));
-        AscendC::SyncFunc<AscendC::HardEvent::MTE2_S>();
-        tempLocal(0) += 1UL;
-        AscendC::SyncFunc<AscendC::HardEvent::S_MTE3>();
-        AscendC::DataCopy(magicGt, tempLocal, UB_32B_ALIGN / sizeof(uint64_t));
-        AscendC::PipeBarrier<PIPE_ALL>();
-        return tempLocal(0);
-    }
-
-protected:
-    AscendC::GlobalTensor<uint32_t> bufferChosenGlobal_;
     uint32_t curRankId_{0U};
     uint32_t aivId_{0};
-    uint32_t bufferId_{0U};
     uint32_t serverNum_{0U};
     uint32_t worldSize_{0U};
     uint32_t halfWorldSize_{0U};
     uint32_t localMoeExpertNum_{0U};
     uint64_t serverSizeOnRdmaData_{0UL};
     uint64_t rankSizeOnIpcData_{0UL};
+    uint64_t magicValue_{0UL};
 
     uint64_t ipcFlagAddrStart_[2]{0UL};
     uint64_t ipcDataAddrStart_[2]{0UL};
@@ -281,7 +276,7 @@ protected:
     {
         auto tokenFlagBytes = STATE_OFFSET * (serverNum_ + 1);
         auto innerTableFlagTotalBytes = STATE_OFFSET * (serverNum_ + 1);
-        auto innerTableDataTotalBytes = STATUS_SIZE_LAYERED - tokenFlagBytes - innerTableFlagTotalBytes;
+        auto innerTableDataTotalBytes = RDMA_STATUS_SIZE - tokenFlagBytes - innerTableFlagTotalBytes;
         innerTableSize_ = innerTableDataTotalBytes / serverNum_ / UB_32B_ALIGN * UB_32B_ALIGN;
         rdmaInnerFlagAddrStart_ = rdmaFlagAddrStart_ + tokenFlagBytes;
         rdmaInnerDataAddrStart_ = rdmaInnerFlagAddrStart_ + innerTableFlagTotalBytes;
@@ -292,14 +287,8 @@ public:
     {
         MoeDistributeA2AddrInfo::Init(rankId, maxBs, worldSize, axisH, axisK, localMoeExpertNum, aivNum);
         InitInnerAddr();
-        magicAddrStart_ = shareAddrs[curRankId_ % SERVER_RANK_SIZE] + ipcFlagAddrStart_[0] + IPC_DISPATCH_MAGIC_OFFSET + aivId_ * UB_32B_ALIGN;
         ipcSyncFlagAddrStart_ = ipcFlagAddrStart_[0] + IPC_DISPATCH_FLAG_OFFSET;
         ipcTokenCntAddrStart_ = ipcFlagAddrStart_[1] + IPC_TOKEN_CNT_OFFSET;
-    }
-
-    __aicore__ inline uint64_t UpdateAndGetMagicValue(AscendC::LocalTensor<uint64_t> tempLocal)
-    {
-        return MoeDistributeA2AddrInfo::UpdateAndGetMagicValue(tempLocal, magicAddrStart_);
     }
 
     // ===== Sender =====
@@ -364,7 +353,6 @@ public:
     }
 
 private:
-    GM_ADDR magicAddrStart_{nullptr};
     uint64_t ipcSyncFlagAddrStart_{0UL};
     uint64_t ipcTokenCntAddrStart_{0UL};
     uint64_t rdmaInnerFlagAddrStart_{0UL};
@@ -377,17 +365,10 @@ public:
     __aicore__ inline void Init(uint32_t rankId, uint32_t maxBs, uint32_t worldSize, uint32_t axisH, uint32_t axisK, uint32_t localMoeExpertNum, uint32_t aivNum)
     {
         MoeDistributeA2AddrInfo::Init(rankId, maxBs, worldSize, axisH, axisK, localMoeExpertNum, aivNum);
-        magicAddrStart_ = shareAddrs[curRankId_ % SERVER_RANK_SIZE] + ipcFlagAddrStart_[0] +
-            IPC_COMBINE_MAGIC_OFFSET + aivId_ * UB_32B_ALIGN;
         ipcSyncFlagAddrStart_ = ipcFlagAddrStart_[0] + IPC_COMBINE_FLAG_OFFSET;
         // 这里使用aivNum是为了添加冗余，确保处理不同server的token级flag不重叠
-        shareFlagSize_ = RoundUp(static_cast<uint32_t>((maxBs + aivNum / serverNum_ + 1U) * sizeof(uint64_t)), UB_32B_ALIGN);
-        shareFlagAddrStart_ = ipcSyncFlagAddrStart_ + (SERVER_RANK_SIZE + 1) * UB_32B_ALIGN;
-    }
-
-    __aicore__ inline uint64_t UpdateAndGetMagicValue(AscendC::LocalTensor<uint64_t> tempLocal)
-    {
-        return MoeDistributeA2AddrInfo::UpdateAndGetMagicValue(tempLocal, magicAddrStart_);
+        ipcTokenFlagSize_ = RoundUp(static_cast<uint32_t>((maxBs + aivNum / serverNum_ + 1U) * sizeof(uint64_t)), UB_32B_ALIGN);
+        ipcTokenFlagAddrStart_ = ipcSyncFlagAddrStart_ + (SERVER_RANK_SIZE + 1) * UB_32B_ALIGN;
     }
 
     // ===== Sender =====
@@ -416,14 +397,13 @@ public:
     //   2. token级flag用于跟踪和同步不同Token的机内转发状态
     __aicore__ inline GM_ADDR GetIpcTokenFlagAddr(uint32_t serverId) const
     {
-        return shareAddrs[curRankId_ % SERVER_RANK_SIZE] + shareFlagAddrStart_ + serverId * shareFlagSize_;
+        return shareAddrs[curRankId_ % SERVER_RANK_SIZE] + ipcTokenFlagAddrStart_ + serverId * ipcTokenFlagSize_;
     }
 
 private:
-    GM_ADDR magicAddrStart_{nullptr};
     uint64_t ipcSyncFlagAddrStart_{0UL};
-    uint64_t shareFlagSize_{0UL};
-    uint64_t shareFlagAddrStart_{0UL};
+    uint64_t ipcTokenFlagSize_{0UL};
+    uint64_t ipcTokenFlagAddrStart_{0UL};
 };
 
 } // namespace MoeDistributeA2Base

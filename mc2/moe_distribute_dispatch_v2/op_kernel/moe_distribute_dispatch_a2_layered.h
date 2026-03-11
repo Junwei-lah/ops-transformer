@@ -313,8 +313,8 @@ __aicore__ inline void MoeDistributeDispatchA2Layered<TemplateMC2TypeA2layeredFu
     }
 
     // 每次调用magic++,用来区分不同轮次
-    LocalTensor<uint64_t> tempLocal = tBuf.Get<uint64_t>();
-    magicVal_ = addrInfo_.UpdateAndGetMagicValue(tempLocal);
+    magicVal_ = addrInfo_.GetMagicValue();
+    AscendC::PipeBarrier<PIPE_ALL>();
 }
 
 template <TemplateMC2TypeA2layeredClass>
@@ -522,13 +522,13 @@ CreateInnerReduceInfo(uint32_t serverIdx)
     if (dstServerId != serverId_) {
         SyncFunc<AscendC::HardEvent::MTE3_S>();
         uint32_t finalSendSize = sendOffset;
-        uint64_t srcInnerRdmaAddr = (uint64_t)(sendInnerTableTensor_.GetPhyAddr());
+        uint64_t srcInnerRdmaAddr = (uint64_t)(addrInfo_.GetLocalSendBuffInnerDataAddr(dstServerId));
         uint32_t dstRankId = rankId_ % SERVER_RANK_SIZE + dstServerId * SERVER_RANK_SIZE;
         uint64_t dstInnerRdmaAddr = (uint64_t)(addrInfo_.GetRemoteRecvBuffInnerDataAddr(dstServerId));
         // 发送Inner表
         AIVRDMAPostSend((GM_ADDR)srcInnerRdmaAddr, (GM_ADDR)dstInnerRdmaAddr, dstRankId, finalSendSize, qp_info_);
 
-        uint64_t srcFlagRdmaAddr = (uint64_t)(sendStatusTensor_.GetPhyAddr());
+        uint64_t srcFlagRdmaAddr = (uint64_t)(addrInfo_.GetLocalSendBuffFlagAddr());
         uint64_t dstFlagRdmaAddr = (uint64_t)(addrInfo_.GetRemoteRecvBuffInnerFlagAddr(dstServerId));
         // 发送Inner结束符
         AIVRDMAPostSend((GM_ADDR)srcFlagRdmaAddr, (GM_ADDR)dstFlagRdmaAddr, dstRankId, FLAG_SIZE, qp_info_);
@@ -879,7 +879,7 @@ SendDataToServer(uint32_t destServerId)
         }
     }
 
-    uint64_t srcFlagRdmaAddr = (uint64_t)(sendStatusTensor_.GetPhyAddr());
+    uint64_t srcFlagRdmaAddr = (uint64_t)(addrInfo_.GetLocalSendBuffFlagAddr());
     uint64_t dstFlagRdmaAddr = (uint64_t)(addrInfo_.GetRemoteRecvBuffFlagAddr(dstRankId));
     AIVRDMAPostSend((GM_ADDR)srcFlagRdmaAddr, (GM_ADDR)dstFlagRdmaAddr, dstRankId, FLAG_SIZE, qp_info_);
     PipeBarrier<PIPE_ALL>();
@@ -1292,8 +1292,8 @@ __aicore__ inline void MoeDistributeDispatchA2Layered<TemplateMC2TypeA2layeredFu
 template <TemplateMC2TypeA2layeredClass>
 __aicore__ inline void MoeDistributeDispatchA2Layered<TemplateMC2TypeA2layeredFunc>::CleanUp()
 {
-    if (aivId_ == 0) {
-        addrInfo_.UpdateBufferId();
+    if (aivId_ >= serverNum) {
+        return;
     }
     uint32_t srcServerId = aivId_;
     uint32_t tokenEndFlagCleanSize = maxBs_ * FLAG_SIZE;
@@ -1303,7 +1303,7 @@ __aicore__ inline void MoeDistributeDispatchA2Layered<TemplateMC2TypeA2layeredFu
     LocalTensor<int32_t> cleanTempLt_ = tBuf.GetWithOffset<int32_t>(maxCleanSize / sizeof(int32_t), TBUF_TEMP_OFFSET);
     Duplicate<int32_t>(cleanTempLt_, 0, maxCleanSize / sizeof(int32_t));
     PipeBarrier<PIPE_ALL>();
-    if (srcServerId == serverNum -1) {
+    if (aivId_ == serverNum - 1) {
         GlobalTensor<int32_t> readStatusTensorU32;
         readStatusTensorU32.SetGlobalBuffer((__gm__ int32_t*)(addrInfo_.GetLocalRecvBuffFlagAddr(0U)));
         DataCopy(readStatusTensorU32, cleanTempLt_, writeEndFlagCleanSize / sizeof(uint32_t));
@@ -1356,11 +1356,8 @@ __aicore__ inline void MoeDistributeDispatchA2Layered<TemplateMC2TypeA2layeredFu
         PipeBarrier<PIPE_ALL>();
         SyncAll<true>();
         Ipc2Out();
-        if (aivId_ < serverNum) {
-            PipeBarrier<PIPE_ALL>();
-            CleanUp();
-        }
-
+        PipeBarrier<PIPE_ALL>();
+        CleanUp();
         PipeBarrier<PIPE_ALL>();
         SyncAll<true>();
         CopyPerformanceInfo();
