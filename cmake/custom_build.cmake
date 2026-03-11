@@ -931,10 +931,10 @@ install(DIRECTORY ${OPS_ADV_DIR}/mc2/3rd/
 )
 
 install(DIRECTORY ${OPBASE_SOURCE_PATH}/pkg_inc/op_common/atvoss
-        DESTINATION ${IMPL_INSTALL_DIR}/common
+        DESTINATION ${IMPL_INSTALL_DIR}/ascendc/common
 )
 install(DIRECTORY ${OPBASE_SOURCE_PATH}/pkg_inc/op_common/op_kernel
-        DESTINATION ${IMPL_INSTALL_DIR}/common
+        DESTINATION ${IMPL_INSTALL_DIR}/ascendc/common
 )
         
 foreach (op_dir ${OP_DIR_LIST})
