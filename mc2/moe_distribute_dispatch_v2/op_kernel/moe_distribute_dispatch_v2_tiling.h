@@ -45,6 +45,7 @@ struct MoeDistributeDispatchV2Info {
     uint64_t totalWinSizeTp;
     uint32_t expertTokenNumsType;        // expert token nums type, support 0: cumsum mode, 1: count mode
     int32_t zeroComputeExpertNum;       // sum of zero, copy and const expert nums
+    uint32_t maxSizeForUbBuffer;
     uint64_t scalesRow;
     uint64_t scalesCol;
     uint32_t scalesTypeSize;
