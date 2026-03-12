@@ -15,8 +15,9 @@
 
 #include "kernel_operator.h"
 #include "kv_quant_sparse_flash_attention_pioneer_template_tiling_key.h"
+#if (__CCE_AICORE__ == 310)
 #include "kv_quant_sparse_flash_attention_pioneer_kernel_mla.h"
-
+#endif
 
 using namespace AscendC;
 
