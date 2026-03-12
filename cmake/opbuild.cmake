@@ -92,7 +92,9 @@ function(gen_aclnn_classify host_obj prefix ori_out_srcs ori_out_headers opbuild
     endif()
   else()
     set(${opbuild_out_srcs} ${ori_out_srcs} ${out_srcs} PARENT_SCOPE)
-    set(${opbuild_out_headers} ${ori_out_headers} ${out_headers} PARENT_SCOPE)
+    if ("${prefix}" STREQUAL "aclnn")
+      set(${opbuild_out_headers} ${ori_out_headers} ${out_headers} PARENT_SCOPE)
+    endif()
   endif()
 endfunction()
 
