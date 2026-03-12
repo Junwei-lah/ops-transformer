@@ -459,7 +459,7 @@ protected:
         return IsDtypeCompatiblePertoken(xDtype, ((*gmmDsqParams_.weight)[0])->GetDataType());
     }
 
-    bool IsDtypeCompatiblePertoken(DataType a, DataType b)
+    bool IsDtypeCompatiblePertoken(const DataType a, const DataType b)
     {
         if ((a == DataType::DT_FLOAT8_E4M3FN || a == DataType::DT_FLOAT8_E5M2) &&
             (b == DataType::DT_FLOAT8_E4M3FN || b == DataType::DT_FLOAT8_E5M2)) {
@@ -535,9 +535,9 @@ and greater or equal to 4, but actual value is %lu.",
             return false;
         }
 
-        if (gmmDsqParams_.quantMode == 2) {
+        if (gmmDsqParams_.quantMode == QUNAT_MODE_MX) {
             return CheckInputOutDimsForMX();
-        } else if (gmmDsqParams_.quantMode == 0) {
+        } else if (gmmDsqParams_.quantMode == QUNAT_MODE_PERTOKEN) {
             return CheckInputOutDimsForPertoken();
         } else {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -667,9 +667,9 @@ and greater or equal to 4, but actual value is %lu.",
                     kInX, kInWeight);
             return false;
         }
-        if (gmmDsqParams_.quantMode == 2) {
+        if (gmmDsqParams_.quantMode == QUNAT_MODE_MX) {
             return CheckInputOutShapeForMX();
-        } else if (gmmDsqParams_.quantMode == 0) {
+        } else if (gmmDsqParams_.quantMode == QUNAT_MODE_PERTOKEN) {
             return CheckInputOutShapeForPertoken();
         } else {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID,
@@ -680,7 +680,6 @@ and greater or equal to 4, but actual value is %lu.",
 
         return true;
     }
-
 
     bool CheckInputOutShapeForMX()
     {

@@ -619,6 +619,10 @@ static op::Shape SwapLastSecondAndThirdDimValue(const op::Shape& tensorShape)
 {
     op::Shape swapedShape = tensorShape;
     int64_t dimNum = tensorShape.GetDimNum();
+    if(dimNum != FOUR_DIM){
+        // 如果维度不是四维，直接不交换返回原shape
+        return swapedShape;
+    }
     int64_t lastSecondDim = tensorShape.GetDim(dimNum - 2);
     // dimNum - 2, 这里1指的是取倒数第二维的dim值。dimNum - 3, 这里3指的是取倒数第三维的dim值
     swapedShape.SetDim(dimNum - 2, tensorShape.GetDim(dimNum - 3));
@@ -1266,7 +1270,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingV2(void *workspace, uint64_t worksp
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);
 }
 
-static inline aclnnStatus CheckSupportSceneforV3(const aclTensor *x1, aclTensor *x2, const aclTensor *scaleOptional,
+static inline aclnnStatus CheckSupportSceneforV3(const aclTensor *x1, const aclTensor *x2, const aclTensor *scaleOptional,
                                                  const aclTensor *groupListOptional,
                                                  const aclTensor *pertokenScaleOptional, const aclTensor *logitOptional,
                                                  const aclTensor *rowIndexOptional,

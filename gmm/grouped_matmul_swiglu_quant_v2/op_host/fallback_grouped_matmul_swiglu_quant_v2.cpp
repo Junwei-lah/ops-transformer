@@ -43,6 +43,7 @@ constexpr size_t MXFP_TPYEM_SCALE_DIM_NUM = 4UL;
 constexpr size_t TYPEM_SCALE_K_DIM_INDEX = 1UL;
 constexpr size_t TYPEM_SCALE_N_DIM_INDEX = 2UL;
 constexpr size_t DIM_TWO = 2UL;
+constexpr size_t QUNATMODE_MX = 2UL;
 
 
 static bool SetShapeAndStrideForMXFPTypeMForGMMSwigluQuantV2(std::vector<int64_t> &viewShape, std::vector<int64_t> &strides) {
@@ -237,7 +238,7 @@ static graphStatus GroupedMatmulSwigluQuantV2ExecuteFunc(OpExecuteContext* host_
     auto aclTensorListWeight = aclCreateTensorList(aclTensorVectorWeight.data(), aclTensorVectorWeight.size());
 
     std::vector<const aclTensor*> aclTensorVectorWeightScale;
-    if(*quantModeGe == 2){
+    if(*quantModeGe == QUNATMODE_MX){
         PrepareAclTensorVector(host_api_ctx, aclTensorVectorWeightScale, INDEX_INPUT_WEIGHT_SCALE, *transWeightGe, false);
     }
     else{

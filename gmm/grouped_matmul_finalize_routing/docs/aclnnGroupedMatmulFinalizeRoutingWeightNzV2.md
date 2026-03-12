@@ -910,9 +910,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2(
       std::vector<float> scaleHostData(GetShapeSize(scaleShape));
       std::vector<float> pertokenScaleHostData(GetShapeSize(pertokenScaleShape));
       std::vector<int64_t> groupListHostData(GetShapeSize(groupListShape));
-      groupListHostData[0] = 7;
-      groupListHostData[0] = 32;
-      groupListHostData[0] = 40;
+      // 对groupList赋值
       groupListHostData[0] = 64;
 
       std::vector<uint16_t> sharedInputHostData(GetShapeSize(sharedInputShape));
@@ -1043,7 +1041,6 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2(
       aclrtFree(logitDeviceAddr);
       aclrtFree(rowIndexDeviceAddr);
       aclrtFree(outDeviceAddr);
-      //aclDestroyIntArray(tuningConfig);
 
       if (workspaceSize > 0) {
           aclrtFree(workspaceAddr);

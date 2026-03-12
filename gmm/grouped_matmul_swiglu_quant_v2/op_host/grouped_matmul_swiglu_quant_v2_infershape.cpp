@@ -22,6 +22,7 @@ using namespace ge;
 namespace ops {
 const int64_t X_INDEX = 0;
 const int64_t WEIGHT_INDEX = 3;
+const int64_t WEIGHTSCALE_DIM_PERTOKEN = 2;
 const int64_t WEIGHTSCALE_INDEX = 4;
 const int64_t M_DIM_INDEX = 0;
 const int64_t DIM_LEN = 2;
@@ -82,7 +83,7 @@ static ge::graphStatus InferShape4GroupedMatmulSwigluQuantV2(gert::InferShapeCon
         n = dimValue;
     } else {
         n = static_cast<int64_t>(weightScaleShape->GetDim(nDimIndex) / SPLIT_RATIO);
-        if (weightScaleShape->GetDimNum() == 2) {
+        if (weightScaleShape->GetDimNum() == WEIGHTSCALE_DIM_PERTOKEN) {
             n = static_cast<int64_t>(weightScaleShape->GetDim(1) / SPLIT_RATIO);
         }
     }

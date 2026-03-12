@@ -187,7 +187,7 @@ auto Ceil(T1 a, T2 b) -> T1
     std::vector<int64_t> logitHostData(GetShapeSize(logitShape));
     std::vector<float> rowIndexHostData(GetShapeSize(rowIndexShape));
     std::vector<float> outHostData(GetShapeSize(outShape));
-    
+    // 对groupList赋值
     groupListHostData[0] = 8;
     
     // 创建x aclTensor

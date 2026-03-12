@@ -260,7 +260,6 @@ bool GroupedMatmulSwigluQuantV2Tiling950::CheckDims() const
         OP_LOGE(inputParams_.opName, "When inputs are FLOAT4, x and weight inner axis element number should be even."),
         return false);
 
-
     // MXFP4场景不支持K=2
     OP_CHECK_IF(IsFp4Input() && inputParams_.kSize == MXFP4_K_MIN_VALUE,
                 OP_LOGE(inputParams_.opName,

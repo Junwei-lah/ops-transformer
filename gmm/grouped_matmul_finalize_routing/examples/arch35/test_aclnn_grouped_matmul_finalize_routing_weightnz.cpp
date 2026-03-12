@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -163,9 +173,7 @@ int main()
     std::vector<float> scaleHostData(GetShapeSize(scaleShape));
     std::vector<float> pertokenScaleHostData(GetShapeSize(pertokenScaleShape));
     std::vector<int64_t> groupListHostData(GetShapeSize(groupListShape));
-    groupListHostData[0] = 7;
-    groupListHostData[0] = 32;
-    groupListHostData[0] = 40;
+    // 对groupList赋值
     groupListHostData[0] = 64;
 
     std::vector<uint16_t> sharedInputHostData(GetShapeSize(sharedInputShape));
@@ -296,7 +304,6 @@ int main()
     aclrtFree(logitDeviceAddr);
     aclrtFree(rowIndexDeviceAddr);
     aclrtFree(outDeviceAddr);
-    //aclDestroyIntArray(tuningConfig);
 
     if (workspaceSize > 0) {
         aclrtFree(workspaceAddr);

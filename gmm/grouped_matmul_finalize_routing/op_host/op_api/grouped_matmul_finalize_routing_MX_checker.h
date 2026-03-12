@@ -16,8 +16,6 @@
 #include "../../../grouped_matmul/op_host/op_api/grouped_matmul_util.h"
 #include "util/math_util.h"
 
-using namespace GmmFinalizeRouting;
-
 namespace GmmFinalizeRouting {
 
 constexpr size_t ZERO_DIM = 0UL;

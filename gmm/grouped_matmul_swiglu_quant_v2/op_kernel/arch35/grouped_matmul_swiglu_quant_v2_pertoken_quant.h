@@ -71,7 +71,6 @@ __aicore__ inline void GmmSwigluAswtPertokenKernel(GM_ADDR x, GM_ADDR weight, GM
     GMMTiling gmmParams{gmmSwigluQuantParams_.groupNum, gmmSwigluQuantParams_.groupListType, mmTilingData_.baseM,
                         mmTilingData_.baseN, mmTilingData_.baseK};
     gmmParams.matmulTiling = &mmTilingData_;
-    // TODO 要调整，要加workspaceoffset
     Params params = {
         {1, 1, 1, 1},
         // mmad args

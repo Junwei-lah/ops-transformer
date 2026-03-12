@@ -304,7 +304,6 @@ protected:
         op::Shape weightNZTransposeExpectShape2 = {e, static_cast<int64_t>(k / NZ_DIM_4_INT4), static_cast<int64_t>(n / NZ_DIM_3),
                                         NZ_DIM_3, NZ_DIM_4_INT4};
 
-
         // 辅助矩阵的shape期望为[E, N]
         op::Shape weightAssistMatrixExpectShape = {e, n};
 
