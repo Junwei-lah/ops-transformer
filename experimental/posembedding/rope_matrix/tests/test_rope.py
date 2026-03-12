@@ -37,9 +37,11 @@ torch_npu.npu.config.allow_internal_format = False
 torch.npu.conv.allow_hf32 = False
 torch.npu.matmul.allow_hf32 = False 
 
+device = torch.device('npu:6')
+
 
 def get_interleave_matrix(n):
-    matrix = torch.zeros(n, n, dtype=torch.bfloat16, device='npu')
+    matrix = torch.zeros(n, n, dtype=torch.bfloat16, device=device)
     for i in range(0, n, 2):
         matrix[i + 0, i + 1] = 1
         matrix[i + 1, i + 0] = -1
@@ -51,7 +53,7 @@ def get_half_matrix(n):
     half = n // 2
     matrix[:half, half:] = torch.eye(half)
     matrix[half:, :half] = -torch.eye(half)
-    return matrix.to('npu')
+    return matrix.to(device)
 
 
 def compose_3matrix(matrix_a, matrix_b, matrix_c):
@@ -72,7 +74,7 @@ def compose_3matrix(matrix_a, matrix_b, matrix_c):
     result[c_row_start:c_row_start + matrix_c.size(0),
            c_col_start:c_col_start + matrix_c.size(1)] = matrix_c
     
-    return result.to('npu')
+    return result.to(device)
 
 
 # half
@@ -162,11 +164,11 @@ def main():
     shape_lists_2d = [64, 64]
     shape_lists_3d = [44, 44, 40]
 
-    q = torch.randn((b, n, s, d), dtype=torch.bfloat16, device='npu')
-    k = torch.randn((b, n, s, d), dtype=torch.bfloat16, device='npu')
+    q = torch.randn((b, n, s, d), dtype=torch.bfloat16, device=device)
+    k = torch.randn((b, n, s, d), dtype=torch.bfloat16, device=device)
     freqs_cis_3d = []
     for shape in shape_lists_3d:
-        sincos = torch.randn((s, shape), dtype=torch.bfloat16, device='npu')
+        sincos = torch.randn((s, shape), dtype=torch.bfloat16, device=device)
         freqs_cis_3d.append([sincos, sincos])
 
     inter_mat_128 = get_interleave_matrix(128)
@@ -186,6 +188,7 @@ def main():
     # 精度验证
     denominator = torch.maximum(torch.abs(outq3), torch.abs(outq5))
     abs_error = torch.abs(torch.abs(outq3) - torch.abs(outq5))
+    print(f'max error: {abs_error.max()}')
     error = abs_error / (denominator + 1e-8)
     assert ((torch.minimum(abs_error, error) > 0).sum() == 0)
 

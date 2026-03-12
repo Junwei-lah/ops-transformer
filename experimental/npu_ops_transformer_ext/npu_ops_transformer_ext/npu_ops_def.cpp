@@ -38,6 +38,12 @@ TORCH_LIBRARY(npu_ops_transformer_ext, m)
 {
     // set def like the rule below: m.def("dummy(Tensor x) -> Tensor");
     m.def("rope_matrix(Tensor x, Tensor y, Tensor sin, Tensor cos) -> Tensor");
+    m.def("mambav2_causal_conv1d(Tensor x, Tensor w, Tensor bias) -> Tensor");
+    m.def("mambav2_rmsnormgated(Tensor x, Tensor z, Tensor w, int G, float E) -> Tensor");
+    m.def("mambav2_chunk_cumsum(Tensor at, Tensor dt, Tensor dt_bias, Tensor dt_mask) -> (Tensor, Tensor, Tensor)");
+    m.def("mambav2_chunk_state(Tensor dt_out, Tensor dacs, Tensor bt, Tensor xt) -> Tensor");
+    m.def("mambav2_chunk_state_passing(Tensor dacs, Tensor init_states, Tensor states, Tensor ct) -> (Tensor, Tensor)");
+    m.def("mambav2_chunk_scan(Tensor ct, Tensor bt, Tensor xt, Tensor dt, Tensor states, Tensor dacs, Tensor dtout) -> Tensor");
 }
 
 } // namespace npu_ops_transformer_ext

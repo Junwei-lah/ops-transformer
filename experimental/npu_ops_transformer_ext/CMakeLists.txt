@@ -152,7 +152,7 @@ macro(add_modules_sources)
     message(STATUS "skip add_modules_sources...")
 endmacro()
 
-set(PARENT_DIRS attention ffn gmm mc2 moe posembedding)
+set(PARENT_DIRS attention mamba ffn gmm mc2 moe posembedding)
 set(OPERATOR_TARGETS "")
 # 进行白名单管理
 set(NPU_EXT_OPERATOR_LIST "typhoon_mla;score_normalize;rope_matrix;select_attention_operators")
