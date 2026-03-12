@@ -245,7 +245,21 @@ aclnnStatus aclnnMoeFusedTopkGetWorkspaceSize(
         return ACLNN_SUCCESS;
     }
 
-    auto MoeFusedTopkRes = l0op::MoeFusedTopk(x, addNum, mappingNum, mappingTable, groupNum, groupTopk, topN, topK, activateType,
+    auto xContiguous = l0op::Contiguous(x, uniqueExecutor.get());
+    CHECK_RET(xContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    auto addNumContiguous = l0op::Contiguous(addNum, uniqueExecutor.get());
+    CHECK_RET(addNumContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+
+    const aclTensor* mappingNumContiguous = mappingNum;
+    const aclTensor* mappingTableContiguous = mappingTable;
+    if (enableExpertMapping) {
+        mappingNumContiguous = l0op::Contiguous(mappingNum, uniqueExecutor.get());
+        CHECK_RET(mappingNumContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+        mappingTableContiguous = l0op::Contiguous(mappingTable, uniqueExecutor.get());
+        CHECK_RET(mappingTableContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
+    }
+
+    auto MoeFusedTopkRes = l0op::MoeFusedTopk(xContiguous, addNumContiguous, mappingNumContiguous, mappingTableContiguous, groupNum, groupTopk, topN, topK, activateType,
                             isNorm, scale, enableExpertMapping, uniqueExecutor.get());
     CHECK_RET(MoeFusedTopkRes[0] != nullptr, ACLNN_ERR_INNER_NULLPTR);
     CHECK_RET(MoeFusedTopkRes[1] != nullptr, ACLNN_ERR_INNER_NULLPTR);
