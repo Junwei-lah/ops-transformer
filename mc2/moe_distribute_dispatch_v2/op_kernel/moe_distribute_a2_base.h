@@ -118,12 +118,18 @@ COMBINE_TOKENFLAG_SIZE = align32((maxBs + (aivNum / (epWorldSize / 8) + 1)) * si
 | -         | -                                            | -                                            | -                                         | -                             |
 | Pong RDMA | Inner Data                                   | W/2MB + 2 * A1                               | 1M - 2 * A1                               | GetLocalSendBuffInnerDataAddr |
 | Pong RDMA | RDMA Data                                    | (W/2 + 1)MB                                  | RDMA_DATA_SIZE                            | GetLocalSendBuffDataAddr      |
-## WindowOut-Combine--RDMAData
-|           |                                              | Start Addr                                   | Size                                      | Function                 |
-|-----------|----------------------------------------------|----------------------------------------------|-------------------------------------------|--------------------------|
-| RDMA      | RDMA Data-DstServer 0                        | (1 or (W/2 + 1))MB                           | A2 = RDMA_DATA_SIZE / (epWorldSize / 8)   | GetLocalSendBuffDataAddr |
-| RDMA      | RDMA Data-DstServer x                        | (1 or (W/2 + 1))MB + A2 * x                  | A2                                        | GetLocalSendBuffDataAddr |
-| RDMA      | RDMA Data-DstServer n-1                      | (1 or (W/2 + 1))MB + A2 * (n - 1)            | A2                                        | GetLocalSendBuffDataAddr |
+
+## WindowOut-Dispatch--RDMAData：内容连续
+|                     |                                        | Start Addr                               | Size                                      | Function                 |
+|---------------------|----------------------------------------|------------------------------------------|-------------------------------------------|--------------------------|
+| (Ping Or Pong) RDMA | (Ping Or Pong) RDMA Data               | (1 or (W/2 + 1))MB                       | MAXBS_TOKEN_SIZE                          | GetLocalSendBuffDataAddr |
+
+## WindowOut-Combine--RDMAData：按照server划分，不连续
+|                     |                                        | Start Addr                               | Size                                      | Function                 |
+|---------------------|----------------------------------------|------------------------------------------|-------------------------------------------|--------------------------|
+| (Ping Or Pong) RDMA | (Ping Or Pong) RDMA Data-DstServer 0   | (1 or (W/2 + 1))MB                       | A2 = RDMA_DATA_SIZE / (epWorldSize / 8)   | GetLocalSendBuffDataAddr |
+| (Ping Or Pong) RDMA | (Ping Or Pong) RDMA Data-DstServer x   | (1 or (W/2 + 1))MB + A2 * x              | A2                                        | GetLocalSendBuffDataAddr |
+| (Ping Or Pong) RDMA | (Ping Or Pong) RDMA Data-DstServer n-1 | (1 or (W/2 + 1))MB + A2 * (n - 1)        | A2                                        | GetLocalSendBuffDataAddr |
 */
 class MoeDistributeA2AddrInfo {
 protected:
