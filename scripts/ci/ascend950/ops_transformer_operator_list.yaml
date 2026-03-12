@@ -58,7 +58,6 @@ operator_group_6:
   - prompt_flash_attention
   - kv_quant_sparse_flash_attention
   - quant_lightning_indexer
-  - kv_quant_sparse_flash_attention_pioneer
 operator_group_7:
   - fused_infer_attention_score,10-0
 operator_group_8:
