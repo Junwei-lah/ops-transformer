@@ -91,67 +91,160 @@ namespace BlockSparse {
         BlockSparseAttentionKernel() {}
 
         __aicore__ inline void Mask2IdxAndCount(const AscendC::GlobalTensor<uint8_t> maskGM, AscendC::GlobalTensor<int32_t> selectIdxGM,
-                                                 AscendC::GlobalTensor<int32_t> selectNumGM,
-                                                 int32_t maxKVBlockNum, int32_t kvseqlen, int32_t qBlockY, int32_t basicBlock)
+                                                 AscendC::GlobalTensor<int32_t> selectNumGM)
         {           
-            maskPatternUbLocal = resource.ubBuf.template GetBufferByByte<uint8_t>(LS_UB_TENSOR_OFFSET);
-            maskPatternInBitUbLocalUint16 = resource.ubBuf.template GetBufferByByte<uint16_t>(LS_UB_TENSOR_OFFSET);
-            maskPatternHalfLocal = resource.ubBuf.template GetBufferByByte<half>(MASK_PATTERN_HALF_OFFSET);
-            maskPatternFloatLocal = resource.ubBuf.template GetBufferByByte<float>(MASK_PATTERN_FLOAT_OFFSET);
-            maskPatternInBitUbLocal = resource.ubBuf.template GetBufferByByte<uint8_t>(MASK_BIT_OFFSET);
-            maskPatternInBitUbLocalUint32 = resource.ubBuf.template GetBufferByByte<uint32_t>(MASK_BIT_OFFSET);
-            maskIdxUbLocal = resource.ubBuf.template GetBufferByByte<int32_t>(MASK_IDX_OFFSET);
-            sparseIdxUbLocal = resource.ubBuf.template GetBufferByByte<int32_t>(SPARSE_IDX_OFFSET);
-            selectNumIdxUbLocal = resource.ubBuf.template GetBufferByByte<int32_t>(SELECT_NUM_IDX_OFFSET);
-            uint64_t tempSelectNum = 0;
-            int32_t selectNum = 0;
-            bool reduceMode = false;
-            uint32_t eventIDMTE2ToV = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::MTE2_V));
-            uint32_t eventIDVToMTE3 = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::V_MTE3));
-            uint32_t eventIDSToMTE3 = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::S_MTE3));
-            uint32_t eventIDVMTE3oMTE2 = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::MTE3_MTE2));
-            uint32_t eventIDV2MTE2 = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::V_MTE2));
-            AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIDVMTE3oMTE2);
-            uint32_t calNum = CeilDiv(CeilDiv(kvseqlen, qBlockY), BASIC_BLOCK);
-            for (int i = 0; i < calNum; i++) {
-                uint32_t elementLen = i == CeilDiv(maxKVBlockNum, BASIC_BLOCK) - 1 ? maxKVBlockNum - (CeilDiv(maxKVBlockNum, BASIC_BLOCK) - 1) * BASIC_BLOCK : BASIC_BLOCK;
-                AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIDVMTE3oMTE2);
-                AscendC::Duplicate(maskPatternInBitUbLocalUint16, (uint16_t)0, BASIC_BLOCK / 2);
-                AscendC::SetFlag<HardEvent::V_MTE2>(eventIDV2MTE2);
-                AscendC::WaitFlag<HardEvent::V_MTE2>(eventIDV2MTE2);
-                if (elementLen == BASIC_BLOCK) {
-                    AscendC::DataCopy(maskPatternUbLocal, maskGM[i * BASIC_BLOCK], elementLen);
-                } else {
-                    DataCopyParams dataCopyParams {1, static_cast<uint16_t>(elementLen), 0, 0};
-                    DataCopyPadParams dataCopyPadParams {true, 0, static_cast<uint8_t>(32 - elementLen % 32), (uint8_t)0};
-                    AscendC::DataCopyPad(maskPatternUbLocal, maskGM[i * BASIC_BLOCK], dataCopyParams, dataCopyPadParams);
-                }
-                AscendC::SetFlag<HardEvent::MTE2_V>(eventIDMTE2ToV);
-                AscendC::WaitFlag<HardEvent::MTE2_V>(eventIDMTE2ToV);
-                AscendC::Cast(maskPatternHalfLocal, maskPatternUbLocal, RoundMode::CAST_NONE, BASIC_BLOCK);
-                AscendC::PipeBarrier<PIPE_V>();
-                AscendC::Cast(maskPatternFloatLocal, maskPatternHalfLocal, RoundMode::CAST_NONE, BASIC_BLOCK);
-                AscendC::PipeBarrier<PIPE_V>();
-                AscendC::CompareScalar(maskPatternInBitUbLocal, maskPatternFloatLocal, (float)1.0, AscendC::CMPMODE::GE, BASIC_BLOCK);
-                AscendC::PipeBarrier<PIPE_V>();
-                AscendC::CreateVecIndex(maskIdxUbLocal, 0, BASIC_BLOCK);
-                AscendC::PipeBarrier<PIPE_V>();
-                AscendC::GatherMask(sparseIdxUbLocal, maskIdxUbLocal, maskPatternInBitUbLocalUint32, reduceMode, (uint32_t)0, {1,1,0,0}, tempSelectNum);
-                AscendC::PipeBarrier<PIPE_V>();
-                AscendC::Adds<int32_t>(sparseIdxUbLocal, sparseIdxUbLocal, static_cast<int32_t>(i * BASIC_BLOCK), static_cast<int32_t>(elementLen));
-                AscendC::SetFlag<HardEvent::V_MTE3>(eventIDVToMTE3);
-                AscendC::WaitFlag<HardEvent::V_MTE3>(eventIDVToMTE3);
-                AscendC::DataCopy(selectIdxGM[selectNum], sparseIdxUbLocal, CeilDiv(elementLen, 8) * 8);
-                AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIDVMTE3oMTE2);
-                selectNum += tempSelectNum;
+            static constexpr uint32_t PRE_ROW_TILE = 128;
+            static constexpr uint32_t PRE_COL_TILE = 64;
+            static constexpr uint32_t PRE_ELEM_NUM_PER_LOOP = PRE_ROW_TILE * PRE_COL_TILE;
+            static constexpr uint32_t MASK_PAT_IN_UINT8 = 0;
+            static constexpr uint32_t MASK_PAT_IN_FP16 = 2 * PRE_ELEM_NUM_PER_LOOP;
+            static constexpr uint32_t MASK_PAT_IN_FP32 = 4 * PRE_ELEM_NUM_PER_LOOP;
+            static constexpr uint32_t MASK_PAT_IN_BIT = 8 * PRE_ELEM_NUM_PER_LOOP;
+            static constexpr uint32_t MASK_IDX = 9 * PRE_ELEM_NUM_PER_LOOP;
+            static constexpr uint32_t RSVD_SPARSE_IDX = 13 * PRE_ELEM_NUM_PER_LOOP;
+            static constexpr uint32_t RSVD_SPARSE_COUNT = 21 * PRE_ELEM_NUM_PER_LOOP;
+
+            AscendC::LocalTensor<uint8_t> maskPatternUbLocal[2];
+            AscendC::LocalTensor<int32_t> selectNumIdxUbLocal[2];
+            AscendC::LocalTensor<uint8_t> maskPatternInBitUbLocal;
+            AscendC::LocalTensor<uint32_t> maskPatternInBitUbLocalUint32;
+
+            AscendC::LocalTensor<int32_t> maskIdxUbLocal;
+            AscendC::LocalTensor<int32_t> sparseIdxUbLocal[2];
+            AscendC::LocalTensor<half> maskPatternHalfLocal;
+            AscendC::LocalTensor<float> maskPatternFloatLocal;
+
+            for (uint32_t i = 0; i < 2; i++) {
+                maskPatternUbLocal[i] = resource.ubBuf.template GetBufferByByte<uint8_t>(
+                    MASK_PAT_IN_UINT8 + i * PRE_ELEM_NUM_PER_LOOP * sizeof(int8_t));
+                sparseIdxUbLocal[i] = resource.ubBuf.template GetBufferByByte<int32_t>(
+                    RSVD_SPARSE_IDX + i * PRE_ELEM_NUM_PER_LOOP * sizeof(int32_t));
+                selectNumIdxUbLocal[i] = resource.ubBuf.template GetBufferByByte<int32_t>(
+                    RSVD_SPARSE_COUNT + i * PRE_ROW_TILE * sizeof(int32_t));
             }
-            AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIDVMTE3oMTE2);
-            AscendC::Duplicate(selectNumIdxUbLocal, selectNum, 8);
-            uint32_t eventIDVToMTE3T = static_cast<int32_t>(GetTPipePtr()->FetchEventID(AscendC::HardEvent::V_MTE3));
-            AscendC::SetFlag<HardEvent::V_MTE3>(eventIDVToMTE3T);
-            AscendC::WaitFlag<HardEvent::V_MTE3>(eventIDVToMTE3T);
-            AscendC::DataCopy(selectNumGM, selectNumIdxUbLocal, 8);
-            AscendC::PipeBarrier<PIPE_ALL>();
+            maskPatternHalfLocal = resource.ubBuf.template GetBufferByByte<half>(MASK_PAT_IN_FP16);
+            maskPatternFloatLocal = resource.ubBuf.template GetBufferByByte<float>(MASK_PAT_IN_FP32);
+            maskPatternInBitUbLocal = resource.ubBuf.template GetBufferByByte<uint8_t>(MASK_PAT_IN_BIT);
+            maskPatternInBitUbLocalUint32 = resource.ubBuf.template GetBufferByByte<uint32_t>(MASK_PAT_IN_BIT);
+            maskIdxUbLocal = resource.ubBuf.template GetBufferByByte<int32_t>(MASK_IDX);
+            AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(0);
+            AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(1);
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(0);
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(1);
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(2);
+            AscendC::SetFlag<AscendC::HardEvent::S_MTE3>(0);
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(0);
+            AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(1);
+
+            uint32_t subCoreIdx = AscendC::GetBlockIdx();
+            uint32_t curStartRowIdx = subCoreIdx * avgRowPerSubCore;
+            uint32_t totalRowNumBlockMask = batch * qHeads * maxQBlockNum;
+            uint32_t actDealtRow = (subCoreIdx == preActivateSubCoreNum - 1) ?
+                (totalRowNumBlockMask - curStartRowIdx) : avgRowPerSubCore;
+            if (subCoreIdx < preActivateSubCoreNum) {
+                uint32_t rowLoop = CeilDiv(actDealtRow, PRE_ROW_TILE);
+                uint32_t colLoop = CeilDiv(maxKvBlockNum, PRE_COL_TILE);
+                uint32_t idxPingPongFlag = 0;
+                uint32_t countPingPongFlag = 0;
+                for (uint32_t i = 0; i < rowLoop; i++) {
+                    uint32_t curLoopRowOffset = i * PRE_ROW_TILE;
+                    int32_t actDealtRowCurLoop = (i == rowLoop - 1) ? (actDealtRow - curLoopRowOffset) : PRE_ROW_TILE;
+                    uint64_t rsvdCountPerRow[PRE_ROW_TILE] = {0};
+                    uint64_t rsvdCountPerRowCurColLoop[PRE_ROW_TILE] = {0};
+                    for (uint32_t j = 0; j < colLoop; j++) {
+                        uint32_t curLoopColOffset = j * PRE_COL_TILE;
+                        uint32_t actDealtColCurLoop = (j == colLoop - 1) ? (maxKvBlockNum - curLoopColOffset) : PRE_COL_TILE;
+                        uint32_t actDealtColCurLoop32 = CeilDiv(actDealtColCurLoop, 32) * 32;
+                        AscendC::CreateVecIndex(maskIdxUbLocal, static_cast<int32_t>(curLoopColOffset), PRE_COL_TILE);
+                        AscendC::PipeBarrier<PIPE_V>();
+                        AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(idxPingPongFlag);
+                        int32_t maskOffset = curStartRowIdx * maxKvBlockNum + curLoopRowOffset * maxKvBlockNum + curLoopColOffset;
+                        AscendC::DataCopyPad(
+                            maskPatternUbLocal[idxPingPongFlag],
+                            maskGM[curStartRowIdx * maxKvBlockNum + curLoopRowOffset * maxKvBlockNum + curLoopColOffset],
+                            AscendC::DataCopyExtParams(
+                                actDealtRowCurLoop,
+                                actDealtColCurLoop * sizeof(int8_t),
+                                (maxKvBlockNum - actDealtColCurLoop) * sizeof(int8_t),
+                                (PRE_COL_TILE - actDealtColCurLoop32) / 32, 0),
+                            AscendC::DataCopyPadExtParams<uint8_t>(
+                                true, 0, (actDealtColCurLoop32 - actDealtColCurLoop), 0));
+                        
+                        AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(0);
+                        AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(0);
+                        AscendC::Cast(
+                            maskPatternHalfLocal, maskPatternUbLocal[idxPingPongFlag],
+                            AscendC::RoundMode::CAST_NONE, actDealtRowCurLoop * PRE_COL_TILE);
+                        AscendC::PipeBarrier<PIPE_V>();
+                        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(idxPingPongFlag);
+                        AscendC::Cast(
+                            maskPatternFloatLocal, maskPatternHalfLocal,
+                            AscendC::RoundMode::CAST_NONE, actDealtRowCurLoop * PRE_COL_TILE);
+                        AscendC::PipeBarrier<PIPE_V>();
+                        for(uint32_t k = 0; k < actDealtRowCurLoop; k++) {
+                            if (actDealtColCurLoop32 != PRE_COL_TILE) {
+                                AscendC::Duplicate(maskPatternFloatLocal[k * PRE_COL_TILE + actDealtColCurLoop32], (float)0, PRE_COL_TILE - actDealtColCurLoop32);
+                            }
+                            AscendC::PipeBarrier<PIPE_V>();
+                            AscendC::CompareScalar(
+                                maskPatternInBitUbLocal[k * PRE_COL_TILE],
+                                maskPatternFloatLocal[k * PRE_COL_TILE],
+                                (float)1.0, AscendC::CMPMODE::GE, PRE_COL_TILE);
+                            AscendC::PipeBarrier<PIPE_V>();
+                            if (k == 0) {
+                                AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(idxPingPongFlag);
+                            }
+                            AscendC::GatherMask(
+                                sparseIdxUbLocal[idxPingPongFlag][k * PRE_COL_TILE],
+                                maskIdxUbLocal,
+                                maskPatternInBitUbLocalUint32[k * PRE_COL_TILE / 4],
+                                false,
+                                (uint32_t)0, {1, 1, 0, 0}, rsvdCountPerRowCurColLoop[k]);
+                            AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(0);
+                            AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(0);
+                            if (k == 0) {
+                                AscendC::WaitFlag<AscendC::HardEvent::S_MTE3>(0);
+                            }
+                            AscendC::DataCopyPad(
+                                selectIdxGM[curStartRowIdx * maxKvBlockNum + curLoopRowOffset * maxKvBlockNum + k * maxKvBlockNum + rsvdCountPerRow[k]],
+                                sparseIdxUbLocal[idxPingPongFlag][k * PRE_COL_TILE],
+                                AscendC::DataCopyExtParams(
+                                    1, rsvdCountPerRowCurColLoop[k] * sizeof(int32_t), 0, 0, 0));
+                            if (k == actDealtRowCurLoop - 1) {
+                                AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(idxPingPongFlag);
+                            }
+                            AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(0);
+                            AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(0);
+                            rsvdCountPerRow[k] += rsvdCountPerRowCurColLoop[k];
+                            if (k == actDealtRowCurLoop - 1) {
+                                AscendC::SetFlag<AscendC::HardEvent::S_MTE3>(0);
+                            }
+                        }
+                        idxPingPongFlag = 1 - idxPingPongFlag;
+                    }
+                    AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(countPingPongFlag);
+                    for (uint32_t k = 0; k < actDealtRowCurLoop; k++) {
+                        selectNumIdxUbLocal[countPingPongFlag].SetValue(k, static_cast<int32_t>(rsvdCountPerRow[k]));
+                    }
+                    AscendC::SetFlag<AscendC::HardEvent::S_MTE3>(countPingPongFlag + 2);
+                    AscendC::WaitFlag<AscendC::HardEvent::S_MTE3>(countPingPongFlag + 2);
+                    AscendC::DataCopyPad(
+                        selectNumGM[curStartRowIdx + curLoopRowOffset],
+                        selectNumIdxUbLocal[countPingPongFlag],
+                        AscendC::DataCopyExtParams(1, actDealtRowCurLoop * sizeof(int32_t), 0, 0, 0));
+                    AscendC::SetFlag<AscendC::HardEvent::MTE3_S>(countPingPongFlag); 
+                    countPingPongFlag = 1 - countPingPongFlag;
+                }
+            }
+            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(1);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(1);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(2);
+            AscendC::WaitFlag<AscendC::HardEvent::S_MTE3>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE3_S>(1);
+
         }
 
         __aicore__ inline void operator()(BlockSparseAttentionKernelParams const &params)
@@ -166,8 +259,8 @@ namespace BlockSparse {
             uint64_t selectNumIdxSize = blockSparseAttentionTilingData->selectNumIdxSize;
             uint64_t selectIdxSize = blockSparseAttentionTilingData->selectIdxSize;
 
-            uint32_t batch = blockSparseAttentionTilingData->batch;
-            uint32_t qHeads = blockSparseAttentionTilingData->numHeads;
+            batch = blockSparseAttentionTilingData->batch;
+            qHeads = blockSparseAttentionTilingData->numHeads;
             uint32_t kvHeads = blockSparseAttentionTilingData->kvHeads;
 
             uint32_t embed = blockSparseAttentionTilingData->embeddingSize;
@@ -178,9 +271,11 @@ namespace BlockSparse {
             uint32_t maskType = blockSparseAttentionTilingData->maskType;
             ElementS scaleValue = static_cast<ElementS>(blockSparseAttentionTilingData->scaleValue);
             uint32_t totalQBlocks = blockSparseAttentionTilingData->totalQBlocks;
-            uint32_t maxKvBlockNum = blockSparseAttentionTilingData->maxKvBlockNum;
+            maxKvBlockNum = blockSparseAttentionTilingData->maxKvBlockNum;
             uint32_t maxKvBlockNumPad = CeilDiv(maxKvBlockNum, 32) * 32;
-            uint32_t maxQBlockNum = blockSparseAttentionTilingData->maxQBlockNum;//
+            maxQBlockNum = blockSparseAttentionTilingData->maxQBlockNum;
+            avgRowPerSubCore = blockSparseAttentionTilingData->avgRowPerSubCore;
+            preActivateSubCoreNum = blockSparseAttentionTilingData->preActivateSubCoreNum;
             
             uint32_t qBlockX = blockSparseAttentionTilingData->blockShapeX;
             uint32_t qBlockY = blockSparseAttentionTilingData->blockShapeY;
@@ -210,8 +305,6 @@ namespace BlockSparse {
             gSelectIdx.SetGlobalBuffer((__gm__ int32_t *)(params.workspace + mm1OutSize + smOnlineOutSize + mm2OutSize + updateSize + selectNumIdxSize));
             AscendC::GlobalTensor<int32_t> gSelectNumIdx;
             gSelectNumIdx.SetGlobalBuffer((__gm__ int32_t *)(params.workspace + mm1OutSize + smOnlineOutSize + mm2OutSize + updateSize));
-            AscendC::GlobalTensor<int32_t> gSync;
-            gSync.SetGlobalBuffer((__gm__ int32_t *)(params.workspace + mm1OutSize + smOnlineOutSize + mm2OutSize + updateSize + selectNumIdxSize + selectIdxSize));
             AscendC::GlobalTensor<uint8_t> gBlockSparseMask;
             gBlockSparseMask.SetGlobalBuffer((__gm__ uint8_t *)params.blockSparseMask);
             AscendC::GlobalTensor<ElementO> gO;
@@ -229,6 +322,11 @@ namespace BlockSparse {
             
             uint32_t coreIdx = AscendC::GetBlockIdx();
             uint32_t coreNum = AscendC::GetBlockNum();
+#ifdef __DAV_C220_VEC__
+            Mask2IdxAndCount(gBlockSparseMask, gSelectIdx, gSelectNumIdx);
+#endif
+            resource.pipe.Reset();
+            AscendC::SyncAll<false>(); 
 
 #ifdef __DAV_C220_CUBE__
             // Initialize hardware events for cube core
@@ -344,7 +442,6 @@ namespace BlockSparse {
             uint32_t curTotalTaskNum = firstBatchTaskNum;
             uint32_t curQXBlockNum = (qSeqlen + qBlockX - 1) / qBlockX; // CeilDiv
             uint32_t curTotalQBlockNum = firstQBlockNum;
-            maskIdxUbLocal = resource.ubBuf.template GetBufferByByte<int32_t>(SYNC_OFFSET);
 
             // Go through each task
             for (uint32_t taskIdx = coreIdx; taskIdx < totalTaskNum; taskIdx += uint32_t(coreNum)) {
@@ -409,35 +506,15 @@ namespace BlockSparse {
                 uint32_t kvHeadIdx = qNBlockIdx / qNBlockNumPerGroup;
                 uint32_t qHeadIdx = kvHeadIdx * groupSize + qNBlockIdxCurGroup * curQNBlockTile;
 
-#ifdef __DAV_C220_VEC__
-                uint32_t Gmaskoffset = curBatch * qHeads * maxKvBlockNum * maxQBlockNum 
-                + qHeadIdx * maxKvBlockNum * maxQBlockNum + qXIdx * maxKvBlockNum;
-
-                uint32_t blockIdx = AscendC::GetBlockIdx();
-
-                //跨核通信 
-                if (blockIdx % 2 == 0) {
-                    Mask2IdxAndCount(gBlockSparseMask[Gmaskoffset], gSelectIdx[taskIdx * maxKvBlockNumPad], gSelectNumIdx[taskIdx * 32], maxKvBlockNum, kvSeqlen, qBlockY, BASIC_BLOCK);
-                    AscendC::IBSet<false>(gSync, maskIdxUbLocal, blockIdx, 0);
-                    NpuArch::Arch::CrossCoreSetFlag<0x2, PIPE_MTE3>(masktoidxReady);
-                } else {
-                    NpuArch::Arch::CrossCoreSetFlag<0x2,PIPE_MTE3>(masktoidxReady);
-                    AscendC::IBWait<false>(gSync, maskIdxUbLocal, blockIdx - 1, 0);
-                }
-#endif
-
-#ifdef __DAV_C220_CUBE__
-                NpuArch::Arch::CrossCoreWaitFlag(masktoidxReady);
-#endif
-                uint32_t pingpong = 0;
-                uint32_t curSelectNum = static_cast<uint32_t>(gSelectNumIdx.GetValue(taskIdx * 32));
+                uint32_t curSelectIdx = curBatch * qHeads * maxQBlockNum + qHeadIdx * maxQBlockNum + qXIdx;
+                uint32_t curSelectNum = static_cast<uint32_t>(gSelectNumIdx.GetValue(curSelectIdx));
                 
                 if (curSelectNum == 0) {
                     continue;
                 }
 
                 uint32_t lastSelectIdx = static_cast<int32_t>(
-                    gSelectIdx.GetValue(taskIdx * maxKvBlockNumPad + curSelectNum - 1));
+                    gSelectIdx.GetValue(curSelectIdx * maxKvBlockNum + curSelectNum - 1));
                 uint32_t kvYBlockNum = (kvSeqlen + qBlockY - 1) / qBlockY; // CeilDiv
                 uint32_t curKvSeqLen = (lastSelectIdx == kvYBlockNum - 1 && kvSeqlen % qBlockY != 0) ? 
                     qBlockY * (curSelectNum - 1) + kvSeqlen % qBlockY : qBlockY * curSelectNum;
@@ -540,7 +617,7 @@ namespace BlockSparse {
                             gK[gmOffsetK],
                             gS[gmOffsetS],
                             gBlockTable[blockBOffset],
-                            gSelectIdx[taskIdx * maxKvBlockNumPad],
+                            gSelectIdx[curSelectIdx * maxKvBlockNum],
                             layoutQTemp,
                             layoutKTemp,
                             layOutS,
@@ -602,7 +679,7 @@ namespace BlockSparse {
                             gV[gmOffsetV],
                             gOTmp[gmOffsetOTmp],
                             gBlockTable[blockBOffset],
-                            gSelectIdx[taskIdx * maxKvBlockNumPad],
+                            gSelectIdx[curSelectIdx * maxKvBlockNum],
                             layoutPTemp,
                             layoutVTemp,
                             layoutOTmp,
@@ -705,19 +782,13 @@ namespace BlockSparse {
         NpuArch::Arch::CrossCoreFlag qkReady{QK_READY_ID};
         NpuArch::Arch::CrossCoreFlag softmaxReady{SOFTMAX_READY_ID};
         NpuArch::Arch::CrossCoreFlag pvReady{PV_READY_ID};
-        NpuArch::Arch::CrossCoreFlag masktoidxReady{MASKTOIDX_READY_ID};
 
-        AscendC::LocalTensor<uint8_t> maskPatternUbLocal;
-        AscendC::LocalTensor<int32_t> selectNumIdxUbLocal;
-        AscendC::LocalTensor<uint16_t> maskPatternInBitUbLocalUint16;
-        AscendC::LocalTensor<uint8_t> maskPatternInBitUbLocal;
-        AscendC::LocalTensor<uint32_t> maskPatternInBitUbLocalUint32;
-        
-        AscendC::LocalTensor<int32_t> maskIdxUbLocal;
-        AscendC::LocalTensor<int32_t> sparseIdxUbLocal;
-        AscendC::LocalTensor<half> maskPatternHalfLocal;
-        AscendC::LocalTensor<float> maskPatternFloatLocal;
-      
+        uint32_t batch{0};
+        uint32_t qHeads{0};
+        uint32_t maxQBlockNum{0};
+        uint32_t maxKvBlockNum{0};
+        uint32_t avgRowPerSubCore{0};
+        uint32_t preActivateSubCoreNum{0};
     };
 
 } // namespace BlockSparse

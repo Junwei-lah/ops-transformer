@@ -42,7 +42,8 @@ TILING_DATA_FIELD_DEF(uint64_t, blockShapeY);  // block的y维度(KV方向)
 // selectIdx相关参数
 TILING_DATA_FIELD_DEF(uint32_t, maxKvBlockNum);      // 最大KV块数量（selectIdx的最后一维）
 TILING_DATA_FIELD_DEF(uint32_t, maxQBlockNum);      // 最大KV块数量（selectIdx的最后一维）
-
+TILING_DATA_FIELD_DEF(uint32_t, avgRowPerSubCore);
+TILING_DATA_FIELD_DEF(uint32_t, preActivateSubCoreNum);
 
 // query Layout: 0=TND, 1=BNSD
 TILING_DATA_FIELD_DEF(uint32_t, queryLayout);
@@ -183,6 +184,8 @@ private:
     uint32_t totalQBlocks_ = 0;
     uint32_t maxKvBlockNum_ = 0;
     uint32_t maxQBlockNum_ = 0;
+    uint32_t avgRowPerSubCore_ = 0;
+    uint32_t preActivateSubCoreNum_ = 0;
     uint32_t firstQBlockNum_ = 0;
     uint32_t firstBatchTaskNum_ = 0;
     uint32_t totalTaskNum_ = 0;

@@ -294,7 +294,7 @@ public:
     {
         // input S
         AscendC::DataCopy(
-            lsUbTensor,
+            lsUbTensor[sUbOffset],
             gInput,
             AscendC::DataCopyParams(rowNumCurLoop,
                 columnNumRound / BLOCK_SIZE,
@@ -344,8 +344,8 @@ public:
     {
         // *** ls = scaleValue * ls
         AscendC::Muls<half, false>(
-            computeUbTensor,
-            lsUbTensor,
+            lsUbTensor[sUbOffset],
+            lsUbTensor[sUbOffset],
             scaleValue,
             (uint64_t)0,
             (rowNumCurLoop * columnNumRound + HALF_VECTOR_SIZE - 1) / HALF_VECTOR_SIZE,
@@ -429,7 +429,7 @@ public:
         uint32_t rowOffset)
     {
         RowmaxTAILTILE(
-            computeUbTensor,
+            lsUbTensor[sUbOffset],
             lmUbTensor[rowOffset],
             tvUbTensor,
             rowNumCurLoopRound,
@@ -498,8 +498,8 @@ public:
         // *** ls = ls - hm_block
         for (uint32_t subIdx = 0; subIdx < columnNum / HALF_VECTOR_SIZE; ++subIdx) {
             AscendC::Sub<half, false>(
-                computeUbTensor[subIdx * HALF_VECTOR_SIZE],
-                computeUbTensor[subIdx * HALF_VECTOR_SIZE],
+                lsUbTensor[sUbOffset][subIdx * HALF_VECTOR_SIZE],
+                lsUbTensor[sUbOffset][subIdx * HALF_VECTOR_SIZE],
                 tvUbTensor,
                 (uint64_t)0,
                 rowNumCurLoop,
@@ -509,8 +509,8 @@ public:
         if (columnNum % HALF_VECTOR_SIZE > 0) {
             SetVecMask(columnNum % HALF_VECTOR_SIZE);
             AscendC::Sub<half, false>(
-                computeUbTensor[columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
-                computeUbTensor[columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
+                lsUbTensor[sUbOffset][columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
+                lsUbTensor[sUbOffset][columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
                 tvUbTensor,
                 (uint64_t)0,
                 rowNumCurLoop,
@@ -521,8 +521,8 @@ public:
         AscendC::PipeBarrier<PIPE_V>();
         // *** ls = exp(ls)
         AscendC::Exp<half, false>(
-            computeUbTensor,
-            computeUbTensor,
+            lsUbTensor[sUbOffset],
+            lsUbTensor[sUbOffset],
             (uint64_t)0,
             (rowNumCurLoop * columnNumRound + HALF_VECTOR_SIZE - 1) / HALF_VECTOR_SIZE,
             AscendC::UnaryRepeatParams(1, 1, 8, 8));
@@ -535,14 +535,14 @@ public:
     {
         // *** ll = rowsum(ls32)
         if (columnNum == 512U) {
-            RowsumSPECTILE512(computeUbTensor,
+            RowsumSPECTILE512(lsUbTensor[sUbOffset],
                 llUbTensor[rowOffset],
                 tvUbTensor,
                 rowNumCurLoopRound,
                 columnNum,
                 columnNumRound);
         } else {
-            RowsumTAILTILE(computeUbTensor,
+            RowsumTAILTILE(lsUbTensor[sUbOffset],
                 llUbTensor[rowOffset],
                 tvUbTensor,
                 rowNumCurLoopRound,
@@ -593,7 +593,7 @@ public:
         repeatParams.blockCount = 1;
         repeatParams.srcStride = 0;
         repeatParams.blockLen = CeilDiv(rowNumCurLoop * columnNumRound, BLOCK_SIZE);
-        AscendC::DataCopy<half>(lpUbTensor[sUbOffset], computeUbTensor, repeatParams);
+        AscendC::DataCopy<half>(lpUbTensor[sUbOffset], lsUbTensor[sUbOffset], repeatParams);
         AscendC::PipeBarrier<PIPE_V>();
     }
 
@@ -629,7 +629,7 @@ public:
             }
         }
         CalcLocalRowMax(sUbOffset, rowNumCurLoopRound, columnNum, columnNumRound, rowOffset);
-        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(EVENT_ID0);
+        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(pingpongFlag);
         UpdateGlobalRowMax(rowNumCurLoop,
             rowNumCurLoopRound,
             columnNum,
@@ -639,15 +639,15 @@ public:
             isFirstStackTile);
         CalcExp(sUbOffset, rowNumCurLoop, rowNumCurLoopRound, columnNum, columnNumRound, rowOffset);
 
-        AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(EVENT_ID0);
+        AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
         MoveP(sUbOffset, rowNumCurLoop, columnNumRound);
-        AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID0);
+        AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(pingpongFlag);
 
         CalcLocalRowSum(sUbOffset, rowNumCurLoopRound, columnNum, columnNumRound, rowOffset);
 
-        AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID0);
+        AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(pingpongFlag);
         CopyPUbToGm(gOutput, sUbOffset, rowNumCurLoop, columnNumRound, columnNumPad);
-        AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(EVENT_ID0);
+        AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
         if (isLastLoop) {
             NpuArch::Arch::CrossCoreSetFlag<0x2, PIPE_MTE3>(softmaxFlag);
         }
@@ -694,11 +694,11 @@ public:
             int64_t offsetInput = layoutInput.GetOffset(MatrixCoord(rowOffsetIoGm, 0));
             auto gInputCurLoop = gInput[offsetInput];
 
-            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(EVENT_ID0);
+            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(pingpongFlag);
             CopySGmToUb(
                 gInputCurLoop, (pingpongFlag * MAX_UB_S_ELEM_NUM), rowNumCurLoop, columnNumRound, columnNumPad);
-            AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(EVENT_ID0);
-            AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(EVENT_ID0);
+            AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(pingpongFlag);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(pingpongFlag);
             ScaleS((pingpongFlag * MAX_UB_S_ELEM_NUM), rowNumCurLoop, columnNumRound);
 
             int64_t offsetOutput = layoutOutput.GetOffset(MatrixCoord(rowOffsetIoGm, 0));
