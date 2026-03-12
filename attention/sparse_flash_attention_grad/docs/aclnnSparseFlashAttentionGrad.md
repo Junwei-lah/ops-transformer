@@ -248,6 +248,7 @@ aclnnStatus aclnnSparseFlashAttentionGrad(
                 <li>可选项：当layout为TND，该变量存在。</li>
                 <li>长度与B保持一致。</li>
                 <li>累加和与T1保持一致。</li>
+                <li>取值须为非负数，传入负值可能触发芯片告警（alarm）。</li>
             </ul>
             </td>
             <td>INT32</td>
@@ -494,6 +495,11 @@ aclnnStatus aclnnSparseFlashAttentionGrad(
                 <td>361001</td>
                 <td>API内存调用npu runtime的接口异常。</td>
             </tr>
+            <tr>
+                <td>ACLNN_ERR_INNER_TILING_ERROR</td>
+                <td>561002</td>
+                <td>输入参数（如layout、sparseMode）的取值超出支持范围，或输入Tensor的shape维度不符合约束要求。</td>
+            </tr>
         </tbody>
     </table>
 
@@ -549,6 +555,7 @@ aclnnStatus aclnnSparseFlashAttentionGrad(
 - 公共约束
     - 入参为空的场景处理：
         - query为空Tensor：直接返回。
+    - 当前只支持value和key完全一致的场景。
 
 - Mask
     <table style="undefined;table-layout: fixed; width: 942px"><colgroup>
