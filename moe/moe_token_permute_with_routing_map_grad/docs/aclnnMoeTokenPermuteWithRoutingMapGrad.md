@@ -146,7 +146,7 @@ aclnnStatus aclnnMoeTokenPermuteWithRoutingMapGrad(
   </tr>
   <tr>
       <td>routingMapOptional</td>
-      <td>输入</td>
+      <td>可选输入</td>
       <td>代表token到expert的映射关系。</td>
       <td>要求shape为一个2D的tensor，非dropAndPad模式要求每行中包含topK个true 或 1。</td>
       <td>INT8、bool(当数据类型为INT8，取值支持0、1，当数据类型为bool，取值支持true、false)</td>
