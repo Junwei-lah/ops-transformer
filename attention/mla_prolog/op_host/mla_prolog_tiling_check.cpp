@@ -928,7 +928,7 @@ bool MlaPrologTilingCheck::CheckKvCache() const
 {
     if (GetCurNpuArch() == NpuArch::DAV_3510) {
         if (std::strncmp(context_.opType, V3_OP_NAME, OP_NAME_LEN) != 0){
-            return IsSingleParamValid(context_.kvCache, KV_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8, ge::DT_FLOAT8_E4M3FN}, {ge::FORMAT_ND, ge::FORMAT_NCHW}, {4});
+            return IsSingleParamValid(context_.kvCache, KV_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8}, {ge::FORMAT_ND, ge::FORMAT_NCHW}, {4});
         } else {
             return IsSingleParamValid(context_.kvCache, KV_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8, ge::DT_FLOAT8_E4M3FN}, {ge::FORMAT_ND, ge::FORMAT_NCHW}, {3, 4});
         } 
@@ -947,10 +947,9 @@ bool MlaPrologTilingCheck::CheckKrCache() const
         return IsSingleParamValid(
             context_.krCache, KR_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8}, {ge::FORMAT_ND, ge::FORMAT_NCHW}, {1, 3, 4});
     } else {
-    return (std::strncmp(context_.opType, V3_OP_NAME, OP_NAME_LEN) == 0 &&
+        return (std::strncmp(context_.opType, V3_OP_NAME, OP_NAME_LEN) == 0 &&
                 *(context_.ckvkrRepoMode) == static_cast<int>(CKVKR_REPO_MODE::COMBINE)) ||
-            IsSingleParamValid(context_.krCache, KR_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8},
-                {ge::FORMAT_ND, ge::FORMAT_NCHW}, {1, 3, 4});
+                IsSingleParamValid(context_.krCache, KR_CACHE_NAME, {ge::DT_BF16, ge::DT_INT8}, {ge::FORMAT_ND, ge::FORMAT_NCHW}, {1, 3, 4});
     }
 }
 

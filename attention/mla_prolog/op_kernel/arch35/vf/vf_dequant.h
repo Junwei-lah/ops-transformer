@@ -73,7 +73,7 @@ __simd_vf__ void DequantVFImpl (__ubuf__ O* yAddr, __ubuf__ T* xAddr, __ubuf__ C
 }
 
 /**
-* @brief DequantVf 对输入做per-token叠加per-channel的反量化， INT8 ---> BF16.
+* @brief DequantVf 对输入做per-token叠加per-channel的反量化， INT32 ---> FP32.
 * @param outputLocal 输出tensor [row, col]
 * @param inputLocal 输入tensor [row, col]
 * @param scalePerChannelLocal 输入tensor [1, col]
