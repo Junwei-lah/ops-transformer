@@ -72,12 +72,21 @@ protected:
             const aclTensor* w = (*gmmDsqParams_.weight)[i];
             const aclTensor* wScale = (*gmmDsqParams_.weightScale)[i];
             op::Format wFormat = w->GetViewFormat();
-            if (IsPrivateFormat(wFormat)) {
-                OP_CHECK_WRONG_DIMENSION(w, WEIGHT_NZ_DIM_LIMIT, return false);
-            } else {
-                OP_CHECK_WRONG_DIMENSION(w, WEIGHT_ND_DIM_LIMIT, return false);
+            if (wLength == static_cast<size_t>(1)) { // 单Tensor场景
+                if (IsPrivateFormat(wFormat)) {
+                    OP_CHECK_WRONG_DIMENSION(w, WEIGHT_NZ_DIM_LIMIT, return false);
+                } else {
+                    OP_CHECK_WRONG_DIMENSION(w, WEIGHT_ND_DIM_LIMIT, return false);
+                }
+                OP_CHECK_WRONG_DIMENSION(wScale, WEIGHT_SCALE_DIM_LIMIT, return false);
+            } else { // 多Tensor场景
+                if (IsPrivateFormat(wFormat)) {
+                    OP_CHECK_WRONG_DIMENSION(w, MULTI_WEIGHT_NZ_DIM_LIMIT, return false);
+                } else {
+                    OP_CHECK_WRONG_DIMENSION(w, MULTI_WEIGHT_ND_DIM_LIMIT, return false);
+                }
+                OP_CHECK_WRONG_DIMENSION(wScale, MULTI_WEIGHT_SCALE_PERCHANNEL_DIM_LIMIT, return false);
             }
-            OP_CHECK_WRONG_DIMENSION(wScale, WEIGHT_SCALE_DIM_LIMIT, return false);
         }
 
         OP_CHECK_WRONG_DIMENSION(gmmDsqParams_.xScale, TOKEN_SCALE_DIM_LIMIT, return false);
