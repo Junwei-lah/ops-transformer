@@ -294,7 +294,7 @@ public:
     {
         // input S
         AscendC::DataCopy(
-            lsUbTensor[sUbOffset],
+            lsUbTensor,
             gInput,
             AscendC::DataCopyParams(rowNumCurLoop,
                 columnNumRound / BLOCK_SIZE,
@@ -344,8 +344,8 @@ public:
     {
         // *** ls = scaleValue * ls
         AscendC::Muls<half, false>(
-            lsUbTensor[sUbOffset],
-            lsUbTensor[sUbOffset],
+            computeUbTensor,
+            lsUbTensor,
             scaleValue,
             (uint64_t)0,
             (rowNumCurLoop * columnNumRound + HALF_VECTOR_SIZE - 1) / HALF_VECTOR_SIZE,
@@ -429,7 +429,7 @@ public:
         uint32_t rowOffset)
     {
         RowmaxTAILTILE(
-            lsUbTensor[sUbOffset],
+            computeUbTensor,
             lmUbTensor[rowOffset],
             tvUbTensor,
             rowNumCurLoopRound,
@@ -498,8 +498,8 @@ public:
         // *** ls = ls - hm_block
         for (uint32_t subIdx = 0; subIdx < columnNum / HALF_VECTOR_SIZE; ++subIdx) {
             AscendC::Sub<half, false>(
-                lsUbTensor[sUbOffset][subIdx * HALF_VECTOR_SIZE],
-                lsUbTensor[sUbOffset][subIdx * HALF_VECTOR_SIZE],
+                computeUbTensor[subIdx * HALF_VECTOR_SIZE],
+                computeUbTensor[subIdx * HALF_VECTOR_SIZE],
                 tvUbTensor,
                 (uint64_t)0,
                 rowNumCurLoop,
@@ -509,8 +509,8 @@ public:
         if (columnNum % HALF_VECTOR_SIZE > 0) {
             SetVecMask(columnNum % HALF_VECTOR_SIZE);
             AscendC::Sub<half, false>(
-                lsUbTensor[sUbOffset][columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
-                lsUbTensor[sUbOffset][columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
+                computeUbTensor[columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
+                computeUbTensor[columnNum / HALF_VECTOR_SIZE * HALF_VECTOR_SIZE],
                 tvUbTensor,
                 (uint64_t)0,
                 rowNumCurLoop,
@@ -521,8 +521,8 @@ public:
         AscendC::PipeBarrier<PIPE_V>();
         // *** ls = exp(ls)
         AscendC::Exp<half, false>(
-            lsUbTensor[sUbOffset],
-            lsUbTensor[sUbOffset],
+            computeUbTensor,
+            computeUbTensor,
             (uint64_t)0,
             (rowNumCurLoop * columnNumRound + HALF_VECTOR_SIZE - 1) / HALF_VECTOR_SIZE,
             AscendC::UnaryRepeatParams(1, 1, 8, 8));
@@ -535,14 +535,14 @@ public:
     {
         // *** ll = rowsum(ls32)
         if (columnNum == 512U) {
-            RowsumSPECTILE512(lsUbTensor[sUbOffset],
+            RowsumSPECTILE512(computeUbTensor,
                 llUbTensor[rowOffset],
                 tvUbTensor,
                 rowNumCurLoopRound,
                 columnNum,
                 columnNumRound);
         } else {
-            RowsumTAILTILE(lsUbTensor[sUbOffset],
+            RowsumTAILTILE(computeUbTensor,
                 llUbTensor[rowOffset],
                 tvUbTensor,
                 rowNumCurLoopRound,
@@ -593,14 +593,14 @@ public:
         repeatParams.blockCount = 1;
         repeatParams.srcStride = 0;
         repeatParams.blockLen = CeilDiv(rowNumCurLoop * columnNumRound, BLOCK_SIZE);
-        AscendC::DataCopy<half>(lpUbTensor[sUbOffset], lsUbTensor[sUbOffset], repeatParams);
+        AscendC::DataCopy<half>(lpUbTensor[sUbOffset], computeUbTensor, repeatParams);
         AscendC::PipeBarrier<PIPE_V>();
     }
 
     __aicore__ inline
     void CopyPUbToGm(AscendC::GlobalTensor<ElementOutput> gOutput, uint32_t sUbOffset, uint32_t rowNumCurLoop,
         uint32_t columnNumRound, uint32_t columnNumPad)
-    {
+    {   
         AscendC::DataCopy(gOutput,
             lpUbTensor[sUbOffset],
             AscendC::DataCopyParams(
@@ -629,7 +629,7 @@ public:
             }
         }
         CalcLocalRowMax(sUbOffset, rowNumCurLoopRound, columnNum, columnNumRound, rowOffset);
-        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(pingpongFlag);
+        AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(EVENT_ID0);
         UpdateGlobalRowMax(rowNumCurLoop,
             rowNumCurLoopRound,
             columnNum,
@@ -641,11 +641,11 @@ public:
 
         AscendC::WaitFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
         MoveP(sUbOffset, rowNumCurLoop, columnNumRound);
-        AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(pingpongFlag);
+        AscendC::SetFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID0);
 
         CalcLocalRowSum(sUbOffset, rowNumCurLoopRound, columnNum, columnNumRound, rowOffset);
 
-        AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(pingpongFlag);
+        AscendC::WaitFlag<AscendC::HardEvent::V_MTE3>(EVENT_ID0);
         CopyPUbToGm(gOutput, sUbOffset, rowNumCurLoop, columnNumRound, columnNumPad);
         AscendC::SetFlag<AscendC::HardEvent::MTE3_V>(pingpongFlag);
         if (isLastLoop) {
@@ -679,6 +679,7 @@ public:
         uint32_t rowNumTile = RoundDown(maxRowNumPerLoop, BLOCK_SIZE);
         rowNumTile = AscendC::Std::min(rowNumTile, HALF_VECTOR_SIZE);
         uint32_t rowLoopNum = CeilDiv(rowActualThisSubBlock, rowNumTile);
+
         if (rowActualThisSubBlock == 0) {
             NpuArch::Arch::CrossCoreSetFlag<0x2, PIPE_MTE3>(softmaxFlag);
             return;
@@ -694,11 +695,11 @@ public:
             int64_t offsetInput = layoutInput.GetOffset(MatrixCoord(rowOffsetIoGm, 0));
             auto gInputCurLoop = gInput[offsetInput];
 
-            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(pingpongFlag);
+            AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(EVENT_ID0);
             CopySGmToUb(
                 gInputCurLoop, (pingpongFlag * MAX_UB_S_ELEM_NUM), rowNumCurLoop, columnNumRound, columnNumPad);
-            AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(pingpongFlag);
-            AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(pingpongFlag);
+            AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(EVENT_ID0);
+            AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(EVENT_ID0);
             ScaleS((pingpongFlag * MAX_UB_S_ELEM_NUM), rowNumCurLoop, columnNumRound);
 
             int64_t offsetOutput = layoutOutput.GetOffset(MatrixCoord(rowOffsetIoGm, 0));
