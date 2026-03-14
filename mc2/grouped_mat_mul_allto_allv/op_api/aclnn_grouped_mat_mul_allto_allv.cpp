@@ -28,15 +28,12 @@ enum class NnopbaseHcclServerType : uint32_t {
     NNOPBASE_HCCL_SERVER_TYPE_END
 };
 
-extern "C" aclnnStatus aclnnInnerGroupedMatMulAlltoAllvGetWorkspaceSize(
-    const aclTensor *gmmX, const aclTensor *gmmWeight, const aclTensor *sendCountsTensorOptional,
-    const aclTensor *recvCountsTensorOptional, const aclTensor *mmXOptional, const aclTensor *mmWeightOptional,
-    const aclTensor *gmmXScaleOptional, const aclTensor *gmmWeightScaleOptional,const aclTensor *mmXScaleOptional,
-    const aclTensor *mmWeightScaleOptional, const aclTensor *commQuantScaleOptional, const char *group,
-    int64_t epWorldSize, const aclIntArray *sendCounts, const aclIntArray *recvCounts, bool transGmmWeight,
-    bool transMmWeight, int64_t gmmXQuantMode, int64_t gmmWeightQuantMode, int64_t mmXQuantMode,
-    int64_t mmWeightQuantMode, int64_t commQuantMode, int64_t groupSize, int64_t commQuantDtypeOptional,
-    const aclTensor *yOut, const aclTensor *mmYOptional, uint64_t *workspaceSize, aclOpExecutor **executor);
+extern aclnnStatus aclnnInnerGroupedMatMulAlltoAllvGetWorkspaceSize(
+    const aclTensor* gmmX, const aclTensor* gmmWeight, const aclTensor* sendCountsTensorOptional,
+    const aclTensor* recvCountsTensorOptional, const aclTensor* mmXOptional, const aclTensor* mmWeightOptional,
+    const char* group, int64_t epWorldSize, const aclIntArray* sendCounts, const aclIntArray* recvCounts,
+    bool transGmmWeight, bool transMmWeight, aclTensor* y, aclTensor* mmYOptional, uint64_t* workspaceSize,
+    aclOpExecutor** executor);
 
 extern aclnnStatus aclnnInnerGroupedMatMulAlltoAllv(void* workspace, uint64_t workspaceSize, aclOpExecutor* executor,
                                                     aclrtStream stream);
@@ -136,29 +133,10 @@ aclnnStatus aclnnGroupedMatMulAlltoAllvGetWorkspaceSize(
     CHECK_RET(ret_param == ACLNN_SUCCESS, ret_param);
     auto ret_send_and_recv = CheckSendAndRecv(sendCounts, recvCounts);
     CHECK_RET(ret_send_and_recv == ACLNN_SUCCESS, ret_send_and_recv);
-    // ACL和GE的datatype枚举值对undefined定义不同，inner接口进入到算子内部，需要使用GE枚举值，因此此处使用的枚举值为28
-    constexpr int64_t GE_UNDEFINED = 28;
-    // 根据算子原型定义默认值
-    aclTensor* gmmXScaleOptional = nullptr;
-    aclTensor* gmmWeightScaleOptional = nullptr;
-    aclTensor* mmXScaleOptional = nullptr;
-    aclTensor* mmWeightScaleOptional = nullptr;
-    aclTensor* commQuantScaleOptional = nullptr;
-    auto strGroup = group;
-    int64_t gmmXQuantMode = 0;
-    int64_t gmmWeightQuantMode = 0;
-    int64_t mmXQuantMode = 0;
-    int64_t mmWeightQuantMode = 0;
-    int64_t commQuantMode = 0;
-    int64_t groupSize = 0;
-    int64_t commQuantDtypeOptional = GE_UNDEFINED;
 
     aclnnStatus ret = aclnnInnerGroupedMatMulAlltoAllvGetWorkspaceSize(
-        gmmX, gmmWeight, sendCountsTensorOptional, recvCountsTensorOptional, mmXOptional, mmWeightOptional,
-        gmmXScaleOptional, gmmWeightScaleOptional, mmXScaleOptional, mmWeightScaleOptional, commQuantScaleOptional,
-        strGroup, epWorldSize, sendCounts, recvCounts, transGmmWeight, transMmWeight, gmmXQuantMode, gmmWeightQuantMode,
-        mmXQuantMode, mmWeightQuantMode, commQuantMode, groupSize, commQuantDtypeOptional, y, mmYOptional,
-        workspaceSize, executor);
+        gmmX, gmmWeight, sendCountsTensorOptional, recvCountsTensorOptional, mmXOptional, mmWeightOptional, group,
+        epWorldSize, sendCounts, recvCounts, transGmmWeight, transMmWeight, y, mmYOptional, workspaceSize, executor);
     return ret;
 }
 

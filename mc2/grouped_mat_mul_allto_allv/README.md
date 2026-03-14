@@ -16,54 +16,20 @@
 - 算子功能：完成路由专家GroupedMatMul、Unpermute、AlltoAllv融合并实现与共享专家MatMul并行融合，**先计算后通信**。
 
 - 计算公式：
-  - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-    - 非量化场景：
+  - 路由专家：
 
-      - 路由专家：
+    $$
+    gmmY = gmmX \times gmmWeight \\
+    unpermuteOut = Unpermute(gmmY) \\
+    y = AlltoAllv(unpermuteOut)
+    $$
 
-        $$
-        gmmY = gmmX @ gmmWeight \\
-        unpermuteOut = Unpermute(gmmY) \\
-        y = AlltoAllv(unpermuteOut)
-        $$
+  - 共享专家：
 
-      - 共享专家：
+    $$
+    mmY = mmX \times mmWeight
+    $$
 
-        $$
-        mmY = mmX @ mmWeight
-        $$
-
-  - <term>Ascend 950PR/Ascend 950DT</term>：
-    - 非量化场景：
-
-      - 路由专家：
-
-        $$
-        gmmY = gmmX @ gmmWeight \\
-        unpermuteOut = Unpermute(gmmY) \\
-        y = AlltoAllv(unpermuteOut)
-        $$
-
-      - 共享专家：
-
-        $$
-        mmY = mmX @ mmWeight
-        $$
-    - 量化场景：
-      - T-T量化场景：
-          - 路由专家：
-
-          $$
-          gmmY = gmmX @ gmmWeight * gmmXScale * gmmWeightScale \\
-          unpermuteOut = Unpermute(gmmY) \\
-          y = AlltoAllv(unpermuteOut)
-          $$
-
-          - 共享专家：
-
-          $$
-          mmY = mmX @  mmWeight * mmXScale * mmWeightScale
-          $$
 
 ## 参数说明
 
@@ -87,28 +53,14 @@
    <td>gmmX</td>
    <td>输入</td>
    <td>该输入进行AlltoAllv通信，通信后结果作为GroupedMatMul计算的左矩阵，支持2维，shape为(A, H1)。</td>
-   <td>FLOAT16、BFLOAT16、HIFLOAT8</td>
+   <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
   </tr>
   <tr>
    <td>gmmWeight</td>
    <td>输入</td>
    <td>GroupedMatMul计算的右矩阵，数据类型与gmmX保持一致，支持3维，shape为(e, H1, N1)。</td>
-   <td>FLOAT16、BFLOAT16、HIFLOAT8</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>gmmXScale</td>
-   <td>输入</td>
-   <td>路由专家左矩阵的量化系数。</td>
-   <td>FLOAT32</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>gmmWeightScale</td>
-   <td>输入</td>
-   <td>路由专家右矩阵的量化系数。</td>
-   <td>FLOAT32</td>
+   <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
   </tr>
   <tr>
@@ -129,78 +81,15 @@
    <td>mmXOptional</td>
    <td>输入</td>
    <td>可选输入，共享专家MatMul计算中的左矩阵，需与mmWeightOptional同时传入或同为nullptr，数据类型与gmmX保持一致，支持2维，shape为(BS, H2)。</td>
-   <td>FLOAT16、BFLOAT16、HIFLOAT8</td>
+   <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
   </tr>
   <tr>
    <td>mmWeightOptional</td>
    <td>输入</td>
    <td>可选输入，共享专家MatMul计算中的右矩阵，需与mmXOptional同时传入或同为nullptr，数据类型与gmmX保持一致，支持2维，shape为(H2, N2)。</td>
-   <td>FLOAT16、BFLOAT16、HIFLOAT8</td>
+   <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
-  </tr>
-  <tr>
-   <td>mmXScaleOptional</td>
-   <td>输入</td>
-   <td>可选输入，共享专家MatMul计算中的左矩阵的量化系数。</td>
-   <td>FLOAT32</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>mmWeightScaleOptional</td>
-   <td>输入</td>
-   <td>可选输入，共享专家MatMul计算中的右矩阵的量化系数。</td>
-   <td>FLOAT32</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>commQuantScaleOptional</td>
-   <td>输入</td>
-   <td>可选输入，低比特通信的量化系数，预留参数，暂不支持低比特通信。</td>
-   <td>FLOAT32</td>
-   <td>ND</td>
-  </tr>
-  <tr>
-   <td>gmmXQuantMode</td>
-   <td>输入</td>
-   <td>路由专家左矩阵的量化方式。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>gmmWeightQuantMode</td>
-   <td>输入</td>
-   <td>路由专家右矩阵的量化方式。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>mmXQuantMode</td>
-   <td>输入</td>
-   <td>共享专家左矩阵的量化方式。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>mmWeightQuantMode</td>
-   <td>输入</td>
-   <td>共享专家右矩阵的量化方式。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>commQuantMode</td>
-   <td>输入</td>
-   <td>低比特通信的量化方式，预留参数，当前仅支持配置为0，表示非量化。</td>
-   <td>INT64</td>
-   <td>-</td>
-  </tr>
-  <tr>
-   <td>commQuantDtype</td>
-   <td>输入</td>
-   <td>低比特通信的量化类型，预留参数，当前仅支持配置为-1，表示ACL_DT_UNDEFINED。</td>
-   <td>INT64</td>
-   <td>-</td>
   </tr>
   <tr>
    <td>group</td>
@@ -247,28 +136,19 @@
   <tr>
    <td>y</td>
    <td>输出</td>
-   <td>最终计算结果，支持2维，shape为(BSK, N1)。</td>
+   <td>最终计算结果，数据类型与输入gmmX保持一致，支持2维，shape为(BSK, N1)。</td>
    <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
   </tr>
   <tr>
    <td>mmYOptional</td>
    <td>输出</td>
-   <td>共享专家MatMul的输出，支持2维，shape为(BS, N2)，仅当传入mmXOptional与mmWeightOptional才输出。</td>
+   <td>共享专家MatMul的输出，数据类型与mmXOptional保持一致，支持2维，shape为(BS, N2)，仅当传入mmXOptional与mmWeightOptional才输出。</td>
    <td>FLOAT16、BFLOAT16</td>
    <td>ND</td>
   </tr>
  </tbody></table>
 
-  gmmXQuantMode、gmmWeightQuantMode、mmXQuantMode、mmWeightQuantMode、commQuantMode的枚举值跟[量化模式](../../../docs/zh/context/量化介绍.md)关系如下:
-  * 0: 非量化
-  * 1: pertensor
-  * 2: perchannel
-  * 3: pertoken
-  * 4: pergroup
-  * 5: perblock
-  * 6: mx量化
-  * 7: pertoken动态量化
 
 ## 约束说明
 
@@ -290,5 +170,4 @@
 
 | 调用方式  | 样例代码                                  | 说明                                                     |
 | :--------: | :----------------------------------------: | :-------------------------------------------------------: |
-| aclnn接口 | [test_aclnn_grouped_mat_mul_allto_allv.cpp](./examples/test_aclnn_grouped_mat_mul_allto_allv.cpp) | 通过[aclnnGroupedMatMulAlltoAllv](./docs/aclnnGroupedMatMulAlltoAllv.md)接口方式调用非量化场景的grouped_mat_mul_allto_allv算子。 |
-| aclnn接口 | [test_aclnn_quant_grouped_mat_mul_allto_allv.cpp](./examples/test_aclnn_quant_grouped_mat_mul_allto_allv.cpp) | 通过[aclnnQuantGroupedMatMulAlltoAllv](./docs/aclnnQuantGroupedMatMulAlltoAllv.md)接口方式调用量化场景的grouped_mat_mul_allto_allv算子。 |
+| aclnn接口 | [test_aclnn_grouped_mat_mul_allto_allv.cpp](./examples/test_aclnn_grouped_mat_mul_allto_allv.cpp) | 通过[aclnnGroupedMatMulAlltoAllv](./docs/aclnnGroupedMatMulAlltoAllv.md)接口方式调用grouped_mat_mul_allto_allv算子。 |

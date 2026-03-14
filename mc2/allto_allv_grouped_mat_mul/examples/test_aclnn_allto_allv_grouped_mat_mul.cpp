@@ -69,7 +69,7 @@ struct Args {
 };
 
 // shape 基本信息
-constexpr int64_t EP_WORLD_SIZE = 8;
+constexpr int64_t EP_WORLD_SIZE = 2;
 constexpr int64_t BS = 4096;
 constexpr int64_t K = 2;
 constexpr int64_t H = 7168;
