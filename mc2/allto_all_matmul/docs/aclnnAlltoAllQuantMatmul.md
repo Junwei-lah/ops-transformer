@@ -902,7 +902,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
         int64_t x2QuantMode = 2;
         int64_t commQuantMode = 0;
         int64_t commQuantDtype = -1;
-        int64_t x1QuantDtype = 2;
+        int64_t x1QuantDtype = 35;
         int64_t groupSize = 0;
         aclOpExecutor *executor;
         void *workspaceAddr = nullptr;
