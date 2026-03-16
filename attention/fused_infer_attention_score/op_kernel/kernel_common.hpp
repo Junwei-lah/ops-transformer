@@ -126,9 +126,24 @@ namespace KernelCommon {
         return qNBlockTile;
     }
 
+    __aicore__ inline uint32_t GetKvNBlockTile(uint32_t rowNumPerQSGTile, uint32_t kvHead)
+    {
+        uint32_t rowNumCeilPerQSGKvNTile = Q_TILE_CEIL;
+        uint32_t kvNBlockTile = rowNumCeilPerQSGKvNTile / rowNumPerQSGTile;
+        kvNBlockTile = kvNBlockTile < kvHead ? kvNBlockTile : kvHead;
+        kvNBlockTile = kvNBlockTile < 1 ? 1 : kvNBlockTile;
+        return kvNBlockTile;
+    }
+
     __aicore__ inline uint32_t GetQSBlockTile(uint32_t kvSeqlen)
     {
         uint32_t qSBlockTile = Q_TILE_CEIL;
+        return qSBlockTile;
+    }
+
+    __aicore__ inline uint32_t GetQSBlockTileDecode(uint32_t qSeqlen)
+    {
+        uint32_t qSBlockTile = Q_TILE_CEIL < qSeqlen ? Q_TILE_CEIL : qSeqlen;
         return qSBlockTile;
     }
     __aicore__ inline uint32_t GetKSBlockTile(uint32_t kvSeqlen)

@@ -34,8 +34,24 @@ struct MmadAtlasA2FAIQK : public MmadAtlasA2 {
     static constexpr bool ENABLE_UNIT_FLAG = ENABLE_UNIT_FLAG_;
 };
 
+// Dispatch policy for decoding scenario (pagedCacheFlag == true && qSeqlen == 1)
+template <bool PAGED_CACHE_FLAG_ = true, bool ENABLE_UNIT_FLAG_ = false>
+struct MmadAtlasA2FAIQKDecode : public MmadAtlasA2 {
+    static constexpr uint32_t STAGES = 2;
+    static constexpr bool PAGED_CACHE_FLAG = PAGED_CACHE_FLAG_;
+    static constexpr bool ENABLE_UNIT_FLAG = ENABLE_UNIT_FLAG_;
+};
+
 template <bool PAGED_CACHE_FLAG_ = false, bool ENABLE_UNIT_FLAG_ = false>
 struct MmadAtlasA2FAIPV : public MmadAtlasA2 {
+    static constexpr uint32_t STAGES = 2;
+    static constexpr bool PAGED_CACHE_FLAG = PAGED_CACHE_FLAG_;
+    static constexpr bool ENABLE_UNIT_FLAG = ENABLE_UNIT_FLAG_;
+};
+
+// Dispatch policy for PV decoding scenario (pagedCacheFlag == true && qSeqlen == 1)
+template <bool PAGED_CACHE_FLAG_ = true, bool ENABLE_UNIT_FLAG_ = false>
+struct MmadAtlasA2FAIPVDecode : public MmadAtlasA2 {
     static constexpr uint32_t STAGES = 2;
     static constexpr bool PAGED_CACHE_FLAG = PAGED_CACHE_FLAG_;
     static constexpr bool ENABLE_UNIT_FLAG = ENABLE_UNIT_FLAG_;

@@ -35,6 +35,8 @@ struct BlockMmad {
 } // namespace NpuArch::Gemm::Block
 
 #include "../../../attn_infra/gemm/block/block_mmad_qk.hpp"
+#include "../../../attn_infra/gemm/block/block_mmad_qk_decode.hpp"
 #include "../../../attn_infra/gemm/block/block_mmad_pv.hpp"
+#include "../../../attn_infra/gemm/block/block_mmad_pv_decode.hpp"
 
 #endif // GEMM_BLOCK_BLOCK_MMAD_HPP
