@@ -115,26 +115,27 @@ __global__ __aicore__ void rotary_position_embedding_grad(
             // 调用reduce模版，做reduce操作
             using ReduceOp = ReduceSch<REDUCE_TPL_VALUE,
                 RotaryPositionEmbeddingGrad::RotaryPositionEmbeddingGradDag<DTYPE_DY, float>::OpDag>;
-            ReduceOp reduceOp(&tilingData.reduceTiling);
+            ReduceOp reduceOp0(&tilingData.reduceTiling);
+            ReduceOp reduceOp1(&tilingData.reduceTiling);
             if (tilingData.rotaryXParams.rotaryMode ==
                 static_cast<int64_t>(RotaryPositionEmbeddingGrad::RotaryPosEmbeddingMode::DEEPSEEK_INTERLEAVE)) {
                 GM_ADDR reduceWorkSpace = usrWorkSpace + workSpaceSize * 2 * sizeof(DTYPE_DY);
                 GM_ADDR dSinWorkSpace = usrWorkSpace + workSpaceSize * sizeof(DTYPE_DY);
-                reduceOp.Init(&pipe, grad, usrWorkSpace, cosGrad, reduceWorkSpace);
-                reduceOp.Process();
+                reduceOp0.Init(&pipe, grad, usrWorkSpace, cosGrad, reduceWorkSpace);
+                reduceOp0.Process();
                 pipe.Reset();
                 PipeBarrier<PIPE_ALL>();
-                reduceOp.Init(&pipe, grad, dSinWorkSpace, sinGrad, reduceWorkSpace);
-                reduceOp.Process();
+                reduceOp1.Init(&pipe, grad, dSinWorkSpace, sinGrad, reduceWorkSpace);
+                reduceOp1.Process();
                 pipe.Reset();
             } else {
                 GM_ADDR reduceWorkSpace = usrWorkSpace + workSpaceSize * sizeof(DTYPE_DY);
-                reduceOp.Init(&pipe, grad, x, cosGrad, reduceWorkSpace);
-                reduceOp.Process();
+                reduceOp0.Init(&pipe, grad, x, cosGrad, reduceWorkSpace);
+                reduceOp0.Process();
                 pipe.Reset();
                 PipeBarrier<PIPE_ALL>();
-                reduceOp.Init(&pipe, grad, usrWorkSpace, sinGrad, reduceWorkSpace);
-                reduceOp.Process();
+                reduceOp1.Init(&pipe, grad, usrWorkSpace, sinGrad, reduceWorkSpace);
+                reduceOp1.Process();
                 pipe.Reset();
             }
         }
