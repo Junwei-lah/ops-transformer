@@ -94,7 +94,7 @@ static bool IsAICoreSupport(const aclTensor* self)
 static const std::initializer_list<DataType> dtype_list = {op::DataType::DT_FLOAT16, op::DataType::DT_FLOAT,
                                                            op::DataType::DT_BF16};
 
-static const std::initializer_list<DataType> routing_map_dtype_list = {op::DataType::DT_UINT8, op::DataType::DT_BOOL};
+static const std::initializer_list<DataType> routing_map_dtype_list = {op::DataType::DT_INT8, op::DataType::DT_UINT8, op::DataType::DT_BOOL};
 
 static const std::initializer_list<DataType> indice_dtype_list = {op::DataType::DT_INT32};
 
@@ -114,23 +114,34 @@ static inline bool CheckNotNull(const aclTensor* permuteTokens,
 
 static inline bool CheckDtypeValid(const aclTensor* permuteTokens,
                                    const aclTensor* sortedIndices,
+                                   const aclTensor* routingMapOptional,
                                    const aclTensor* probsOptional,
                                    const aclTensor* unpermutedTokens, 
                                    const aclTensor* outIndex, 
                                    const aclTensor* permuteTokenId, 
                                    const aclTensor* permuteProbs)
 {
-    // 检查gradY的数据类型是否在支持列表内
     OP_CHECK_DTYPE_NOT_SUPPORT(permuteTokens, dtype_list, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(sortedIndices, indice_dtype_list, return false);
     
+    if (routingMapOptional != nullptr) {
+        bool dtypeSupported = false;
+        for (auto dtype : routing_map_dtype_list) {
+            if (routingMapOptional->GetDataType() == dtype) {
+                dtypeSupported = true;
+                break;
+            }
+        }
+        if (!dtypeSupported) {
+            OP_LOGW("routingMapOptional's dtype is not supported. Supported dtypes are INT8, UINT8, BOOL.");
+        }
+    }
+    
     if (probsOptional != nullptr) {
         OP_CHECK_DTYPE_NOT_SUPPORT(probsOptional, dtype_list, return false);
-        //混精仅支持permuteTokens为bf16时probs为fp32
         if (probsOptional->GetDataType() != op::DataType::DT_FLOAT || permuteTokens->GetDataType() != op::DataType::DT_BF16) {
             OP_CHECK_DTYPE_NOT_MATCH(permuteTokens, probsOptional->GetDataType(), return false);
         }
-        // 检查输入和输出的数据类型是否一致
         if (permuteProbs != nullptr) {
             OP_CHECK_DTYPE_NOT_MATCH(permuteProbs, probsOptional->GetDataType(), return false);
         }
@@ -151,7 +162,11 @@ static inline bool CheckDtypeValid(const aclTensor* permuteTokens,
     return true;
 }
 
-static bool CheckShapeValid(const aclTensor* permuteTokens, const aclTensor* sortedIndices, const aclTensor* unpermutedTokens)
+static bool CheckShapeValid(const aclTensor* permuteTokens, 
+                            const aclTensor* sortedIndices, 
+                            const aclTensor* routingMapOptional,
+                            const aclTensor* probsOptional,
+                            const aclTensor* unpermutedTokens)
 {
     auto permuteTokenspDimNum = permuteTokens->GetViewShape().GetDimNum();
     OP_CHECK(
@@ -171,23 +186,54 @@ static bool CheckShapeValid(const aclTensor* permuteTokens, const aclTensor* sor
         OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The dimension of unpermutedTokensDimNum should be two, but got %lu.", unpermutedTokensDimNum),
         return false);
 
+    if (routingMapOptional != nullptr) {
+        auto routingMapDimNum = routingMapOptional->GetViewShape().GetDimNum();
+        if (routingMapDimNum != TRANSPOSE_SHAPE_SIZE) {
+            OP_LOGW("The dimension of routingMapOptional should be two, but got %lu.", routingMapDimNum);
+        }
+        
+        if (probsOptional != nullptr) {
+            if (routingMapOptional->GetViewShape() != probsOptional->GetViewShape()) {
+                OP_LOGW("The shape of routingMapOptional should match probsOptional.");
+            }
+        }
+    }
+
     return true;
+}
+
+static void IsFormatSupport(const aclTensor* input, const std::string& inputName)
+{
+    if (input != nullptr && op::IsPrivateFormat(input->GetStorageFormat())) {
+        OP_LOGW("%s's format should be ND. actual is [%s].", inputName.c_str(),
+            op::ToString(input->GetStorageFormat()).GetString());
+    }
+}
+
+static void CheckFormatValid(const aclTensor* permutedTokens,
+                             const aclTensor* sortedIndices,
+                             const aclTensor* routingMapOptional,
+                             const aclTensor* probsOptional)
+{
+    IsFormatSupport(permutedTokens, "permutedTokens");
+    IsFormatSupport(sortedIndices, "sortedIndices");
+    IsFormatSupport(routingMapOptional, "routingMapOptional");
+    IsFormatSupport(probsOptional, "probsOptional");
 }
 
 static aclnnStatus CheckParams(const aclTensor* permuteTokens,
                                const aclTensor* sortedIndices,
+                               const aclTensor* routingMapOptional,
                                const aclTensor* probsOptional, 
                                const aclIntArray* restoreShapeOptional,
                                aclTensor* unpermutedTokens, aclTensor* outIndex, aclTensor* permuteTokenId, aclTensor* permuteProbs)
 {
-    // 1. 检查参数是否为空指针
     CHECK_RET(CheckNotNull(permuteTokens, sortedIndices, probsOptional, restoreShapeOptional), 
                            ACLNN_ERR_PARAM_NULLPTR);
-    // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验
-    CHECK_RET(CheckDtypeValid(permuteTokens, sortedIndices, probsOptional, unpermutedTokens, outIndex, permuteTokenId, permuteProbs), 
+    CHECK_RET(CheckDtypeValid(permuteTokens, sortedIndices, routingMapOptional, probsOptional, unpermutedTokens, outIndex, permuteTokenId, permuteProbs), 
                               ACLNN_ERR_PARAM_INVALID);
-    // 3. 检查输入的Shape是否符合要求
-    CHECK_RET(CheckShapeValid(permuteTokens, sortedIndices, unpermutedTokens), ACLNN_ERR_PARAM_INVALID);
+    CHECK_RET(CheckShapeValid(permuteTokens, sortedIndices, routingMapOptional, probsOptional, unpermutedTokens), ACLNN_ERR_PARAM_INVALID);
+    CheckFormatValid(permuteTokens, sortedIndices, routingMapOptional, probsOptional);
     return ACLNN_SUCCESS;
 }
 
@@ -216,7 +262,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMapGetWorkspaceSize(const aclTensor
                    DFX_IN(permutedTokens, sortedIndices, routingMapOptional, probsOptional, paddedMode, restoreShapeOptional),
                    DFX_OUT(unpermutedTokens, outIndex, permuteTokenId, permuteProbs));
 
-    auto ret = CheckParams(permutedTokens, sortedIndices, probsOptional, 
+    auto ret = CheckParams(permutedTokens, sortedIndices, routingMapOptional, probsOptional, 
                            restoreShapeOptional, unpermutedTokens, outIndex, permuteTokenId, permuteProbs);
     CHECK_RET(ret == ACLNN_SUCCESS, ret);
     // 固定写法，创建OpExecutor
