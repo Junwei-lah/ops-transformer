@@ -55,8 +55,8 @@ constexpr uint64_t MB_SIZE = 1024UL * 1024UL;
 constexpr uint32_t OP_TYPE_ALL_TO_ALL = 8U;
 const char *A_INNER_DEBUG_BARRIER = "DistributeBarrier Tiling Debug";
 
-const int MIN_WORLD_SIZE = 2;
-const int MAX_WORLD_SIZE = 384;
+const int64_t MIN_WORLD_SIZE = 2;
+const int64_t MAX_WORLD_SIZE = 384;
 
 static void PrintTilingDataInfo(DistributeBarrierTilingData &tilingData) {
   OPS_LOG_D(A_INNER_DEBUG_BARRIER, "worldSize is %u.",
@@ -117,7 +117,7 @@ static bool CheckAndSetAttrs(const gert::TilingContext *context, DistributeBarri
   OP_TILING_CHECK(attrs == nullptr, OPS_LOG_E(A_INNER_DEBUG_BARRIER, "GetAttrs returned nullptr!"), return false);
 
   auto groupPtr = attrs->GetAttrPointer<char>(ATTR_GROUP_INDEX);
-  auto worldSizePtr = attrs->GetAttrPointer<int>(ATTR_WORLD_SIZE_INDEX);
+  auto worldSizePtr = attrs->GetAttrPointer<int64_t>(ATTR_WORLD_SIZE_INDEX);
 
   // 当前仅对必选属性进行校空
   OP_TILING_CHECK(groupPtr == nullptr,
@@ -128,10 +128,11 @@ static bool CheckAndSetAttrs(const gert::TilingContext *context, DistributeBarri
                   return false);
 
   OP_TILING_CHECK((*worldSizePtr < MIN_WORLD_SIZE) || (*worldSizePtr > MAX_WORLD_SIZE),
-                  OPS_LOG_E(A_INNER_DEBUG_BARRIER, "WorldSize is invalid, only support [%d, %d], but got worldSize=%d.",
+                  OPS_LOG_E(A_INNER_DEBUG_BARRIER, "WorldSize is invalid, only support [%ld, %ld], but got worldSize=%ld.",
                   MIN_WORLD_SIZE, MAX_WORLD_SIZE, *worldSizePtr), return false);
 
-  tilingData.distributeBarrierInfo.worldSize = *worldSizePtr;
+  uint32_t worldSize = static_cast<uint32_t>(*worldSizePtr);
+  tilingData.distributeBarrierInfo.worldSize = worldSize;
 
   OPS_LOG_D(A_INNER_DEBUG_BARRIER, "group = %s", groupPtr);
   group = string(groupPtr);
@@ -141,7 +142,7 @@ static bool CheckAndSetAttrs(const gert::TilingContext *context, DistributeBarri
                     return false);
   }
   if (isInputElasticInfo) {     
-    OP_TILING_CHECK(CheckElasticInfo(context, *worldSizePtr) == false,
+    OP_TILING_CHECK(CheckElasticInfo(context, worldSize) == false,
                     OPS_LOG_E(A_INNER_DEBUG_BARRIER, "elasticInfo is invalid!"),
                     return false);
   }

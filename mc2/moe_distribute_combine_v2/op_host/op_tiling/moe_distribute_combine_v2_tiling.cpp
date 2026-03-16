@@ -1374,7 +1374,7 @@ static void UbUsedCal(const uint64_t ubSize, const gert::TilingContext* context,
     bool enableSpecialExpert = (constExpertNum + zeroExpertNum + copyExpertNum > 0U);
     auto expandXDesc = context->GetInputDesc(config.expandXIndex);
     auto attrs = context->GetAttrs();
-    auto commQuantModePtr = attrs->GetAttrPointer<int>((config.attrCommQuantModeIndex));
+    auto commQuantModePtr = attrs->GetAttrPointer<int64_t>((config.attrCommQuantModeIndex));
     uint32_t maxSizeTokenBuf = (axisH * sizeof(expandXDesc->GetDataType()) + UB_ALIGN - 1) / UB_ALIGN * UB_ALIGN;
     uint32_t hExpandXTypeSize = axisH * sizeof(expandXDesc->GetDataType());
     uint32_t activeMaskAlignSize = axisBS * ((axisK * sizeof(bool) + UB_ALIGN - 1) / UB_ALIGN * UB_ALIGN);
