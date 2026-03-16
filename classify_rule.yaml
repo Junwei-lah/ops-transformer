@@ -326,6 +326,7 @@ mc2_moe_advanced@ops-transformer:
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_api/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_graph/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_kernel/arch35/
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/arch35/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_kernel/check_winsize.h
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_kernel/common.h
                 - ops/ops-transformer/mc2/moe_distribute_dispatch/op_kernel/moe_distribute_dispatch_tiling_key.h
@@ -339,6 +340,7 @@ mc2_moe_advanced@ops-transformer:
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_api/
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_graph/
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_kernel/arch35/
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/arch35/
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_kernel/moe_distribute_combine_tiling_key.h
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_kernel/moe_distribute_combine_tiling.h
                 - ops/ops-transformer/mc2/moe_distribute_combine/op_kernel/moe_distribute_combine.cpp
@@ -367,15 +369,34 @@ mc2_moe@ops-transformer:
                 - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_host/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_api/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_graph/
-                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/
                 - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/CMakeLists.txt
                 - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/README.md
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/common.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_tiling.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_full_mesh.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_host_kfc.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_layered.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_quant.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_tiling_key.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_tiling.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2.cpp
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_elastic.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_base.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/moe_distribute_dispatch_v2_constant.h
+                - ops/ops-transformer/mc2/moe_distribute_dispatch_v2/op_kernel/quantize_functions.h
                 - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_host/
                 - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_api/
                 - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_graph/
-                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/
                 - ops/ops-transformer/mc2/moe_distribute_combine_v2/CMakeLists.txt
                 - ops/ops-transformer/mc2/moe_distribute_combine_v2/README.md
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_tiling.h
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_layered.h
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_quant.h
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_tiling_key.h
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2_tiling.h
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2.cpp
+                - ops/ops-transformer/mc2/moe_distribute_combine_v2/op_kernel/moe_distribute_combine_v2.h
                 - ops/ops-transformer/mc2/moe_distribute_combine_add_rms_norm/op_host/
                 - ops/ops-transformer/mc2/moe_distribute_combine_add_rms_norm/op_api/
                 - ops/ops-transformer/mc2/moe_distribute_combine_add_rms_norm/op_graph/
