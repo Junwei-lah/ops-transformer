@@ -2111,7 +2111,7 @@ static ge::graphStatus MoeDistributeDispatchA2CheckWinSize(const gert::TilingCon
                     "* (h * 2 + 16 * Align8(k))) / 1MB + 8MB) = %luMB, actual HCCL_BUFFSIZE = %luMB, "
                     "moeExpertNum = %u, maxBs = %lu, h = %u, k = %u. AlignY(x) = (x + Y - 1) / Y * Y.",
                     ops::CeilDiv(minHcclBuffSize, MB_SIZE), ops::CeilDiv(hcclBuffSize, MB_SIZE), info.moeExpertNum,
-                    maxBs, info.h, info.k, BUFFER_ALIGN);
+                    maxBs, info.h, info.k);
             return ge::GRAPH_FAILED;
         }
     } else {
