@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,1288 +12,808 @@
  * \file kv_quant_sparse_flash_attention_service_vector_mla.h
  * \brief
  */
-#ifndef KV_QUANT_SPARSE_FLASH_ATTENTION_SERVICE_VECTOR_MLA_H
-#define KV_QUANT_SPARSE_FLASH_ATTENTION_SERVICE_VECTOR_MLA_H
+#ifndef KV_QUANT_SPARSE_ATTN_SHAREDKV_QSFA_BLOCK_VECTOR_H
+#define KV_QUANT_SPARSE_ATTN_SHAREDKV_QSFA_BLOCK_VECTOR_H
 
-#include "kernel_operator.h"
+#include "util_regbase.h"
+#include "kv_quant_sparse_flash_attention_common_arch35.h"
 #include "kernel_operator_list_tensor_intf.h"
-#include "kernel_tiling/kernel_tiling.h"
 #include "lib/matmul_intf.h"
 #include "lib/matrix/matmul/tiling.h"
-#include "../kv_quant_sparse_flash_attention_common.h"
 
-using AscendC::CrossCoreSetFlag;
-using AscendC::CrossCoreWaitFlag;
+#include "vf/vf_mul_sel_softmaxflashv2_cast_nz_qsfa.h"
+#include "vf/vf_flashupdate_new_qsfa.h"
 
-template <typename QSFAT> class QSFAVectorService {
+#if __has_include("../../common/op_kernel/buffers_policy.h")
+#include "../../common/op_kernel/buffers_policy.h"
+#else
+#include "../common/buffers_policy.h"
+#endif
+#if __has_include("../../common/op_kernel/buffer_manager.h")
+#include "../../common/op_kernel/buffer_manager.h"
+#else
+#include "../common/buffer_manager.h"
+#endif
+#if __has_include("../../common/op_kernel/buffer.h")
+#include "../../common/op_kernel/buffer.h"
+#else
+#include "../common/buffer.h"
+#endif
+
+using namespace AscendC;
+using namespace QSFaVectorApi;
+using namespace AscendC::Impl::Detail;
+using namespace regbaseutil;
+using namespace matmul;
+
+namespace BaseApi {
+
+TEMPLATES_DEF
+class QSFAVectorService {
 public:
-    // 中间计算数据类型为float，高精度模式
-    using T = float;
-    using KV_T = typename QSFAT::kvType;
-    using K_ROPE_T = typename QSFAT::kRopeType;
-    using OUT_T = typename QSFAT::outputType;
-    using UPDATE_T = T;
-    using MM1_OUT_T = float;
-    using MM2_OUT_T = float;
-    bool NO_AMLA = true;
+    // BUFFER的字节数
+    static constexpr uint32_t BUFFER_SIZE_BYTE_32B = 32;
+    /* =================编译期常量的基本块信息================= */
+    static constexpr uint32_t s1BaseSize = 64;  //lz : 先设置64，但目前方案中应该是32
+    static constexpr uint32_t s2BaseSize = 128; 
+    static constexpr uint32_t vec1Srcstride = (s1BaseSize >> 1) + 1; 
+    static constexpr uint32_t dVTemplateType = 512;
+    static constexpr uint32_t dTemplateAlign64 = Align64Func(dVTemplateType);
+    static constexpr uint32_t dVTemplateTypeInput = 672;
+    static constexpr float R0 = 1.0f;
+    static constexpr uint64_t SYNC_SINKS_BUF_FLAG = 6;
 
-    __aicore__ inline QSFAVectorService(){};
-    __aicore__ inline void ProcessVec1L(const RunInfo &info);
-    __aicore__ inline void ProcessVec2L(const RunInfo &info);
-    __aicore__ inline void InitBuffers(TPipe *pipe);
-    __aicore__ inline void InitParams(const struct ConstInfo &constInfo,
-                                      const KvQuantSparseFlashAttentionTilingDataMla *__restrict tilingData);
-    __aicore__ inline void InitMm2ResInt32GmGlobalTensor(GlobalTensor<int32_t> mm2ResInt32Gm);
-    __aicore__ inline void InitVec0GlobalTensor(const GlobalTensor<int32_t> &kvValidSizeGm,
-                                                const GlobalTensor<K_ROPE_T> &kvMergeGm,
-                                                const GlobalTensor<K_ROPE_T> &keyRopeGm,
-                                                const GlobalTensor<KV_T> &keyGm,
-                                                const GlobalTensor<int32_t> &blkTableGm);
-    __aicore__ inline void InitVec1GlobalTensor(GlobalTensor<MM1_OUT_T> mm1ResGm, GlobalTensor<K_ROPE_T> vec1ResGm,
-                                                GlobalTensor<int32_t> actualSeqLengthsQGm,
-                                                GlobalTensor<int32_t> actualSeqLengthsKVGm, GlobalTensor<T> lseMaxFdGm,
-                                                GlobalTensor<T> lseSumFdGm, GlobalTensor<int32_t> topKGm);
-    __aicore__ inline void InitVec2GlobalTensor(GlobalTensor<T> accumOutGm, GlobalTensor<UPDATE_T> vec2ResGm,
-                                                GlobalTensor<MM2_OUT_T> mm2ResGm, GlobalTensor<OUT_T> attentionOutGm);
-    __aicore__ inline void AllocEventID();
-    __aicore__ inline void FreeEventID();
-    __aicore__ inline void InitSoftmaxDefaultBuffer();
-    // ================================Base Vector==========================================
-    __aicore__ inline void RowDivs(LocalTensor<float> dstUb, LocalTensor<float> src0Ub, LocalTensor<float> src1Ub,
-                                   uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount);
-    __aicore__ inline void RowMuls(LocalTensor<T> dstUb, LocalTensor<T> src0Ub, LocalTensor<T> src1Ub,
-                                   uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount);
-    // ================================Vector0==========================================
-    __aicore__ inline void MergeKv(const RunInfo &runInfo);
-    __aicore__ inline int64_t GetKeyBNBOffset(int64_t realS2Idx, const RunInfo &runInfo, int64_t s2IdLimit);
-    __aicore__ inline void GetRealS2Idx(int64_t s2GmOffset, int64_t &realS2Idx, int64_t topkGmBaseOffset,
-                                        const RunInfo &runInfo);
-    __aicore__ inline void CopyInKv(int64_t &mte2Size, int64_t mte3Size, int64_t mergeMte3Idx, int64_t realS2Idx1,
-                                    int64_t realS2Idx2, const RunInfo &runInfo);
-    __aicore__ inline void CopyOutMrgeResult(int64_t mte2Size, int64_t mte3Size, int64_t s2StartGmOffset,
-                                             int64_t mergeMte3Idx, const RunInfo &runInfo);
-    __aicore__ inline void SetInfInBlk(const LocalTensor<T> &mmResUb, uint32_t dealRowCount, uint32_t columnCount,
-                                       uint64_t startId, uint64_t endId);
-    __aicore__ inline void SetMidInf(const LocalTensor<T> &mmResUb, uint32_t dealRowCount, uint32_t columnCount,
-                                     uint64_t startId, uint64_t endId);
-    __aicore__ inline void CopyInSingleKv(int64_t &mte2Size, int64_t mte3Size, int64_t mergeMte3Idx, int64_t realS2Idx,
-                                          int64_t keyBNBOffset, int64_t s2IdLimit, const RunInfo &runInfo);
-    // ================================Vector1==========================================
-    __aicore__ inline void ProcessVec1SingleBuf(const RunInfo &info, const MSplitInfo &mSplitInfo);
-    __aicore__ inline void DealBmm1ResBaseBlock(const RunInfo &info, const MSplitInfo &mSplitInfo, uint32_t startRow,
-                                                uint32_t dealRowCount, uint32_t columnCount, uint32_t loopId);
-    __aicore__ inline void SoftmaxFlashV2Compute(const RunInfo &info, const MSplitInfo &mSplitInfo,
-                                                 LocalTensor<T> &mmResUb, LocalTensor<uint8_t> &softmaxTmpUb,
-                                                 uint32_t startRow, uint32_t dealRowCount, uint32_t columnCount,
-                                                 uint32_t actualColumnCount);
-    __aicore__ inline void ElewiseCompute(const RunInfo &info, const LocalTensor<T> &mmResUb, uint32_t dealRowCount,
-                                          uint32_t columnCount);
-    __aicore__ inline void ComputeLogSumExpAndCopyToGm(const RunInfo &info, const MSplitInfo &mSplitInfo,
-                                                       LocalTensor<T> &softmaxSumUb, LocalTensor<T> &softmaxMaxUb);
-    // ================================Vecotr2==========================================
-    __aicore__ inline void ProcessVec2SingleBuf(const RunInfo &info, const MSplitInfo &mSplitInfo);
-    __aicore__ inline void DealBmm2ResBaseBlock(const RunInfo &info, const MSplitInfo &mSplitInfo, uint32_t startRow,
-                                                uint32_t dealRowCount, uint32_t columnCount,
-                                                uint32_t actualColumnCount);
-    __aicore__ inline void ProcessVec2Inner(const RunInfo &info, const MSplitInfo &mSplitInfo, uint32_t mStartRow,
-                                            uint32_t mDealSize);
-    __aicore__ inline void Bmm2DataCopyOutTrans(const RunInfo &info, LocalTensor<OUT_T> &attenOutUb, uint32_t wsMStart,
-                                                uint32_t dealRowCount, uint32_t columnCount,
-                                                uint32_t actualColumnCount);
-    __aicore__ inline void Bmm2ResCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb, uint32_t wsMStart,
-                                          uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount);
-    __aicore__ inline void Bmm2CastAndCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb, uint32_t wsMStart,
-                                              uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount);
-    __aicore__ inline void Bmm2FDDataCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb, uint32_t wsMStart,
-                                             uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount);
-    __aicore__ inline uint64_t CalcAccumOffset(uint32_t bN2Idx, uint32_t gS1Idx);
-    __aicore__ inline void GetConfusionTransposeTiling(int64_t numR, int64_t numC, const uint32_t stackBufferSize,
-                                                       const uint32_t typeSize, ConfusionTransposeTiling &tiling);
+    // ==================== Functions ======================
+    __aicore__ inline QSFAVectorService() {};
+    __aicore__ inline void InitVecBlock(TPipe *pipe, const KvQuantSparseFlashAttentionTilingDataMla *__restrict tiling,
+        CVSharedParams &sharedParams, int32_t aicIdx, uint8_t subBlockIdx, __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths)
+    {
+        if ASCEND_IS_AIV {
+            tPipe = pipe;
+            tilingData = tiling;
+            if (actualSeqLengthsQ != nullptr) {
+                cuSeqlensQGm.SetGlobalBuffer((__gm__ int32_t *)actualSeqLengthsQ);
+            }
+            if (actualSeqLengths != nullptr) {
+                actualSeqLengthsKVGm.SetGlobalBuffer((__gm__ int32_t *)actualSeqLengths);
+            }
+            this->InitCubeVecSharedParams(sharedParams, aicIdx, subBlockIdx);
+            this->GetExtremeValue(this->negativeFloatScalar);
+        }
+    }
 
-    // BLOCK和REPEAT的字节数
-    static constexpr uint64_t BYTE_BLOCK = 32UL;
-    static constexpr uint32_t REPEAT_BLOCK_BYTE = 256U;
-    // BLOCK和REPEAT的FP32元素数
-    static constexpr uint32_t FP32_BLOCK_ELEMENT_NUM = BYTE_BLOCK / sizeof(float);
-    static constexpr uint32_t FP32_REPEAT_ELEMENT_NUM = REPEAT_BLOCK_BYTE / sizeof(float);
-    // repeat stride不能超过256
-    static constexpr uint32_t REPEATE_STRIDE_UP_BOUND = 256;
+    // 初始化LocalTensor
+    __aicore__ inline void InitLocalBuffer(TPipe *pipe, ConstInfo &constInfo);
+    // 初始化attentionOutGM
+    __aicore__ inline void CleanOutput(__gm__ uint8_t *attentionOut, ConstInfo &constInfo);
+    __aicore__ inline void InitGlobalBuffer(__gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *sparseIndices,
+        __gm__ uint8_t *blockTable);
+    __aicore__ inline void InitOutputSingleCore(ConstInfo &constInfo);
+    __aicore__ inline void ProcessVec0(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void ProcessVec1(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputBuf,
+        Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &bmm1ResBuf, RunInfo &runInfo,
+        ConstInfo &constInfo);
+    using mm2ResPos = Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH>;
+    __aicore__ inline void ProcessVec2(mm2ResPos &bmm2ResBuf, RunInfo &runInfo,
+        ConstInfo &constInfo);
 
 private:
-    static constexpr bool PAGE_ATTENTION = QSFAT::pageAttention;
-    static constexpr int TEMPLATE_MODE = QSFAT::templateMode;
-    static constexpr bool FLASH_DECODE = QSFAT::flashDecode;
-    static constexpr QSFA_LAYOUT LAYOUT_T = QSFAT::layout;
-    static constexpr QSFA_LAYOUT KV_LAYOUT_T = QSFAT::kvLayout;
+    __aicore__ inline void ProcessSparseKv(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void ProcessNotSparseKv(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline int64_t GetkeyOffset(int64_t s2Idx, const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void GetRealCmpS2Idx(int64_t &token0Idx, int64_t &token1Idx, int64_t s2IdxInBase,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void CopyInKvNotSparse(LocalTensor<KV_T> kvMergUb, int64_t v0Loop, int64_t dealRow,
+        int64_t s2StartIdx, const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline uint32_t CopyInKvSparse(LocalTensor<KV_T> kvInUb , int64_t startRow, int64_t token0Idx,
+        int64_t token1Idx, const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void DequantKv(LocalTensor<Q_T> antiKvTensorAsB16, LocalTensor<KV_T> srcTensor, int64_t dealRow,
+        int64_t s2ProcessBaseSize, ConstInfo &constInfo);
+    __aicore__ inline void CopyOutKvUb2L1(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+        LocalTensor<Q_T> antiKvTensorAsB16, int64_t v0Loop, int64_t dealRow, int64_t s2StartIdx,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void CopyOutMrgeResult(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+        int64_t mte2Size, int64_t mte3Size, int64_t s2keyOffset, int64_t mergeMte3Idx, const RunInfo &runInfo);
+    __aicore__ inline void CopyInSingleKv(LocalTensor<KV_T> kvInUb, int64_t startRow, int64_t keyOffset);
+    /* VEC2_RES_T 表示bmm2ResUb当前的类型，VEC2_RES_T = Q_T那么不需要做Cast。另外，无效行场景当前默认需要做Cast */
+    using VEC2_RES_T = T;
+    template <typename VEC2_RES_T>
+    __aicore__ inline void Bmm2DataCopyOut(RunInfo &runInfo, ConstInfo &constInfo,
+        LocalTensor<VEC2_RES_T> &vec2ResUb, int64_t vec2S1Idx, int64_t vec2CalcSize = 0);
+    template <typename VEC2_RES_T>
+    __aicore__ inline void CopyOutAttentionOut(
+        RunInfo &runInfo, ConstInfo &constInfo, LocalTensor<VEC2_RES_T> &vec2ResUb, int64_t vec2S1Idx, int64_t vec2CalcSize);
+    __aicore__ inline void SoftmaxInitBuffer();
+    __aicore__ inline void InitCubeVecSharedParams(CVSharedParams &sharedParams, int32_t aicIdx, uint8_t subBlockIdx);
+    __aicore__ inline void GetExtremeValue(T &negativeScalar);
+    __aicore__ inline void InitSinksBuffer(ConstInfo &constInfo);
 
-    static constexpr uint64_t MERGE_CACHE_GM_BUF_NUM = 4;
-    static constexpr uint64_t SYNC_INPUT_BUF1_FLAG = 2;
-    static constexpr uint64_t SYNC_INPUT_BUF1_PONG_FLAG = 3;
-    static constexpr uint64_t SYNC_INPUT_BUF2_FLAG = 4;
-    static constexpr uint64_t SYNC_OUTPUT_BUF1_FLAG = 4;
-    static constexpr uint64_t SYNC_OUTPUT_BUF2_FLAG = 5;
-    static constexpr uint32_t INPUT1_BUFFER_OFFSET = ConstInfo::BUFFER_SIZE_BYTE_32K;
-    static constexpr uint32_t SOFTMAX_TMP_BUFFER_OFFSET = ConstInfo::BUFFER_SIZE_BYTE_512B / sizeof(T);
-    static constexpr uint32_t BASE_BLOCK_MAX_ELEMENT_NUM = ConstInfo::BUFFER_SIZE_BYTE_32K / sizeof(T);  // 32768/4=8096
-    static constexpr uint32_t BLOCK_ELEMENT_NUM = BYTE_BLOCK / sizeof(T);                                // 32/4=8
-    static constexpr uint32_t LIMIT_DEAL_ROW = 16U;
-    static constexpr T FLOAT_E_SCALAR = 8388608;
-    static constexpr T LN2 = 0.6931471805599453094172;
-    static constexpr T RECIP_OF_LN2 = 1 / LN2;
-    static constexpr T SOFTMAX_MIN_NUM = -2e38;
-
+    TPipe *tPipe;
     const KvQuantSparseFlashAttentionTilingDataMla *__restrict tilingData;
 
-    uint32_t pingpongFlag = 0U;
-    ConstInfo constInfo = {};
-
-    GlobalTensor<int32_t> mm2ResInt32Gm;
-    GlobalTensor<MM1_OUT_T> mm1ResGm;
-    GlobalTensor<K_ROPE_T> vec1ResGm;
-    GlobalTensor<T> lseSumFdGm;
-    GlobalTensor<T> lseMaxFdGm;
-
-    GlobalTensor<int32_t> actualSeqLengthsQGm;
+    GlobalTensor<OUTPUT_T> attentionOutGm;
+    GlobalTensor<KV_T> keyGm;
+    GlobalTensor<int32_t> SparseIndicesGm;
+    GlobalTensor<int32_t> blockTableGm;
+    GlobalTensor<int32_t> cuSeqlensQGm;
     GlobalTensor<int32_t> actualSeqLengthsKVGm;
-    GlobalTensor<T> vec2ResGm;
-    GlobalTensor<MM2_OUT_T> mm2ResGm;
-    GlobalTensor<T> accumOutGm;
-    GlobalTensor<OUT_T> attentionOutGm;
-    GlobalTensor<int32_t> blkTableGm_;
 
-    GlobalTensor<K_ROPE_T> kvMergeGm_;
-    GlobalTensor<K_ROPE_T> keyRopeGm_;
-    GlobalTensor<KV_T> keyGm_;
-    GlobalTensor<int32_t> topkGm_;
-    GlobalTensor<int32_t> kvValidSizeGm_;
+    TBuf<> commonTBuf; // common的复用空间
+    TBuf<> sinksBuf;
+    TQue<QuePosition::VECOUT, 1> stage1OutQue[2]; // 2份表示可能存在pingpong
+    TQue<QuePosition::VECIN, 2> stage0InQue; // for v0 input, 2份表示可能存在pingpong
+    TQue<QuePosition::VECOUT, 2> stage0OutQue; // for v0 output, 2份表示可能存在pingpong
+    TBuf<> stage2OutBuf;
+    TEventID mte3ToVId[2]; // 存放MTE3_V的eventId, 2份表示可能存在pingpong
+    TEventID vToMte3Id[2]; // 存放V_MTE3的eventId, 2份表示可能存在pingpong
+    TBuf<> softmaxMaxBuf[2];
+    TBuf<> softmaxSumBuf[2];
+    TBuf<> softmaxExpBuf[2]; 
+    TBuf<> dequantScaleBuff;
 
-    // ================================Local Buffer区====================================
-    TBuf<> inputBuff1;  // 32K * 2
-    TBuf<> inputBuff2;  // 32K
-    TBuf<> outputBuff1; // 32K
-    TBuf<> outputBuff2; // 4K
-
-    TBuf<> tmpBuff1;         // 32K
-    TBuf<> tmpBuff2;         // 8K
-    TBuf<> v0ValidSizeBuff;  // 8K
-
-    TBuf<> softmaxMaxBuff;        // PRE_LOAD_NUM * 1K
-    TBuf<> softmaxExpBuff;        // PRE_LOAD_NUM * 1K
-    TBuf<> softmaxSumBuff;        // PRE_LOAD_NUM * 1K
-    TBuf<> softmaxMaxDefaultBuff; // 1K
-    TBuf<> softmaxSumDefaultBuff; // 1K
-
-    LocalTensor<T> softmaxMaxDefaultUb;
-    LocalTensor<T> softmaxSumDefaultUb;
-
-    LocalTensor<T> softmaxMaxUb;
-    LocalTensor<T> softmaxSumUb;
-    LocalTensor<T> softmaxExpUb;
-    LocalTensor<KV_T> kvMergUb_;
-    LocalTensor<int32_t> v0ValidSizeUb_;
+    T negativeFloatScalar;
+    uint32_t maxBlockNumPerBatch;
+    uint32_t blockSize;
 };
 
-template <typename QSFAT> __aicore__ inline void QSFAVectorService<QSFAT>::InitBuffers(TPipe *pipe)
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::GetRealCmpS2Idx(int64_t &token0Idx, int64_t &token1Idx,
+    int64_t s2IdxInBase, const RunInfo &runInfo, ConstInfo &constInfo)
 {
-    pipe->InitBuffer(inputBuff1, ConstInfo::BUFFER_SIZE_BYTE_32K * 2); // 2:pingpong
-    pipe->InitBuffer(inputBuff2, ConstInfo::BUFFER_SIZE_BYTE_32K);
-    pipe->InitBuffer(outputBuff1, ConstInfo::BUFFER_SIZE_BYTE_32K);
-    pipe->InitBuffer(outputBuff2, ConstInfo::BUFFER_SIZE_BYTE_4K);
-
-    pipe->InitBuffer(tmpBuff1, ConstInfo::BUFFER_SIZE_BYTE_32K);
-    pipe->InitBuffer(tmpBuff2, ConstInfo::BUFFER_SIZE_BYTE_8K);
-    pipe->InitBuffer(v0ValidSizeBuff, ConstInfo::BUFFER_SIZE_BYTE_8K);
-
-    pipe->InitBuffer(softmaxMaxBuff, ConstInfo::BUFFER_SIZE_BYTE_512B * constInfo.preLoadNum);
-    pipe->InitBuffer(softmaxExpBuff, ConstInfo::BUFFER_SIZE_BYTE_512B * constInfo.preLoadNum);
-    pipe->InitBuffer(softmaxSumBuff, ConstInfo::BUFFER_SIZE_BYTE_512B * constInfo.preLoadNum);
-
-    pipe->InitBuffer(softmaxMaxDefaultBuff, ConstInfo::BUFFER_SIZE_BYTE_512B);
-    pipe->InitBuffer(softmaxSumDefaultBuff, ConstInfo::BUFFER_SIZE_BYTE_512B);
-
-    softmaxMaxUb = softmaxMaxBuff.Get<T>();
-    softmaxSumUb = softmaxSumBuff.Get<T>();
-    softmaxExpUb = softmaxExpBuff.Get<T>();
-
-    softmaxMaxDefaultUb = softmaxMaxDefaultBuff.Get<T>();
-    softmaxSumDefaultUb = softmaxSumDefaultBuff.Get<T>();
-
-    kvMergUb_ = inputBuff1.Get<KV_T>();
-
-    v0ValidSizeUb_ = v0ValidSizeBuff.Get<int32_t>();
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::InitParams(const struct ConstInfo &constInfo,
-                                     const KvQuantSparseFlashAttentionTilingDataMla *__restrict tilingData)
-{
-    this->constInfo = constInfo;
-    this->tilingData = tilingData;
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::InitMm2ResInt32GmGlobalTensor(GlobalTensor<int32_t> mm2ResInt32Gm)
-{
-    this->mm2ResInt32Gm = mm2ResInt32Gm;
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::InitVec0GlobalTensor(
-    const GlobalTensor<int32_t> &kvValidSizeGm, const GlobalTensor<K_ROPE_T> &kvMergeGm,
-    const GlobalTensor<K_ROPE_T> &keyRopeGm, const GlobalTensor<KV_T> &keyGm, const GlobalTensor<int32_t> &blkTableGm)
-{
-    this->kvMergeGm_ = kvMergeGm;
-    this->keyRopeGm_ = keyRopeGm;
-    this->keyGm_ = keyGm;
-    this->blkTableGm_ = blkTableGm;
-    this->kvValidSizeGm_ = kvValidSizeGm;
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::InitVec1GlobalTensor(
-    GlobalTensor<MM1_OUT_T> mm1ResGm, GlobalTensor<K_ROPE_T> vec1ResGm,
-    GlobalTensor<int32_t> actualSeqLengthsQGm, GlobalTensor<int32_t> actualSeqLengthsKVGm, GlobalTensor<T> lseMaxFdGm,
-    GlobalTensor<T> lseSumFdGm, GlobalTensor<int32_t> topKGm)
-{
-    this->mm1ResGm = mm1ResGm;
-    this->vec1ResGm = vec1ResGm;
-    this->actualSeqLengthsQGm = actualSeqLengthsQGm;
-    this->actualSeqLengthsKVGm = actualSeqLengthsKVGm;
-    this->lseMaxFdGm = lseMaxFdGm;
-    this->lseSumFdGm = lseSumFdGm;
-    this->topkGm_ = topKGm;
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::InitVec2GlobalTensor(GlobalTensor<T> accumOutGm,
-                                                                      GlobalTensor<T> vec2ResGm,
-                                                                      GlobalTensor<MM2_OUT_T> mm2ResGm,
-                                                                      GlobalTensor<OUT_T> attentionOutGm)
-{
-    this->accumOutGm = accumOutGm;
-    this->vec2ResGm = vec2ResGm;
-    this->mm2ResGm = mm2ResGm;
-    this->attentionOutGm = attentionOutGm;
-}
-
-template <typename QSFAT> __aicore__ inline void QSFAVectorService<QSFAT>::AllocEventID()
-{
-    SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG);
-    SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_PONG_FLAG);
-    SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF2_FLAG);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-}
-
-template <typename QSFAT> __aicore__ inline void QSFAVectorService<QSFAT>::FreeEventID()
-{
-    WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_PONG_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF2_FLAG);
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-}
-
-template <typename QSFAT> __aicore__ inline void QSFAVectorService<QSFAT>::InitSoftmaxDefaultBuffer()
-{
-    Duplicate(softmaxMaxDefaultUb, SOFTMAX_MIN_NUM, SOFTMAX_TMP_BUFFER_OFFSET);
-    Duplicate(softmaxSumDefaultUb, ConstInfo::FLOAT_ZERO, SOFTMAX_TMP_BUFFER_OFFSET);
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ComputeLogSumExpAndCopyToGm(const RunInfo &info,
-                                                                                         const MSplitInfo &mSplitInfo,
-                                                                                         LocalTensor<T> &softmaxSumUb,
-                                                                                         LocalTensor<T> &softmaxMaxUb)
-{
-    if (mSplitInfo.vecDealM == 0) {
-        return;
-    }
-    uint64_t baseOffset = mSplitInfo.nBufferStartM / 2;
-    size_t size = mSplitInfo.vecDealM * FP32_BLOCK_ELEMENT_NUM;
-    uint64_t accumTmpOutNum = CalcAccumOffset(info.bIdx, info.gS1Idx);
-    uint64_t offset = (accumTmpOutNum * constInfo.kvHeadNum * constInfo.mBaseSize +              // taskoffset
-                       info.tndCoreStartKVSplitPos * constInfo.kvHeadNum * constInfo.mBaseSize + // 份数offset
-                       mSplitInfo.nBufferStartM + mSplitInfo.vecStartM) *
-                       FP32_BLOCK_ELEMENT_NUM; // m轴offset
-    if (info.actualSingleProcessSInnerSize != 0) {
-        LocalTensor<T> tmp = outputBuff2.Get<T>();
-        WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-        Brcb(tmp, softmaxSumUb[baseOffset], (mSplitInfo.vecDealM + 7) / 8, {1, 8});
-        SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-        WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-        DataCopy(lseSumFdGm[offset], tmp, size);
-        SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-
-        tmp = outputBuff2.Get<T>();
-        WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-        Brcb(tmp, softmaxMaxUb[baseOffset], (mSplitInfo.vecDealM + 7) / 8, {1, 8});
-        SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-        WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-        DataCopy(lseMaxFdGm[offset], tmp, size);
-        SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
+    int64_t topkBS1Idx = 0;
+    if constexpr (LAYOUT_T == QSFA_LAYOUT::TND) {
+        uint64_t actualSeqQPrefixSum = runInfo.boIdx == 0 ? 0 : cuSeqlensQGm.GetValue(runInfo.boIdx - 1);
+        topkBS1Idx += (actualSeqQPrefixSum + runInfo.s1oIdx) * constInfo.sparseBlockCount; // T, N2(1), K
     } else {
-        matmul::InitOutput<T>(lseSumFdGm[offset], size, ConstInfo::FLOAT_ZERO);
-        matmul::InitOutput<T>(lseMaxFdGm[offset], size, SOFTMAX_MIN_NUM);
+        topkBS1Idx += runInfo.boIdx * constInfo.s1Size * constInfo.sparseBlockCount +
+            runInfo.s1oIdx * constInfo.sparseBlockCount; // B, S1, N2(1), K
     }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ElewiseCompute(const RunInfo &info,
-                                                                const LocalTensor<T> &mmResUb,
-                                                                uint32_t dealRowCount, uint32_t columnCount)
-{
-    Muls(mmResUb, mmResUb, static_cast<T>(tilingData->baseParams.scaleValue), dealRowCount * columnCount);
-    if constexpr (TEMPLATE_MODE == V_TEMPLATE) {
-        // v0的无效值判断
-        uint64_t s2ValidSizeFirstPart = v0ValidSizeUb_.GetValue(128 + info.loop % MERGE_CACHE_GM_BUF_NUM);
-        uint64_t s2ValidSizeSecondPart = v0ValidSizeUb_.GetValue(256 + info.loop % MERGE_CACHE_GM_BUF_NUM);
-
-        int64_t s2ProcessSize = info.actualSingleProcessSInnerSize;
-        int64_t s2Pair = CeilDiv(s2ProcessSize, 2L * constInfo.sparseBlockSize);
-        int64_t s2Mid = CeilDiv(s2Pair, 2L) * 2 * constInfo.sparseBlockSize;
-        if (s2Mid > s2ProcessSize) {
-            s2Mid = s2ProcessSize;
-        }
-        if (unlikely(s2ValidSizeFirstPart < s2Mid)) {
-            int64_t s2StartCeilAlign = CeilAlign(s2ValidSizeFirstPart, 8);
-            int64_t s2MidFloorAlign = s2Mid / 8 * 8;
-            // 场景一 s2Mid > s2ValidSizeFirstPart + oneBlk
-            // 可以推导出s2StartCeilAlign < s2Mid   第一阶段取到s2StartCeilAlign
-            // s2StartCeilAlign <= s2MidFloorAlign 第二阶段取到s2MidFloorAlign
-            // 场景二 s2Mid <= s2ValidSizeFirstPart + oneBlk
-            // 可以推导出 s2StartCeilAlign >= s2Mid 第一阶段取到mid
-            // s2StartCeilAlign > s2MidFloorAlign 第二阶段取到s2StartCeilAlign
-            SetInfInBlk(mmResUb, dealRowCount, columnCount, s2ValidSizeFirstPart,
-                        s2StartCeilAlign >= s2Mid ? s2Mid : s2StartCeilAlign);
-            SetMidInf(mmResUb, dealRowCount, columnCount, s2StartCeilAlign, s2MidFloorAlign);
-            SetInfInBlk(mmResUb, dealRowCount, columnCount,
-                        s2StartCeilAlign <= s2MidFloorAlign ? s2MidFloorAlign : s2StartCeilAlign, s2Mid);
-        }
-        if (unlikely(s2ValidSizeSecondPart < s2ProcessSize - s2Mid)) {
-            // 场景一 s2Mid + s2ValidSizeSecondPart > s2ProcessSize + oneBlk
-            // 可以推导出 s2StartCeilAlign < s2ProcessSize 第一阶段取到s2StartCeilAlign
-            // s2StartCeilAlign <= s2EndFloorAlign 第二阶段取到s2EndFloorAlign
-            // 场景二 s2Mid + s2ValidSizeSecondPart <= s2ProcessSize + oneBlk
-            // 可以推导出 s2StartCeilAlign >= s2ProcessSize 第一阶段取到s2ProcessSize
-            // s2StartCeilAlign > s2EndFloorAlign 第二阶段取到s2StartCeilAlign
-            int64_t s2StartCeilAlign = CeilAlign(s2Mid + s2ValidSizeSecondPart, 8);
-            int64_t s2EndFloorAlign = s2ProcessSize / 8 * 8;
-            SetInfInBlk(mmResUb, dealRowCount, columnCount, s2Mid + s2ValidSizeSecondPart,
-                        s2StartCeilAlign >= s2ProcessSize ? s2ProcessSize : s2StartCeilAlign);
-            SetMidInf(mmResUb, dealRowCount, columnCount, s2StartCeilAlign, s2EndFloorAlign);
-            SetInfInBlk(mmResUb, dealRowCount, columnCount,
-                        s2StartCeilAlign <= s2EndFloorAlign ? s2EndFloorAlign : s2StartCeilAlign, s2ProcessSize);
-        }
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::SetInfInBlk(const LocalTensor<T> &mmResUb,
-                                                             uint32_t dealRowCount, uint32_t columnCount,
-                                                             uint64_t startId, uint64_t endId)
-{
-    //       startId     endId
-    // x x x   0      0   0     x x x
-    // 从startId到endId部分置-inf, endId、startId为endId一个blk内部的下标
-    if (startId >= endId) {
-        return;
-    }
-
-    uint64_t startFloorAlignSize = startId / BLOCK_ELEMENT_NUM * BLOCK_ELEMENT_NUM;
-    uint64_t notComputePreMaskOneBlk = (1 << (startId - startFloorAlignSize)) - 1;
-    uint64_t notComputePostMaskOneBlk = ~((1 << (endId - startFloorAlignSize)) - 1);
-    uint64_t notComputeMaskOneBlk = notComputePreMaskOneBlk ^ notComputePostMaskOneBlk;
-
-    uint64_t maskOneBlk = ~notComputeMaskOneBlk;
-    uint64_t mask[1] = {maskOneBlk};
-    for (int i = 1; i < 8; i++) {
-        mask[0] = mask[0] | (maskOneBlk << (i * 8));
-    }
-    for (uint64_t rowId = 0; rowId < dealRowCount; rowId += 8) {
-        Duplicate(mmResUb[rowId * columnCount + startFloorAlignSize], SOFTMAX_MIN_NUM, mask,
-                  1, CeilDiv(columnCount, 8), 0);
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::SetMidInf(const LocalTensor<T> &mmResUb,
-                                                           uint32_t dealRowCount, uint32_t columnCount,
-                                                           uint64_t startId, uint64_t endId)
-{
-    if (startId >= endId) {
-        return;
-    }
-    // startId        endId
-    //    0      ...    0
-    // 从startId到endId部分置-inf, startId、endId为32B对齐的下标
-    for (uint64_t rowId = 0; rowId < dealRowCount; rowId++) {
-        Duplicate(mmResUb[rowId * columnCount + startId], SOFTMAX_MIN_NUM, endId - startId);
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::SoftmaxFlashV2Compute(
-    const RunInfo &info, const MSplitInfo &mSplitInfo, LocalTensor<T> &mmResUb, LocalTensor<uint8_t> &softmaxTmpUb,
-    uint32_t startRow, uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount)
-{
-    LocalTensor<T> inSumTensor;
-    LocalTensor<T> inMaxTensor;
-    uint32_t baseOffset = mSplitInfo.nBufferStartM / 2 + startRow;
-    uint32_t outIdx = info.loop % (constInfo.preLoadNum);
-    uint32_t softmaxOutOffset = outIdx * SOFTMAX_TMP_BUFFER_OFFSET + baseOffset;
-    if (info.isFirstSInnerLoop) {
-        inMaxTensor = softmaxMaxDefaultUb;
-        inSumTensor = softmaxSumDefaultUb;
+    int64_t cmpS2LoopCnt = runInfo.s2LoopCount;
+    int64_t topkKIdx = s2IdxInBase + cmpS2LoopCnt * constInfo.s2BaseSize;
+    if (unlikely(topkKIdx >= constInfo.sparseBlockCount)) {
+        token0Idx = -1;
     } else {
-        uint32_t inIdx = (info.loop - 1) % (constInfo.preLoadNum);
-        inMaxTensor = softmaxMaxUb[inIdx * SOFTMAX_TMP_BUFFER_OFFSET + baseOffset];
-        inSumTensor = softmaxSumUb[inIdx * SOFTMAX_TMP_BUFFER_OFFSET + baseOffset];
+        token0Idx = SparseIndicesGm.GetValue(topkBS1Idx + topkKIdx) + runInfo.s2StartIdx;
     }
-    if (actualColumnCount !=0) {
-        SoftMaxShapeInfo srcShape{dealRowCount, columnCount, dealRowCount, actualColumnCount};
-        SoftMaxTiling newTiling =
-            SoftMaxFlashV2TilingFunc(srcShape, sizeof(T), sizeof(T), softmaxTmpUb.GetSize(), true, false);
-        SoftmaxFlashV2<T, true, true, false, false, QSFA_SOFTMAX_FLASHV2_CFG_WITHOUT_BRC>(
-        mmResUb, softmaxSumUb[softmaxOutOffset], softmaxMaxUb[softmaxOutOffset], mmResUb,
-        softmaxExpUb[softmaxOutOffset], inSumTensor, inMaxTensor, softmaxTmpUb, newTiling, srcShape);
+    topkKIdx += 1;
+    if (unlikely(topkKIdx >= constInfo.sparseBlockCount)) {
+        token1Idx = -1;
     } else {
-        DataCopy(softmaxSumUb[softmaxOutOffset], inSumTensor, dealRowCount);
-        PipeBarrier<PIPE_V>();
-        DataCopy(softmaxMaxUb[softmaxOutOffset], inMaxTensor, dealRowCount);
+        token1Idx = SparseIndicesGm.GetValue(topkBS1Idx + topkKIdx) + runInfo.s2StartIdx;
     }
 }
 
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::DealBmm1ResBaseBlock(
-    const RunInfo &info, const MSplitInfo &mSplitInfo, uint32_t startRow, uint32_t dealRowCount,
-    uint32_t columnCount, uint32_t loopId)
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline int64_t QSFAVectorService<TEMPLATE_ARGS>::GetkeyOffset(int64_t s2Idx, const RunInfo &runInfo, ConstInfo &constInfo)
 {
-    uint32_t computeSize = dealRowCount * columnCount;
-    uint64_t inOutGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.mmResUbSize +
-                             (mSplitInfo.nBufferStartM + mSplitInfo.vecStartM + startRow) * columnCount;
-    LocalTensor<MM1_OUT_T> mmResUb = inputBuff1.Get<MM1_OUT_T>();
-    mmResUb = mmResUb[pingpongFlag * INPUT1_BUFFER_OFFSET / sizeof(MM1_OUT_T)];
-    WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG + pingpongFlag);
-
-    DataCopy(mmResUb, mm1ResGm[inOutGmOffset], computeSize);
-    if constexpr (TEMPLATE_MODE == V_TEMPLATE) {
-        if (loopId == 0) {
-            WaitFlag<HardEvent::MTE2_S>(0);
-        }
-    }
-    SetFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF1_FLAG);
-
-    ElewiseCompute(info, mmResUb, dealRowCount, columnCount);
-
-    PipeBarrier<PIPE_V>();
-    LocalTensor<T> tmpAFloorUb = tmpBuff1.Get<T>();
-    LocalTensor<uint8_t> softmaxTmpUb = tmpAFloorUb.template ReinterpretCast<uint8_t>();
-
-    SoftmaxFlashV2Compute(info, mSplitInfo, mmResUb, softmaxTmpUb, startRow, dealRowCount, columnCount,
-                            info.actualSingleProcessSInnerSize);
-
-    PipeBarrier<PIPE_V>();
-    LocalTensor<K_ROPE_T> tmpMMResCastTensor = outputBuff1.Get<K_ROPE_T>();
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-
-    Cast(tmpMMResCastTensor, mmResUb, AscendC::RoundMode::CAST_ROUND, computeSize);
-    SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG + pingpongFlag);
-
-    SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    DataCopy(vec1ResGm[inOutGmOffset], tmpMMResCastTensor, computeSize);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ProcessVec1SingleBuf(const RunInfo &info,
-                                                                                  const MSplitInfo &mSplitInfo)
-{
-    if (mSplitInfo.vecDealM == 0) {
-        return;
-    }
-    uint32_t mSplitSize = info.actualSingleProcessSInnerSize == 0 ?
-        16 : BASE_BLOCK_MAX_ELEMENT_NUM / info.actualSingleProcessSInnerSizeAlign;
-    // 1. 向下8对齐是因为UB操作至少32B
-    // 2. info.actualSingleProcessSInnerSizeAlign最大512, mSplitSize可以确保最小为16
-    mSplitSize = mSplitSize / 8 * 8;
-
-    if (mSplitSize > mSplitInfo.vecDealM) {
-        mSplitSize = mSplitInfo.vecDealM;
-    }
-    uint32_t loopCount = (mSplitInfo.vecDealM + mSplitSize - 1) / mSplitSize;
-    uint32_t tailSplitSize = mSplitInfo.vecDealM - (loopCount - 1) * mSplitSize;
-
-    if constexpr (TEMPLATE_MODE == V_TEMPLATE) {
-        DataCopyExtParams dataCopyParams;
-        dataCopyParams.blockCount = 1;
-        dataCopyParams.blockLen = 256 * sizeof(int32_t);
-        dataCopyParams.srcStride = 0;
-        dataCopyParams.dstStride = 0;
-        DataCopyPadExtParams<int32_t> padParams;
-        // 额外偏移128个元素，避免不同loop下v0和v1互相影响
-        DataCopyPad(v0ValidSizeUb_[128], kvValidSizeGm_[info.loop % MERGE_CACHE_GM_BUF_NUM * (128 * 2)],
-                    dataCopyParams, padParams);
-        SetFlag<HardEvent::MTE2_S>(0);
-        if (unlikely(loopCount == 0)) {
-            // scalar同步影响较大，挪到循环内部进行
-            WaitFlag<HardEvent::MTE2_S>(0);
-        }
-    }
-    for (uint32_t i = 0, dealSize = mSplitSize; i < loopCount; i++) {
-        if (i == (loopCount - 1)) {
-            dealSize = tailSplitSize;
-        }
-        DealBmm1ResBaseBlock(info, mSplitInfo, i * mSplitSize, dealSize, info.actualSingleProcessSInnerSizeAlign, i);
-        pingpongFlag ^= 1; // pingpong 0 1切换
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::GetRealS2Idx(int64_t s2GmOffset, int64_t &realS2Idx,
-                                                              int64_t topkGmBaseOffset, const RunInfo &runInfo)
-{
-    int64_t topkGmIdx = (s2GmOffset + runInfo.s2Idx * constInfo.s2BaseSize) / constInfo.sparseBlockSize;
-    if (unlikely(topkGmIdx >= constInfo.sparseBlockCount)) {
-        realS2Idx = -1;
-        return;
-    }
-    realS2Idx = topkGm_.GetValue(topkGmBaseOffset + topkGmIdx) * static_cast<int64_t>(constInfo.sparseBlockSize) +
-                static_cast<int64_t>((s2GmOffset + runInfo.s2Idx * constInfo.s2BaseSize) % constInfo.sparseBlockSize);
-}
-
-template <typename QSFAT>
-__aicore__ inline int64_t QSFAVectorService<QSFAT>::GetKeyBNBOffset(int64_t realS2Idx,
-                                                                    const RunInfo &runInfo, int64_t s2IdLimit)
-{
-    if (realS2Idx < 0 || realS2Idx >= s2IdLimit) {
+    if (s2Idx < 0) {
         return -1;
     }
-    int64_t realKeyBNBOffset = 0;
-    if constexpr (PAGE_ATTENTION) {
-        int64_t blkTableIdx = realS2Idx / constInfo.kvCacheBlockSize;
-        int64_t blkTableOffset = realS2Idx % constInfo.kvCacheBlockSize;
-        realKeyBNBOffset = blkTableGm_.GetValue(runInfo.bIdx * constInfo.maxBlockNumPerBatch + blkTableIdx) *
-                                static_cast<int64_t>(constInfo.kvCacheBlockSize) *
-                                static_cast<int64_t>(constInfo.kvHeadNum) +
-                                blkTableOffset;
+    int64_t realkeyOffset = 0;
+    if constexpr (isPa) {
+        int64_t blkTableIdx = s2Idx / blockSize;
+        int64_t blkTableOffset = s2Idx % blockSize;
+        realkeyOffset = blockTableGm.GetValue(runInfo.boIdx * maxBlockNumPerBatch + blkTableIdx) *
+            static_cast<int64_t>(blockSize) * constInfo.dSizeVInput +
+            blkTableOffset * constInfo.dSizeVInput; // BlockNum, BlockSize, N(1), D
     } else {
-        realKeyBNBOffset = (runInfo.tensorBOffset +
-                           realS2Idx * constInfo.kvHeadNum * constInfo.combineHeadDim) /
-                           constInfo.combineHeadDim;
+        realkeyOffset = runInfo.boIdx * constInfo.s2Size + s2Idx; // BSN(1)D
     }
-    return realKeyBNBOffset;
+    return realkeyOffset;
 }
 
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::CopyInSingleKv(int64_t &mte2Size, int64_t mte3Size, int64_t mergeMte3Idx, int64_t realS2Idx,
-                                         int64_t keyBNBOffset, int64_t s2IdLimit, const RunInfo &runInfo)
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void
+QSFAVectorService<TEMPLATE_ARGS>::CopyInSingleKv(LocalTensor<KV_T> kvInUb, int64_t startRow, int64_t keyOffset)
 {
-    if (keyBNBOffset < 0) {
+    if (keyOffset < 0) {
         return;
     }
-    int64_t validS2Count =
-        (realS2Idx + constInfo.sparseBlockSize > s2IdLimit ? s2IdLimit - realS2Idx : constInfo.sparseBlockSize);
     DataCopyExtParams intriParams;
     
-    intriParams.blockCount = validS2Count;
+    intriParams.blockCount = 1;
     intriParams.dstStride = 0;
     intriParams.srcStride = 0;
     DataCopyPadExtParams<KV_T> padParams;
     // 当前仅支持COMBINE模式
-    if (constInfo.quantScaleRepoMode == QUANT_SCALE_REPO_MODE::COMBINE) {
-        uint32_t combineBytes = (constInfo.headDim * sizeof(KV_T) + constInfo.headDimRope * sizeof(K_ROPE_T) +
-            constInfo.headDim / constInfo.tileSize * sizeof(T));
-        intriParams.blockLen = combineBytes;
-        uint32_t combineDim = combineBytes / sizeof(KV_T);
-        uint32_t combineDimAlign = CeilAlign(combineBytes, ConstInfo::BUFFER_SIZE_BYTE_32B) / sizeof(KV_T);
-        padParams.isPad = true;
-        padParams.leftPadding = 0;
-        padParams.rightPadding = combineDimAlign - combineDim;
-        padParams.paddingValue = 0;
-        DataCopyPad(kvMergUb_[mergeMte3Idx % 2 * INPUT1_BUFFER_OFFSET / sizeof(KV_T)  + (mte2Size - mte3Size) *
-                combineDimAlign], keyGm_[keyBNBOffset * combineDim], intriParams, padParams);
-    }
-    mte2Size += validS2Count;
+    uint32_t combineBytes = 672;
+    intriParams.blockLen = combineBytes;
+    uint32_t combineDim = combineBytes / sizeof(KV_T);
+    uint32_t combineDimAlign = CeilAlign(combineBytes, BUFFER_SIZE_BYTE_32B) / sizeof(KV_T);
+    padParams.isPad = true;
+    padParams.leftPadding = 0;
+    padParams.rightPadding = combineDimAlign - combineDim;
+    padParams.paddingValue = 0;
+    DataCopyPad(kvInUb[startRow * combineDimAlign], keyGm[keyOffset], intriParams, padParams);
 }
 
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::CopyInKv(int64_t &mte2Size, int64_t mte3Size, int64_t mergeMte3Idx,
-                                                          int64_t realS2Idx1, int64_t realS2Idx2,
-                                                          const RunInfo &runInfo)
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline uint32_t QSFAVectorService<TEMPLATE_ARGS>::CopyInKvSparse(LocalTensor<KV_T> kvInUb , int64_t startRow,
+    int64_t token0Idx, int64_t token1Idx, const RunInfo &runInfo, ConstInfo &constInfo)
 {
-    int64_t s2IdLimit = runInfo.curActualSeqLenOri;
-    if (constInfo.sparseMode == 3) {
-        s2IdLimit = runInfo.curActualSeqLenOri - runInfo.actS1Size + runInfo.gS1Idx / constInfo.gSize + 1;
+    int64_t keyOffset0 = GetkeyOffset(token0Idx, runInfo, constInfo);
+    int64_t keyOffset1 = GetkeyOffset(token1Idx, runInfo, constInfo);
+    if (unlikely(keyOffset0 < 0 && keyOffset1 < 0)) {
+        return 0;
     }
-
-    int64_t keyBNBOffset1 = GetKeyBNBOffset(realS2Idx1, runInfo, s2IdLimit);
-    int64_t keyBNBOffset2 = GetKeyBNBOffset(realS2Idx2, runInfo, s2IdLimit);
-    if (unlikely(keyBNBOffset1 < 0 && keyBNBOffset2 < 0)) {
-        return;
-    }
-
-    int64_t sparseBlockSrcStride =
-        ((keyBNBOffset1 > keyBNBOffset2 ? (keyBNBOffset1 - keyBNBOffset2) :
-        (keyBNBOffset2 - keyBNBOffset1)) - constInfo.sparseBlockSize);
-    uint32_t combineBytes = (constInfo.headDim * sizeof(KV_T) +
-                             constInfo.headDimRope * sizeof(K_ROPE_T) +
-                             constInfo.headDim / constInfo.tileSize * sizeof(T));
-    int64_t keySrcStride = sparseBlockSrcStride * combineBytes;
-    if (unlikely(keySrcStride >= INT32_MAX || keySrcStride < 0 ||
-        realS2Idx1 + constInfo.sparseBlockSize >= s2IdLimit ||
-        realS2Idx2 + constInfo.sparseBlockSize >= s2IdLimit) ||
-        constInfo.sparseBlockSize > 1) {
+    uint32_t combineBytes = constInfo.dSizeVInput;
+    int64_t keySrcStride = (keyOffset0 > keyOffset1 ? (keyOffset0 - keyOffset1) :
+        (keyOffset1 - keyOffset0)) - combineBytes;
+    if (keySrcStride >= INT32_MAX || keySrcStride < 0 || constInfo.sparseBlockSize > 1) {
         // stride溢出、stride为负数、s2超长等异常场景，还原成2条搬运指令
-        CopyInSingleKv(mte2Size, mte3Size, mergeMte3Idx, realS2Idx1, keyBNBOffset1, s2IdLimit, runInfo);
-        CopyInSingleKv(mte2Size, mte3Size, mergeMte3Idx, realS2Idx2, keyBNBOffset2, s2IdLimit, runInfo);
+        CopyInSingleKv(kvInUb, startRow, keyOffset0);
+        CopyInSingleKv(kvInUb, startRow + 1, keyOffset1);
     } else {
         DataCopyExtParams intriParams;
-        intriParams.blockCount = (keyBNBOffset1 >= 0) + (keyBNBOffset2 >= 0);
+        intriParams.blockCount = (keyOffset0 >= 0) + (keyOffset1 >= 0);
+        intriParams.blockLen = combineBytes;
         intriParams.dstStride = 0;
         intriParams.srcStride = keySrcStride;
         DataCopyPadExtParams<KV_T> padParams;
 
-        int64_t startGmOffset = keyBNBOffset1 > -1 ? keyBNBOffset1 : keyBNBOffset2;
-        if (keyBNBOffset2 > -1 && keyBNBOffset2 < keyBNBOffset1) {
-            startGmOffset = keyBNBOffset2;
+        int64_t keyOffset = keyOffset0 > -1 ? keyOffset0 : keyOffset1;
+        if (keyOffset1 > -1 && keyOffset1 < keyOffset0) {
+            keyOffset = keyOffset1;
         }
 
         // 当前仅支持COMBINE模式
-        if (constInfo.quantScaleRepoMode == QUANT_SCALE_REPO_MODE::COMBINE) {
-            intriParams.blockLen = constInfo.sparseBlockSize * combineBytes;
-            uint32_t combineDim = combineBytes / sizeof(KV_T);
-            uint32_t combineDimAlign = CeilAlign(combineBytes, ConstInfo::BUFFER_SIZE_BYTE_32B) / sizeof(KV_T);
-            padParams.isPad = true;
-            padParams.leftPadding = 0;
-            padParams.rightPadding = combineDimAlign - combineDim;
-            padParams.paddingValue = 0;
-            DataCopyPad(kvMergUb_[mergeMte3Idx % 2 * INPUT1_BUFFER_OFFSET / sizeof(KV_T) + (mte2Size - mte3Size) *
-                        combineDimAlign], keyGm_[startGmOffset * combineDim], intriParams, padParams);
-        }
-        mte2Size += ((keyBNBOffset1 > -1) + (keyBNBOffset2 > -1)) * constInfo.sparseBlockSize;
+        uint32_t combineDim = combineBytes / sizeof(KV_T);
+        uint32_t combineDimAlign = CeilAlign(combineBytes, BUFFER_SIZE_BYTE_32B) / sizeof(KV_T);
+        padParams.isPad = true;
+        padParams.leftPadding = 0;
+        padParams.rightPadding = combineDimAlign - combineDim;
+        padParams.paddingValue = 0;
+        DataCopyPad(kvInUb[startRow *  combineDimAlign], keyGm[keyOffset], intriParams, padParams);
+    }
+    return (keyOffset0 > -1) + (keyOffset1 > -1);
+}
+
+// fp8->fp32
+static constexpr MicroAPI::CastTrait castTraitFp8_1 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::UNKNOWN,
+                                                       MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
+// fp8->fp32
+static constexpr MicroAPI::CastTrait castTraitFp8_2 = {MicroAPI::RegLayout::ONE, MicroAPI::SatMode::UNKNOWN,
+                                                       MicroAPI::MaskMergeMode::ZEROING, RoundMode::UNKNOWN};
+// fp32->fp16
+static constexpr MicroAPI::CastTrait castTraitFp8_3 = {MicroAPI::RegLayout::ZERO, MicroAPI::SatMode::NO_SAT,
+                                                       MicroAPI::MaskMergeMode::ZEROING, RoundMode::CAST_RINT};
+// fp32->fp16
+static constexpr MicroAPI::CastTrait castTraitFp8_4 = {MicroAPI::RegLayout::ONE, MicroAPI::SatMode::NO_SAT,
+                                                       MicroAPI::MaskMergeMode::ZEROING, RoundMode::CAST_RINT};
+template <typename Q_T, typename KV_T>
+__simd_vf__ void CastScaleImpl(__ubuf__ float* ubDstAddr, __ubuf__ int8_t* ubSrcAddr, uint32_t dealRowCount)
+{
+    MicroAPI::RegTensor<fp8_e8m0_t> vScale0;
+    MicroAPI::RegTensor<fp8_e8m0_t> vScale1;
+    MicroAPI::RegTensor<bfloat16_t> vScalebf16Res0;
+    MicroAPI::RegTensor<bfloat16_t> vScalebf16Res1;
+    MicroAPI::RegTensor<float> vScalefp32Res0;
+    MicroAPI::RegTensor<float> vScalefp32Res1;
+    __ubuf__ int8_t* ubScaleSrcAddrTemp = ubSrcAddr;
+    __ubuf__ float* ubDstAddrTmp = ubDstAddr;
+    MicroAPI::MaskReg bf16TypeMaskAll = MicroAPI::CreateMask<bfloat16_t, MicroAPI::MaskPattern::ALL>();
+    MicroAPI::MaskReg fp32MaskAll = MicroAPI::CreateMask<float, MicroAPI::MaskPattern::ALL>();
+    for (uint16_t i = 0; i < static_cast<uint16_t>(dealRowCount); i++) {
+        // load scale
+        MicroAPI::LoadAlign<int8_t, MicroAPI::PostLiteral::POST_MODE_UPDATE, MicroAPI::LoadDist::DIST_UNPACK4_B8>(
+            (MicroAPI::RegTensor<int8_t>&)vScale0, ubScaleSrcAddrTemp, 640);
+
+        MicroAPI::Cast<bfloat16_t, fp8_e8m0_t, castTraitFp8_1>(vScalebf16Res0, vScale0, bf16TypeMaskAll);
+        MicroAPI::Cast<float, bfloat16_t, castTraitFp8_1>(vScalefp32Res0, vScalebf16Res0, fp32MaskAll);
+
+        MicroAPI::StoreAlign<float, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
+            ubDstAddrTmp, vScalefp32Res0, 64, bf16TypeMaskAll);
     }
 }
 
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::CopyOutMrgeResult(int64_t mte2Size, int64_t mte3Size,
-                                                                   int64_t s2GmStartOffset, int64_t mergeMte3Idx,
-                                                                   const RunInfo &runInfo)
+template <typename Q_T, typename KV_T>
+__aicore__ inline void CastScale(LocalTensor<float>& outputUb,  LocalTensor<KV_T>& inputUb, uint32_t dealRowCount)
 {
-    if (mte2Size <= mte3Size) {
+    __ubuf__ float* ubDstAddr = (__ubuf__ float*)(outputUb.GetPhyAddr());
+    __ubuf__ int8_t* ubScaleAddr = (__ubuf__ int8_t*)(inputUb[448 + 64 * 2].GetPhyAddr()); // 448 for nope, 64 for rope, 2 for sizeof(bf16)
+
+    CastScaleImpl<Q_T, KV_T>(ubDstAddr, ubScaleAddr, dealRowCount);
+}
+
+template <typename Q_T, typename KV_T>
+__simd_vf__ void AntiquantVFImplFp8D448(__ubuf__ int8_t* ubSrcAddr, __ubuf__ Q_T* ubDstAddr, // output first
+    __ubuf__ float* ubScaleSrcAddr, uint32_t dealRowCount)
+{
+    uint32_t combineDim = 672; // 128对齐 640->672
+    MicroAPI::RegTensor<KV_T> vKvData0;
+    MicroAPI::RegTensor<KV_T> vKvData1;
+    MicroAPI::RegTensor<half> vKvDataHalf0;
+    MicroAPI::RegTensor<half> vKvDataHalf1;
+    MicroAPI::RegTensor<float> vCastFp32Res0;
+    MicroAPI::RegTensor<float> vCastFp32Res1;
+    MicroAPI::RegTensor<float> vMulRes0;
+    MicroAPI::RegTensor<float> vMulRes1;
+    MicroAPI::RegTensor<float> vScale0;
+    MicroAPI::RegTensor<float> vScale1;
+    MicroAPI::RegTensor<Q_T> vCastRes0;
+    MicroAPI::RegTensor<Q_T> vCastRes1;
+    MicroAPI::RegTensor<Q_T> vCastResPack0;
+    MicroAPI::RegTensor<Q_T> vCastResPack1;
+
+    MicroAPI::MaskReg kvTypeMaskAll = MicroAPI::CreateMask<KV_T, MicroAPI::MaskPattern::ALL>();
+    MicroAPI::MaskReg kvRopeTypeMaskAll = MicroAPI::CreateMask<Q_T, MicroAPI::MaskPattern::ALL>();
+    MicroAPI::MaskReg fp32MaskAll = MicroAPI::CreateMask<float, MicroAPI::MaskPattern::ALL>();
+    uint32_t blockStride = 17; // +1 to solve bank confict
+    uint32_t repeatStride = 1;
+    const uint32_t nopeDim = 512;  // 448->512
+    const uint32_t kvNumPerLoop = 128;
+    const uint32_t scaleNumPerLoop = 1;
+    const uint32_t tileSize = 128;
+    
+    // tilesize is 128, deal 128 b8 kv, deal 1 fp32 scale
+    for (uint16_t j = 0; j < (nopeDim / kvNumPerLoop); j++) {
+        __ubuf__ int8_t* ubSrcTemp = ubSrcAddr + j * kvNumPerLoop;
+        __ubuf__ float* ubScaleSrcAddrTemp = ubScaleSrcAddr + j * scaleNumPerLoop;
+        __ubuf__ Q_T* ubDstAddrTmp = ubDstAddr + j * kvNumPerLoop * blockStride;
+        for (uint16_t i = 0; i < static_cast<uint16_t>(dealRowCount); i++) {
+            // load scale
+            MicroAPI::LoadAlign<int8_t, MicroAPI::PostLiteral::POST_MODE_UPDATE, MicroAPI::LoadDist::DIST_UNPACK4_B8>(
+                (MicroAPI::RegTensor<int8_t>&)vKvData0, ubSrcTemp, tileSize / 2);
+            MicroAPI::LoadAlign<int8_t, MicroAPI::PostLiteral::POST_MODE_UPDATE, MicroAPI::LoadDist::DIST_UNPACK4_B8>(
+                (MicroAPI::RegTensor<int8_t>&)vKvData1, ubSrcTemp, combineDim - tileSize / 2);
+
+            MicroAPI::LoadAlign<float, MicroAPI::PostLiteral::POST_MODE_UPDATE, MicroAPI::LoadDist::DIST_BRC_B32>(
+                (MicroAPI::RegTensor<float>&)vScale0, ubScaleSrcAddrTemp, combineDim / 4);
+
+            MicroAPI::Cast<float, KV_T, castTraitFp8_1>(vCastFp32Res0, vKvData0, fp32MaskAll);
+            MicroAPI::Cast<float, KV_T, castTraitFp8_1>(vCastFp32Res1, vKvData1, fp32MaskAll);
+
+            MicroAPI::Mul<float, MicroAPI::MaskMergeMode::ZEROING>(vMulRes0, vCastFp32Res0, vScale0, fp32MaskAll);
+            MicroAPI::Mul<float, MicroAPI::MaskMergeMode::ZEROING>(vMulRes1, vCastFp32Res1, vScale0, fp32MaskAll);
+
+            MicroAPI::Cast<Q_T, float, castTraitFp8_3>(vCastRes0, vMulRes0, fp32MaskAll);
+            MicroAPI::Cast<Q_T, float, castTraitFp8_3>(vCastRes1, vMulRes1, fp32MaskAll);
+
+            MicroAPI::DeInterleave(vCastResPack0, vCastResPack1, vCastRes0, vCastRes1);
+            
+            MicroAPI::StoreAlign<Q_T, MicroAPI::DataCopyMode::DATA_BLOCK_COPY, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
+                ubDstAddrTmp, vCastResPack0, blockStride, repeatStride, kvRopeTypeMaskAll);
+        }
+    }
+}
+
+template <typename Q_T, typename KV_T>
+__aicore__ inline void AntiquantVFFp8D448(LocalTensor<Q_T>& outputUb,  LocalTensor<KV_T>& inputUb,
+    LocalTensor<float>& scaleUb, uint32_t dealRowCount)
+{
+    __ubuf__ int8_t* ubSrcAddr = (__ubuf__ int8_t*)(inputUb.GetPhyAddr()); // nope改成在左，所以起始位置是0
+    __ubuf__ Q_T* ubDstAddr = (__ubuf__ Q_T*)(outputUb.GetPhyAddr());
+    __ubuf__ float* ubScaleAddr = (__ubuf__ float*)(inputUb[512 + 64 * 2].GetPhyAddr());
+
+    AntiquantVFImplFp8D448<Q_T, KV_T>(ubSrcAddr, ubDstAddr, ubScaleAddr, dealRowCount);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::DequantKv(LocalTensor<Q_T> antiKvTensorAsB16,
+    LocalTensor<KV_T> srcTensor, int64_t dealRow, int64_t s2ProcessBaseSize, ConstInfo &constInfo)
+{
+    // srcTensor是nope(512) + nope(64) + scale + pad, dstTensor是nope(512) + rope(64)
+    LocalTensor<float> floatScale = dequantScaleBuff.Get<float>();
+    AntiquantVFFp8D448<Q_T, KV_T>(antiKvTensorAsB16, srcTensor, floatScale, dealRow);
+
+    LocalTensor<Q_T> kRopeUb = srcTensor[constInfo.dSizeNope].template ReinterpretCast<Q_T>();
+    LocalTensor<Q_T> kRopeUbNz = antiKvTensorAsB16[constInfo.dSizeNope * (16 + 1)]; // V0单次处理16行数据
+    Copy(kRopeUbNz, kRopeUb,
+        constInfo.dSizeRope, // mask 处理多少列数据
+        static_cast<uint8_t>(dealRow), // repeatTime, 每次处理多少个block
+        {
+            17, // dst stride
+            1, // src stride
+            1, // dst repeat stride
+            21 // src repeat stride, 640 / 32   // 640 -> 672 : 20 -> 21
+        });
+    event_t idTest = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::V_S>()); // TODO
+    SetFlag<HardEvent::V_S>(idTest);
+    WaitFlag<HardEvent::V_S>(idTest);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::CopyOutKvUb2L1(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+    LocalTensor<Q_T> antiKvTensorAsB16, int64_t v0Loop, int64_t dealRow, int64_t s2StartIdx, const RunInfo &runInfo, ConstInfo &constInfo)
+{
+    uint64_t blockElementNum = 16;
+    DataCopyParams dataCopyParams;
+    dataCopyParams.blockCount = (constInfo.dSizeNope + constInfo.dSizeRope) / blockElementNum;
+    dataCopyParams.blockLen = dealRow;
+    dataCopyParams.srcGap = blockElementNum + 1 - dealRow;
+    dataCopyParams.dstGap = Align16Func(runInfo.s2RealSize) - dealRow;
+
+    LocalTensor<Q_T> dst = outputL1.GetTensor<Q_T>();
+    DataCopy(dst[s2StartIdx * blockElementNum], antiKvTensorAsB16, dataCopyParams);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::ProcessVec0(
+    Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1, const RunInfo &runInfo, ConstInfo &constInfo)
+{
+    outputL1.WaitCrossCore(); // 核间同步
+
+    blockSize = constInfo.oriBlockSize;
+    maxBlockNumPerBatch = constInfo.oriMaxBlockNumPerBatch;
+
+    ProcessSparseKv(outputL1, runInfo, constInfo);
+
+    outputL1.SetCrossCore(); // 核间同步
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::ProcessSparseKv(
+    Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
+    const RunInfo &runInfo, ConstInfo &constInfo)
+{
+    int64_t s2ProcessBaseSize = 32;
+    int64_t s2PerVecLoop = 2LL;
+    int64_t vecNum = 2LL;
+    int64_t s2Loops = CeilDiv(CeilDiv(runInfo.s2RealSize, vecNum), s2PerVecLoop);
+
+    // Left-closed, right-open interval
+    // 4x = 2x + 2x
+    // 4x + 1 = (2x + 2) + (2x - 1)
+    // 4x + 2 = (2x + 2) + (2x)
+    // 4x + 3 = (2x + 2) + (2x + 1)
+    int64_t s2Start = GetSubBlockIdx() == 0 ? 0 : s2Loops * s2PerVecLoop;
+    int64_t s2End = GetSubBlockIdx() == 0 ? s2Loops * s2PerVecLoop: runInfo.s2RealSize;
+    bool meetEnd = false;
+    int64_t s2 = s2Start;
+    int64_t token0Idx, token1Idx; // 拷贝进入的两个token的index
+    // 处理一个s2的base块
+    while ((s2 < s2End) && !meetEnd) { // 拷贝到s2End或者遇到-1
+        int64_t dealRow = 0;
+        // 1、copy kv in, gm ->ub
+        LocalTensor<KV_T> kvInUb = stage0InQue.AllocTensor<KV_T>();
+        while (dealRow < 16) { // 拷贝满16行或者遇到-1
+            GetRealCmpS2Idx(token0Idx, token1Idx, s2, runInfo, constInfo);
+            s2 += 2; // 每次搬运2行
+            if (token0Idx== -1 && token1Idx == -1) {
+                meetEnd = true;
+                break;
+            }
+            dealRow += CopyInKvSparse(kvInUb, dealRow, token0Idx, token1Idx, runInfo, constInfo);
+            if (token1Idx == -1) {
+                meetEnd = true;
+                break;
+            }
+        }
+        if (dealRow  == 0) {
+            stage0InQue.FreeTensor(kvInUb);
+            return;
+        }
+        stage0InQue.EnQue(kvInUb);
+        kvInUb = stage0InQue.DeQue<KV_T>();
+
+        // 2、dequant by vf
+        LocalTensor<Q_T> kvDequantOutUb = stage0OutQue.AllocTensor<Q_T>();
+        DequantKv(kvDequantOutUb, kvInUb, dealRow, s2ProcessBaseSize, constInfo);
+        stage0InQue.FreeTensor(kvInUb);
+        stage0OutQue.EnQue(kvDequantOutUb);
+        kvDequantOutUb = stage0OutQue.DeQue<Q_T>();
+
+        // 3、copy kv out, ub -> l1
+        CopyOutKvUb2L1(outputL1, kvDequantOutUb, 0, dealRow, s2Start, runInfo, constInfo);
+        s2Start += dealRow;
+        stage0OutQue.FreeTensor(kvDequantOutUb);
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::ProcessVec1(
+    Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputBuf,
+    Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &bmm1ResBuf, RunInfo &runInfo,
+    ConstInfo &constInfo)
+{
+    bmm1ResBuf.WaitCrossCore();
+
+    LocalTensor<float> sumUb = this->softmaxSumBuf[runInfo.multiCoreIdxMod2].template Get<float>();
+    LocalTensor<float> maxUb = this->softmaxMaxBuf[runInfo.multiCoreIdxMod2].template Get<float>();
+    LocalTensor<float> expUb = this->softmaxExpBuf[runInfo.taskIdMod2].template Get<T>();
+    int64_t stage1Offset = runInfo.taskIdMod2;
+    auto stage1CastTensor = this->stage1OutQue[stage1Offset].template AllocTensor<Q_T>();
+
+    LocalTensor<T> apiTmpBuffer = this->commonTBuf.template Get<T>();
+    LocalTensor<T> mmRes = bmm1ResBuf.template GetTensor<T>();
+
+    // loopCount = 0 但传入sinks时走update分支，maxUb通过sinks初始化，sumUb初始化为1.0
+    if (runInfo.s2LoopCount == 0) { //sink 丢失首token信息，sink会增加首token信息，维度是n1
+        if (likely(runInfo.s2RealSize == 128)) { // s2RealSize等于128分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, false, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::EQ_128_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        } else if(runInfo.s2RealSize <= 64) { // s2RealSize小于等于64分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, false, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::GT_0_AND_LTE_64_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize, //实际的计算有效元素，
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        } else if(runInfo.s2RealSize < 128) { // s2RealSize小于128分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, false, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::GT_64_AND_LTE_128_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        }
+    } else {
+        if (likely(runInfo.s2RealSize == 128)) { // s2RealSize等于128分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, true, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::EQ_128_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        } else if (runInfo.s2RealSize <= 64) { // s2RealSize小于等于64分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, true, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::GT_0_AND_LTE_64_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        } else if(runInfo.s2RealSize < 128) { // s2RealSize小于128分档, VF内常量化减少if判断
+            ProcessVec1Vf<T, Q_T, true, s1BaseSize, s2BaseSize, QSFaVectorApi::OriginNRange::GT_64_AND_LTE_128_QSFA>(
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
+                static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
+        }
+    }
+    bmm1ResBuf.SetCrossCore();
+
+    // ===================DataCopy to L1 ====================
+    this->stage1OutQue[stage1Offset].template EnQue(stage1CastTensor);
+    this->stage1OutQue[stage1Offset].template DeQue<Q_T>();
+
+    LocalTensor<Q_T> mm2AL1Tensor = outputBuf.GetTensor<Q_T>(s2BaseSize * constInfo.dSizeV); // 加偏移
+    if (likely(runInfo.halfMRealSize != 0)) {
+        DataCopy(mm2AL1Tensor[constInfo.subBlockIdx * (BLOCK_BYTE / sizeof(Q_T)) * (runInfo.mRealSize - runInfo.halfMRealSize)],
+            stage1CastTensor, {s2BaseSize / 16, (uint16_t)runInfo.halfMRealSize,
+            (uint16_t)(vec1Srcstride - runInfo.halfMRealSize),
+            (uint16_t)(runInfo.mRealSize - runInfo.halfMRealSize)});
+    } //todo
+
+    this->stage1OutQue[stage1Offset].template FreeTensor(stage1CastTensor);
+
+    outputBuf.SetCrossCore();
+    if (runInfo.s2LoopCount != 0) {
+        QSFAUpdateExpSumAndExpMax<T>(sumUb, maxUb, expUb, sumUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize);
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::ProcessVec2(
+    Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &bmm2ResBuf, RunInfo &runInfo,
+    ConstInfo &constInfo)
+{
+    bmm2ResBuf.WaitCrossCore();
+    if (unlikely(runInfo.vec2MBaseSize == 0)) {
+        bmm2ResBuf.SetCrossCore();
         return;
     }
-    int32_t dealRow = mte2Size - mte3Size;
-    SetFlag<AscendC::HardEvent::MTE2_V>(0);
-    WaitFlag<AscendC::HardEvent::MTE2_V>(0);
-    LocalTensor<float> kvTensorAsFp32 = tmpBuff1.Get<float>();
-    uint64_t mask = ConstInfo::BUFFER_SIZE_BYTE_256B / sizeof(float);
-    LocalTensor<KV_T> srcTensor = kvMergUb_[mergeMte3Idx % 2 * INPUT1_BUFFER_OFFSET / sizeof(KV_T)];
+    
+    runInfo.vec2S1RealSize = runInfo.vec2S1BaseSize;
+    runInfo.vec2MRealSize = runInfo.vec2MBaseSize;
+    int64_t vec2CalcSize = runInfo.vec2MRealSize * dTemplateAlign64;
 
-    uint8_t repeatTimes = static_cast<uint8_t>(dealRow);
-        
-    Cast(kvTensorAsFp32, srcTensor, RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21}); // 21=(512+64*2+32)/32
-    Cast(kvTensorAsFp32[64], srcTensor[64], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[128], srcTensor[128], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[192], srcTensor[192], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[256], srcTensor[256], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[320], srcTensor[320], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[384], srcTensor[384], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
-    Cast(kvTensorAsFp32[448], srcTensor[448], RoundMode::CAST_NONE, mask, repeatTimes, {1, 1, 64, 21});
+    LocalTensor<T> vec2ResUb = this->stage2OutBuf.template Get<T>();
+    LocalTensor<T> mmRes = bmm2ResBuf.template GetTensor<T>();
 
-    PipeBarrier<PIPE_V>();
-    LocalTensor<T> antiQuantScale = tmpBuff2.Get<T>();
-    LocalTensor<T> oriQuantScaleTensor = srcTensor[640].template ReinterpretCast<T>();
-    if (dealRow == 1) {
-        Brcb(antiQuantScale, oriQuantScaleTensor, 1, {1, 4});
+    WaitFlag<HardEvent::MTE3_V>(mte3ToVId[0]);
+    if (unlikely(runInfo.s2LoopCount == 0)) {
+        DataCopy(vec2ResUb, mmRes, vec2CalcSize);
     } else {
-        DataCopyParams params;
-        params.blockCount = dealRow;
-        params.blockLen = 1;
-        params.srcStride = (constInfo.headDim * sizeof(KV_T) + constInfo.headDimRope * sizeof(K_ROPE_T)) /
-            ConstInfo::BUFFER_SIZE_BYTE_32B;
-        params.dstStride = 0;
-        LocalTensor<T> tmpAntiQuantScale = antiQuantScale[ConstInfo::BUFFER_SIZE_BYTE_1K];
-        DataCopy(tmpAntiQuantScale, oriQuantScaleTensor, params);
-        PipeBarrier<PIPE_V>();
-        Brcb(antiQuantScale, tmpAntiQuantScale, dealRow, {1, 4});
-    }
-    PipeBarrier<PIPE_V>();
-    uint32_t dealLoop = CeilDiv(dealRow, LIMIT_DEAL_ROW);
-    uint32_t dealRowFp32 = LIMIT_DEAL_ROW;
-    uint32_t element = LIMIT_DEAL_ROW * constInfo.headDim;
-    LocalTensor<K_ROPE_T> antiKvTensorAsB16 = tmpBuff1.Get<K_ROPE_T>();
-
-    for (uint32_t i = 0; i < dealLoop; i++) {
-        if (i == dealLoop - 1) {
-            dealRowFp32 = dealRow - i * LIMIT_DEAL_ROW;
-        }
-        PipeBarrier<PIPE_V>();
-        for (uint32_t j = 0; j < constInfo.tileSize / FP32_REPEAT_ELEMENT_NUM; j++) {
-            Mul(kvTensorAsFp32[i * element + j * FP32_REPEAT_ELEMENT_NUM], kvTensorAsFp32[i * element + j * FP32_REPEAT_ELEMENT_NUM],
-                antiQuantScale[i * LIMIT_DEAL_ROW * 32],
-                FP32_REPEAT_ELEMENT_NUM, 4 * dealRowFp32, {1, 1, 0, 16, 16, 1});
-        }
-        PipeBarrier<PIPE_V>();
-        if constexpr (IsSameType<K_ROPE_T, bfloat16_t>::value) { // bf16 采取四舍六入五成双模式
-            Cast(antiKvTensorAsB16[i * element], kvTensorAsFp32[i * element], RoundMode::CAST_RINT,
-                static_cast<uint32_t>(dealRowFp32 * constInfo.headDim));
+        LocalTensor<T> expUb = softmaxExpBuf[runInfo.taskIdMod2].template Get<T>();
+        if (runInfo.s2LoopCount < runInfo.s2LoopLimit) {
+            FlashUpdateNew<T, Q_T, OUTPUT_T, dTemplateAlign64>(vec2ResUb, mmRes, vec2ResUb, expUb, runInfo.vec2MRealSize);
         } else {
-            Cast(antiKvTensorAsB16[i * element], kvTensorAsFp32[i * element], RoundMode::CAST_ROUND,
-                static_cast<uint32_t>(dealRowFp32 * constInfo.headDim));
+            LocalTensor<float> sumUb = this->softmaxSumBuf[runInfo.multiCoreIdxMod2].template Get<float>();
+            FlashUpdateLastNew<T, Q_T, OUTPUT_T, dTemplateAlign64>(
+                vec2ResUb, mmRes, vec2ResUb, expUb, sumUb, runInfo.vec2MRealSize);
         }
-        PipeBarrier<PIPE_V>();
     }
 
-    LocalTensor<K_ROPE_T> antiKvTensorAsB16Nz = outputBuff1.Get<K_ROPE_T>();
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    int dataBlocks = REPEAT_BLOCK_BYTE / BYTE_BLOCK;
-    int loops = CeilDiv(dealRow, dataBlocks);
-    uint64_t tail = dealRow - (loops - 1) * dataBlocks;
-    uint64_t repeatElementNum = FP32_REPEAT_ELEMENT_NUM * 2;
-    uint64_t blockElementNum = FP32_BLOCK_ELEMENT_NUM * 2;
-    repeatTimes = static_cast<uint8_t>(constInfo.headDim / blockElementNum);
-    for (int i = 0; i < loops; i++) {
-        mask = (i == loops - 1) ? tail * blockElementNum : repeatElementNum;
-        Copy(antiKvTensorAsB16Nz[i * repeatElementNum], antiKvTensorAsB16[i * dataBlocks * constInfo.headDim], mask,
-            repeatTimes, {1, 32, static_cast<uint16_t>(dealRow), 1});
+    bmm2ResBuf.SetCrossCore();
+    if (runInfo.s2LoopCount == runInfo.s2LoopLimit) {
+        if (unlikely(runInfo.s2LoopCount == 0)) {
+            LocalTensor<float> sumUb = this->softmaxSumBuf[runInfo.multiCoreIdxMod2].template Get<float>();
+            LastDivNew<T, Q_T, OUTPUT_T, dTemplateAlign64>(vec2ResUb, vec2ResUb, sumUb, runInfo.vec2MRealSize);
+        }
+
+        this->CopyOutAttentionOut(runInfo, constInfo, vec2ResUb, 0, vec2CalcSize);
     }
-    SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    DataCopyExtParams dataCopyParams;
-    dataCopyParams.blockCount = constInfo.headDim / blockElementNum;
-    dataCopyParams.blockLen = dealRow * blockElementNum * sizeof(K_ROPE_T);
-    dataCopyParams.srcStride = 0;
-    dataCopyParams.dstStride = (constInfo.s2BaseSize - dealRow) * blockElementNum * sizeof(K_ROPE_T);
-    DataCopyPad(kvMergeGm_[runInfo.loop % MERGE_CACHE_GM_BUF_NUM * 512 * 576 + (s2GmStartOffset + mte3Size) *
-        blockElementNum], antiKvTensorAsB16Nz, dataCopyParams);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-   
-    LocalTensor<K_ROPE_T> kRopeUb = srcTensor[512].template ReinterpretCast<K_ROPE_T>();
-    LocalTensor<K_ROPE_T> kRopeUbNz = outputBuff2.Get<K_ROPE_T>();
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
-    Copy(kRopeUbNz, kRopeUb, constInfo.headDimRope, static_cast<uint8_t>(dealRow), {static_cast<uint16_t>(dealRow), 1,
-        1, 21});
-    SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF2_FLAG);
-    dataCopyParams.blockCount = constInfo.headDimRope / blockElementNum;
-    DataCopyPad(kvMergeGm_[runInfo.loop % MERGE_CACHE_GM_BUF_NUM * 512 * 576 + 512 * 512 + (s2GmStartOffset +
-        mte3Size) * blockElementNum], kRopeUbNz, dataCopyParams);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF2_FLAG);
+    SetFlag<HardEvent::MTE3_V>(mte3ToVId[0]);
 }
 
-// b s1 k
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::MergeKv(const RunInfo &runInfo)
+TEMPLATES_DEF_NO_DEFAULT
+template <typename VEC2_RES_T>
+__aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::Bmm2DataCopyOut (RunInfo &runInfo, ConstInfo &constInfo,
+    LocalTensor<VEC2_RES_T> &vec2ResUb, int64_t vec2S1Idx, int64_t vec2CalcSize)
 {
-    int64_t s2ProcessSize = runInfo.actualSingleProcessSInnerSize;
-    int64_t s2Pair = CeilDiv(s2ProcessSize, 2L * constInfo.sparseBlockSize);
-    int64_t topkGmBaseOffset = 0;
+    LocalTensor<OUTPUT_T> attenOut;
+    int64_t dSizeAligned64 = (int64_t)dTemplateAlign64;
 
-    if constexpr (LAYOUT_T == QSFA_LAYOUT::TND) {
-        uint64_t actualSeqQPrefixSum = (runInfo.bIdx <= 0) ? 0 : actualSeqLengthsQGm.GetValue(runInfo.bIdx - 1);
-        topkGmBaseOffset += (actualSeqQPrefixSum + runInfo.gS1Idx / constInfo.gSize) * constInfo.kvHeadNum *
-                            constInfo.sparseBlockCount + runInfo.n2Idx * constInfo.sparseBlockCount;
-    } else {
-        topkGmBaseOffset += runInfo.bIdx * constInfo.qSeqSize * constInfo.sparseBlockCount +
-                            runInfo.gS1Idx / constInfo.gSize * constInfo.sparseBlockCount;
+    attenOut.SetAddr(vec2ResUb.address_);
+    Cast(attenOut, vec2ResUb, RoundMode::CAST_ROUND, vec2CalcSize);
+    SetFlag<HardEvent::V_MTE3>(vToMte3Id[0]);
+    WaitFlag<HardEvent::V_MTE3>(vToMte3Id[0]);
+
+    DataCopyExtParams dataCopyParams;
+    dataCopyParams.blockLen = constInfo.dSizeV * sizeof(OUTPUT_T);
+    dataCopyParams.srcStride = (dSizeAligned64 - constInfo.dSizeV) >> 4; // 以32B为单位偏移，bf16类型即偏移16个数，右移4
+    dataCopyParams.dstStride = constInfo.attentionOutStride;
+    dataCopyParams.blockCount = runInfo.vec2MRealSize;
+
+    DataCopyPad(this->attentionOutGm[runInfo.attentionOutOffset], attenOut, dataCopyParams);
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+template <typename VEC2_RES_T>
+__aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::CopyOutAttentionOut(
+    RunInfo &runInfo, ConstInfo &constInfo, LocalTensor<VEC2_RES_T> &vec2ResUb, int64_t vec2S1Idx, int64_t vec2CalcSize)
+{
+    this->Bmm2DataCopyOut(runInfo, constInfo, vec2ResUb, vec2S1Idx, vec2CalcSize);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::InitOutputSingleCore(ConstInfo &constInfo)
+{
+    uint32_t coreNum = GetBlockNum();
+    uint64_t totalOutputSize = 0;
+
+    // n2 = 1, n1 = gn2 = gSize
+    if constexpr (LAYOUT_T == QSFA_LAYOUT::BSND) {
+        totalOutputSize = constInfo.bSize * constInfo.gSize * constInfo.s1Size * constInfo.dSizeV;
+    } else if constexpr (LAYOUT_T == QSFA_LAYOUT::TND) {
+        totalOutputSize = constInfo.s1Size * constInfo.gSize * constInfo.dSizeV;
     }
-    int64_t mergeMte3Idx = 0;
-    int64_t mte2Size = 0;
-    int64_t mte3Size = 0;
-    int64_t s2IdxArray0 = -1;
-    int64_t s2IdxArray1 = -1;
-    bool needWaitMte3ToMte2 = true;
-    SetFlag<AscendC::HardEvent::MTE3_MTE2>(0);
-    SetFlag<AscendC::HardEvent::MTE3_MTE2>(1);
-    int64_t s2GmStartOffset = GetSubBlockIdx() == 0 ? 0 : CeilDiv(s2Pair, 2L) * 2 * constInfo.sparseBlockSize;
-    int64_t s2GmLimit = GetSubBlockIdx() == 0 ? CeilDiv(s2Pair, 2L) * 2 * constInfo.sparseBlockSize: s2ProcessSize;
-    if (s2GmLimit > s2ProcessSize) {
-        s2GmLimit = s2ProcessSize;
-    }
-    for (int64_t s2GmOffsetArray = s2GmStartOffset; s2GmOffsetArray < s2GmLimit; s2GmOffsetArray += 2 *
-        constInfo.sparseBlockSize) {
-        if (needWaitMte3ToMte2) {
-            WaitFlag<AscendC::HardEvent::MTE3_MTE2>(mergeMte3Idx % 2);
-            needWaitMte3ToMte2 = false;
+
+    if (coreNum != 0) {
+        uint64_t singleCoreSize = (totalOutputSize + (CV_RATIO * coreNum) - 1) / (CV_RATIO * coreNum);
+        uint64_t tailSize = totalOutputSize - constInfo.aivIdx * singleCoreSize;
+        uint64_t singleInitOutputSize = tailSize < singleCoreSize ? tailSize : singleCoreSize;
+        if (singleInitOutputSize > 0) {
+            matmul::InitOutput<OUTPUT_T>(this->attentionOutGm[constInfo.aivIdx * singleCoreSize], singleInitOutputSize, 0);
         }
-        GetRealS2Idx(s2GmOffsetArray, s2IdxArray0, topkGmBaseOffset, runInfo);
-        if (unlikely(s2IdxArray0 < 0)) {
-            CopyOutMrgeResult(mte2Size, mte3Size, s2GmStartOffset, mergeMte3Idx, runInfo);
-            SetFlag<AscendC::HardEvent::MTE3_MTE2>(mergeMte3Idx % 2);
-            mergeMte3Idx++;
+    }
+    SyncAll();
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::CleanOutput(__gm__ uint8_t *attentionOut, ConstInfo &constInfo) 
+{
+    if ASCEND_IS_AIV {
+        this->attentionOutGm.SetGlobalBuffer((__gm__ OUTPUT_T *)attentionOut);
+        if (constInfo.needInit == 1) {
+            InitOutputSingleCore(constInfo);
+        }
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::InitGlobalBuffer(__gm__ uint8_t *key,
+__gm__ uint8_t *value, __gm__ uint8_t *sparseIndices, __gm__ uint8_t *blockTable)
+{
+    keyGm.SetGlobalBuffer((__gm__ KV_T *)(key));
+    blockTableGm.SetGlobalBuffer((__gm__ int32_t *)blockTable);
+    SparseIndicesGm.SetGlobalBuffer((__gm__ int32_t *)sparseIndices);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::SoftmaxInitBuffer()
+{
+    constexpr uint32_t softmaxBufSize = 256; // VF单次操作256Byte
+    tPipe->InitBuffer(softmaxSumBuf[0], softmaxBufSize);
+    tPipe->InitBuffer(softmaxSumBuf[1], softmaxBufSize);
+    tPipe->InitBuffer(softmaxMaxBuf[0], softmaxBufSize);
+    tPipe->InitBuffer(softmaxMaxBuf[1], softmaxBufSize);
+    tPipe->InitBuffer(softmaxExpBuf[0], softmaxBufSize);
+    tPipe->InitBuffer(softmaxExpBuf[1], softmaxBufSize);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::InitSinksBuffer(ConstInfo &constInfo)
+{
+    LocalTensor<T> sinksUb = this->sinksBuf.template Get<T>();
+    const uint32_t maxN = constInfo.gSize; // N最大支持128, sink shape是[N]
+    DataCopyExtParams dataCopyParams;
+    dataCopyParams.blockCount = 1U;
+    dataCopyParams.blockLen = maxN * sizeof(T);
+    dataCopyParams.srcStride = 0U;
+    dataCopyParams.dstStride = 0U;
+    DataCopyPadExtParams<T> padParams;
+    DataCopyPad(sinksUb, this->sinksGm, dataCopyParams, padParams);
+    SetFlag<AscendC::HardEvent::MTE2_V>(SYNC_SINKS_BUF_FLAG);
+    WaitFlag<AscendC::HardEvent::MTE2_V>(SYNC_SINKS_BUF_FLAG);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe, ConstInfo &constInfo)
+{
+    // ub buffer
+    pipe->InitBuffer(dequantScaleBuff, 64 * 16 * 2 * sizeof(float)); // v0阶段每次处理16行，每行64个元素，开2 buffer
+
+    SoftmaxInitBuffer();
+
+    tPipe->InitBuffer(commonTBuf, 512); // commonTBuf内存申请512B
+    tPipe->InitBuffer(sinksBuf, 512); // sinksBuf内存申请512B
+
+    tPipe->InitBuffer(stage0InQue, 2, dVTemplateTypeInput * 16 * sizeof(KV_T)); // V0阶段每次处理16个seq, 开2 buffer
+    tPipe->InitBuffer(stage0OutQue, 2, dVTemplateType * (16 + 1) * sizeof(Q_T)); // kv输入D轴640, V0阶段每次处理16个seq, 开2 buffer
+
+    tPipe->InitBuffer(stage1OutQue[0], 1, vec1Srcstride * s2BaseSize * sizeof(Q_T));
+    tPipe->InitBuffer(stage1OutQue[1], 1, vec1Srcstride * s2BaseSize * sizeof(Q_T));
+    tPipe->InitBuffer(stage2OutBuf, (s1BaseSize / CV_RATIO) * dTemplateAlign64 * sizeof(T));
+
+    mte3ToVId[0] = GetTPipePtr()->AllocEventID<HardEvent::MTE3_V>();
+    mte3ToVId[1] = GetTPipePtr()->AllocEventID<HardEvent::MTE3_V>();
+
+    vToMte3Id[0] = GetTPipePtr()->AllocEventID<HardEvent::V_MTE3>();
+    vToMte3Id[1] = GetTPipePtr()->AllocEventID<HardEvent::V_MTE3>();
+    SetFlag<HardEvent::MTE3_V>(mte3ToVId[0]);
+    SetFlag<HardEvent::MTE3_V>(mte3ToVId[1]);
+}
+
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::InitCubeVecSharedParams(
+    CVSharedParams &sharedParams, int32_t aicIdx, uint8_t subBlockIdx)
+{
+    // TODO参数整改
+    auto &sparseAttnSharedkvBaseParams = this->tilingData->baseParams;
+    sharedParams.bSize = sparseAttnSharedkvBaseParams.batchSize;
+    sharedParams.n2Size = 1;
+    sharedParams.gSize = sparseAttnSharedkvBaseParams.nNumOfQInOneGroup; 
+    sharedParams.s1Size = sparseAttnSharedkvBaseParams.qSeqSize;
+    sharedParams.s2Size = sparseAttnSharedkvBaseParams.seqSize;
+    sharedParams.sparseBlockCount = sparseAttnSharedkvBaseParams.sparseBlockCount;
+    sharedParams.cmpRatio = 1; // 走spaese， 但不压缩
+    sharedParams.oriMaskMode = sparseAttnSharedkvBaseParams.sparseMode;
+    sharedParams.oriWinLeft = -1;
+    sharedParams.oriWinRight = 0;
+    sharedParams.layoutType = sparseAttnSharedkvBaseParams.outputLayout; 
+    sharedParams.dSizeRope = 64; // 拷贝KV用
+    sharedParams.softmaxScale = 0.04419417; 
+    sharedParams.dSize = 576;
+    sharedParams.dSizeVInput = sparseAttnSharedkvBaseParams.dSizeVInput; // 拷贝用
+
+    sharedParams.usedCoreNum = this->tilingData->singleCoreParams.usedCoreNum;
+
+    // pageAttention, rope在C侧搬运时使用
+    if constexpr (isPa) {
+        sharedParams.oriBlockSize = sparseAttnSharedkvBaseParams.blockSize;
+        sharedParams.oriMaxBlockNumPerBatch = sparseAttnSharedkvBaseParams.maxBlockNumPerBatch;
+    }
+    
+    // actQ->TND, actKV pa场景任意layout均有
+    sharedParams.isActualSeqLengthsKVNull = 0U; // 均flase 
+
+    sharedParams.needInit = 0;
+    for (uint32_t bIdx = 0; bIdx < sharedParams.bSize; bIdx++) {
+        int64_t s2Size = actualSeqLengthsKVGm.GetValue(bIdx);
+        int64_t s1Size;
+        if constexpr (LAYOUT_T == QSFA_LAYOUT::TND) {
+            s1Size = bIdx == 0 ? cuSeqlensQGm.GetValue(bIdx) : cuSeqlensQGm.GetValue(bIdx) - cuSeqlensQGm.GetValue(bIdx - 1);
+        } else {
+            s1Size = sharedParams.s1Size;
+        }
+        if (s1Size > s2Size) {
+            sharedParams.needInit = 1;
             break;
         }
-        GetRealS2Idx(s2GmOffsetArray + constInfo.sparseBlockSize, s2IdxArray1, topkGmBaseOffset, runInfo);
-        CopyInKv(mte2Size, mte3Size, mergeMte3Idx, s2IdxArray0, s2IdxArray1, runInfo);
-        if ((mte2Size - mte3Size + 2 * constInfo.sparseBlockSize > 16) ||
-            s2GmOffsetArray + 2 * constInfo.sparseBlockSize >= s2GmLimit) {
-            CopyOutMrgeResult(mte2Size, mte3Size, s2GmStartOffset, mergeMte3Idx, runInfo);
-            mte3Size = mte2Size;
-            SetFlag<AscendC::HardEvent::MTE3_MTE2>(mergeMte3Idx % 2);
-            mergeMte3Idx++;
-            needWaitMte3ToMte2 = true;
-        }
     }
 
-    if (unlikely(s2GmStartOffset + mte2Size < s2GmLimit)) {
-        uint64_t blockElementNum = FP32_BLOCK_ELEMENT_NUM * 2;
-        SetFlag<AscendC::HardEvent::MTE3_V>(0);
-        WaitFlag<AscendC::HardEvent::MTE3_V>(0);
-        WaitFlag<AscendC::HardEvent::MTE3_MTE2>(mergeMte3Idx & 1);
-        LocalTensor<K_ROPE_T> mergeUb = kvMergUb_.template ReinterpretCast<K_ROPE_T>();
-        Duplicate(mergeUb, static_cast<K_ROPE_T>(0.0), constInfo.headDim);
-        SetFlag<AscendC::HardEvent::V_MTE3>(0);
-        WaitFlag<AscendC::HardEvent::V_MTE3>(0);
-
-        DataCopyExtParams dataCopyParams;
-        dataCopyParams.blockCount = constInfo.headDim / blockElementNum;
-        dataCopyParams.blockLen = blockElementNum * sizeof(K_ROPE_T);
-        dataCopyParams.srcStride = 0;
-        dataCopyParams.dstStride = (constInfo.s2BaseSize - 1) * blockElementNum * sizeof(K_ROPE_T);
-        for (int64_t s2GmOffset = s2GmStartOffset + mte2Size; s2GmOffset < s2GmLimit; s2GmOffset++) {
-            DataCopyPad(kvMergeGm_[runInfo.loop % MERGE_CACHE_GM_BUF_NUM * 512 * 576 + s2GmOffset * blockElementNum],
-                        mergeUb, dataCopyParams);
-        }
-        dataCopyParams.blockCount = constInfo.headDimRope / blockElementNum;
-        for (int64_t s2GmOffset = s2GmStartOffset + mte2Size; s2GmOffset < s2GmLimit; s2GmOffset++) {
-            DataCopyPad(kvMergeGm_[runInfo.loop % MERGE_CACHE_GM_BUF_NUM * 512 * 576 + 512 * constInfo.headDim +
-                                   s2GmOffset * blockElementNum],
-                        mergeUb, dataCopyParams);
-        }
-        SetFlag<AscendC::HardEvent::MTE3_MTE2>(mergeMte3Idx & 1);
-        mergeMte3Idx++;
-    }
-    WaitFlag<AscendC::HardEvent::MTE3_MTE2>(0);
-    WaitFlag<AscendC::HardEvent::MTE3_MTE2>(1);
-    v0ValidSizeUb_.SetValue(runInfo.loop % MERGE_CACHE_GM_BUF_NUM, mte2Size);
-    SetFlag<AscendC::HardEvent::S_MTE3>(1);
-    WaitFlag<AscendC::HardEvent::S_MTE3>(1);
-    DataCopyExtParams dataCopyParams;
-    dataCopyParams.blockCount = 1;
-    dataCopyParams.blockLen = 128 * sizeof(int32_t);
-    dataCopyParams.srcStride = 0;
-    dataCopyParams.dstStride = 0;
-    DataCopyPad(kvValidSizeGm_[runInfo.loop % MERGE_CACHE_GM_BUF_NUM * (128 * 2) + GetSubBlockIdx() * 128],
-                v0ValidSizeUb_, dataCopyParams);
-    return;
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ProcessVec1L(const RunInfo &info)
-{
-    uint32_t nBufferLoopTimes = (info.actMBaseSize + constInfo.nBufferMBaseSize - 1) / constInfo.nBufferMBaseSize;
-    uint32_t nBufferTail = info.actMBaseSize - (nBufferLoopTimes - 1) * constInfo.nBufferMBaseSize;
-    for (uint32_t i = 0; i < nBufferLoopTimes; i++) {
-        MSplitInfo mSplitInfo;
-        mSplitInfo.nBufferIdx = i;
-        mSplitInfo.nBufferStartM = i * constInfo.nBufferMBaseSize;
-        mSplitInfo.nBufferDealM = (i + 1 != nBufferLoopTimes) ? constInfo.nBufferMBaseSize : nBufferTail;
-
-        mSplitInfo.vecDealM = (mSplitInfo.nBufferDealM <= 16) ? mSplitInfo.nBufferDealM :
-                                                                (((mSplitInfo.nBufferDealM + 15) / 16 + 1) / 2 * 16);
-        mSplitInfo.vecStartM = 0;
-        if (GetBlockIdx() % 2 == 1) {
-            mSplitInfo.vecStartM = mSplitInfo.vecDealM;
-            mSplitInfo.vecDealM = mSplitInfo.nBufferDealM - mSplitInfo.vecDealM;
-        }
-
-        CrossCoreWaitFlag(constInfo.syncC1V1);
-        // vec1 compute
-        ProcessVec1SingleBuf(info, mSplitInfo);
-        CrossCoreSetFlag<ConstInfo::QSFA_SYNC_MODE2, PIPE_MTE3>(constInfo.syncV1C2);
-        // move lse for flash decode
-        if (info.s2Idx == info.curSInnerLoopTimes - 1) {
-            if (info.tndIsS2SplitCore) {
-                if constexpr (FLASH_DECODE) {
-                    uint32_t outIdx = info.loop % (constInfo.preLoadNum);
-                    auto sumTensor = softmaxSumUb[outIdx * SOFTMAX_TMP_BUFFER_OFFSET];
-                    auto maxTensor = softmaxMaxUb[outIdx * SOFTMAX_TMP_BUFFER_OFFSET];
-                    ComputeLogSumExpAndCopyToGm(info, mSplitInfo, sumTensor, maxTensor);
-                }
+    if ASCEND_IS_AIV {
+        if (subBlockIdx == 0) {
+            auto tempTilingSSbuf = reinterpret_cast<__ssbuf__ uint32_t*>(0); // 从ssbuf的0地址开始拷贝
+            auto tempTiling = reinterpret_cast<uint32_t *>(&sharedParams);
+            #pragma unroll
+            for (int i = 0; i < sizeof(CVSharedParams) / sizeof(uint32_t); ++i, ++tempTilingSSbuf, ++tempTiling) {
+                *tempTilingSSbuf = *tempTiling;
             }
+            CrossCoreSetFlag<SYNC_MODE, PIPE_S>(15);
         }
     }
 }
 
-template <typename QSFAT>
-__aicore__ inline uint64_t QSFAVectorService<QSFAT>::CalcAccumOffset(uint32_t bN2Idx, uint32_t gS1Idx)
+TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>::GetExtremeValue(
+    T &negativeScalar)
 {
-    return 0;
+    uint32_t tmp1 = NEGATIVE_MIN_VALUE_FP32;
+    negativeScalar = *((float *)&tmp1);
 }
 
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ProcessVec2SingleBuf(const RunInfo &info,
-                                                                      const MSplitInfo &mSplitInfo)
-{
-    if (mSplitInfo.vecDealM == 0) {
-        return;
-    }
 
-    uint32_t gPreSplitSize = BASE_BLOCK_MAX_ELEMENT_NUM / constInfo.headDim;
-    if (gPreSplitSize > mSplitInfo.vecDealM) {
-        gPreSplitSize = mSplitInfo.vecDealM;
-    }
-    uint32_t loopCount = (mSplitInfo.vecDealM + gPreSplitSize - 1) / gPreSplitSize;
-    uint32_t tailSplitSize = mSplitInfo.vecDealM - (loopCount - 1) * gPreSplitSize;
+TEMPLATES_DEF class QSFAVectorServiceDummy {
+public:
+    __aicore__ inline QSFAVectorServiceDummy() {};
+    __aicore__ inline void CleanOutput(__gm__ uint8_t *attentionOut, ConstInfo &constInfo) {}
+    __aicore__ inline void InitGlobalBuffer(__gm__ uint8_t *key, __gm__ uint8_t *value, __gm__ uint8_t *sparseIndices,
+        __gm__ uint8_t *blockTable) {}
+    __aicore__ inline void InitVecBlock(TPipe *pipe, const KvQuantSparseFlashAttentionTilingDataMla *__restrict tiling,
+        CVSharedParams &sharedParams, int32_t aicIdx, uint8_t subBlockIdx, __gm__ uint8_t *actualSeqLengthsQ, __gm__ uint8_t *actualSeqLengths) {};
+    __aicore__ inline void InitLocalBuffer(TPipe *pipe, ConstInfo &constInfo) {}
+    __aicore__ inline void ProcessVec1(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputBuf,
+        Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &bmm1ResBuf, RunInfo &runInfo,
+        ConstInfo &constInfo) {}
 
-    for (uint32_t i = 0, dealSize = gPreSplitSize; i < loopCount; i++) {
-        if (i == (loopCount - 1)) {
-            dealSize = tailSplitSize;
-        }
-        DealBmm2ResBaseBlock(info, mSplitInfo, i * gPreSplitSize, dealSize, constInfo.headDim, constInfo.headDim);
-        pingpongFlag ^= 1; // pingpong 0 1切换
-    }
+    using mm2ResPos = Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH>;
+    __aicore__ inline void ProcessVec2(mm2ResPos &bmm2ResBuf, RunInfo &runInfo,
+        ConstInfo &constInfo) {}
+};
 }
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::DealBmm2ResBaseBlock(const RunInfo &info, const MSplitInfo &mSplitInfo,
-                                                                      uint32_t startRow, uint32_t dealRowCount,
-                                                                      uint32_t columnCount, uint32_t actualColumnCount)
-{
-    uint32_t vec2ComputeSize = dealRowCount * columnCount;
-    uint32_t baseOffset = startRow;
-    LocalTensor<T> bmm2ResUb = tmpBuff1.Get<T>();
-    bmm2ResUb.SetSize(vec2ComputeSize);
-
-    size_t batchBase = 0;
-    uint64_t inOutBaseOffset = (mSplitInfo.vecStartM + startRow) * columnCount;
-    uint64_t srcGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
-    
-    LocalTensor<MM2_OUT_T> tmpBmm2ResUb = inputBuff1.Get<MM2_OUT_T>();
-    tmpBmm2ResUb = tmpBmm2ResUb[pingpongFlag * INPUT1_BUFFER_OFFSET / sizeof(MM2_OUT_T)];
-    WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG + pingpongFlag);
-
-    DataCopy(tmpBmm2ResUb, mm2ResGm[srcGmOffset + batchBase], vec2ComputeSize);
-    SetFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF1_FLAG);
-    DataCopy(bmm2ResUb, tmpBmm2ResUb, vec2ComputeSize);
-    SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF1_FLAG + pingpongFlag);
-
-    // 除第一个循环外，均需要更新中间计算结果
-    if (info.s2Idx > 0) {
-        event_t eventIdMte2WaitMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_MTE2));
-        SetFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
-        WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte2WaitMte3);
-        LocalTensor<T> bmm2ResPreUb = inputBuff2.Get<T>();
-        WaitFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF2_FLAG);
-        uint64_t vecPre2ResGmOffset = ((info.loop - 1) % constInfo.preLoadNum) * constInfo.bmm2ResUbSize +
-            inOutBaseOffset;
-        DataCopy(bmm2ResPreUb, vec2ResGm[vecPre2ResGmOffset + batchBase], vec2ComputeSize);
-        SetFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF2_FLAG);
-        WaitFlag<AscendC::HardEvent::MTE2_V>(SYNC_INPUT_BUF2_FLAG);
-        LocalTensor<T> softmaxExpBrcb =  tmpBuff2.Get<T>();
-        Brcb(softmaxExpBrcb, softmaxExpUb[(info.loop % constInfo.preLoadNum) * SOFTMAX_TMP_BUFFER_OFFSET + baseOffset],
-            (mSplitInfo.vecDealM + 7) / 8, {1, 8});
-        PipeBarrier<PIPE_V>();
-        RowMuls(bmm2ResPreUb, bmm2ResPreUb, softmaxExpBrcb, dealRowCount, columnCount, actualColumnCount);
-        PipeBarrier<PIPE_V>();
-        Add(bmm2ResUb, bmm2ResUb, bmm2ResPreUb, vec2ComputeSize);
-        SetFlag<AscendC::HardEvent::V_MTE2>(SYNC_INPUT_BUF2_FLAG);
-    }
-    // 最后一次输出计算结果，否则将中间结果暂存至workspace
-    if (info.s2Idx + 1 == info.curSInnerLoopTimes) {
-        LocalTensor<T> softmaxSumBrcb =  tmpBuff2.Get<T>();
-        Brcb(softmaxSumBrcb, softmaxSumUb[(info.loop % constInfo.preLoadNum) * SOFTMAX_TMP_BUFFER_OFFSET + baseOffset],
-            (mSplitInfo.vecDealM + 7) / 8, {1, 8});
-        PipeBarrier<PIPE_V>();
-        RowDivs(bmm2ResUb, bmm2ResUb, softmaxSumBrcb, dealRowCount, columnCount, actualColumnCount);
-
-        PipeBarrier<PIPE_V>();
-        Bmm2ResCopyOut(info, bmm2ResUb, mSplitInfo.vecStartM + startRow, dealRowCount, columnCount, actualColumnCount);
-    } else {
-        PipeBarrier<PIPE_V>();
-        LocalTensor<T> tmpBmm2Res = outputBuff1.Get<T>();
-        WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-        DataCopy(tmpBmm2Res, bmm2ResUb, dealRowCount * columnCount);
-        SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-        WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-
-        uint64_t vecPre2ResGmOffset = (info.loop % constInfo.preLoadNum) * constInfo.bmm2ResUbSize + inOutBaseOffset;
-        DataCopy(vec2ResGm[vecPre2ResGmOffset + batchBase], tmpBmm2Res, vec2ComputeSize);
-        SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    }
-}
-
-template <typename QSFAT> __aicore__ inline void QSFAVectorService<QSFAT>::ProcessVec2L(const RunInfo &info)
-{   // V2
-    uint32_t nBufferLoopTimes = (info.actMBaseSize + constInfo.nBufferMBaseSize - 1) / constInfo.nBufferMBaseSize;
-    uint32_t nBufferTail = info.actMBaseSize - (nBufferLoopTimes - 1) * constInfo.nBufferMBaseSize;
-    for (uint32_t i = 0; i < nBufferLoopTimes; i++) {
-        MSplitInfo mSplitInfo;
-        mSplitInfo.nBufferIdx = i;
-        mSplitInfo.nBufferStartM = i * constInfo.nBufferMBaseSize;
-        mSplitInfo.nBufferDealM = (i + 1 != nBufferLoopTimes) ? constInfo.nBufferMBaseSize : nBufferTail;
-
-        mSplitInfo.vecDealM = (mSplitInfo.nBufferDealM <= 16) ? mSplitInfo.nBufferDealM :
-            (((mSplitInfo.nBufferDealM + 15) / 16 + 1) / 2 * 16);
-        mSplitInfo.vecStartM = 0;
-        if (GetBlockIdx() % 2 == 1) {
-            mSplitInfo.vecStartM = mSplitInfo.vecDealM;
-            mSplitInfo.vecDealM = mSplitInfo.nBufferDealM - mSplitInfo.vecDealM;
-        }
-        CrossCoreWaitFlag(constInfo.syncC2V2);
-        ProcessVec2SingleBuf(info, mSplitInfo);
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::ProcessVec2Inner(const RunInfo &info,
-                                                                  const MSplitInfo &mSplitInfo,
-                                                                  uint32_t mStartRow, uint32_t mDealSize)
-{
-    uint32_t mSplitSize = BASE_BLOCK_MAX_ELEMENT_NUM / constInfo.headDim;
-    if (mSplitSize > mDealSize) {
-        mSplitSize = mDealSize;
-    }
-
-    uint32_t loopCount = (mDealSize + mSplitSize - 1) / mSplitSize;
-    uint32_t tailSplitSize = mDealSize - (loopCount - 1) * mSplitSize;
-    for (uint32_t i = 0, dealSize = mSplitSize; i < loopCount; i++) {
-        if (i == (loopCount - 1)) {
-            dealSize = tailSplitSize;
-        }
-        DealBmm2ResBaseBlock(info, mSplitInfo, i * mSplitSize + mStartRow, dealSize,
-                             constInfo.headDim, constInfo.headDim);
-        pingpongFlag ^= 1; // pingpong 0 1切换
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void QSFAVectorService<QSFAT>::GetConfusionTransposeTiling(
-    int64_t numR, int64_t numC, const uint32_t stackBufferSize, const uint32_t typeSize,
-    ConfusionTransposeTiling &tiling)
-{
-    (void)stackBufferSize;
-    uint32_t blockSize = ONE_BLK_SIZE / typeSize;
-    uint32_t height = numC;
-    uint32_t width = numR;
-    uint32_t highBlock = height / BLOCK_CUBE;
-    uint32_t stride = height * blockSize * typeSize / ONE_BLK_SIZE;
-    uint32_t repeat = width / blockSize;
-
-    tiling.param0 = blockSize;
-    tiling.param1 = height;
-    tiling.param2 = width;
-    tiling.param3 = highBlock;
-    tiling.param4 = stride;
-    tiling.param5 = repeat;
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::Bmm2FDDataCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb,
-                                            uint32_t wsMStart, uint32_t dealRowCount, uint32_t columnCount,
-                                            uint32_t actualColumnCount)
-{
-    LocalTensor<T> tmp = outputBuff1.Get<T>();
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    DataCopy(tmp, bmm2ResUb, columnCount * dealRowCount);
-    SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    uint64_t accumTmpOutNum = CalcAccumOffset(info.bIdx, info.gS1Idx);
-    uint64_t offset = accumTmpOutNum * constInfo.kvHeadNum * constInfo.mBaseSize * constInfo.headDim + // taskoffset
-                      // 份数offset
-                      info.tndCoreStartKVSplitPos * constInfo.kvHeadNum * constInfo.mBaseSize * constInfo.headDim +
-                      wsMStart * actualColumnCount; // m轴offset
-    GlobalTensor<T> dst = accumOutGm[offset];
-    if (info.actualSingleProcessSInnerSize == 0) {
-        DataCopyExtParams dataCopyParams;
-        dataCopyParams.blockCount = dealRowCount;
-        dataCopyParams.blockLen = actualColumnCount * sizeof(T);
-        dataCopyParams.srcStride = (columnCount - actualColumnCount) / (BYTE_BLOCK / sizeof(T));
-        dataCopyParams.dstStride = 0;
-        DataCopyPad(dst, tmp, dataCopyParams);
-    } else {
-        matmul::InitOutput<T>(dst, dealRowCount * actualColumnCount, ConstInfo::FLOAT_ZERO);
-    }
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::Bmm2DataCopyOutTrans(const RunInfo &info, LocalTensor<OUT_T> &attenOutUb,
-                                               uint32_t wsMStart, uint32_t dealRowCount,
-                                               uint32_t columnCount, uint32_t actualColumnCount)
-{
-    DataCopyExtParams dataCopyParams;
-    dataCopyParams.blockCount = dealRowCount;
-    dataCopyParams.blockLen = actualColumnCount * sizeof(OUT_T);
-    dataCopyParams.srcStride = (columnCount - actualColumnCount) / (BYTE_BLOCK / sizeof(OUT_T));
-    dataCopyParams.dstStride = 0;
-    DataCopyPad(attentionOutGm[info.attenOutOffset + wsMStart * actualColumnCount], attenOutUb, dataCopyParams);
-    return;
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::Bmm2CastAndCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb,
-                                             uint32_t wsMStart, uint32_t dealRowCount, uint32_t columnCount,
-                                             uint32_t actualColumnCount)
-{
-    LocalTensor<OUT_T> tmpBmm2ResCastTensor = outputBuff1.Get<OUT_T>();
-    WaitFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-    if constexpr (IsSameType<OUT_T, bfloat16_t>::value) { // bf16 采取四舍六入五成双模式
-        Cast(tmpBmm2ResCastTensor, bmm2ResUb, AscendC::RoundMode::CAST_RINT, dealRowCount * columnCount);
-    } else {
-        Cast(tmpBmm2ResCastTensor, bmm2ResUb, AscendC::RoundMode::CAST_ROUND, dealRowCount * columnCount);
-    }
-
-    SetFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    WaitFlag<AscendC::HardEvent::V_MTE3>(SYNC_OUTPUT_BUF1_FLAG);
-    Bmm2DataCopyOutTrans(info, tmpBmm2ResCastTensor, wsMStart, dealRowCount, columnCount, actualColumnCount);
-    SetFlag<AscendC::HardEvent::MTE3_V>(SYNC_OUTPUT_BUF1_FLAG);
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::Bmm2ResCopyOut(const RunInfo &info, LocalTensor<T> &bmm2ResUb, uint32_t wsMStart,
-                                         uint32_t dealRowCount, uint32_t columnCount,
-                                         uint32_t actualColumnCount)
-{
-    if constexpr (FLASH_DECODE) {
-        if (info.tndIsS2SplitCore) {
-            Bmm2FDDataCopyOut(info, bmm2ResUb, wsMStart, dealRowCount, columnCount, actualColumnCount);
-        } else {
-            Bmm2CastAndCopyOut(info, bmm2ResUb, wsMStart, dealRowCount, columnCount, actualColumnCount);
-        }
-    } else {
-        Bmm2CastAndCopyOut(info, bmm2ResUb, wsMStart, dealRowCount, columnCount, actualColumnCount);
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::RowDivs(LocalTensor<float> dstUb, LocalTensor<float> src0Ub, LocalTensor<float> src1Ub,
-                                  uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount)
-{
-    // divs by row, 每行的元素除以相同的元素
-    // dstUb[i, (j * 8) : (j * 8 + 7)] = src0Ub[i, (j * 8) : (j * 8 + 7)] / src1Ub[i, 0 : 7]
-    // src0Ub:[dealRowCount, columnCount], src1Ub:[dealRowCount, FP32_BLOCK_ELEMENT_NUM] dstUb:[dealRowCount,
-    // columnCount]
-    uint32_t dtypeMask = FP32_REPEAT_ELEMENT_NUM;
-    uint32_t dLoop = actualColumnCount / dtypeMask;
-    uint32_t dRemain = actualColumnCount % dtypeMask;
-
-    BinaryRepeatParams repeatParamsDiv;
-    repeatParamsDiv.src0BlkStride = 1;
-    repeatParamsDiv.src1BlkStride = 0;
-    repeatParamsDiv.dstBlkStride = 1;
-    repeatParamsDiv.src0RepStride = columnCount / FP32_BLOCK_ELEMENT_NUM;
-    repeatParamsDiv.src1RepStride = 1;
-    repeatParamsDiv.dstRepStride = columnCount / FP32_BLOCK_ELEMENT_NUM;
-    uint32_t columnRepeatCount = dLoop;
-    if (columnRepeatCount <= dealRowCount) {
-        uint32_t offset = 0;
-        for (uint32_t i = 0; i < dLoop; i++) {
-            Div(dstUb[offset], src0Ub[offset], src1Ub, dtypeMask, dealRowCount, repeatParamsDiv);
-            offset += dtypeMask;
-        }
-    } else {
-        BinaryRepeatParams columnRepeatParams;
-        columnRepeatParams.src0BlkStride = 1;
-        columnRepeatParams.src1BlkStride = 0;
-        columnRepeatParams.dstBlkStride = 1;
-        columnRepeatParams.src0RepStride = 8; // 列方向上两次repeat起始地址间隔dtypeMask=64个元素，即8个block
-        columnRepeatParams.src1RepStride = 0;
-        columnRepeatParams.dstRepStride = 8;  // 列方向上两次repeat起始地址间隔dtypeMask=64个元素，即8个block
-        uint32_t offset = 0;
-        for (uint32_t i = 0; i < dealRowCount; i++) {
-            Div(dstUb[offset], src0Ub[offset], src1Ub[i * FP32_BLOCK_ELEMENT_NUM], dtypeMask, columnRepeatCount,
-                columnRepeatParams);
-            offset += columnCount;
-        }
-    }
-    if (dRemain > 0) {
-        Div(dstUb[dLoop * dtypeMask], src0Ub[dLoop * dtypeMask], src1Ub, dRemain, dealRowCount, repeatParamsDiv);
-    }
-}
-
-template <typename QSFAT>
-__aicore__ inline void
-QSFAVectorService<QSFAT>::RowMuls(LocalTensor<T> dstUb, LocalTensor<T> src0Ub, LocalTensor<T> src1Ub,
-                                  uint32_t dealRowCount, uint32_t columnCount, uint32_t actualColumnCount)
-{
-    // muls by row, 每行的元素乘以相同的元素
-    // dstUb[i, (j * 8) : (j * 8 + 7)] = src0Ub[i, (j * 8) : (j * 8 + 7)] * src1Ub[i, 0 : 7]
-    // src0Ub:[dealRowCount, columnCount] src1Ub:[dealRowCount, FP32_BLOCK_ELEMENT_NUM] dstUb:[dealRowCount,
-    // columnCount]
-    // dealRowCount is repeat times, must be less 256
-    uint32_t repeatElementNum = FP32_REPEAT_ELEMENT_NUM;
-    uint32_t blockElementNum = FP32_BLOCK_ELEMENT_NUM;
-
-    if constexpr (std::is_same<T, half>::value) {
-        // 此限制由于每个repeat至多连续读取256B数据
-        repeatElementNum = FP32_REPEAT_ELEMENT_NUM * 2; // 256/4 * 2=128
-        blockElementNum = FP32_BLOCK_ELEMENT_NUM * 2;   // 32/4 * 2 = 16
-    }
-
-    // 每次只能连续读取256B的数据进行计算，故每次只能处理256B/sizeof(dType)=
-    // 列方向分dLoop次，每次处理8列数据
-    uint32_t dLoop = actualColumnCount / repeatElementNum;
-    uint32_t dRemain = actualColumnCount % repeatElementNum;
-    // REPEATE_STRIDE_UP_BOUND=256， 此限制由于src0RepStride数据类型为uint8之多256个datablock间距
-    if (columnCount < REPEATE_STRIDE_UP_BOUND * blockElementNum) {
-        BinaryRepeatParams repeatParams;
-        repeatParams.src0BlkStride = 1;
-        repeatParams.src1BlkStride = 0;
-        repeatParams.dstBlkStride = 1;
-        repeatParams.src0RepStride = columnCount / blockElementNum;
-        repeatParams.src1RepStride = 1;
-        repeatParams.dstRepStride = columnCount / blockElementNum;
-
-        // 如果以列为repeat所处理的次数小于行处理次数，则以列方式处理。反之则以行进行repeat处理
-        if (dLoop <= dealRowCount) {
-            uint32_t offset = 0;
-            for (uint32_t i = 0; i < dLoop; i++) {
-                Mul(dstUb[offset], src0Ub[offset], src1Ub, repeatElementNum, dealRowCount, repeatParams);
-                offset += repeatElementNum;
-            }
-        } else {
-            BinaryRepeatParams columnRepeatParams;
-            columnRepeatParams.src0BlkStride = 1;
-            columnRepeatParams.src1BlkStride = 0;
-            columnRepeatParams.dstBlkStride = 1;
-            columnRepeatParams.src0RepStride = 8; // 列方向上两次repeat起始地址间隔dtypeMask=64个元素，即8个block
-            columnRepeatParams.src1RepStride = 0;
-            columnRepeatParams.dstRepStride = 8;  // 列方向上两次repeat起始地址间隔dtypeMask=64个元素，即8个block
-            for (uint32_t i = 0; i < dealRowCount; i++) {
-                Mul(dstUb[i * columnCount], src0Ub[i * columnCount], src1Ub[i * blockElementNum], repeatElementNum,
-                    dLoop, columnRepeatParams);
-            }
-        }
-
-        // 最后一次完成[dealRowCount, dRemain] * [dealRowCount, blockElementNum] 只计算有效部分
-        if (dRemain > 0) {
-            Mul(dstUb[dLoop * repeatElementNum], src0Ub[dLoop * repeatElementNum], src1Ub, dRemain, dealRowCount,
-                repeatParams);
-        }
-    } else {
-        BinaryRepeatParams repeatParams;
-        repeatParams.src0RepStride = 8; // 每个repeat为256B数据，正好8个datablock
-        repeatParams.src0BlkStride = 1;
-        repeatParams.src1RepStride = 0;
-        repeatParams.src1BlkStride = 0;
-        repeatParams.dstRepStride = 8;
-        repeatParams.dstBlkStride = 1;
-        // 每次计算一行，共计算dealRowCount行
-        for (uint32_t i = 0; i < dealRowCount; i++) {
-            // 计算一行中的dLoop个repeat, 每个repeat计算256/block_size 个data_block
-            Mul(dstUb[i * columnCount], src0Ub[i * columnCount], src1Ub[i * blockElementNum], repeatElementNum, dLoop,
-                repeatParams);
-            //  计算一行中的尾块
-            if (dRemain > 0) {
-                Mul(dstUb[i * columnCount + dLoop * repeatElementNum],
-                    src0Ub[i * columnCount + dLoop * repeatElementNum], src1Ub[i * blockElementNum], dRemain, 1,
-                    repeatParams);
-            }
-        }
-    }
-}
-
-#endif // KV_QUANT_SPARSE_FLASH_ATTENTION_SERVICE_VECTOR_MLA_H
+#endif // KV_QUANT_SPARSE_ATTN_SHAREDKV_QSFA_BLOCK_VECTOR_H

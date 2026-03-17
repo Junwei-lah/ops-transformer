@@ -10,6 +10,7 @@
 add_op_to_compiled_list()
 
 if (BUILD_OPEN_PROJECT)
+    set(kv_quant_sparse_flash_attention_depends attention/common CACHE INTERNAL "Dependencies for kv_quant_sparse_flash_attention")
     target_sources(op_host_aclnn PRIVATE
     kv_quant_sparse_flash_attention_def.cpp
     )
