@@ -164,7 +164,7 @@ protected:
     bool CheckQuant(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, const PFAShapeInfo& valueShapeInfo) const;
     bool CheckQScaleShape4MLAFullQuant(ContextParamsForPFATiling& contextKeyParams) const;
     bool CheckKVScaleShape4MLAFullQuant(ContextParamsForPFATiling& contextKeyParams) const;
-    bool CheckMLAFullQuant(ContextParamsForPFATiling& contextKeyParams) const;
+    bool CheckMLAFullQuant(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo) const;
     bool CheckPrefix(ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo, PFAShapeInfo& keyShapeInfo, 
         PromptFlashAttentionTilingData& tilingData);
     bool CheckActSeq(const ContextParamsForPFATiling& contextKeyParams, const PFAShapeInfo& queryShapeInfo) const;
@@ -189,7 +189,7 @@ protected:
         std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV);
     bool CheckMultiFeatureCrossover(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, 
         std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV, PromptFlashAttentionTilingData& tilingData);
-    bool CheckPerblockCrossover(ContextParamsForPFATiling& contextKeyParams);
+    bool CheckPerblockCrossover(ContextParamsForPFATiling& contextKeyParams, PromptFlashAttentionTilingData& tilingData);
     void SetTilingDataAttribute(ContextParamsForPFATiling& contextKeyParams, PromptFlashAttentionTilingData& tilingData);
     void GetEnableDN(ContextParamsForPFATiling& contextKeyParams, PromptFlashAttentionTilingData& tilingData,
         PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo, std::vector<int64_t>& actualSeqLengths, std::vector<int64_t>& actualSeqLengthsKV);
