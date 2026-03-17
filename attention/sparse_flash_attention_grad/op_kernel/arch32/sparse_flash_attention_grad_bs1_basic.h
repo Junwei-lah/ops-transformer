@@ -661,7 +661,9 @@ __aicore__ inline void SelectedAttentionGradBasic<SFAGT>::GetActualSelCountScatt
         maxS2Blk = (newMaxS2 + selectedBlockSize - 1) / selectedBlockSize;
     }
     actualSelectedBlockCountScatter = Min(selectedBlockCount, maxS2Blk);
- 
+    if (actualSelectedBlockCountScatter <= 0) {
+        return;
+    }
     int64_t topkGmOffset = t1Idx * (dimN2 * selectedBlockCount) + n2Idx * selectedBlockCount + actualSelectedBlockCountScatter - 1;
     if (topkIndicesGm[topkGmOffset].GetValue(0) == maxS2Blk - 1) {
         isLastBlockSelectedScatter = true;
@@ -677,7 +679,9 @@ __aicore__ inline void SelectedAttentionGradBasic<SFAGT>::GetActualSelCount(cons
         maxS2Blk = (newMaxS2 + selectedBlockSize - 1) / selectedBlockSize;
     }
     actualSelectedBlockCount = Min(selectedBlockCount, maxS2Blk);
- 
+    if (actualSelectedBlockCount <= 0) {
+        return;
+    }
     int64_t topkGmOffset = t1Idx * (dimN2 * selectedBlockCount) + n2Idx * selectedBlockCount + actualSelectedBlockCount - 1;
     if (topkIndicesGm[topkGmOffset].GetValue(0) == maxS2Blk - 1) {
         isLastBlockSelected = true;
