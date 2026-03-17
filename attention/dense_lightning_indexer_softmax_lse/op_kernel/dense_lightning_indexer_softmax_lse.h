@@ -253,6 +253,11 @@ __aicore__ void inline DenseLISoftmaxLse<T>::SplitCore(uint32_t curCoreIdx, uint
     uint32_t coreDealS1BlockCnt = curCoreIdx < deal1MoreS1BlockCoreNum ?
                                   minSeqS1BlockPerCore + 1 : minSeqS1BlockPerCore;
 
+    info.dealCnt = coreDealS1BlockCnt;
+    if (coreDealS1BlockCnt <= 0) {
+        return;
+    }
+
     uint32_t coreDealS1BlockOffset = curCoreIdx < deal1MoreS1BlockCoreNum ? (minSeqS1BlockPerCore + 1) * curCoreIdx :
                                      (minSeqS1BlockPerCore + 1) * deal1MoreS1BlockCoreNum +
                                      minSeqS1BlockPerCore * (curCoreIdx - deal1MoreS1BlockCoreNum);
@@ -262,10 +267,10 @@ __aicore__ void inline DenseLISoftmaxLse<T>::SplitCore(uint32_t curCoreIdx, uint
     uint32_t tmpAccumSeqS1Block = 0;
     bool isFindStart = false;
     bool isFindEnd = false;
-    uint32_t startBIdx;
-    uint32_t endBIdx;
-    uint32_t s1StartBlock;
-    uint32_t s1EndBlock;
+    uint32_t startBIdx = 0;
+    uint32_t endBIdx = 0;
+    uint32_t s1StartBlock = 0;
+    uint32_t s1EndBlock = 0;
 
     for (uint32_t bIdx = 1; bIdx <= constInfo.batchSize; bIdx++) {
         uint32_t actS1Size = GetActualSeqLen(bIdx - 1, constInfo.actualLenQDims, constInfo.isAccumSeqS1,
@@ -452,6 +457,10 @@ template <typename T>
 __aicore__ inline void DenseLISoftmaxLse<T>::ProcessMain()
 {
     if (aiCoreIdx >= usedCoreNum) {
+        return;
+    }
+
+    if (splitCoreInfo.dealCnt <= 0) {
         return;
     }
 

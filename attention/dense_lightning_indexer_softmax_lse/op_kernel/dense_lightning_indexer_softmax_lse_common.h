@@ -112,6 +112,7 @@ struct SplitCoreInfo {
     uint32_t bN2End = 0U;
     uint32_t gS1Start = 0U;
     uint32_t gS1End = 0U;
+    uint32_t dealCnt = 0U;
 
     // softmax
     uint32_t bIdxStart = 0U;
