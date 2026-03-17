@@ -65,7 +65,7 @@ public:
 
     // TilingMethods
     void ECutInit(CutResult &eCut);
-    void EAxisCut(uint64_t tmpCnt, uint64_t eSize, CutResult &eCut);
+    void EAxisCut(uint64_t tmpCnt, uint64_t eSize, CutResult &eCut) const;
     void MaxTileCntCheckForE();
 
     // Wrapper function
@@ -110,12 +110,12 @@ public:
         };
 
         // TilingMethods
-        void InitCutResult(CutResult& tmpCut, uint64_t totalLen);
-        void CutAxisE(CutResult& cutRes, uint64_t maxCutNum, uint64_t minLen, double unbalanceRatio);
+        void InitCutResult(CutResult& tmpCut, uint64_t totalLen) const;
+        void CutAxisE(CutResult& cutRes, uint64_t maxCutNum, uint64_t minLen, double unbalanceRatio) const;
         void CutAxisC(uint64_t maxCutNum, uint64_t minLen, double unbalanceRatio);
         void AsignMaxCutNumForBranches(double totalBMMTime, double totalCommTime);
         virtual bool SetShortTilePositionFlag([[maybe_unused]] double totalBMMTime, [[maybe_unused]] double totalCommTime){return false;};
-        void TrimCutResult(CutResult& tmpCut, bool setShortFlag);
+        void TrimCutResult(CutResult& tmpCut, bool setShortFlag) const;
 
         // wrapper function
         void GetTiling();

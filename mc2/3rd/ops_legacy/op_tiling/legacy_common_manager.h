@@ -40,7 +40,7 @@ public:
      * @return 函数指针
      */
     template<typename FuncType>
-    FuncType GetFunc(const char * symbolName)
+    FuncType GetFunc(const char * symbolName) const
     {
         if (symbolName == nullptr || strlen(symbolName) == 0) {
             OP_LOGW("LegacyCommonMgr", "Invalid symbol name (null or empty).");

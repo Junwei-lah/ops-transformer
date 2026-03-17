@@ -44,10 +44,10 @@ bool QuantMatmulAllReduceTilingA5::IsCapable()
 {
     if (isA8W8_ || (scenario_ == AllReduceScenario::FP8HIF8) || (scenario_ == AllReduceScenario::MXFP4) ||
         (scenario_ == AllReduceScenario::MXFP8)) {
-        OP_LOGI(opName_, "Start with quant tiling.");
+        OP_LOGI(opName_, "Start with matmulAllReduce 950 quant tiling.");
         return true;
     }
-    OP_LOGI(opName_, "Skip quant tiling as dtype not support.");
+    OP_LOGI(opName_, "Skip matmulAllReduce 950 quant tiling as dtype not support.");
     return false;
 }
 

@@ -56,7 +56,7 @@ uint64_t HCCLPerformanceArch35::InverseCommTime(double targetTime) const
         tmpSize = (targetTime - commEstimatePar_.sizeToTimeLinearOffset) /
                     commEstimatePar_.sizeToTimeLinearGradient;
     } else if (targetTime > commEstimatePar_.timeToSizeBoundary1) {
-        if (commTypeInfo_.kernelType == KernelType::ALL_REDUCE && commEstimatePar_.timeToSizeParabolicPar2 != 0) {
+        if (commTypeInfo_.kernelType == KernelType::ALL_REDUCE && commEstimatePar_.timeToSizeParabolicPar2 != 0.0f) {
             tmpSize = (targetTime - commEstimatePar_.timeToSizeParabolicPar3) /
                     commEstimatePar_.timeToSizeParabolicPar2;
         } else {

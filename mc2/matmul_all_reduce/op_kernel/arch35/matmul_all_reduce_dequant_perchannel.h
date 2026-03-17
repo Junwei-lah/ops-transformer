@@ -26,8 +26,8 @@ constexpr uint32_t BF16_BUF_CNT_MATMUL_ALLREDUCE_INT8 = 8;
 constexpr uint32_t FP16_BUF_CNT_MATMUL_ALLREDUCE_INT8 = 4;
 constexpr int32_t FP16_BUF_SPLIT_MN_CNT_MATMUL_ALLREDUCE_INT8 = 6;
 constexpr int32_t BF16_BUF_SPLIT_MN_CNT_MATMUL_ALLREDUCE_INT8 = 10;
-constexpr uint32_t BYTE512_MATMUL_ALLREDUCE_INT8 = 512;
 constexpr uint32_t BYTE32_MATMUL_ALLREDUCE_INT8 = 32;
+constexpr uint32_t BYTE512_MATMUL_ALLREDUCE_INT8 = 512;
 constexpr uint32_t SPLIT_M_MATMUL_ALLREDUCE_INT8 = 1;
 constexpr uint32_t SPLIT_MN_MATMUL_ALLREDUCE_INT8 = 2;
 
@@ -62,18 +62,18 @@ public:
         const uint32_t quantUbSize, int64_t& blockAddrOffset, uint32_t& tileCalCntM, uint32_t& tailCalCntM,
         uint32_t& aivLoopNum)
     {
-        uint32_t vectorIndex = GetBlockIdx();                 // [0, 23]
-        uint32_t singleAivM = dequantM_ / dequantAivCoreNum_; // 单核要计算的总行数（多次循环累计）
         uint32_t aivAddOneIndex = dequantAivCoreNum_ + 1; // 要多算一轮的核的下标，如果不均分，使用后面 [aivAddOneIndex,
                                                           // dequantAivCoreNum_ - 1] 核来完成多余一轮的计算
         if ((dequantM_ % dequantAivCoreNum_) != 0) {
             aivAddOneIndex = dequantAivCoreNum_ - (dequantM_ % dequantAivCoreNum_);
         }
 
+        uint32_t vectorIndex = GetBlockIdx();                 // [0, 23]
+        uint32_t singleAivM = dequantM_ / dequantAivCoreNum_; // 单核要计算的总行数（多次循环累计）
         if (singleAivM == 0) { // M小于核数，singleAivM为0，核计算行数更新及偏移计算
             uint32_t usedAivCoreIndex = dequantAivCoreNum_ - aivAddOneIndex;
             if (vectorIndex < usedAivCoreIndex) {
-                singleAivM += 1;
+                singleAivM = singleAivM + 1;
                 blockAddrOffset = static_cast<int64_t>(vectorIndex) * static_cast<int64_t>(singleAivM) *
                                   static_cast<int64_t>(dequantN_);
             } else {
@@ -83,7 +83,7 @@ public:
         } else { // M大于核数，singleAivM>0，核计算行数更新及偏移计算
             if ((aivAddOneIndex < dequantAivCoreNum_ + 1) && (vectorIndex >= aivAddOneIndex)) {
                 // 多算一行
-                singleAivM += 1;
+                singleAivM = singleAivM + 1;
                 blockAddrOffset = (static_cast<int64_t>(vectorIndex) * static_cast<int64_t>(singleAivM) -
                                    static_cast<int64_t>(aivAddOneIndex)) *
                                   static_cast<int64_t>(dequantN_);
@@ -96,8 +96,8 @@ public:
         tileCalCntM = quantUbSize / dequantAlginN_; // 单次循环计算行数
         aivLoopNum = singleAivM / tileCalCntM;      // 循环次数
         if (singleAivM % (quantUbSize / dequantAlginN_) != 0) {
-            aivLoopNum += 1;
             tailCalCntM = singleAivM % tileCalCntM;
+            aivLoopNum += 1;
         }
     }
 
@@ -299,12 +299,12 @@ __aicore__ inline void MatmulAllReduceDequantPerchannelCommInt8(
     }
     uint32_t tileBlockCnt = 0;
     uint32_t tailBlockCnt = 0;
-    uint32_t dequantAivLoopNum = 0;
-    int64_t blockAddrOffset = 0;
     uint32_t tailCalCntM = 0;
     uint32_t tileCalCntM = 0;
     uint32_t needAivCoreNum = 0;
+    uint32_t dequantAivLoopNum = 0;
     uint32_t blockNumPerRow = 1;
+    int64_t blockAddrOffset = 0;
 
     tPipe->Reset();
     int32_t nowDequantAlginN = Ceil(N * sizeof(int8_t), BYTE512_MATMUL_ALLREDUCE_INT8) * BYTE512_MATMUL_ALLREDUCE_INT8;
@@ -322,8 +322,8 @@ __aicore__ inline void MatmulAllReduceDequantPerchannelCommInt8(
     op.dequantN_ = N;
     op.dequantAlginN_ = static_cast<uint32_t>(nowDequantAlginN);
     op.dequantAivCoreNum_ = nowDequantAivCoreNum;
-    op.allgatherOut_ = allgatherOut;
     op.dequantScale_ = dequantScale;
+    op.allgatherOut_ = allgatherOut;
     op.dequantedOut_ = dequantedOut;
     if (nowDequantUbSize > M * nowDequantAlginN) {
         nowDequantUbSize = M * nowDequantAlginN;
@@ -343,11 +343,11 @@ __aicore__ inline void MatmulAllReduceDequantPerchannelCommInt8(
     }
     op.Init(tPipe, nowDequantUbSize);                                    // 按照最大去开
     for (uint32_t loopIdx = 0; loopIdx < dequantAivLoopNum; loopIdx++) { // 一轮外层循环对应着一次核间并行
-        int64_t blockAddrOffsetSplitM = 0;
         uint32_t blockCntM = tileCalCntM;
         uint32_t blockCntSpiltMN = tileBlockCnt;
-        int64_t blockAddrOffsetSplitMN = 0;
+        int64_t blockAddrOffsetSplitM = 0;
         int64_t scaleAddrOffsetSplitMN = 0;
+        int64_t blockAddrOffsetSplitMN = 0;
         if (op.splitMode_ == SPLIT_M_MATMUL_ALLREDUCE_INT8) {
             if ((tailCalCntM != 0) && (loopIdx == dequantAivLoopNum - 1)) {
                 blockCntM = tailCalCntM;

@@ -18,7 +18,6 @@
 #include "graph/utils/type_utils.h"
 #include "mc2_hcom_topo_info.h"
 #include "mat_mul_v3/op_host/op_tiling/arch35/matmul_v3_tiling_strategy.h"
-#include "mc2_log.h"
 #include "tiling/mc2_tiling_utils.h"
 
 namespace mc2tiling {

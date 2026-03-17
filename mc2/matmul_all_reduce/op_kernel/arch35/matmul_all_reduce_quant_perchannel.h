@@ -26,10 +26,10 @@ constexpr int32_t BF16_BUF_CNT_MATMUL_ALLREDUCE_INT8 = 8;
 constexpr int32_t FP16_BUF_CNT_MATMUL_ALLREDUCE_INT8 = 4;
 constexpr int32_t FP16_BUF_SPLIT_MN_CNT_MATMUL_ALLREDUCE_INT8 = 6;
 constexpr int32_t BF16_BUF_SPLIT_MN_CNT_MATMUL_ALLREDUCE_INT8 = 10;
-constexpr uint32_t BYTE512_MATMUL_ALLREDUCE_INT8 = 512;
-constexpr uint32_t BYTE32_MATMUL_ALLREDUCE_INT8 = 32;
 constexpr uint32_t SPLIT_M_MATMUL_ALLREDUCE_INT8 = 1;
 constexpr uint32_t SPLIT_MN_MATMUL_ALLREDUCE_INT8 = 2;
+constexpr uint32_t BYTE32_MATMUL_ALLREDUCE_INT8 = 32;
+constexpr uint32_t BYTE512_MATMUL_ALLREDUCE_INT8 = 512;
 
 template <class T>
 class MatmulAllReduceQuantPerchannel
@@ -98,18 +98,20 @@ public:
         const uint32_t quantUbSize, int64_t& blockAddrOffset, uint32_t& tileCalCntM, uint32_t& tailCalCntM,
         uint32_t& aivLoopNum)
     {
-        uint32_t vectorIndex = GetBlockIdx();             // [0, 23]
-        uint32_t singleAivM = quantM_ / quantAivCoreNum_; // 单核要计算的总行数（多次循环累计）
+        
         uint32_t aivAddOneIndex = quantAivCoreNum_ + 1; // 要多算一轮的核的下标，如果不均分，使用后面 [aivAddOneIndex,
                                                         // quantAivCoreNum_ - 1] 核来完成多余一轮的计算
         if (quantM_ % quantAivCoreNum_ != 0) {
             aivAddOneIndex = quantAivCoreNum_ - (quantM_ % quantAivCoreNum_);
         }
 
+        uint32_t vectorIndex = GetBlockIdx();             // [0, 23]
+        uint32_t singleAivM = quantM_ / quantAivCoreNum_; // 单核要计算的总行数（多次循环累计）
+
         if (singleAivM == 0) { // M小于核数，singleAivM为0，核计算行数更新及偏移计算
             uint32_t usedAivCoreIndex = quantAivCoreNum_ - aivAddOneIndex;
             if (vectorIndex < usedAivCoreIndex) {
-                singleAivM += 1;
+                singleAivM = singleAivM + 1;
                 blockAddrOffset = static_cast<int64_t>(vectorIndex) * static_cast<int64_t>(singleAivM) *
                                   static_cast<int64_t>(quantN_);
             } else {
@@ -119,7 +121,7 @@ public:
         } else { // M大于核数，singleAivM>0，核计算行数更新及偏移计算
             if ((aivAddOneIndex < quantAivCoreNum_ + 1) && (vectorIndex >= aivAddOneIndex)) {
                 // 多算一行
-                singleAivM += 1;
+                singleAivM = singleAivM + 1;
                 blockAddrOffset = (static_cast<int64_t>(vectorIndex) * static_cast<int64_t>(singleAivM) -
                                    static_cast<int64_t>(aivAddOneIndex)) *
                                   static_cast<int64_t>(quantN_);
@@ -132,8 +134,8 @@ public:
         tileCalCntM = quantUbSize / quantAlginN_; // 单次循环计算行数
         aivLoopNum = singleAivM / tileCalCntM;    // 循环次数
         if (singleAivM % (quantUbSize / quantAlginN_) != 0) {
-            aivLoopNum += 1;
             tailCalCntM = singleAivM % tileCalCntM;
+            aivLoopNum += 1;
         }
     }
 
@@ -150,8 +152,8 @@ public:
         quantUbSize = quantUbSize / static_cast<int32_t>(BYTE512_MATMUL_ALLREDUCE_INT8) *
                       static_cast<int32_t>(BYTE512_MATMUL_ALLREDUCE_INT8);
         if (quantUbSize >= static_cast<int32_t>(quantN_)) {
-            tileBlockCnt = quantN_;
             quantUbSize = static_cast<int32_t>(quantN_);
+            tileBlockCnt = quantN_;
         } else {
             blockNumPerRow = Ceil(quantN_, static_cast<uint32_t>(quantUbSize));
             tileBlockCnt = static_cast<uint32_t>(quantUbSize);
@@ -162,7 +164,7 @@ public:
         needAivCoreNum = blockNumPerRow * quantM_;
         aivLoopNum = needAivCoreNum / quantAivCoreNum_;
         if ((needAivCoreNum % quantAivCoreNum_) != 0) {
-            aivLoopNum += 1;
+            aivLoopNum = aivLoopNum + 1;
         }
     }
 
@@ -274,9 +276,9 @@ public:
     uint32_t quantM_;          // 输入 M
     uint32_t quantAivCoreNum_; // vector 核数
     uint32_t splitMode_;
-    GM_ADDR mmOut_;
     GM_ADDR quantScale_;
     GM_ADDR quantedOut_;
+    GM_ADDR mmOut_;
 };
 
 /*
@@ -310,6 +312,9 @@ __aicore__ inline void MatmulAllReduceQuantPerchannelCommInt8(
                          (BF16_BUF_CNT_MATMUL_ALLREDUCE_INT8 * static_cast<int32_t>(sizeof(T)));
     }
     nowQuantUbSize = (nowQuantUbSize / nowQuantAlginN) * nowQuantAlginN;
+    if (nowQuantUbSize > M * nowQuantAlginN) {
+        nowQuantUbSize = M * nowQuantAlginN;
+    }
     MatmulAllReduceQuantPerchannel<T> op;
     op.quantM_ = M;
     op.quantN_ = N;
@@ -318,9 +323,6 @@ __aicore__ inline void MatmulAllReduceQuantPerchannelCommInt8(
     op.mmOut_ = mmOut;
     op.quantScale_ = quantScale;
     op.quantedOut_ = quantedOut;
-    if (nowQuantUbSize > M * nowQuantAlginN) {
-        nowQuantUbSize = M * nowQuantAlginN;
-    }
     if (nowQuantUbSize >= nowQuantAlginN) { // 分核切M， 不切N
         op.splitMode_ = SPLIT_M_MATMUL_ALLREDUCE_INT8;
         op.MatmulAllReduceQuantPerchannelSplitM(

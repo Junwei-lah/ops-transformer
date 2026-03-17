@@ -25,8 +25,11 @@
 #include "../arch32/weight_quant_matmul_all_reduce_tiling_data.h"
 namespace Mc2Tiling {
 
+// 确保tilingData按8byte对齐
+constexpr uint32_t STRUCT_ALIGNAS_EIGHT = 8;
+
 #pragma pack(push, 8)
-struct alignas(8) WeightQuantMatmulAllReduceA5TilingData {
+struct alignas(STRUCT_ALIGNAS_EIGHT) WeightQuantMatmulAllReduceA5TilingData {
     Mc2InitTiling mc2InitTiling;
  	Mc2CcTiling mc2CcTiling;
     Mc2Tiling::RCSTiling param;
@@ -36,7 +39,7 @@ struct alignas(8) WeightQuantMatmulAllReduceA5TilingData {
 #pragma pack(pop)
 
 #pragma pack(push, 8)
-struct alignas(8) WeightQuantMatmulAllReduceA5Fp8TilingData {
+struct alignas(STRUCT_ALIGNAS_EIGHT) WeightQuantMatmulAllReduceA5Fp8TilingData {
     Mc2InitTiling mc2InitTiling;
  	Mc2CcTiling mc2CcTiling;
     Mc2Tiling::RCSTiling param;
@@ -46,7 +49,7 @@ struct alignas(8) WeightQuantMatmulAllReduceA5Fp8TilingData {
 #pragma pack(pop)
 
 #pragma pack(push, 8)
-struct alignas(8) QuantMatmulAllReduceTilingDataA5 {
+struct alignas(STRUCT_ALIGNAS_EIGHT) QuantMatmulAllReduceTilingDataA5 {
     Mc2InitTiling mc2InitTiling;
  	Mc2CcTiling mc2CcTiling;
  	Mc2CcTiling mc2CcTilingCommQuant;
@@ -57,7 +60,7 @@ struct alignas(8) QuantMatmulAllReduceTilingDataA5 {
 #pragma pack(pop)
 
 #pragma pack(push, 8)
-struct alignas(8) MatmulAllReduce910TilingDataA5 {
+struct alignas(STRUCT_ALIGNAS_EIGHT) MatmulAllReduce910TilingDataA5 {
     Mc2InitTiling mc2InitTiling;
  	Mc2CcTiling mc2CcTiling;
     Mc2Tiling::RCSTiling param;

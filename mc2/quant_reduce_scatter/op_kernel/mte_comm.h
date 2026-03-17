@@ -366,7 +366,6 @@ __aicore__ inline GM_ADDR MTECommunication<TemplateType>::GetWinAddrGm(uint32_t 
 template <TemplateTypeClass>
 __aicore__ inline GM_ADDR MTECommunication<TemplateType>::GetWinDataAddrGm(uint32_t rankId, uint32_t winFlag)
 {   
-
     if (winFlag == 0U) {
         // 若使用 0 分区, 加上状态区的偏移
         return GetWinAddrGm(rankId, STATE_WIN_SIZE);
@@ -381,7 +380,6 @@ __aicore__ inline GM_ADDR MTECommunication<TemplateType>::GetWinDataAddrGm(uint3
 template <TemplateTypeClass>
 __aicore__ inline GM_ADDR MTECommunication<TemplateType>::GetWinStatusAddrGm(uint32_t rankId, uint32_t winFlag)
 {   
-
     if (winFlag == 0U) {
         // 若使用 0 分区, 即无偏移
         return GetWinAddrGm(rankId);

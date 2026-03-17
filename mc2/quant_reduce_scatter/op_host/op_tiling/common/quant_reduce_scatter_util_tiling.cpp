@@ -337,7 +337,6 @@ static bool CheckScalesValid(const gert::TilingContext *context,
     for (size_t i = 0; i < expectedScalesDims.size(); ++i) {
         uint64_t expectedDim = expectedScalesDims[i];
         uint64_t actualDim = scalesShape->GetStorageShape().GetDim(i);
-        
         if (expectedDim != actualDim) {
             OP_LOGE(nodeName,
                     "Scales dimension %lu mismatch in %s quant mode. Expected %lu, but got %lu. "
@@ -520,7 +519,6 @@ static bool CheckOutputDim(const gert::TilingContext *context, TilingRunInfo &ru
     size_t outputDim = outputShape->GetStorageShape().GetDimNum();
     // context->GetInputShape在函数CheckInputTensorDim中已经校验
     size_t xDimNum = context->GetInputShape(X_INDEX)->GetStorageShape().GetDimNum();
-
     // 检查output的维度大小  
     if (!CheckOutputDimSize(context, outputDim, xDimNum, opType, nodeName)) {
         return false;

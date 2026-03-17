@@ -29,7 +29,7 @@ void OneCalcTwoCommBase::ECutInit(CutResult& eCut) {
 }
 
 void OneCalcTwoCommBase::EAxisCut(uint64_t tmpCnt, uint64_t eSize,
-                                  CutResult& eCut) {
+                                  CutResult& eCut) const {
   tmpCnt = std::min(eSize, tmpCnt);
   tmpCnt = std::max(ONE, tmpCnt);
   while (tmpCnt > ONE &&
@@ -163,7 +163,7 @@ void OneCalcTwoCommBase::GetTiling() {
 }
 
 void OneCalcTwoCommShardHBase::InitCutResult(CutResult& tmpCut,
-                                             uint64_t totalLen) {
+                                             uint64_t totalLen) const {
   tmpCut.longTileLen = totalLen;
   tmpCut.numLongTile = ONE;
   tmpCut.shortTileLen = 0;
@@ -194,7 +194,7 @@ void OneCalcTwoCommShardHBase::AsignMaxCutNumForBranches(double totalBMMTime,
 
 void OneCalcTwoCommShardHBase::CutAxisE(CutResult& cutRes, uint64_t maxCutNum,
                                         uint64_t minLen,
-                                        double unbalanceRatio) {
+                                        double unbalanceRatio) const {
   uint64_t totalLen = cutRes.longTileLen;
   minLen = std::max(minLen, ONE);
   OP_LOGD("MC2 Op Formulaic Tiling", "CutAxisE: minLen %lu, totalLen %lu\n",
@@ -274,7 +274,7 @@ void OneCalcTwoCommShardHBase::CutAxisC(uint64_t maxCutNum, uint64_t minLen,
 }
 
 void OneCalcTwoCommShardHBase::TrimCutResult(CutResult& tmpCut,
-                                             bool setShortFlag) {
+                                             bool setShortFlag) const {
   // 长短块一样长时归一
   if (tmpCut.shortTileLen == tmpCut.longTileLen) {
     tmpCut.shortTileLen = 0;
