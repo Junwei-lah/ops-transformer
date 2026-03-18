@@ -434,6 +434,8 @@ __aicore__ inline void LIGKernel<LIGT>::ProcessVec2(uint64_t taskId)
     AscendC::WaitEvent(SYNC_C1_V2_FLAG);
     if (runInfoStore[taskId].realTopk > 0) {
         vectorService.ReluGrad(reluInGm, reluGradGm, dyGm, reluGradGm, dweightsGm, constInfo, runInfoStore[taskId]);
+    } else {
+        vectorService.InitOutputDqAndDweights(dweightsGm, dqGm, constInfo, runInfoStore[taskId]);
     }
     AscendC::CrossCoreSetFlag<2, PIPE_MTE3>(SYNC_V2_C2_FLAG);
 }
@@ -443,14 +445,14 @@ __aicore__ inline void LIGKernel<LIGT>::ProcessVec3(uint64_t taskId)
 {
     scatterAddGm = (taskId & 1) ? scatterAddPingGm : scatterAddPongGm;
     AscendC::WaitEvent(SYNC_C2_V3_FLAG);
-    if (runInfoStore[taskId].realTopk > 0) {
+    if (likely(!constInfo.deterministic)) {
+        vectorService.ScatterAdd(sparseIndicesGm, scatterAddGm, dkWorkSpaceGm, constInfo, runInfoStore[taskId]);
+    } else {
         vectorService.ScatterAdd(sparseIndicesGm, scatterAddGm, dkCoreWorkspaceGM, constInfo, runInfoStore[taskId]);
-        if (unlikely(constInfo.deterministic)) {
-            SyncAll();
-            vectorService.DeterministicMerge(dkCoreWorkspaceGM, dkWorkSpaceGm, constInfo, runInfoStore[taskId]);
-            SyncAll();
-            InitOutput<float>(dkCoreWorkspaceGM[GetBlockIdx() * constInfo.dkCoreSize / 2], constInfo.dkCoreSize / 2, 0);
-        }
+        SyncAll();
+        vectorService.DeterministicMerge(dkCoreWorkspaceGM, dkWorkSpaceGm, constInfo, runInfoStore[taskId]);
+        SyncAll();
+        InitOutput<float>(dkCoreWorkspaceGM[GetBlockIdx() * constInfo.dkCoreSize / 2], constInfo.dkCoreSize / 2, 0);
     }
 }
 

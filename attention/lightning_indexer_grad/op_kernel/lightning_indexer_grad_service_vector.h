@@ -38,6 +38,8 @@ public:
     __aicore__ inline void InitBuffers();
     __aicore__ inline void AllocEvents();
     __aicore__ inline void ReleaseEvents();
+    __aicore__ inline void InitOutputDqAndDweights(GlobalTensor<dataType> dweightsGmTensor, GlobalTensor<dataType> dqTensor,
+        LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo);
     __aicore__ inline void GatherTopk(GlobalTensor<int32_t> sparseIndicesTensor, GlobalTensor<dataType> keyTensor,
         GlobalTensor<dataType> gatherKTensor, LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo);
     __aicore__ inline void ScatterAdd(GlobalTensor<int32_t> sparseIndicesTensor, GlobalTensor<float> scatterAddTensor,
@@ -249,6 +251,9 @@ template <typename LIGT>
 __aicore__ inline void LIGVector<LIGT>::ScatterAdd(GlobalTensor<int32_t> sparseIndicesTensor, GlobalTensor<float> scatterAddTensor,
     GlobalTensor<float> dkWorkSpaceGmTensor, LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo)
 {
+    if (runInfo.realTopk <= 0) {
+        return;
+    }
     LocalTensor<int32_t> indiceUb = unifiedBuffer.GetWithOffset<int32_t>(indicesUbSize / sizeof(int32_t), indicesUbOffset);
     LocalTensor<float> gatherPingUb = unifiedBuffer.GetWithOffset<float>(gatherPingUbSize / sizeof(float), gatherPingUbOffset);
     LocalTensor<float> gatherPongUb = unifiedBuffer.GetWithOffset<float>(gatherPongUbSize / sizeof(float), gatherPongUbOffset);
@@ -361,6 +366,40 @@ __aicore__ inline void LIGVector<LIGT>::DeterministicMerge(GlobalTensor<float> d
         }
     }
     AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMTE2);
+}
+
+template <typename LIGT>
+__aicore__ inline void LIGVector<LIGT>::InitOutputDqAndDweights(GlobalTensor<dataType> dweightsGmTensor, GlobalTensor<dataType> dqTensor,
+    LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo)
+{
+    uint32_t maxLen = constInfo.groupNum * constInfo.headDim;
+    LocalTensor<dataType> zeroDataTensor = unifiedBuffer.GetWithOffset<dataType>(maxLen, reluInPingUbOffset);
+
+    uint64_t blockGroupBegin = (GetBlockIdx() % 2 == 0) ? 0 : constInfo.groupNum / 2;
+    uint64_t blockGroupNum = (GetBlockIdx() % 2 == 0) ? constInfo.groupNum / 2 : (constInfo.groupNum + 1) / 2;
+
+    uint32_t dweightsGmOffset;
+    uint32_t dqGmOffset;
+    if constexpr (LIGT::layout == LIG_LAYOUT::BSND) {
+        dweightsGmOffset = runInfo.bIdx * constInfo.seqlenQ * constInfo.headNumQ + runInfo.s1Idx *
+            constInfo.headNumQ + runInfo.n2Idx * constInfo.groupNum + blockGroupBegin;
+        dqGmOffset = runInfo.bIdx * constInfo.seqlenQ * constInfo.headNumQ * constInfo.headDim +
+            runInfo.s1Idx * constInfo.headNumQ * constInfo.headDim + runInfo.n2Idx * constInfo.groupNum * constInfo.headDim +
+            blockGroupBegin * constInfo.headDim;
+    } else if constexpr (LIGT::layout == LIG_LAYOUT::TND) {
+        dweightsGmOffset = (runInfo.prefixSumS1 + runInfo.s1Idx) * constInfo.headNumQ + runInfo.n2Idx *
+            constInfo.groupNum + blockGroupBegin;
+        dqGmOffset = (runInfo.prefixSumS1 + runInfo.s1Idx) * constInfo.headNumQ * constInfo.headDim +
+            runInfo.n2Idx * constInfo.groupNum * constInfo.headDim + blockGroupBegin * constInfo.headDim;
+    }
+
+    AscendC::Duplicate(zeroDataTensor, static_cast<dataType>(0.0), maxLen);
+    AscendC::SetFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+    AscendC::WaitFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+    AscendC::DataCopy(dweightsGmTensor[dweightsGmOffset], zeroDataTensor, blockGroupNum);
+    AscendC::DataCopy(dqTensor[dqGmOffset], zeroDataTensor, blockGroupNum * constInfo.headDim);
+    AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
+    AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
 }
 
 // reluGrad calc elements num should be devided by two block in groupNum axis
