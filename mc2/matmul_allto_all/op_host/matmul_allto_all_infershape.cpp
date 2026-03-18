@@ -109,7 +109,7 @@ static ge::graphStatus CheckRankDim(gert::InferShapeContext* context, MatmulAllt
     const auto attrs = context->GetAttrs();
     const int64_t* rankDim = attrs->GetAttrPointer<int64_t>(INDEX_ATTR_WORLD_SIZE);
     OPS_CHECK(rankDim == nullptr,
-        CUBE_INNER_ERR_REPORT(context->GetNodeName(), "Attr worldSize is nullptr."),
+        CUBE_INNER_ERR_REPORT(context->GetNodeName(), "Invalid rank number %zu in matmul allto all.", *rankDim),
         return ge::GRAPH_FAILED);
     OP_TILING_CHECK(SUPPORT_RANK_NUM.find(*rankDim) == SUPPORT_RANK_NUM.end(),
                     OP_LOGE(INNER_DEBUG, "Rank number should be 2 or 4 or 8 or 16, but the actual value is %ld.", *rankDim),

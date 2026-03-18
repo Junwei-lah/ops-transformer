@@ -222,7 +222,7 @@ ge::graphStatus Mc2MatmulV3BaseTiling::CheckArgs()
     }
 
     if (attrs->GetAttrNum() >= HF32_ATTR_NUM) {
-        OP_CHECK_NULL_WITH_CONTEXT(context_, attrs->GetAttrPointer<int64_t>(HF32_ATTR_INDEX - 1));
+        OP_CHECK_NULL_WITH_CONTEXT(context_, attrs->GetAttrPointer<int32_t>(HF32_ATTR_INDEX - 1));
         OP_CHECK_NULL_WITH_CONTEXT(context_, attrs->GetAttrPointer<bool>(HF32_ATTR_INDEX));
     }
     OP_CHECK_NULL_WITH_CONTEXT(context_, context_->GetOutputDesc(0));

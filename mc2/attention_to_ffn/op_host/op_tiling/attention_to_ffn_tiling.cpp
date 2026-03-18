@@ -123,7 +123,7 @@ static void PrintTilingDataInfo(AttentionToFFNTilingData &tilingData)
 static bool CheckAndSetShapeAttrs(gert::TilingContext* context, AttentionToFFNTilingData &tilingData)
 {
     auto attrs = context->GetAttrs();
-    auto worldSizePtr = attrs->GetAttrPointer<int64_t>(ATTR_WORLD_SIZE_INDEX);
+    auto worldSizePtr = attrs->GetAttrPointer<int>(ATTR_WORLD_SIZE_INDEX);
     auto ffnTokenInfoTableDimNum = attrs->GetListInt(ATTR_FFN_TOKEN_INFO_TABLE_SHAPE_INDEX)->GetSize();
     auto ffnTokenDataDimNum = attrs->GetListInt(ATTR_FFN_TOKEN_DATA_SHAPE)->GetSize();
     auto attnTokenDataDimNum = attrs->GetListInt(ATTR_ATTN_TOKEN_INFO_TABLE_SHAPE_INDEX)->GetSize();
@@ -158,12 +158,12 @@ static bool CheckAndSetShapeAttrs(gert::TilingContext* context, AttentionToFFNTi
         attnTokenDataShape[DIM2], ffnTokenDataShape[DIM3]), return false);
     
     // 校验 attentionWorkerNum 的值
-    int64_t attentionWorkerNum = ffnTokenDataShape[0];
+    uint32_t attentionWorkerNum = ffnTokenDataShape[0];
     OP_TILING_CHECK(attentionWorkerNum <= 0 || attentionWorkerNum >= *worldSizePtr, OP_LOGE(ATTN_FFN_INNER_DEBUG,
-        "attentionWorkerNum is invalid, only support (0, worldSize = %ld), but got attentionWorkerNum=%ld.",
+        "attentionWorkerNum is invalid, only support (0, worldSize = %u), but got attentionWorkerNum=%u.",
         *worldSizePtr, attentionWorkerNum), return false);
 
-    tilingData.attentionToFFNInfo.attentionWorkerNum = static_cast<uint32_t>(attentionWorkerNum);
+    tilingData.attentionToFFNInfo.attentionWorkerNum = attentionWorkerNum;
     tilingData.attentionToFFNInfo.microBatchNum = ffnTokenDataShape[1];
     tilingData.attentionToFFNInfo.HS = ffnTokenDataShape[INFO_HS_INDEX];
     tilingData.attentionToFFNInfo.infoTableLastDimNum = ffnTokenInfoTableShape[INFO_TABLE_LAST_DIM_NUM_INDEX];
@@ -176,11 +176,13 @@ static bool CheckAndSetAttrs(gert::TilingContext* context, AttentionToFFNTilingD
     OP_TILING_CHECK(attrs == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "GetAttrs returned nullptr!"), return false);
 
     auto groupPtr = attrs->GetAttrPointer<char>(ATTR_GROUP_INDEX);
-    auto worldSizePtr = attrs->GetAttrPointer<int64_t>(ATTR_WORLD_SIZE_INDEX);
-    auto quantModePtr = attrs->GetAttrPointer<int64_t>(ATTR_QUANT_MODE_INDEX);
-    auto syncFlagPtr = attrs->GetAttrPointer<int64_t>(ATTR_SYNC_FLAG_INDEX);
-    auto ffnStartRankIdPtr = attrs->GetAttrPointer<int64_t>(ATTR_FFN_START_RANK_INDEX);
-    auto moeExpertNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_MOE_EXPERT_NUM_INDEX);
+    auto worldSizePtr = attrs->GetAttrPointer<int>(ATTR_WORLD_SIZE_INDEX);
+    auto quantModePtr = attrs->GetAttrPointer<int>(ATTR_QUANT_MODE_INDEX);
+    auto syncFlagPtr = attrs->GetAttrPointer<int>(ATTR_SYNC_FLAG_INDEX);
+    auto ffnStartRankIdPtr = attrs->GetAttrPointer<int>(ATTR_FFN_START_RANK_INDEX);
+    auto moeExpertNumPtr = attrs->GetAttrPointer<int>(ATTR_MOE_EXPERT_NUM_INDEX);
+    uint32_t moeExpertNum = *moeExpertNumPtr;
+    uint32_t worldSize = *worldSizePtr;
 
     OP_TILING_CHECK(groupPtr == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "group is nullptr!"), return false);
     OP_TILING_CHECK(worldSizePtr == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "worldSize is nullptr!"), return false);
@@ -189,26 +191,26 @@ static bool CheckAndSetAttrs(gert::TilingContext* context, AttentionToFFNTilingD
     OP_TILING_CHECK(syncFlagPtr == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "syncFlag is nullptr!"), return false);
     OP_TILING_CHECK(ffnStartRankIdPtr == nullptr, OP_LOGE(ATTN_FFN_INNER_DEBUG, "ffnStartRankId is nullptr!"), return false);
 
-    OP_TILING_CHECK((*moeExpertNumPtr <= 0) || (*moeExpertNumPtr > MOE_EXPERT_MAX_NUM), OP_LOGE(ATTN_FFN_INNER_DEBUG,
-        "moeExpertNum is invalid, only support (0, %u], but got moeExpertNum=%ld.", MOE_EXPERT_MAX_NUM, *moeExpertNumPtr), return false);
+    OP_TILING_CHECK((moeExpertNum <= 0) || (moeExpertNum > MOE_EXPERT_MAX_NUM), OP_LOGE(ATTN_FFN_INNER_DEBUG,
+        "moeExpertNum is invalid, only support (0, %u], but got moeExpertNum=%u.", MOE_EXPERT_MAX_NUM, moeExpertNum), return false);
     OP_TILING_CHECK((*quantModePtr < static_cast<int64_t>(NO_SCALES)) || (*quantModePtr > static_cast<int64_t>(DYNAMIC_SCALES)),
-        OP_LOGE(ATTN_FFN_INNER_DEBUG, "quantMode is invalid, only support [0, %u], but got quantMode=%ld.",
+        OP_LOGE(ATTN_FFN_INNER_DEBUG, "quantMode is invalid, only support [0, %u], but got quantMode=%u.",
         DYNAMIC_SCALES, *quantModePtr), return false);
     OP_TILING_CHECK((*syncFlagPtr != 0) && (*syncFlagPtr != 1), OP_LOGE(ATTN_FFN_INNER_DEBUG,
-        "syncFlag is invalid, only support 0 and 1, but got syncFlag=%ld.", *syncFlagPtr), return false);
+        "syncFlag is invalid, only support 0 and 1, but got syncFlag=%u.", *syncFlagPtr), return false);
     OP_TILING_CHECK((*ffnStartRankIdPtr >= *worldSizePtr) || (*ffnStartRankIdPtr < 0), OP_LOGE(ATTN_FFN_INNER_DEBUG,
         "ffnStartRankId is invalid, only support (0, %u], but ffn_start_rank_id=%d!", *worldSizePtr, *ffnStartRankIdPtr), return false);
-    OP_TILING_CHECK((*worldSizePtr < MIN_WORLD_SIZE) || (*worldSizePtr > MAX_WORLD_SIZE), OP_LOGE(ATTN_FFN_INNER_DEBUG, 
-        "worldSize is invalid, only support [%ld, %ld], but got worldSize=%ld.", MIN_WORLD_SIZE, MAX_WORLD_SIZE, *worldSizePtr), return false);
+    OP_TILING_CHECK((worldSize < MIN_WORLD_SIZE) || (worldSize > MAX_WORLD_SIZE), OP_LOGE(ATTN_FFN_INNER_DEBUG, 
+        "worldSize is invalid, only support [%ld, %ld], but got worldSize=%ld.", MIN_WORLD_SIZE, MAX_WORLD_SIZE, worldSize), return false);
 
     OP_TILING_CHECK(!CheckAndSetShapeAttrs(context, tilingData),
         OP_LOGE(ATTN_FFN_INNER_DEBUG, "Check and set shape list attrs failed!"), return false);
 
-    tilingData.attentionToFFNInfo.moeExpertNum = static_cast<uint32_t>(*moeExpertNumPtr);
+    tilingData.attentionToFFNInfo.moeExpertNum = static_cast<uint32_t>(moeExpertNum);
     tilingData.attentionToFFNInfo.quantMode = static_cast<uint32_t>(*quantModePtr);
     tilingData.attentionToFFNInfo.syncFlag = static_cast<uint32_t>(*syncFlagPtr);
     tilingData.attentionToFFNInfo.ffnStartRankId = static_cast<uint32_t>(*ffnStartRankIdPtr);
-    tilingData.attentionToFFNInfo.worldSize = static_cast<uint32_t>(*worldSizePtr);
+    tilingData.attentionToFFNInfo.worldSize = static_cast<uint32_t>(worldSize);
     OP_LOGD(ATTN_FFN_INNER_DEBUG, "group = %s", groupPtr);
     group = string(groupPtr);
  

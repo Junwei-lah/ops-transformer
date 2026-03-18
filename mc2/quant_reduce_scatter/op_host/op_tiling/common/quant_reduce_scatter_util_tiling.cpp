@@ -75,7 +75,7 @@ static ge::graphStatus SetRankSize(const gert::TilingContext *context, TilingRun
     const char *nodeName = context->GetNodeName();
     // attrs在函数CheckAttrsInfo中已做校验
     const gert::RuntimeAttrs *attrs = context->GetAttrs();
-    const int64_t *rankSizePtr = attrs->GetAttrPointer<int64_t>(WORLD_SIZE_INDEX);
+    const int *rankSizePtr = attrs->GetAttrPointer<int>(WORLD_SIZE_INDEX);
     if (rankSizePtr == nullptr || *rankSizePtr == RANK_SIZE_DEFAULT) {
         int64_t rankSize = 0;
         OP_TILING_CHECK(!mc2tiling::GetRankSize(nodeName, runInfo.groupPtr, rankSize),

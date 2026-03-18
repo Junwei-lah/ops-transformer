@@ -354,15 +354,15 @@ bool MatmulReduceScatterTilingBase::CheckAttrInfoValid(uint64_t kValue)
         VECTOR_INNER_ERR_REPORT_TILING(
             opName_, "world_size should be 2 or 4 or 8 or 16 or 32 or 64, but the actual value is %ld.", rankSize_),
         return false);
-    auto commTurn = *context_->GetAttrs()->GetAttrPointer<int64_t>(COMMTURN_INDEX);
+    auto commTurn = *context_->GetAttrs()->GetAttrPointer<int>(COMMTURN_INDEX);
     OP_TILING_CHECK(
         commTurn != 0,
-        VECTOR_INNER_ERR_REPORT_TILING(opName_, "commTurn should be 0, but the actual value is %ld.", commTurn),
+        VECTOR_INNER_ERR_REPORT_TILING(opName_, "commTurn should be 0, but the actual value is %d.", commTurn),
         return false);
-    auto blockSize = *context_->GetAttrs()->GetAttrPointer<int64_t>(BLOCKSIZE_INDEX);
+    auto blockSize = *context_->GetAttrs()->GetAttrPointer<int>(BLOCKSIZE_INDEX);
     OP_TILING_CHECK(
         blockSize != 0,
-        VECTOR_INNER_ERR_REPORT_TILING(opName_, "blockSize should be 0, but the actual value is %ld.", blockSize),
+        VECTOR_INNER_ERR_REPORT_TILING(opName_, "blockSize should be 0, but the actual value is %d.", blockSize),
         return false);
     return CheckInputScale();
 }
@@ -488,7 +488,7 @@ void MatmulReduceScatterTilingBase::SetReduceScatterTilingArgsBasicInfo()
 {
     auto isTransA = context_->GetAttrs()->GetAttrPointer<bool>(IS_TRANS_A);
     auto isTransB = context_->GetAttrs()->GetAttrPointer<bool>(IS_TRANS_B);
-    auto commTurn = *context_->GetAttrs()->GetAttrPointer<int64_t>(COMM_TURN);
+    auto commTurn = *context_->GetAttrs()->GetAttrPointer<int>(COMM_TURN);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     auto coreNum = ascendcPlatform.GetCoreNumAic();
 

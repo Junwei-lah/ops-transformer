@@ -696,7 +696,7 @@ static ge::graphStatus MatmulReduceScatterTilingFunc(gert::TilingContext* contex
     auto reduce_op = context->GetAttrs()->GetAttrPointer<char>(index++);
     auto is_trans_a = context->GetAttrs()->GetAttrPointer<bool>(index++);
     auto is_trans_b = context->GetAttrs()->GetAttrPointer<bool>(index++);
-    auto comm_turn_ptr = context->GetAttrs()->GetAttrPointer<int64_t>(index++);
+    auto comm_turn_ptr = context->GetAttrs()->GetAttrPointer<int>(index++);
     
     OP_TILING_CHECK(is_trans_b == nullptr,
         VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(),
@@ -708,12 +708,12 @@ static ge::graphStatus MatmulReduceScatterTilingFunc(gert::TilingContext* contex
     auto comm_turn = *comm_turn_ptr;
     OP_TILING_CHECK(comm_turn != 0,
                     VECTOR_INNER_ERR_REPORT_TILING(context->GetNodeName(),
-                                                    "comm_turn should be 0, but the actual value is %ld.", comm_turn),
+                                                    "comm_turn should be 0, but the actual value is %d.", comm_turn),
                     return ge::GRAPH_FAILED);
 
     OP_LOGD("MatmulReduceScatter",
             "group is %s, rankSize is %u, reduce_op is %s, is_trans_a is %d, is_trans_b is %d,"
-            "comm_turn is %ld.",
+            "comm_turn is %d.",
             group, rankSize, reduce_op, *is_trans_a, *is_trans_b, comm_turn);
 
     tilingData->param.rankDim = rankSize;

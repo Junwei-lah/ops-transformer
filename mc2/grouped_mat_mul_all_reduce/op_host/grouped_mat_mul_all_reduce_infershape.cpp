@@ -28,12 +28,12 @@ static const size_t INDEX_IN_CONTEXT = 4;
 static const size_t INDEX_OUT_Y = 0;
 static const size_t INDEX_ATTR_SPLIT_ITEM = 0;
 
-static const int64_t IN_NOT_SPLIT_OUT_NOT_SPLIT = 0;
-static const int64_t IN_SPLIT_OUT_NOT_SPLIT = 1;
-static const int64_t IN_NOT_SPLIT_OUT_SPLIT = 2;
-static const int64_t IN_SPLIT_OUT_SPLIT = 3;
+static const int32_t IN_NOT_SPLIT_OUT_NOT_SPLIT = 0;
+static const int32_t IN_SPLIT_OUT_NOT_SPLIT = 1;
+static const int32_t IN_NOT_SPLIT_OUT_SPLIT = 2;
+static const int32_t IN_SPLIT_OUT_SPLIT = 3;
 
-static ge::graphStatus CheckSplitItemGmmAr(int64_t splitItem)
+static ge::graphStatus CheckSplitItemGmmAr(int32_t splitItem)
 {
     if (splitItem == IN_NOT_SPLIT_OUT_NOT_SPLIT || splitItem == IN_SPLIT_OUT_SPLIT ||
         splitItem == IN_NOT_SPLIT_OUT_SPLIT || splitItem == IN_SPLIT_OUT_NOT_SPLIT) {
@@ -159,7 +159,7 @@ static graphStatus InferMAxisShape(gert::InferShapeContext* context)
 {
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    const int64_t* splitItem = attrs->GetAttrPointer<int64_t>(INDEX_ATTR_SPLIT_ITEM);
+    const int32_t* splitItem = attrs->GetAttrPointer<int32_t>(INDEX_ATTR_SPLIT_ITEM);
     OP_CHECK_NULL_WITH_CONTEXT(context, splitItem);
     OPS_CHECK(
         CheckSplitItemGmmAr(*splitItem) != GRAPH_SUCCESS,
@@ -185,7 +185,7 @@ static graphStatus InferMAxisShape(gert::InferShapeContext* context)
             const gert::Shape* weightShape = context->GetDynamicInputShape(INDEX_IN_WEIGHT, idx);
             OP_CHECK_NULL_WITH_CONTEXT(context, weightShape);
             OPS_CHECK(
-                CheckDims(context, xShape, weightShape, static_cast<int32_t>(*splitItem)) == GRAPH_FAILED,
+                CheckDims(context, xShape, weightShape, *splitItem) == GRAPH_FAILED,
                 VECTOR_INFER_SHAPE_INNER_ERR_REPORT(context->GetNodeName(), "Invalid dims of x or weight."),
                 return GRAPH_FAILED);
             m += xShape->GetDim(0);
@@ -204,7 +204,7 @@ static graphStatus InferMAxisShape(gert::InferShapeContext* context)
                 break;
             }
             OPS_CHECK(
-                CheckDims(context, xShape, weightShape, static_cast<int32_t>(*splitItem)) == GRAPH_FAILED,
+                CheckDims(context, xShape, weightShape, *splitItem) == GRAPH_FAILED,
                 VECTOR_INFER_SHAPE_INNER_ERR_REPORT(context->GetNodeName(), "Invalid dims of x or weight."),
                 return GRAPH_FAILED);
             idx++;
@@ -250,7 +250,7 @@ static graphStatus InferDataTypeGroupedMatMulAllReduce(gert::InferDataTypeContex
 
     const gert::RuntimeAttrs* attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    const int64_t* splitItem = attrs->GetAttrPointer<int64_t>(INDEX_ATTR_SPLIT_ITEM);
+    const int32_t* splitItem = attrs->GetAttrPointer<int32_t>(INDEX_ATTR_SPLIT_ITEM);
     if (nullptr == splitItem) {
         return GRAPH_FAILED;
     }

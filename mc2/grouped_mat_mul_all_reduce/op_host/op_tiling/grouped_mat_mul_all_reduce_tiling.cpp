@@ -312,7 +312,7 @@ ge::graphStatus GMMAllReduceTiling::Init(const gert::TilingContext* context)
     splitItem_ = *context->GetAttrs()->GetAttrPointer<int64_t>(index++);
     group_ = context->GetAttrs()->GetAttrPointer<char>(index++);
     reduceOp_ = context->GetAttrs()->GetAttrPointer<char>(index++);
-    commTurn_ = *context->GetAttrs()->GetAttrPointer<int64_t>(index++);
+    commTurn_ = *context->GetAttrs()->GetAttrPointer<int>(index++);
     if (commTurn_ == 0) {
         commTurn_ = COMM_TILE;
     } // set default value
