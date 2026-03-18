@@ -38,6 +38,7 @@ public:
 private:
     __aicore__ inline void ComputeAxisIdxByBnAndGs1(int64_t bnIndex, int64_t gS1Index,
                                                     RunParamStr<isInfer> &runParam);
+    __aicore__ inline void UnInit();
 };
 
 template <typename CubeBlockType, typename VecBlockType>
@@ -262,12 +263,25 @@ __aicore__ inline void FlashAttentionScoreKernelInferMlaFullquant<CubeBlockType,
         SyncAll<false>();
     }
     ProcessMainLoop();
+    UnInit();
     if constexpr (isFd) {
         if ASCEND_IS_AIV {
             SyncAll();
             this->vecBlock.InitFDBuffers(this->constInfo);
             this->vecBlock.FlashDecodeCompute(this->constInfo, this->keyGm, this->actualSeqKvlenAddr);
         }
+    }
+}
+
+template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline void FlashAttentionScoreKernelInferMlaFullquant<CubeBlockType, VecBlockType>::UnInit()
+{
+    if ASCEND_IS_AIC {
+        this->cubeBlock.UnInit();
+    }
+    this->l1PBuffers.Uninit(this->l1BufferManager);
+    if ASCEND_IS_AIV {
+        this->vecBlock.UnInit();
     }
 }
 

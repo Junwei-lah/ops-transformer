@@ -105,6 +105,7 @@ public:
         Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_FORWARD>>::type;
     __aicore__ inline void ProcessVec2(mm2ResPos &bmm2ResBuf, RunInfo<isInfer> &runInfo,
         ConstInfo<isInfer, hasRope> &constInfo);
+    __aicore__ inline void UnInit();
 
     TPipe *tPipe;
     const optiling::FlashAttentionScoreSimplifiedTilingData *__restrict tilingData;
@@ -1691,6 +1692,16 @@ __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::InitLocalBuf
     SetFlag<HardEvent::MTE3_V>(mte3ToVId[1]);
 }
 
+TEMPLATES_DEF_BASE_NO_DEFAULT
+__aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::UnInit()
+{
+    WaitFlag<HardEvent::MTE3_V>(mte3ToVId[0]);
+    WaitFlag<HardEvent::MTE3_V>(mte3ToVId[1]);
+    GetTPipePtr()->ReleaseEventID<HardEvent::MTE3_V>(mte3ToVId[0]);
+    GetTPipePtr()->ReleaseEventID<HardEvent::MTE3_V>(mte3ToVId[1]);
+    GetTPipePtr()->ReleaseEventID<HardEvent::V_MTE3>(vToMte3Id[0]);
+    GetTPipePtr()->ReleaseEventID<HardEvent::V_MTE3>(vToMte3Id[1]);
+}
 
 TEMPLATES_DEF_BASE_NO_DEFAULT
 __aicore__ inline void FABlockVecBaseFullquant<TEMPLATE_BASE_ARGS>::GetExtremeValue(
@@ -1752,6 +1763,7 @@ public:
         Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_FORWARD>>::type;
     __aicore__ inline void ProcessVec2(mm2ResPos &bmm2ResBuf, RunInfo<isInfer> &runInfo,
         ConstInfo<isInfer, hasRope> &constInfo) {}
+    __aicore__ inline void UnInit() {}
 };
 }
 #endif // FLASH_ATTENTION_SCORE_BLOCK_VEC_BASE_FULLQUANT_H_
