@@ -235,7 +235,12 @@ aclnnStatus aclnnRopeWithSinCosCacheGetWorkspaceSizeCommon(
     const aclIntArray* mropeSection, int64_t headSize, bool isNeoxStyle, int64_t cacheMode, aclTensor* queryOut, aclTensor* keyOut,
     uint64_t* workspaceSize, aclOpExecutor** executor)
 {
-   // 固定写法，创建OpExecutor
+    // 固定写法，参数检查
+    auto ret = CheckParams(positions, queryIn, keyIn, cosSinCache, mropeSection, queryOut, keyOut);
+    CHECK_RET(ret == ACLNN_SUCCESS, ret);
+    CHECK_RET(headSize != 0, ACLNN_ERR_PARAM_INVALID);
+   
+    // 固定写法，创建OpExecutor
     auto uniqueExecutor = CREATE_EXECUTOR();
     CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
@@ -247,10 +252,6 @@ aclnnStatus aclnnRopeWithSinCosCacheGetWorkspaceSizeCommon(
     auto cosSinCacheContiguous = l0op::Contiguous(cosSinCache, uniqueExecutor.get());
     CHECK_RET(cosSinCacheContiguous != nullptr, ACLNN_ERR_INNER_NULLPTR);
 
-    // 固定写法，参数检查
-    auto ret = CheckParams(positions, queryIn, keyIn, cosSinCache, mropeSection, queryOut, keyOut);
-    CHECK_RET(ret == ACLNN_SUCCESS, ret);
-    CHECK_RET(headSize != 0, ACLNN_ERR_PARAM_INVALID);
     int64_t numQheads = queryIn->GetViewShape()[1] / headSize;
     int64_t numKheads = keyIn->GetViewShape()[1] / headSize;
 
