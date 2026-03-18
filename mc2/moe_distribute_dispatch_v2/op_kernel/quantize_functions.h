@@ -116,28 +116,20 @@ __aicore__ inline void ComputeScale(__ubuf__ uint16_t* maxExpAddr, __ubuf__ uint
 
     __VEC_SCOPE__
     {
-        MicroAPI::RegTensor<uint16_t> expMask;
+        MicroAPI::RegTensor<uint16_t> expMask, vdMaxExp;
         MicroAPI::Duplicate(expMask, MAX_EXP_FOR_BF16);
-        MicroAPI::RegTensor<uint16_t> vdMaxExp;
-
-        MicroAPI::MaskReg cmpResult;
-        MicroAPI::MaskReg zeroMask;
-        MicroAPI::MaskReg preMaskScale;
+        MicroAPI::MaskReg cmpResult, zeroMask, preMaskScale;
         MicroAPI::RegTensor<uint16_t> maxExpValue;
         MicroAPI::Duplicate(maxExpValue, f8Emax);
-        MicroAPI::RegTensor<uint16_t> sharedExp;
-        MicroAPI::RegTensor<uint16_t> scaleValue;
-        MicroAPI::RegTensor<uint16_t> scaleBias;
+        MicroAPI::RegTensor<uint16_t> sharedExp, scaleValue, scaleBias;
         MicroAPI::Duplicate(scaleBias, BF16_EXP_BIAS);
-        MicroAPI::RegTensor<uint16_t> halfScale;
-        MicroAPI::RegTensor<uint16_t> fp8NanRegTensor;
+        MicroAPI::RegTensor<uint16_t> halfScale, fp8NanRegTensor;
         MicroAPI::Duplicate(fp8NanRegTensor, MAX_EXP_FOR_FP8);
         MicroAPI::RegTensor<uint16_t> zeroRegTensor;
         MicroAPI::Duplicate(zeroRegTensor, 0);
         MicroAPI::RegTensor<uint16_t> nanRegTensor;
         MicroAPI::Duplicate(nanRegTensor, NAN_CUSTOMIZATION);
-        MicroAPI::MaskReg invalidDataMask;
-        MicroAPI::MaskReg specialDataMask;
+        MicroAPI::MaskReg invalidDataMask, specialDataMask;
         MicroAPI::RegTensor<uint16_t> specialExpRegTensor;
         MicroAPI::Duplicate(specialExpRegTensor, SPECIAL_EXP_THRESHOLD);
         for (uint16_t i = 0; i < loopNumScale; i++) {
@@ -150,7 +142,6 @@ __aicore__ inline void ComputeScale(__ubuf__ uint16_t* maxExpAddr, __ubuf__ uint
                 preMaskScale);
 
             MicroAPI::Select<uint16_t>(vdMaxExp, maxExpValue, vdMaxExp, invalidDataMask);
-
             MicroAPI::Sub(sharedExp, vdMaxExp, maxExpValue, preMaskScale);
             MicroAPI::ShiftRights(scaleValue, sharedExp, SHR_NUM_FOR_BF16, preMaskScale);
 

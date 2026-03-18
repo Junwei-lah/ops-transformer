@@ -880,8 +880,7 @@ ge::graphStatus MoeDistributeDispatchTilingImpl(gert::TilingContext* context, ui
     OP_LOGD(nodeName, "Start MoeDistributeDispatch tiling.");
     MoeDistributeDispatchV2TilingData *tilingData = context->GetTilingData<MoeDistributeDispatchV2TilingData>();
     OP_TILING_CHECK(tilingData == nullptr, OP_LOGE(nodeName, "tilingData is nullptr."), return ge::GRAPH_FAILED);
-    std::string groupEp = "";
-    std::string groupTp = "";
+    std::string groupEp = "", groupTp = "";
     uint32_t localMoeExpertNum = 1;
     // Attrs
     OP_TILING_CHECK(GetContextAttrs(context, nodeName, *tilingData, groupEp, groupTp) != ge::GRAPH_SUCCESS,
@@ -902,21 +901,17 @@ ge::graphStatus MoeDistributeDispatchTilingImpl(gert::TilingContext* context, ui
         OP_LOGE(nodeName, "quant mode and scales not match, isScales is %d, quantMode is %u.",
         static_cast<int32_t>(isScales), quantMode), return ge::GRAPH_FAILED);
     // Output and Input
-    OP_TILING_CHECK(
-        MoeDistributeDispatchTilingHelper::TilingCheckMoeDistributeDispatchA5(
-            context, isScales, quantMode, isTokenMask) != ge::GRAPH_SUCCESS,
-            OP_LOGE(nodeName, "Tiling check param failed."), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(MoeDistributeDispatchTilingHelper::TilingCheckMoeDistributeDispatchA5(context, isScales,
+        quantMode, isTokenMask) != ge::GRAPH_SUCCESS, OP_LOGE(nodeName, "Tiling check param failed."), return ge::GRAPH_FAILED);
     // Check Attrs
     OP_TILING_CHECK(CheckAttrs(context, *tilingData, localMoeExpertNum, isTokenMask) != ge::GRAPH_SUCCESS,
         OP_LOGE(nodeName, "Check attr failed."), return ge::GRAPH_FAILED);
 
-    bool isSharedExpert =
-        (tilingData->moeDistributeDispatchV2Info.epRankId >= tilingData->moeDistributeDispatchV2Info.sharedExpertRankNum) ?
+    bool isSharedExpert = (tilingData->moeDistributeDispatchV2Info.epRankId >= tilingData->moeDistributeDispatchV2Info.sharedExpertRankNum) ?
             false : true;
 
     // Shape
-    OP_TILING_CHECK(
-        CheckTensorShape(context, *tilingData, isSharedExpert, static_cast<int64_t>(localMoeExpertNum)) !=
+    OP_TILING_CHECK(CheckTensorShape(context, *tilingData, isSharedExpert, static_cast<int64_t>(localMoeExpertNum)) !=
         ge::GRAPH_SUCCESS, OP_LOGE(nodeName, "Check tensor shape failed."), return ge::GRAPH_FAILED);
     OP_TILING_CHECK(CheckAndSetScalesInfo(context, nodeName, *tilingData, isScales, realMode) != ge::GRAPH_SUCCESS,
         OP_LOGE(nodeName, "Check scales info failed."), return ge::GRAPH_FAILED);
