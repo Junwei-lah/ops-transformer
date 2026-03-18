@@ -268,5 +268,7 @@ void RecordFDInfo(const SplitContext &splitContext, const AssignContext &assignC
 void SplitFD(SplitResult &result);
 void CalcSplitPlan(uint32_t coreNum, int64_t costLimit, const SplitContext &splitContext, SplitResult &result);
 void SplitCore(uint32_t coreNum, const BaseInfo &baseInfo, const SplitParam &splitParam, SplitResult &result);
+
+void LogAssignContext(const char* phase, const AssignContext &assignContext);
 }
 #endif

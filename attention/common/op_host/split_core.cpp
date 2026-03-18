@@ -16,6 +16,7 @@
 #include "split_core.h"
 #include <cstdio>
 #include <math.h>
+#include "log/log.h"
 
 
 namespace optiling {
@@ -182,6 +183,14 @@ void CalcSplitInfo(SplitContext &splitContext)
             splitInfo.isKvSeqAllZero = false;
         }
     }
+    OP_LOGI ("SplitInfo", "========== SplitInfo ==========");
+    OP_LOGI("SplitInfo", "splitInfo.isKvSeqAllZero: %u", splitInfo.isKvSeqAllZero);
+    for (uint32_t i = 0; i < baseInfo.bSize; i++) {
+        OP_LOGI("SplitInfo", "splitInfo.s1GBaseNum[%u]: %d", i, splitInfo.s1GBaseNum[i]);
+        OP_LOGI("SplitInfo", "splitInfo.s1GTailSize[%u]: %d", i, splitInfo.s1GTailSize[i]);
+        OP_LOGI("SplitInfo", "splitInfo.s2BaseNum[%u]: %d", i, splitInfo.s2BaseNum[i]);
+        OP_LOGI("SplitInfo", "splitInfo.s2TailSize[%u]: %d", i, splitInfo.s2TailSize[i]);
+    }
 }
 
 void CalcBatchCache(uint32_t bIdx, const SplitContext &splitContext, BatchCache &batchCache)
@@ -333,6 +342,14 @@ void CalcCostInfo(SplitContext &splitContext)
         CalcBatchCost(bIdx, splitContext, costInfo);
         costInfo.totalCost += costInfo.bN2CostOfEachBatch[bIdx] * baseInfo.n2Size;
         costInfo.totalBlockNum += costInfo.bN2BlockOfEachBatch[bIdx] * baseInfo.n2Size;
+    }
+    OP_LOGI("CostInfo", "========== CostInfo ==========");
+    OP_LOGI("CostInfo", "costInfo.totalCost: %ld", costInfo.totalCost);
+    OP_LOGI("CostInfo", "costInfo.totalBlockNum: %u", costInfo.totalBlockNum);
+    for (uint32_t i = 0; i < baseInfo.bSize; i++) {
+        OP_LOGI("CostInfo", "costInfo.bN2CostOfEachBatch[%u]: %d", i, costInfo.bN2CostOfEachBatch[i]);
+        OP_LOGI("CostInfo", "costInfo.bN2LastBlockCostOfEachBatch[%u]: %d", i, costInfo.bN2LastBlockCostOfEachBatch[i]);
+        OP_LOGI("CostInfo", "costInfo.bN2BlockOfEachBatch[%u]: %d", i, costInfo.bN2BlockOfEachBatch[i]);
     }
 }
 
@@ -542,6 +559,17 @@ void RecordFDInfo(const SplitContext &splitContext, const AssignContext &assignC
     result.numOfFdHead++;
 }
 
+void LogAssignContext(const char* phase, const AssignContext &assignContext) {
+    OP_LOGD("assignContext", "[%s] curCoreIdx: %u, unassignedCost: %ld, "
+    "bIdx: %u, bN2Idx: %u, s1GIdx: %u, s2Idx: %u, "
+    "bN2Cost: %ld, bN2Block: %u, "
+    "s1GBlock: %u, s2Start: %u, s2End: %u",
+    phase, assignContext.curCoreIdx, assignContext.unassignedCost,
+    assignContext.curBIdx, assignContext.curBN2Idx, assignContext.curS1GIdx, assignContext.curS2Idx,
+    assignContext.bN2Cost, assignContext.bN2Block,
+    assignContext.s1GCache.s1GBlock, assignContext.s1GCache.s2Start, assignContext.s1GCache.s2End);
+}
+
 void CalcSplitPlan(uint32_t coreNum, int64_t costLimit, const SplitContext &splitContext, SplitResult &result)
 {
     const CostInfo &costInfo = splitContext.costInfo;
@@ -576,15 +604,20 @@ void CalcSplitPlan(uint32_t coreNum, int64_t costLimit, const SplitContext &spli
         assignContext.coreCache = {};
         assignContext.coreCache.costLimit = assignContext.unassignedCost / (coreNum - assignContext.curCoreIdx);
 
+        LogAssignContext("START", assignContext);
         // 1、按整batch分配
         AssignByBatch(splitContext, assignContext);
+        LogAssignContext("BATCH", assignContext);
         // 2、按行分配
         AssignByRow(splitContext, assignContext);
+        LogAssignContext("ROW", assignContext);
         // 3、按块分配
         AssignByBlock(splitContext, assignContext);
+        LogAssignContext("BLOCK", assignContext);
         // 4、强制分配
         if (assignContext.coreCache.block == 0) {
             ForceAssign(splitContext, assignContext);
+            LogAssignContext("FORCE", assignContext);
         }
 
         result.bN2End[i] = assignContext.curBN2Idx;
@@ -654,6 +687,24 @@ void SplitFD(SplitResult &result)
 
 void SplitCore(uint32_t coreNum, const BaseInfo &baseInfo, const SplitParam &param, SplitResult &result)
 {
+    OP_LOGI("BaseInfo", "========== BaseInfo ==========");
+    OP_LOGI("BaseInfo", "bSize: %u", baseInfo.bSize);
+    OP_LOGI("BaseInfo", "n2Size: %u", baseInfo.n2Size);
+    OP_LOGI("BaseInfo", "gSize: %u", baseInfo.gSize);
+    OP_LOGI("BaseInfo", "s1Size: %u", baseInfo.s1Size);
+    OP_LOGI("BaseInfo", "s2Size: %u", baseInfo.s2Size);
+    OP_LOGI("BaseInfo", "isS1G: %u", baseInfo.isS1G);
+    OP_LOGI("BaseInfo", "isAccumSeqS1: %u", baseInfo.isAccumSeqS1);
+    OP_LOGI("BaseInfo", "isAccumSeqS2: %u", baseInfo.isAccumSeqS2);
+    OP_LOGI("BaseInfo", "actualLenQDims: %u", baseInfo.actualLenQDims);
+    OP_LOGI("BaseInfo", "actualLenKvDims: %u", baseInfo.actualLenKvDims);
+    OP_LOGI("BaseInfo", "attenMaskFlag: %u", baseInfo.attenMaskFlag);
+    OP_LOGI("BaseInfo", "sparseMode: %u", baseInfo.sparseMode);
+    OP_LOGI("BaseInfo", "preToken: %ld", baseInfo.preToken);
+    OP_LOGI("BaseInfo", "nextToken: %ld", baseInfo.nextToken);
+    OP_LOGI("BaseInfo", "actualSeqPrefixSize: %ld", baseInfo.actualSeqPrefixSize);
+    OP_LOGI("SplitParam", "mBaseSize: %u", param.mBaseSize);
+    OP_LOGI("SplitParam", "s2BaseSize: %u", param.s2BaseSize);
     SplitContext splitContext(baseInfo, param);
 
     // 1、划分基本块，统计信息
@@ -680,6 +731,7 @@ void SplitCore(uint32_t coreNum, const BaseInfo &baseInfo, const SplitParam &par
 
     SplitResult tmpResult {coreNum, result.vecCubeRatio};
     for (uint32_t i = minCore; i <= maxCore; ++i) {
+        OP_LOGD("SplitRes", "CoreNum: %u", i);
         CalcSplitPlan(i, result.maxCost, splitContext, tmpResult);
         if (tmpResult.maxCost < result.maxCost) {
             CopyTmpResult(tmpResult, result);
@@ -692,6 +744,30 @@ void SplitCore(uint32_t coreNum, const BaseInfo &baseInfo, const SplitParam &par
         SplitFD(result);
     }
     result.usedCoreNum = std::max(result.usedCoreNum, 1U);  // 至少使用1个core
+    OP_LOGI("SplitRes", "splitRes.usedCoreNum: %d", result.usedCoreNum);
+    OP_LOGI("SplitRes", "splitRes.maxCost: %d", result.maxCost);
+    OP_LOGI("SplitRes", "splitRes.numOfFdHead: %d", result.numOfFdHead);
+    OP_LOGI("SplitRes", "splitRes.maxS2SplitNum: %d", result.maxS2SplitNum);
+    OP_LOGI("SplitRes", "splitRes.usedVecNumOfFd: %d", result.usedVecNumOfFd);
+
+    for (uint32_t i = 0; i < result.usedCoreNum; i++) {
+        OP_LOGI("SplitRes", "outerSplitParams.bN2End[%u]: %d", i, result.bN2End[i]);
+        OP_LOGI("SplitRes", "outerSplitParams.gS1End[%u]: %d", i, result.gS1End[i]);
+        OP_LOGI("SplitRes", "outerSplitParams.s2End[%u]: %d", i, result.s2End[i]);
+        OP_LOGI("fdRes", "fDParams.s2SplitStartIdxOfCore[%u]: %d", i, result.fdRes.s2SplitStartIdxOfCore[i]);
+    }
+    for (uint32_t i = 0; i < result.numOfFdHead; i++) {
+    OP_LOGI("fdRes", "fDParams.bN2IdxOfFdHead[%u]: %d", i, result.fdRes.bN2IdxOfFdHead[i]);
+    OP_LOGI("fdRes", "fDParams.gS1IdxOfFdHead[%u]: %d", i, result.fdRes.gS1IdxOfFdHead[i]);
+    OP_LOGI("fdRes", "fDParams.s2SplitNumOfFdHead[%u]: %d", i, result.fdRes.s2SplitNumOfFdHead[i]);
+    OP_LOGI("fdRes", "fDParams.gS1SplitNumOfFdHead[%u]: %d", i, result.fdRes.gS1SplitNumOfFdHead[i]);
+    OP_LOGI("fdRes", "fDParams.gS1LastPartSizeOfFdHead[%u]: %d", i, result.fdRes.gS1LastPartSizeOfFdHead[i]);
+    }
+
+    for (uint32_t i = 0; i < result.usedVecNumOfFd; i++) {
+        OP_LOGI("fdRes", "fDParams.gS1IdxEndOfFdHead[%u]: %d", i, result.fdRes.gS1IdxEndOfFdHead[i]);
+        OP_LOGI("fdRes", "fDParams.gS1IdxEndOfFdHeadSplit[%u]: %d", i, result.fdRes.gS1IdxEndOfFdHeadSplit[i]);
+    }
 }
 
 }
