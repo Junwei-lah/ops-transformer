@@ -25,7 +25,8 @@ enum class LI_LAYOUT : uint32_t {
 };
 
 template <typename Q_T, typename K_T, typename OUT_T, const bool PAGE_ATTENTION = false,
-          LI_LAYOUT Q_LAYOUT_T = LI_LAYOUT::BSND, LI_LAYOUT K_LAYOUT_T = LI_LAYOUT::PA_BSND, typename... Args>
+          LI_LAYOUT Q_LAYOUT_T = LI_LAYOUT::BSND, LI_LAYOUT K_LAYOUT_T = LI_LAYOUT::PA_BSND, 
+          typename W_T = half, typename SCALE_T = half, typename... Args>
 struct QLIType {
     using queryType = Q_T;
     using keyType = K_T;
@@ -33,6 +34,8 @@ struct QLIType {
     static constexpr bool pageAttention = PAGE_ATTENTION;
     static constexpr LI_LAYOUT layout = Q_LAYOUT_T;
     static constexpr LI_LAYOUT keyLayout = K_LAYOUT_T;
+    using weightType = W_T;
+    using scaleType = SCALE_T;
 };
 
 struct RunInfo {

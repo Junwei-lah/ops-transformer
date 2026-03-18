@@ -68,6 +68,8 @@ public:
     static constexpr bool PAGE_ATTENTION = QLIT::pageAttention;
     static constexpr LI_LAYOUT Q_LAYOUT_T = QLIT::layout;
     static constexpr LI_LAYOUT K_LAYOUT_T = QLIT::keyLayout;
+    using W_T = typename QLIT::weightType;
+    using SCALE_T = typename QLIT::scaleType;
 
     QLIMatmul<QLIT> matmulService;
     QLIVector<QLIT> vectorService;
@@ -99,9 +101,9 @@ protected:
     // ================================Global Buffer区=================================
     GlobalTensor<Q_T> queryGm;
     GlobalTensor<K_T> keyGm;
-    GlobalTensor<bfloat16_t> weightsGm;
-    GlobalTensor<float> qScaleGm;
-    GlobalTensor<float> kScaleGm;
+    GlobalTensor<W_T> weightsGm;
+    GlobalTensor<SCALE_T> qScaleGm;
+    GlobalTensor<SCALE_T> kScaleGm;
 
     GlobalTensor<int32_t> indiceOutGm;
     GlobalTensor<int32_t> blockTableGm;
@@ -411,9 +413,9 @@ __aicore__ inline void QLIPreload<QLIT>::Init(__gm__ uint8_t *query, __gm__ uint
     if ASCEND_IS_AIV {
         vectorService.InitParams(constInfo, tiling);
         indiceOutGm.SetGlobalBuffer((__gm__ int32_t *)sparseIndices);
-        weightsGm.SetGlobalBuffer((__gm__ bfloat16_t *)weights);
-        qScaleGm.SetGlobalBuffer((__gm__ float *)queryScale);
-        kScaleGm.SetGlobalBuffer((__gm__ float *)keyScale);
+        weightsGm.SetGlobalBuffer((__gm__ W_T *)weights);
+        qScaleGm.SetGlobalBuffer((__gm__ SCALE_T *)queryScale);
+        kScaleGm.SetGlobalBuffer((__gm__ SCALE_T *)keyScale);
         blockTableGm.SetGlobalBuffer((__gm__ int32_t *)blockTable);
         vectorService.InitVecInputTensor(weightsGm, qScaleGm, kScaleGm, indiceOutGm, blockTableGm);
         vectorService.InitVecWorkspaceTensor(scoreGm);
