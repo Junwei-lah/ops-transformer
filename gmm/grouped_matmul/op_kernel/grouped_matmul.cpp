@@ -34,6 +34,7 @@
 #include "a16w4_msd/grouped_matmul_weight_quant_a16w4_msd_controller.h"
 #ifndef __CCE_KT_TEST__
 #include "grouped_matmul_fixaxismove_interface.cpp"
+#include "grouped_matmul_a4w4_interface.cpp"
 #endif
 #endif
 
@@ -484,7 +485,19 @@ __global__ __aicore__ void grouped_matmul(GM_ADDR x, GM_ADDR weight, GM_ADDR bia
     // QUANT_A4W4
     if constexpr (D_T_A == GMM_TPL_INT4 && D_T_B == GMM_TPL_INT4) {
         if constexpr (TRANS_B == 0){
-            GMM_A4W4_IMP(GMMA4W4Compute, false, false, matmulCFG, xType, weightType, yType);
+            GET_TILING_DATA_MEMBER(GMMTilingData, gmmBaseParams, gmmBaseParams_, tiling);
+            if (gmmBaseParams_.isA4W4Optimize) {
+                tPipe.Destroy();
+                AscendC::SetMMLayoutTransform(true);                                                                                                                                                                                                         
+#ifndef __CCE_KT_TEST__
+                Catlass::grouped_matmul_a4w4_catlass(
+                    gmmBaseParams_.m, gmmBaseParams_.k, gmmBaseParams_.n, gmmBaseParams_.groupNum, gmmBaseParams_.quantGroupNum,
+                    x, weight, scale, groupList, perTokenScale, y, user1, gmmBaseParams_.coreNum);
+#endif
+                AscendC::SetMMLayoutTransform(false);
+            } else {
+                GMM_A4W4_IMP(GMMA4W4Compute, false, false, matmulCFG, xType, weightType, yType);
+            }
         }else{
             GMM_A4W4_IMP(GMMA4W4Compute, false, true, matmulCFG, xType, weightType, yType);
         }

@@ -11,7 +11,11 @@
 #ifndef CATLASS_CATLASS_HPP
 #define CATLASS_CATLASS_HPP
 
+#include <cstdint>
+
+#if defined(__CCE__)
 #include <kernel_operator.h>
+#endif
 
 #include "../gmm_infra/detail/alignment.hpp"
 #include "../gmm_infra/detail/dependent_false.hpp"
@@ -31,6 +35,11 @@ constexpr uint32_t BYTE_PER_VECTOR_FRACTAL = BYTE_PER_BLK * BLK_NUM_PER_VECTOR_F
 constexpr uint64_t L2_OFFSET = 0;
 constexpr uint32_t STRIDE_LIMIT = 65536;
 
-}  // namespace Catlass
+constexpr uint32_t BYTE_PER_BLK_FP = 128;  /// datablock size of A1->C2PiPE2GM
 
+} // namespace Catlass
+
+#if defined(__CCE__) && defined(L2_CACHE_HINT) && defined(CATLASS_BUILD_LEGACY)
+inline __gm__ struct OpSystemRunCfg g_opSystemRunCfg{Catlass::L2_OFFSET};
+#endif
 #endif  // CATLASS_CATLASS_HPP

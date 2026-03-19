@@ -31,6 +31,21 @@ template <
     class ArchTag,
     /// GemmType for C matrix operand
     class CType,
+    /// GemmType for D matrix operand
+    class DType
+>
+struct TileCopy<ArchTag, CType, DType> {
+    using ElementC = typename CType::Element;
+    using ElementD = typename DType::Element;
+
+    using CopyGmToUbC = CopyGm2Ub<ArchTag, CType>;
+    using CopyUbToGmD = CopyUb2Gm<ArchTag, DType>;
+};
+
+template <
+    class ArchTag,
+    /// GemmType for C matrix operand
+    class CType,
     /// GemmType for X matrix operand
     class XType,
     /// GemmType for D matrix operand
@@ -100,6 +115,22 @@ struct TileCopyPerTokenDequant {
     using CopyGmToUbC = CopyGm2Ub<ArchTag, CType>;
     using CopyGmToUbScale = CopyGm2Ub<ArchTag, ScaleType>;
     using CopyGmToUbPerTokenScale = CopyPerTokenScale2Ub<ArchTag, PerTokenScaleType>;
+    using CopyUbToGmD = CopyUb2Gm<ArchTag, DType>;
+};
+
+template <
+    class ArchTag,
+    class CType,
+    class PerTokenScaleType,
+    class DType
+>
+struct TileCopyW4A4Gemm {
+    using ElementC = typename CType::Element;
+    using ElementPerTokenScale = typename PerTokenScaleType::Element;
+    using ElementD = typename DType::Element;
+
+    using CopyGmToUbC = CopyGm2Ub<ArchTag, CType>;
+    using CopyGmToUbPerTokenScale = CopyGm2Ub<ArchTag, PerTokenScaleType>;
     using CopyUbToGmD = CopyUb2Gm<ArchTag, DType>;
 };
 } // namespace Catlass::Epilogue::Tile

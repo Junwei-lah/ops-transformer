@@ -96,6 +96,28 @@ constexpr size_t TUNING_CONFIG_TOKEN_PER_EXPECT_INDEX = 0;
 constexpr size_t TUNING_CONFIG_A8W4_SPEC_SCENARIO_INDEX = 1;
 constexpr size_t TUNING_CONFIG_ALLOW_WORKSPACE_INDEX = 2;
 constexpr int64_t SPLITK_M_N_RATIO_THRESHOLD_2 = 2L;
+// A4W4访存优化,合轴发送算法K的范围
+// A4W4该优化点只支持CV比例1:2，没有做1:1的适配
+constexpr int64_t A4W4OPTIMIZE_K_LOWER = 1024L;
+constexpr int64_t A4W4OPTIMIZE_K_UPPER = 16384L;
+// A4W4访存优化,合轴发送算法N的范围
+constexpr int64_t A4W4OPTIMIZE_N_LOWER = 128L;
+constexpr int64_t A4W4OPTIMIZE_N_UPPER = 16384L;
+// A4W4访存优化,合轴发送算法group_num的范围
+constexpr int32_t A4W4OPTIMIZE_GROUP_NUM_LOWER = 1;
+constexpr int32_t A4W4OPTIMIZE_GROUP_NUM_UPPER = 256;
+// A4W4访存优化,合轴发送算法每个专家M的范围
+constexpr int64_t A4W4OPTIMIZE_PERM_LOWER = 16L;
+constexpr int64_t A4W4OPTIMIZE_PERM_UPPER = 10240L;
+// A4W4访存优化,合轴发送算法split_item的范围
+constexpr int64_t A4W4OPTIMIZE_SPLIT_ITEM2 = 2L;
+constexpr int64_t A4W4OPTIMIZE_SPLIT_ITEM3 = 3L;
+// A4W4访存优化,合轴发送算法group_list_type的范围
+constexpr int64_t A4W4OPTIMIZE_GROUP_LIST_TYPE = 0L;
+// AA4W4访存优化,合轴发送算法group_type的范围
+constexpr int64_t A4W4OPTIMIZE_GROUP_TYPE = 0L;
+// A4W4访存优化,合轴发送算法quantGroupSize的范围
+constexpr int64_t A4W4OPTIMIZE_QUANT_GROUP_SIZE = 256L;
 
 
 static inline uint32_t FindBestSingleNA8W4(uint32_t baseM_, uint32_t baseN_, uint32_t avg_m, uint32_t maxN_, uint32_t groupNum_, const uint32_t& aicNum) {
@@ -459,6 +481,8 @@ ge::graphStatus GMMTiling::Init(const gert::TilingContext* context) {
     // 3: pergroup scale shape is [e,g,n]
     if (scaleDimNum == 3U) {
       quantGroupNum = context->GetDynamicInputTensor(SCALE_INDEX, 0)->GetStorageShape().GetDim(1);
+      quantGroupSize_ = quantGroupNum == 0 ? 0U : maxK_ / quantGroupNum;
+      isPerGroup_ = true;
     // 2: perchannel scale shape is [e, n]
     } else if (scaleDimNum == 2U) {
       quantGroupNum = 1UL;
@@ -469,6 +493,10 @@ ge::graphStatus GMMTiling::Init(const gert::TilingContext* context) {
     tilingData.gmmBaseParams.set_k(maxK_);
     tilingData.gmmBaseParams.set_n(maxN_);
     tilingData.gmmBaseParams.set_quantGroupNum(quantGroupNum);
+    isA4W4Optimize_ = IsA4W4OptimizeCondition();
+    if (isA4W4Optimize_) {
+      tilingData.gmmBaseParams.set_isA4W4Optimize(1);
+    }
   }
   if (isA8W4FakeA8W8_) {
     hasBias_ = false;
@@ -768,8 +796,13 @@ ge::graphStatus GMMTiling::SetWorkspscesPerTokenQuant(const uint32_t aicNum, siz
     tilingData.gmmBaseParams.set_singleN(bestSingleN);
   }
   if (isA4W4_) {
-    // 4： when do cv parallelism, four pieces of workspace are used for storing four cycles of matmul output
-    workspaces[0] += 4UL * baseM_ * baseN_ * usedCoreNum_ * sizeof(short); // a4w4 mmout dtype is half
+    if (isA4W4Optimize_) {
+      constexpr uint32_t BASEM_OPTIMIZE = 128;
+      workspaces[0] += 2UL * BASEM_OPTIMIZE * BEST_BASEN * usedCoreNum_ * sizeof(short); // a4w4 mmout dtype is half
+    } else {
+      // 4： when do cv parallelism, four pieces of workspace are used for storing four cycles of matmul output
+      workspaces[0] += 4UL * baseM_ * baseN_ * usedCoreNum_ * sizeof(short); // a4w4 mmout dtype is half
+    }
   } else {
     // 4： when do cv parallelism, four pieces of workspace are used for storing four cycles of matmul output
     workspaces[0] += 4UL * baseM_ * baseN_ * usedCoreNum_ * sizeof(int32_t);
@@ -1032,12 +1065,31 @@ bool GMMTiling::IsFixedAxisMoveCondition() {
                           && (groupListType_ == FIXAXISMOVE_GROUP_LIST_TYPE)
                           && (groupType_ == FIXAXISMOVE_GROUP_TYPE) && (actType_ == 0)
                           && !transposeWeight_;
-    bool isWorkspaceValid = (static_cast<int64_t>(FixedAxisMoveWorkspace_) <= tuningConfigWorkspace_) ||
-                           (tuningConfigWorkspace_ == -1);
+    bool isWorkspaceValid = (static_cast<int64_t>(FixedAxisMoveWorkspace_) <= tuningConfigWorkspace_) || 
+                            (tuningConfigWorkspace_ == -1);
     bool isFormatValid = (wFormat_ == matmul_tiling::CubeFormat::NZ);
 
     return isCorrectShape && isTuningInRange && isGroupCorrect && isA8W8_ &&
            isDataTypeCorrect && isConfigCorrect && isWorkspaceValid && !hasBias_ && isFormatValid;
+}
+
+// A4W4该优化点只支持CV比例1:2，没有做1:1的适配
+bool GMMTiling::IsA4W4OptimizeCondition() {
+    bool isKInRange = (maxK_ >= A4W4OPTIMIZE_K_LOWER && maxK_ <= A4W4OPTIMIZE_K_UPPER);
+    bool isNInRange = (maxN_ >= A4W4OPTIMIZE_N_LOWER && maxN_ <= A4W4OPTIMIZE_N_UPPER);
+    bool isGroupInRange = (groupNum_ >= A4W4OPTIMIZE_GROUP_NUM_LOWER && groupNum_ <= A4W4OPTIMIZE_GROUP_NUM_UPPER);
+    bool isTuningInRange = (tuningConfig_ >= A4W4OPTIMIZE_PERM_LOWER) &&
+                          (tuningConfig_ <= A4W4OPTIMIZE_PERM_UPPER);
+    bool isPerGroupValid = isPerGroup_ && quantGroupSize_ == A4W4OPTIMIZE_QUANT_GROUP_SIZE;
+    bool isDataTypeValid = yDtype_ == ge::DT_BF16 && scaleDtype_ == ge::DT_UINT64 && perTokenScaleDtype_ == ge::DT_FLOAT;
+    bool isConfigValid = !transposeX_ && (splitItem_ == A4W4OPTIMIZE_SPLIT_ITEM2 || splitItem_ == A4W4OPTIMIZE_SPLIT_ITEM3)
+                          && (groupListType_ == A4W4OPTIMIZE_GROUP_LIST_TYPE)
+                          && (groupType_ == A4W4OPTIMIZE_GROUP_TYPE) && (actType_ == 0)
+                          && !transposeWeight_;
+    bool isFormatValid = (wFormat_ == matmul_tiling::CubeFormat::NZ);
+
+    return isKInRange && isNInRange && isTuningInRange && isGroupInRange && isPerGroupValid && isA4W4_ &&
+           isDataTypeValid && isConfigValid && !hasBias_ && isFormatValid;
 }
 
 bool GMMTiling::IsIntDataType() {
@@ -1172,7 +1224,7 @@ ge::graphStatus GMMTiling::GMMGetAttrs(const gert::TilingContext* context) {
   OP_CHECK_NULL_WITH_CONTEXT(context, yDesc);
   yDtype_ = yDesc->GetDataType();
   if ((weightDtype_ == ge::DT_INT8 && xDType_ == ge::DT_INT8 && yDtype_ != ge::DT_INT32) || isA8W4FakeA8W8_ ||
-      (xDType_ == ge::DT_FLOAT8_E4M3FN) || (xDType_ == ge::DT_FLOAT8_E5M2)) {
+      (xDType_ == ge::DT_FLOAT8_E4M3FN) || (xDType_ == ge::DT_FLOAT8_E5M2) || isA4W4_) {
       auto scale0Desc = context->GetDynamicInputDesc(SCALE_INDEX, 0);
       OP_CHECK_NULL_WITH_CONTEXT(context, scale0Desc);
       scaleDtype_ = scale0Desc->GetDataType();

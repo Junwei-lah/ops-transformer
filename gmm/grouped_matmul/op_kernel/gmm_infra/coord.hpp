@@ -314,6 +314,33 @@ Coord<4, T> MakeCoord(T dim0, T dim1, T dim2, T dim3)
     return Coord<4, T>(values);
 }
 
+/// Helper to make a 5-element coordinate
+template <class T>
+CATLASS_HOST_DEVICE constexpr
+Coord<5, T> MakeCoord(T dim0, T dim1, T dim2, T dim3, T dim4)
+{
+    T values[5] = {dim0, dim1, dim2, dim3, dim4};
+    return Coord<5, T>(values);
+}
+
+/// Helper to make a 6-element coordinate
+template <class T>
+CATLASS_HOST_DEVICE constexpr
+Coord<6, T> MakeCoord(T dim0, T dim1, T dim2, T dim3, T dim4, T dim5)
+{
+    T values[6] = {dim0, dim1, dim2, dim3, dim4, dim5};
+    return Coord<6, T>(values);
+}
+
+/// Helper to make a 7-element coordinate
+template <class T>
+CATLASS_HOST_DEVICE constexpr
+Coord<7, T> MakeCoord(T dim0, T dim1, T dim2, T dim3, T dim4, T dim5, T dim6)
+{
+    T values[7] = {dim0, dim1, dim2, dim3, dim4, dim5, dim6};
+    return Coord<7, T>(values);
+}
+
 }  // namespace Catlass
 
 #endif  // CATLASS_COORD_HPP

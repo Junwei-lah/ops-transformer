@@ -35,5 +35,5 @@ struct BlockMmad {
 } // namespace Catlass::Gemm::Block
 
 #include "../../../gmm_infra/gemm/block/block_mmad_preload_async_fixAxisMove_with_callback.hpp"
-
+#include "../../../gmm_infra/gemm/block/block_mmad_preload_async_with_callback_pergroup.hpp"
 #endif // CATLASS_GEMM_BLOCK_BLOCK_MMAD_HPP

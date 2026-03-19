@@ -11,10 +11,12 @@
 #ifndef CATLASS_DETAIL_DEPENDENT_FALSE_HPP
 #define CATLASS_DETAIL_DEPENDENT_FALSE_HPP
 
+namespace Catlass {
 template <bool VALUE, class... Args>
 constexpr bool DEPENDENT_BOOL_VALUE = VALUE;
 
 template <class... Args>
 constexpr bool DEPENDENT_FALSE = DEPENDENT_BOOL_VALUE<false, Args...>;
+}
 
 #endif  // CATLASS_DETAIL_DEPENDENT_FALSE_HPP

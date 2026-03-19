@@ -13,6 +13,8 @@
 
 #include "../../gmm_infra/detail/macros.hpp"
 
+namespace Catlass {
+
 /// @brief Callback is an alternative to std::function<void(void)>, providing a general carrier
 /// of callable structure with no parameters and no return value. Compared with function pointers
 /// of type void (*)(), Callback can carry lambda expressions with captures, and does not need to
@@ -57,5 +59,5 @@ Callback MakeCallback(Func *func)
     callback.caller = &FuncWrapper<Func>;
     return callback;
 }
-
+}
 #endif // CATLASS_DETAIL_CALLBACK_HPP

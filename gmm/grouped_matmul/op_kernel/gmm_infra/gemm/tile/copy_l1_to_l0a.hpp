@@ -12,6 +12,7 @@
 #define CATLASS_GEMM_TILE_COPY_L1_TO_L0A_HPP
 
 #include "../../../gmm_infra/base_defs.hpp"
+#include "../../../gmm_infra/numeric_size.hpp"
 #include "../../../gmm_infra/arch/arch.hpp"
 #include "../../../gmm_infra/layout/layout.hpp"
 #include "../../../gmm_infra/gemm/gemm_type.hpp"
@@ -36,8 +37,8 @@ struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<Element, layout::zN, AscendC
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::zN;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 =  BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     CATLASS_DEVICE
     CopyL1ToL0A(){}
@@ -68,7 +69,7 @@ struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<Element, layout::nN, AscendC
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nN;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 =  BYTE_PER_C0 / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
 
     CATLASS_DEVICE
     CopyL1ToL0A(){}
@@ -99,7 +100,7 @@ struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<float, layout::nN, AscendC::
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nN;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 =  BYTE_PER_C0 / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
 
     CATLASS_DEVICE
     CopyL1ToL0A(){}
@@ -128,7 +129,7 @@ struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<int8_t, layout::nZ, AscendC:
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nZ;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 =  BYTE_PER_C0 / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
 
     CATLASS_DEVICE
     CopyL1ToL0A(){}
@@ -154,6 +155,66 @@ struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<int8_t, layout::nZ, AscendC:
         }
     }
 };
+
+template<class ArchTag, class Element>
+struct CopyL1ToL0A<ArchTag, Catlass::Gemm::GemmType<Element, layout::NDC1HWC0, AscendC::TPosition::A1>>{
+    using LayoutDst = layout::zZ;
+    using LayoutSrc = layout::NDC1HWC0;
+
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint8_t RIGHT_MOVE_8 = 8;
+
+    // Methods
+
+    CATLASS_DEVICE
+    CopyL1ToL0A(uint32_t strideW = 0,
+                uint32_t strideH = 0,
+                uint32_t filterW = 0,
+                uint32_t filterH = 0,
+                uint32_t dilationFilterW = 0,
+                uint32_t dilationFilterH = 0)
+    {
+        loadData3Dv2Params.strideW = strideW;
+        loadData3Dv2Params.strideH = strideH;
+        loadData3Dv2Params.filterW = filterW;
+        loadData3Dv2Params.filterSizeW = filterW >> RIGHT_MOVE_8;
+        loadData3Dv2Params.filterH = filterH;
+        loadData3Dv2Params.filterSizeH = filterH >> RIGHT_MOVE_8;
+        loadData3Dv2Params.dilationFilterW = dilationFilterW;
+        loadData3Dv2Params.dilationFilterH = dilationFilterH;
+    }
+
+    CATLASS_DEVICE
+    static CopyL1ToL0A MakeCopyL1ToL0A(
+        uint32_t strideW = 0,
+        uint32_t strideH = 0,
+        uint32_t filterW = 0,
+        uint32_t filterH = 0,
+        uint32_t dilationFilterW = 0,
+        uint32_t dilationFilterH = 0)
+    {
+        return CopyL1ToL0A(strideW, strideH, filterW, filterH, dilationFilterW, dilationFilterH);
+    }
+
+    CATLASS_DEVICE
+    void operator()(
+        AscendC::LocalTensor<Element> dstTensor,
+        AscendC::LocalTensor<Element> srcTensor,
+        LayoutDst layoutDst, LayoutSrc layoutSrc, 
+        uint32_t kStartPt, uint32_t mStartPt
+    ){
+        loadData3Dv2Params.kStartPt = kStartPt;
+        loadData3Dv2Params.mStartPt = mStartPt;
+        loadData3Dv2Params.kExtension = layoutDst.orgShape(1);
+        loadData3Dv2Params.mExtension = layoutDst.orgShape(0);
+        loadData3Dv2Params.channelSize = layoutSrc.orgShape(1) * layoutSrc.orgShape(2) * layoutSrc.orgShape(5);
+        static constexpr AscendC::IsResetLoad3dConfig CONV3D_LOAD3DV2_DEFAULT_CONFIG = {false, false};
+        AscendC::LoadData<Element, CONV3D_LOAD3DV2_DEFAULT_CONFIG>(dstTensor, srcTensor, loadData3Dv2Params);
+    }
+private:
+    AscendC::LoadData3DParamsV2<Element> loadData3Dv2Params;
+};
+
 //////////////////////////////////////////
 
 /// Partial specialization for zN in and zZ out.
@@ -162,8 +223,8 @@ struct CopyL1ToL0A<ArchTag, Gemm::GemmType<Element, layout::zN, AscendC::TPositi
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::zN;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 = BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     // Methods
 
@@ -199,8 +260,8 @@ struct CopyL1ToL0A<ArchTag, Gemm::GemmType<float, layout::zN, AscendC::TPosition
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::zN;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 = BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     // Methods
 
@@ -234,8 +295,8 @@ struct CopyL1ToL0A<ArchTag, Gemm::GemmType<Element, layout::nZ, AscendC::TPositi
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nZ;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 = BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     CATLASS_DEVICE
     CopyL1ToL0A() {};
@@ -269,8 +330,8 @@ struct CopyL1ToL0A<ArchTag, Gemm::GemmType<int8_t, layout::nZ, AscendC::TPositio
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nZ;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 = BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     // Methods
 
@@ -306,8 +367,8 @@ struct CopyL1ToL0A<ArchTag, Gemm::GemmType<float, layout::nZ, AscendC::TPosition
     using LayoutDst = layout::zZ;
     using LayoutSrc = layout::nZ;
 
-    static constexpr uint32_t ELE_NUM_PER_C0 = BYTE_PER_C0 / sizeof(Element);
-    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BYTE_PER_FRACTAL / sizeof(Element);
+    static constexpr uint32_t ELE_NUM_PER_C0 = BytesToBits(BYTE_PER_C0) / SizeOfBits<Element>::value;
+    static constexpr uint32_t ELE_NUM_PER_FRACTAL = BytesToBits(BYTE_PER_FRACTAL) / SizeOfBits<Element>::value;
 
     // Methods
 

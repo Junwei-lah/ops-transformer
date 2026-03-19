@@ -95,7 +95,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_autotiling_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 ";
+        "1 0 ";
     std::vector<size_t> expectWorkspaces = {67108864}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,250);
 }
@@ -156,7 +156,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_autotiling_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 ";
+        "1 0 ";
     std::vector<size_t> expectWorkspaces = {67108864}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,250);
 }
@@ -217,7 +217,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_pergroup_antiqunt_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {121634816}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -278,7 +278,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_pergroup_antiqunt_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {121634816}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -339,7 +339,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_perchannel_antiqunt_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33562624}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -400,7 +400,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_perchannel_antiqunt_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33562624}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -461,7 +461,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_msd_vec_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -522,7 +522,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_vec_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -583,7 +583,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_msd_api_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {117440512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -644,7 +644,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4obf16_msd_api_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {117440512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -705,7 +705,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_api_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {117440512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -766,7 +766,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_api_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {117440512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -827,7 +827,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w4ofp16_msd_api_withoffset_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {117440512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -890,7 +890,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {83886080}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -951,7 +951,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {83886080}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1012,7 +1012,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {83886080}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1073,7 +1073,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {83886080}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1134,7 +1134,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1195,7 +1195,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1256,7 +1256,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1317,7 +1317,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1378,7 +1378,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_perchannel_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1439,7 +1439,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_perchannel_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1500,7 +1500,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4ofp16_pergroup_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1561,7 +1561,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w4obf16_pergroup_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1625,7 +1625,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1686,7 +1686,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {75497472}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1747,7 +1747,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_msd_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23134208}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1808,7 +1808,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_msd_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23134208}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1869,7 +1869,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33554432}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1930,7 +1930,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {33554432}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -1992,7 +1992,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_msd_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {27328512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2053,7 +2053,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_msd_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {27328512}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2114,7 +2114,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8ofp16_antiquant_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2175,7 +2175,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a16w8obf16_antiquant_transw_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {50331648}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2238,7 +2238,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2299,7 +2299,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic2aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2360,7 +2360,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2421,7 +2421,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2482,7 +2482,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv_static)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2543,7 +2543,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv_static)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2604,7 +2604,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_notrans_1aic1aiv_sparse)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2665,7 +2665,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8obf16_notrans_1aic1aiv_sparse)
         0 //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2730,7 +2730,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8ofp16_fixed_axis)
         true //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {26669056}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2794,7 +2794,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_notrans_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2856,7 +2856,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4obf16_notrans_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2918,7 +2918,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_trans_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -2980,7 +2980,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4obf16_trans_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3042,7 +3042,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_trans_dynamic_tiling_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3104,7 +3104,70 @@ TEST_F(GroupedMatmulTiling, test_tiling_a4w4obf16_trans_dynamic_tiling_1aic2aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+    std::vector<size_t> expectWorkspaces = {23068672}; // workspace
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
+}
+
+// QUANT_A4W4优化
+TEST_F(GroupedMatmulTiling, test_tiling_a4w4ofp16_optimize)
+{
+    size_t M = 256;
+    size_t K = 2048;
+    size_t N = 7168;
+    size_t E = 4;
+    optiling::GMMCompileInfo compileInfo = {
+        24,//aicNum
+        48,//aivNum
+        196608,//ubSize
+        524288,//l1Size
+        196608,//l2Size
+        131072,//l0CSize
+        65536,//l0ASize
+        65536,//l0BSize
+        platform_ascendc::SocVersion::ASCEND910B,//ASCEND910B
+        NpuArch::DAV_2201,
+    };
+    gert::TilingContextPara tilingContextPara("GroupedMatmul", // op_name
+                                                { // input info
+                                                    {{{M, K}, {M, K}}, ge::DT_INT4, ge::FORMAT_ND},              //x
+                                                    {{{E, K, N}, {E, K/64, N/16, 16, 64}}, ge::DT_INT4, ge::FORMAT_FRACTAL_NZ},        //weight
+                                                    {{{}, {}}, ge::DT_INT32, ge::FORMAT_ND},                //bias
+                                                    {{{E, N}, {E, N}}, ge::DT_UINT64, ge::FORMAT_ND},                //scale
+                                                    {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},                        //offset
+                                                    {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},                        //antiquantScale
+                                                    {{{}, {}}, ge::DT_FLOAT, ge::FORMAT_ND},                        //antiquantOffset
+                                                    {{{E}, {E}}, ge::DT_INT64, ge::FORMAT_ND},                      //groupList
+                                                    {{{M}, {M}}, ge::DT_FLOAT, ge::FORMAT_ND},                        //perTokenScale
+                                                }, 
+                                                { // output info
+                                                    {{{M}, {N}}, ge::DT_FLOAT16, ge::FORMAT_ND}
+                                                }, 
+                                                { // attr
+                                                    {"split_item", Ops::Transformer::AnyValue::CreateFrom<int64_t>(3)},
+                                                    {"dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+                                                    {"transpose_weight", Ops::Transformer::AnyValue::CreateFrom<bool>(false)},
+                                                    {"transpose_x", Ops::Transformer::AnyValue::CreateFrom<bool>(false)},
+                                                    {"group_type", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+                                                    {"group_list_type", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+                                                    {"act_type", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
+                                                    {"tuning_config", Ops::Transformer::AnyValue::CreateFrom<std::vector<int64_t>>({0})},
+                                                }, &compileInfo);
+    int64_t expectTilingKey = gmmTestUtils::GMMEncodeTilingKey(
+        DT_INT4, // D_T_A
+        DT_INT4, // D_T_B
+        DT_FLOAT16, // D_T_Y
+        0, // TRANS_A
+        0, // TRANS_B
+        GROUPED_MATMUL_GROUP_LIST_TYPE_CUMSUM, // GROUP_LIST_TYPE
+        0, // IS_STATIC_TILING_API
+        GROUPED_MATMUL_A8W4_KERNEL_TEMPLATE_NONE, // A8W4_KERNEL_TEMPLATE
+        GROUPED_MATMUL_A16W8_KERNEL_TEMPLATE_NONE, // A16W8_KERNEL_TEMPLATE
+        GROUPED_MATMUL_AIV_AIC_RATIO_2, // AIV_AIC_RATIO
+        false //IS_ENABLE_FIXED_AXIS
+    ); // tilngkey
+    string expectTilingData =
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {23068672}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3167,7 +3230,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3229,7 +3292,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3291,7 +3354,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_static_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3353,7 +3416,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_static_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3416,7 +3479,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_notrans_sparse_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3478,7 +3541,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o8_transw_sparse_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {29360128}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3544,7 +3607,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_notrans_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3606,7 +3669,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_transw_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3668,7 +3731,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_notrans_1aic_sparse)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3730,7 +3793,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_a8w8o32_transw_1aic_sparse)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3793,7 +3856,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_notrans_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3855,7 +3918,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_notrans_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3917,7 +3980,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_notrans_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -3979,7 +4042,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_transw_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4041,7 +4104,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_transw_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4103,7 +4166,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_transw_1aic)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4165,7 +4228,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp16_transx_1aic1aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4227,7 +4290,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_bf16_transx_1aic1aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4289,7 +4352,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_fp32_transx_1aic1aiv)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {16777216}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
@@ -4597,7 +4660,7 @@ TEST_F(GroupedMatmulTiling, test_tiling_A8W8O8)
         false //IS_ENABLE_FIXED_AXIS
     ); // tilngkey
     string expectTilingData =
-        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ";
     std::vector<size_t> expectWorkspaces = {18350080}; // workspace
     ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData, expectWorkspaces,230);
 }
