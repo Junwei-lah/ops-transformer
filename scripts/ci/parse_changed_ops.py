@@ -31,7 +31,8 @@ class OperatorChangeInfo:
 BlackList = {
         "moe_distribute_combine_shmem",
         "moe_distribute_dispatch_shmem",
-        "rope_matrix"
+        "rope_matrix",
+        "all_gather_matmul"
     }
 
 
