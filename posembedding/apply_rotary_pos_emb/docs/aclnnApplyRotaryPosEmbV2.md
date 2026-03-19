@@ -142,7 +142,7 @@
 
 ## 函数原型
 
-每个算子分为两段式接口，必须先调用“aclnnApplyRotaryPosEmbV2GetWorkspaceSize”接口获取入参并根据流程计算所需workspace大小，再调用“aclnnApplyRotaryPosEmbV2”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnApplyRotaryPosEmbV2GetWorkspaceSize”接口获取入参并根据流程计算所需workspace大小，再调用“aclnnApplyRotaryPosEmbV2”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnApplyRotaryPosEmbV2GetWorkspaceSize(
@@ -168,16 +168,16 @@ aclnnStatus aclnnApplyRotaryPosEmbV2(
 
 - **参数说明**
 
-  <table style="undefined;table-layout: fixed; width: 1557px">
+  <table style="undefined;table-layout: fixed; width: 1576px">
   <colgroup>
-    <col style="width: 100px">
-    <col style="width: 100px">
-    <col style="width: 250px">
-    <col style="width: 300px">
-    <col style="width: 180px">
-    <col style="width: 80px">
-    <col style="width: 100px">
-    <col style="width: 100px">
+    <col style="width: 157px">
+    <col style="width: 125px">
+    <col style="width: 282px">
+    <col style="width: 319px">
+    <col style="width: 196px">
+    <col style="width: 122px">
+    <col style="width: 230px">
+    <col style="width: 145px">
   </colgroup>
   <tr>
     <th align="center">参数名</th>
@@ -355,9 +355,9 @@ aclnnStatus aclnnApplyRotaryPosEmbV2(
   <table>
   
   <tr>
-  <td align="center">返回值</td>
-  <td align="center">错误码</td>
-  <td align="center">描述</td>
+  <td align="center" style="width:169px;">返回值</td>
+  <td align="center" style="width:125px;">错误码</td>
+  <td align="center" style="width:855px;">描述</td>
   </tr>
   <tr>
   <td align="left">ACLNN_ERR_PARAM_NULLPTR</td>
@@ -377,11 +377,11 @@ aclnnStatus aclnnApplyRotaryPosEmbV2(
 
 - **参数说明**
 
-  <table style="undefined;table-layout: fixed; width: 1557px">
+  <table style="undefined;table-layout: fixed; width: 1149px">
   <colgroup>
-    <col style="width: 100px">
-    <col style="width: 100px">
-    <col style="width: 600px">
+    <col style="width: 169px">
+    <col style="width: 125px">
+    <col style="width: 855px">
   </colgroup>
   <tr>
     <th align="center">参数名</th>
