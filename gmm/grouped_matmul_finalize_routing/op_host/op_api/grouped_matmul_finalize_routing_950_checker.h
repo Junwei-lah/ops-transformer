@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#ifndef OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
-#define OP_API_INC_QUANT_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
+#ifndef OP_API_INC_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
+#define OP_API_INC_GROUPED_MATMUL_FINALIZE_ROUTING_950_CHECKER_H
 #include "opdev/format_utils.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "quant_grouped_matmul_finalize_routing_util.h"
@@ -28,8 +28,8 @@ constexpr int64_t GMMFR_SPLIT_FACTOR = 2L;
 constexpr int64_t MOD2 = 2L;
 constexpr int64_t MAX_NUM_EXPERTS = 1024L;
 
-const std::initializer_list<DataType> X_WEIGHT_TYPE_SUPPORT_LIST_MX = {op::DataType::DT_FLOAT8_E4M3FN, op::DataType::DT_FLOAT8_E5M2,
-                                                                 op::DataType::DT_FLOAT4_E1M2, op::DataType::DT_FLOAT4_E2M1};
+const std::initializer_list<DataType> X_WEIGHT_TYPE_SUPPORT_LIST_MX = {
+    op::DataType::DT_FLOAT8_E4M3FN, op::DataType::DT_FLOAT8_E5M2, op::DataType::DT_FLOAT4_E2M1};
 const std::initializer_list<DataType> X_WEIGHT_TYPE_SUPPORT_LIST_FP4 = {op::DataType::DT_FLOAT4_E2M1};
 const std::initializer_list<DataType> X_WEIGHT_TYPE_SUPPORT_LIST_FP8 = {op::DataType::DT_FLOAT4_E2M1};
 static const std::initializer_list<op::DataType> SCALE_TYPE_SUPPORT_LIST_MX = {op::DataType::DT_FLOAT8_E8M0};
@@ -61,7 +61,7 @@ public:
         gmmParams_ = gmmParams;
         // 0. 进入判断逻辑之前先判断是哪种量化
         CHECK_COND(gmmParams_.scale != nullptr, ACLNN_ERR_PARAM_NULLPTR,
-                   "In MX quant, scaleOptional should not be nullptr.");
+                   "scaleOptional should not be nullptr.");
         DataType scaleDtype = gmmParams_.scale->GetDataType();
         if (CheckType(scaleDtype, SCALE_TYPE_SUPPORT_LIST_MX)) {
             quantMode_ = QuantMode::MX;
@@ -134,7 +134,7 @@ public:
         CHECK_COND(rowindexDimNumber == ONE_DIM, ACLNN_ERR_PARAM_INVALID,
                    "The dim num of rowindex should be equal 1, current dim is %lu.", rowindexDimNumber);
         CHECK_COND(outDimNumber == TWO_DIM, ACLNN_ERR_PARAM_INVALID,
-                   "The dim num of out should be equal 1, current dim is %lu.", outDimNumber);
+                   "The dim num of out should be equal 2, current dim is %lu.", outDimNumber);
         if (gmmParams_.pertokenScaleOptional != nullptr) {
             auto xScaleDimNumber = gmmParams_.pertokenScaleOptional->GetViewShape().GetDimNum();
             CHECK_COND(xScaleDimNumber == xscaleExpectDim, ACLNN_ERR_PARAM_INVALID,
@@ -171,6 +171,17 @@ public:
                     "When the M or N value is not 0, the K value should be positive, but got %ld.", k);
             return false;
         }
+        if (!CheckRequiredShapes(m, k, n, e, outputBS)) {
+            return false;
+        }
+        if (!CheckOptionalShapes(m, k, e, n)) {
+            return false;
+        }
+        return true;
+    }
+
+    bool CheckRequiredShapes(int64_t m, int64_t k, int64_t n, int64_t e, int64_t outputBS)
+    {
         op::Shape xExpectShape = {m, k};
         op::Shape weightExpectShape = {e, k, n};
         op::Shape weightScaleExpectShape =
@@ -196,6 +207,11 @@ public:
         OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gmmParams_.logit, logitExpectShape, return false);
         OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gmmParams_.rowIndex, rowindexExpectShape, return false);
         OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gmmParams_.out, outputExpectShape, return false);
+        return true;
+    }
+
+    bool CheckOptionalShapes(int64_t m, int64_t k, int64_t e, int64_t n)
+    {
         if (gmmParams_.pertokenScaleOptional != nullptr) {
             op::Shape xScaleExpectShape =
                 quantMode_ == QuantMode::MX ? op::Shape{m, Ops::Base::CeilDiv(k, GMMFR_SPLIT_SIZE), GMMFR_SPLIT_FACTOR} : op::Shape{m};
@@ -203,13 +219,11 @@ public:
                                                         return false);
         }
         if (gmmParams_.bias != nullptr) {
-            // bias的shape期望为[E, N]
             op::Shape biasExpectShape = {e, n};
             OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gmmParams_.bias, biasExpectShape, return false);
         }
         if (gmmParams_.shareInput != nullptr) {
-            // shareInput的shape期望为[bsdp, N]
-            int64_t bsdp = gmmParams_.shareInput->GetViewShape().GetDim(0); // 从share_input 第一维获取bsdp
+            int64_t bsdp = gmmParams_.shareInput->GetViewShape().GetDim(0);
             op::Shape shareInputExpectShape = {bsdp, n};
             OP_CHECK_SHAPE_NOT_EQUAL_WITH_EXPECTED_SIZE(gmmParams_.shareInput, shareInputExpectShape, return false);
         }
@@ -236,7 +250,9 @@ public:
             return false;
         }
         if (e > MAX_NUM_EXPERTS) {
-            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "In MXFP4/MXFP8, e must be less than 1024. But got %ld.", e);
+            const char* quantModeStr = (quantMode_ == QuantMode::MX) ? "MX quant" : "pertoken quant";
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "In %s, e must be less than or equal to 1024. But got %ld.",
+                    quantModeStr, e);
             return false;
         }
         return true;
@@ -355,6 +371,17 @@ public:
 
     bool CheckFormat()
     {
+        if (!CheckXAndWeightFormat()) {
+            return false;
+        }
+        if (!CheckOtherTensorFormats()) {
+            return false;
+        }
+        return true;
+    }
+
+    bool CheckXAndWeightFormat()
+    {
         if (op::IsPrivateFormat(gmmParams_.x1->GetStorageFormat()) ||
             (gmmParams_.pertokenScaleOptional != nullptr &&
              op::IsPrivateFormat(gmmParams_.pertokenScaleOptional->GetStorageFormat()))) {
@@ -376,6 +403,11 @@ public:
                 return false;
             }
         }
+        return true;
+    }
+
+    bool CheckOtherTensorFormats()
+    {
         if (op::IsPrivateFormat(gmmParams_.scale->GetStorageFormat())) {
             OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Format of scale should be ND, current format is %s.",
                     op::ToString(gmmParams_.scale->GetStorageFormat()).GetString());

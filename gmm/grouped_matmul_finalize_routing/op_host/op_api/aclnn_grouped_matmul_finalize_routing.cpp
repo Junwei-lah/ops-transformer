@@ -26,7 +26,7 @@
 #include "aclnn_kernels/transpose.h"
 #include "aclnn_kernels/contiguous.h"
 #include "aclnn_kernels/reshape.h"
-#include "grouped_matmul_finalize_routing_MX_checker.h"
+#include "grouped_matmul_finalize_routing_950_checker.h"
 #include "../../../grouped_matmul/op_host/op_api/grouped_matmul_950_checker.h"
 
 using namespace op;
@@ -1039,6 +1039,19 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNz(void *workspace, uint64_t 
     return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);
 }
 
+static inline aclnnStatus CheckNullptrForXAndweight(const aclTensor *x, const aclTensor *weight)
+{
+    if (x == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "GroupedMatmulFinalizeRoutingWeightNzV2: x should not be nullptr.");
+        return ACLNN_ERR_PARAM_NULLPTR;
+    }
+    if (weight == nullptr) {
+        OP_LOGE(ACLNN_ERR_PARAM_NULLPTR, "GroupedMatmulFinalizeRoutingWeightNzV2: weight should not be nullptr.");
+        return ACLNN_ERR_PARAM_NULLPTR;
+    }
+    return ACLNN_SUCCESS;
+}
+
 aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2GetWorkspaceSize(const aclTensor *x1, const aclTensor *x2,
     const aclTensor *scale, const aclTensor *bias, const aclTensor *offsetOptional,
     const aclTensor *antiquantScaleOptional, const aclTensor *antiquantOffsetOptional,
@@ -1054,6 +1067,9 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2GetWorkspaceSize(const ac
         DFX_OUT(out));
     (void) antiquantScaleOptional;
     (void) antiquantOffsetOptional;
+    // 对x和weight为空提前拦截
+    auto retxweightnullptr = CheckNullptrForXAndweight(x1, x2);
+    CHECK_RET(retxweightnullptr == ACLNN_SUCCESS, retxweightnullptr);
     auto viewShape = x2->GetViewShape();
     auto uniqueExecutor = CREATE_EXECUTOR();
     // unpack int32 to int4
