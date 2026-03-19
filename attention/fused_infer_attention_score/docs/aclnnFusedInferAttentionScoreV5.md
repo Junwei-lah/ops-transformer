@@ -1019,7 +1019,8 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
             - query、key的d等于192，value的d等于128，queryRope和keyRope等于空。
           - gqa非量化场景下，BSH_BNSD、BSND_BNSD仅支持D=64或D=128;BNSD_BSND仅支持D=16对齐(output dtype为int8时为32对齐);
           - BSH_BNSD、BSND_BNSD场景下不支持左padding、tensorlist、pse、prefix;
-          - 不支持伪量化。
+          - BSH_BNSD、BSND_BNSD不支持伪量化;BNSD_BSND支持伪量化;
+          - 伪量化场景下，BNSD_BSND不支持QS=1。
     -  TND、NTD、TND_NTD、NTD_TND场景下query，key，value输入的综合限制：
         - 当query的d等于512时：
           - 仅支持TND、TND_NTD;

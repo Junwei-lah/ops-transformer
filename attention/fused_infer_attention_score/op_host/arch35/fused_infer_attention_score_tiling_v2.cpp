@@ -1001,6 +1001,9 @@ ge::graphStatus FusedInferAttentionScoreTilingV2::DoOpTiling() {
             usingIFA = true;
         }
     }
+    OP_CHECK_IF(((s == 1) && (inputLayoutStr == "BNSD_BSND") && (qDType != kDType)),
+        OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), "BNSD_BSND layout is not supported when S is 1!"),
+        return ge::GRAPH_FAILED);
 
     if (usingIFA) {
         // IFA tiling path        
