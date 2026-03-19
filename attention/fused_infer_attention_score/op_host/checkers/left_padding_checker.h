@@ -46,10 +46,6 @@ private:
     // enableNonQuant 相关校验函数
     ge::graphStatus CheckMultiParaShapeAndDim(const FiaTilingInfo &fiaInfo);
 
-    // enableFullQuant 相关校验函数
-
-    // enableAntiQuant 相关校验函数
-
 private:
 };
 

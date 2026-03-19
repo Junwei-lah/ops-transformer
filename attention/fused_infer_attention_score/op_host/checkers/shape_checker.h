@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef SHAPE_CHECKER_H
 #define SHAPE_CHECKER_H
 
@@ -68,10 +67,6 @@ private:
     bool CheckTNDLayoutCrossover(const FiaTilingInfo &fiaInfo);
     bool CheckNTDLayoutCrossover(const FiaTilingInfo &fiaInfo);
     bool CheckTransposeLayoutCrossover(const FiaTilingInfo &fiaInfo);
-
-    // enableFullQuant 相关校验函数
-
-    // enableAntiQuant 相关校验函数
 
 private:
 };

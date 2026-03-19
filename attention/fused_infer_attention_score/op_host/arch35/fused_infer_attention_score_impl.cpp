@@ -77,9 +77,11 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetEmptyTensor(gert::TilingC
 
     return ge::GRAPH_SUCCESS;
 }
+
 bool FusedInferAttentionScoreTilingImpl::CheckTransposeLayout(const FiaTilingInfo &fiaInfo){
-     std::string layoutStr(fiaInfo.opParamInfo.layOut);
-    if(layoutStr == "BNSD_BSND" || layoutStr == "NTD" || layoutStr == "NTD_TND"){
+    std::string layoutStr(fiaInfo.opParamInfo.layOut);
+    if(layoutStr == "BNSD_BSND" || layoutStr == "BSND_BNSD" || layoutStr == "BSH_BNSD" ||
+        layoutStr == "NTD" || layoutStr == "NTD_TND" || layoutStr == "TND_NTD"){
         return true;
     }
     return false;
@@ -87,7 +89,10 @@ bool FusedInferAttentionScoreTilingImpl::CheckTransposeLayout(const FiaTilingInf
 
 void FusedInferAttentionScoreTilingImpl::SetGSMerge(const FiaTilingInfo &fiaInfo)
 {
-    if (fiaInfo.s1Size == 1 && !fiaInfo.enableAlibiPse && fiaInfo.qLayout != FiaLayout::NTD &&
+    std::string layoutStr(fiaInfo.opParamInfo.layOut);
+    bool isTransposeLayout = layoutStr == "BNSD_BSND" || layoutStr == "BSND_BNSD" || layoutStr == "BSH_BNSD" ||
+            layoutStr == "NTD" || layoutStr == "NTD_TND";
+    if (fiaInfo.s1Size == 1 && !fiaInfo.enableAlibiPse && !isTransposeLayout &&
         fiaInfo.fullQuantMode != FiaFullQuantMode::PER_BLOCK_FULL_QUANT ) {
         gsMergeFlag_ =true;
         return;
@@ -138,7 +143,6 @@ void FusedInferAttentionScoreTilingImpl::InitImplParam(const FiaTilingInfo &fiaI
     if (fiaInfo.isMaxWorkspace) {
         actualSeqLenQFlag_ = false;
         actualSeqLenKVFlag_ = false;
-        actualSharedPrefixLenFlag_ = false;
     } else {
         actSeqLenQDims = (actSeqLenQ != nullptr) ? actSeqLenQ->GetShapeSize() : 0;
         actSeqLenKVDims = (actSeqLenKV != nullptr) ? actSeqLenKV->GetShapeSize() : 0;
@@ -147,8 +151,27 @@ void FusedInferAttentionScoreTilingImpl::InitImplParam(const FiaTilingInfo &fiaI
             !((actSeqLenQDims == 0) || (actSeqLenQ == nullptr) || (actSeqLenQ->GetData<int64_t>() == nullptr));
         actualSeqLenKVFlag_ =
             !((actSeqLenKVDims == 0) || (actSeqLenKV == nullptr) || (actSeqLenKV->GetData<int64_t>() == nullptr));
-        actualSharedPrefixLenFlag_ = !((actSharedPrefixLenDims == 0) || (actSharedPrefixLen == nullptr) ||
+
+        if (fiaInfo.antiQuantFlag && fiaInfo.qLayout == FiaLayout::TND) {
+            actualSeqLenQFlag_ = true;
+        }
+    }
+
+    if (!fiaInfo.sysPrefixFlag) {
+        actualSharedPrefixLenFlag_ = false;
+    } else {
+        if (fiaInfo.antiQuantFlag) {
+            actualSharedPrefixLenFlag_ = !((actSharedPrefixLenDims == 0) || (actSharedPrefixLen == nullptr) ||
                                      (actSharedPrefixLen->GetData<int64_t>() == nullptr));
+        } else {
+            actualSharedPrefixLenFlag_ = !fiaInfo.isMaxWorkspace &&
+                                         !((actSharedPrefixLenDims == 0) || (actSharedPrefixLen == nullptr) ||
+                                           (actSharedPrefixLen->GetData<int64_t>() == nullptr));
+        }
+    }
+
+    if (fiaInfo.antiQuantFlag && fiaInfo.s1Size == 1 && fiaInfo.qLayout != FiaLayout::TND) {
+        actualSeqLenQFlag_ = false;
     }
 
     for (uint32_t bIdx = 0; bIdx < fiaInfo.bSize; bIdx++) {
@@ -546,7 +569,7 @@ bool FusedInferAttentionScoreTilingImpl::CheckFlashDecode(const FiaTilingInfo &f
         if (fiaInfo.s1Size != 1 || fiaInfo.ropeMode != RopeMode::NO_ROPE) {
             return false;
         }
-        if (fiaInfo.s2Size < NUM_256) {
+        if (fiaInfo.maxActualseq < NUM_256) {
             return false;
         }
     }
@@ -939,7 +962,7 @@ void FusedInferAttentionScoreTilingImpl::UpdateTilingKeyLayout(const FiaTilingIn
 
 void FusedInferAttentionScoreTilingImpl::UpdateTilingKeyPseMode(const FiaTilingInfo &fiaInfo)
 {
-    if (!fiaInfo.pseShiftFlag) {
+    if (!fiaInfo.pseShiftFlag && !fiaInfo.enableAlibiPse) {
         tilingKeyInfo_.pseMode = PSE_MODE_PSE_NONE_TYPE;
     } else {
         tilingKeyInfo_.pseMode = *(fiaInfo.opParamInfo.pseType);
@@ -954,6 +977,7 @@ void FusedInferAttentionScoreTilingImpl::UpdateTilingKeyQuantMode(const FiaTilin
 
     if (fiaInfo.quantMode == FiaQuantMode::ANTI_QUANT) {
         uint32_t antiQuantMode = fiaInfo.keyAntiquantMode;
+        tilingKeyInfo_.quantMode = 0; // 默认处理，与重构前保持一致
         switch (antiQuantMode) {
             case 0:
                 tilingKeyInfo_.quantMode = (fiaInfo.valueAntiquantMode == 1) ? AntiquantMode_K_PER_CHANNEL_V_PER_TOKEN :
@@ -1056,13 +1080,16 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::UpdateTilingKeyInfo(const Fi
         UpdateTilingKeyConfig(fiaInfo);
         UpdateTilingKeyPseMode(fiaInfo);
         UpdateTilingKeyQuantMode(fiaInfo);
+        tilingKeyInfo_.isFd = flashDecodeFlag_;
+        if (fiaInfo.sysPrefixFlag) {
+            tilingKeyInfo_.isFd = false;
+        }
         tilingKeyInfo_.hasAttenMask = fiaInfo.attenMaskFlag;
         if (fiaInfo.fullQuantMode == FiaFullQuantMode::PER_TENSOR_FULL_QUANT) {
             tilingKeyInfo_.hasAttenMask = false;
         }
         UpdateTilingKeyHasRope(fiaInfo);
         tilingKeyInfo_.isPa = fiaInfo.pageAttentionFlag;
-        tilingKeyInfo_.isFd = flashDecodeFlag_;
         tilingKeyInfo_.emptyTensor = fiaInfo.emptyTensorFlag;
         UpdateTilingKeyMaskMode(fiaInfo);
         UpdateTilingKeyMatmulMode(fiaInfo);
@@ -1235,6 +1262,9 @@ bool FusedInferAttentionScoreTilingImpl::EnableMTE2BmmPipe(const FiaTilingInfo &
     }
     uint32_t baseK = 32U;
     uint32_t headSize = fiaInfo.qkHeadDim;
+    if (fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D512) {
+        headSize = fiaInfo.qkHeadDim + fiaInfo.ropeHeadDim;
+    }
     if (headSize % baseK != 0) {
         return true;
     }
@@ -1279,25 +1309,30 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetMM1TilingData(gert::Tilin
     bmm1.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, bmm1InputType, false);
     bmm1.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND, bmm1InputType, true);
     bmm1.SetCType(matmul_tiling::TPosition::VECCALC, matmul_tiling::CubeFormat::ND_ALIGN, bmm1OutputType);
-    int32_t ret = bmm1.SetShape(sOuterFactor_, sInnerFactor_, fiaInfo.qkHeadDim);
+
+    auto qkHeadDim = fiaInfo.qkHeadDim;
+    if (fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D512) {
+        qkHeadDim = fiaInfo.qkHeadDim + fiaInfo.ropeHeadDim;
+    }
+    int32_t ret = bmm1.SetShape(sOuterFactor_, sInnerFactor_, qkHeadDim);
     OP_CHECK_IF(ret != ge::GRAPH_SUCCESS, OP_LOGE(fiaInfo.opName, "Bmm1 set shape space failed"),
                 return ge::GRAPH_FAILED);
     if ((fiaInfo.qLayout == FiaLayout::BSH) || (fiaInfo.qLayout == FiaLayout::BSND) ||
         (fiaInfo.qLayout == FiaLayout::TND)) {
         if (fiaInfo.qLayout == FiaLayout::TND && fiaInfo.pageAttentionFlag && fiaInfo.kvLayout == FiaLayout::BnNBsD) {
-            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, fiaInfo.qkHeadDim * nLoopTimes_, fiaInfo.qkHeadDim);
+            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, qkHeadDim * nLoopTimes_, qkHeadDim);
         } else if (fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D512 || fiaInfo.s1Size == 1) {
-            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, fiaInfo.qkHeadDim, fiaInfo.n2Size * fiaInfo.qkHeadDim);
+            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, qkHeadDim, fiaInfo.n2Size * qkHeadDim);
         } else {
-            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, fiaInfo.qkHeadDim * nLoopTimes_,
-                             fiaInfo.n2Size * fiaInfo.qkHeadDim);
+            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, qkHeadDim * nLoopTimes_,
+                             fiaInfo.n2Size * qkHeadDim);
         }
     } else if (fiaInfo.qLayout == FiaLayout::BNSD) {
         if (fiaInfo.pageAttentionFlag &&
             fiaInfo.kvLayout == FiaLayout::BnBsH) {  // The left matrix of PA is BNSD, and the right matrix is BSH.
-            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, fiaInfo.qkHeadDim, fiaInfo.n2Size * fiaInfo.qkHeadDim);
+            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, qkHeadDim, fiaInfo.n2Size * qkHeadDim);
         } else {
-            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, fiaInfo.qkHeadDim);
+            bmm1.SetOrgShape(gsSize_, fiaInfo.s2Size, qkHeadDim);
         }
     }
     bmm1.SetBias(false);
@@ -1460,7 +1495,7 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetFullQuantTilingData(const
     auto &singleCoreParams = pfaTilingData_.promptAttentionSingleCoreParams;
     singleCoreParams.set_singleProcessSInnerSize(sInnerFactor_);
     singleCoreParams.set_singleProcessSOuterSize(sOuterFactor_);
-    singleCoreParams.set_pseShiftBatch(fiaInfo.pseShiftByBatch ? fiaInfo.bSize : 1);
+    singleCoreParams.set_pseShiftBatch(fiaInfo.pseShiftByBatch);
     singleCoreParams.set_kvAntiquantSInnerSize(0);
     return ge::GRAPH_SUCCESS;
 }
@@ -1635,30 +1670,35 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::ComputeTilingData(const FiaT
         inputParams.set_attenMaskCompressMode(itr->second);
     }
 
-    uint8_t sparseType = 0;
-    if (fiaInfo.sparseMode == SPARSE_MODE_NO_MASK) {
-        if (fiaInfo.preToken >= fiaInfo.s1Size && fiaInfo.nextToken == 0) {
-            sparseType = 3;
-        } else if (fiaInfo.preToken >= fiaInfo.s1Size && !fiaInfo.pageAttentionFlag &&
-                   fiaInfo.nextToken >= fiaInfo.s2Size) {
+    if (!isPFAFlag_) {
+        uint8_t sparseType = 0;
+        inputParams.set_sparseType(sparseType);
+    } else {
+        uint8_t sparseType = 0;
+        if (fiaInfo.sparseMode == SPARSE_MODE_NO_MASK) {
+            if (fiaInfo.preToken >= fiaInfo.s1Size && fiaInfo.nextToken == 0) {
+                sparseType = 3;
+            } else if (fiaInfo.preToken >= fiaInfo.s1Size && !fiaInfo.pageAttentionFlag &&
+                       fiaInfo.nextToken >= fiaInfo.s2Size) {
+                sparseType = 0;
+            } else {
+                sparseType = 4;
+            }
+        } else if (fiaInfo.sparseMode == SPARSE_MODE_ALL_MASK) {
             sparseType = 0;
-        } else {
-            sparseType = 4;
-        }
-    } else if (fiaInfo.sparseMode == SPARSE_MODE_ALL_MASK) {
-        sparseType = 0;
-    } else if (fiaInfo.sparseMode == SPARSE_MODE_LEFT_UP) {
-        sparseType = 3;
-    } else if (fiaInfo.sparseMode == SPARSE_MODE_RIGHT_DOWN) {
-        if (!fiaInfo.pageAttentionFlag && fiaInfo.s1Size == fiaInfo.s2Size) {
+        } else if (fiaInfo.sparseMode == SPARSE_MODE_LEFT_UP) {
             sparseType = 3;
-        } else {
+        } else if (fiaInfo.sparseMode == SPARSE_MODE_RIGHT_DOWN) {
+            if (!fiaInfo.pageAttentionFlag && fiaInfo.s1Size == fiaInfo.s2Size) {
+                sparseType = 3;
+            } else {
+                sparseType = 4;
+            }
+        } else if (fiaInfo.sparseMode == SPARSE_MODE_BAND) {
             sparseType = 4;
         }
-    } else if (fiaInfo.sparseMode == SPARSE_MODE_BAND) {
-        sparseType = 4;
+        inputParams.set_sparseType(sparseType);
     }
-    inputParams.set_sparseType(sparseType);
 
     /*
      *  alibi 相关tiling data
@@ -1700,16 +1740,30 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::ComputeTilingData(const FiaT
     }
 
     if (fiaInfo.pageAttentionFlag) {
-        uint32_t keyCacheDimNum = fiaInfo.opParamInfo.key.shape->GetStorageShape().GetDimNum();
-        if (keyCacheDimNum == 3) {
-            inputParams.set_paLayoutType(1);
-            baseParams.set_PAlayoutType(1);
-        } else if (keyCacheDimNum == 4) {
-            inputParams.set_paLayoutType(0);
-            baseParams.set_PAlayoutType(0);
-        } else if (keyCacheDimNum == 5) {
-            inputParams.set_paLayoutType(2);
-            baseParams.set_PAlayoutType(2);
+        if (fiaInfo.antiQuantFlag) {
+            uint32_t keyCacheDimNum = fiaInfo.opParamInfo.key.shape->GetStorageShape().GetDimNum();
+            if (keyCacheDimNum == 3) { // 3: BBH
+                inputParams.set_paLayoutType(0);
+                baseParams.set_PAlayoutType(0);
+            } else if (keyCacheDimNum == 4) { // 4: BNBD
+                inputParams.set_paLayoutType(1);
+                baseParams.set_PAlayoutType(1);
+            } else if (keyCacheDimNum == 5) { // 5: PA NZ
+                inputParams.set_paLayoutType(2);
+                baseParams.set_PAlayoutType(2);
+            }
+        } else {
+            uint32_t keyCacheDimNum = fiaInfo.opParamInfo.key.shape->GetStorageShape().GetDimNum();
+            if (keyCacheDimNum == 3) { // 3: BBH
+                inputParams.set_paLayoutType(1);
+                baseParams.set_PAlayoutType(1);
+            } else if (keyCacheDimNum == 4) { // 4: BNBD
+                inputParams.set_paLayoutType(0);
+                baseParams.set_PAlayoutType(0);
+            } else if (keyCacheDimNum == 5) { // 5: PA NZ
+                inputParams.set_paLayoutType(2);
+                baseParams.set_PAlayoutType(2);
+            }
         }
     }
 
@@ -1762,7 +1816,7 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetFATilingData(const FiaTil
     inputParams.set_pseShapeType(fiaInfo.enableAlibiPse ? 3 : 0);
     inputParams.set_pseS1Size(fiaInfo.pseShiftS1);
     inputParams.set_pseS2Size(fiaInfo.pseShiftS2);
-    inputParams.set_pseBSize(fiaInfo.pseShiftByBatch ? fiaInfo.bSize : 1);
+    inputParams.set_pseBSize(fiaInfo.pseShiftByBatch);
     inputParams.set_implMode(0);
     inputParams.set_needDropMaskOp(0);
     inputParams.set_dropMaskOuter(0);
@@ -1780,7 +1834,7 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetFATilingData(const FiaTil
     inputParams.set_isKvContinuous(fiaInfo.kvStorageMode != KvStorageMode::TENSOR_LIST);
     inputParams.set_fromFused(!fromPFA_);
     inputParams.set_isBSNDOut(fiaInfo.qLayout == FiaLayout::BNSD && fiaInfo.outLayout == FiaLayout::BSND);
-    inputParams.set_isGqa(gsMergeFlag_ && fiaInfo.ropeMode == RopeMode::NO_ROPE);
+    inputParams.set_isGqa(gsMergeFlag_ && fiaInfo.ropeMode != RopeMode::ROPE_SPLIT);
     inputParams.set_isSoftMaxLseEnable(fiaInfo.softmaxLseFlag);
     inputParams.set_isQHasLeftPadding(fiaInfo.qPaddingSizeFlag);
     inputParams.set_isKVHasLeftPadding(fiaInfo.kvPaddingSizeFlag);

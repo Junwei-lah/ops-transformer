@@ -84,7 +84,9 @@ int64_t PagedAttentionChecker::GetMaxBlockNumPerBatch(const FiaTilingInfo &fiaIn
     int64_t blockNumPerBatch = 0;
     int64_t maxBlockNumPerBatch = 0;
     uint32_t loop = std::min(actualSeqLengthsKVSize, fiaInfo.bSize);
-
+    if (actSeqLenKV->GetData<int64_t>() == nullptr) {
+        return 0;
+    }
     for (uint32_t i = 0; i < loop; i++) {
         actualSeqKVPerBatch = actSeqLenKV->GetData<int64_t>()[i];
         blockNumPerBatch = (actualSeqKVPerBatch + blockSize - 1) / blockSize;
@@ -248,17 +250,20 @@ ge::graphStatus PagedAttentionChecker::CheckPACacheShape(const FiaTilingInfo &fi
                     return ge::GRAPH_FAILED);
             }
         } else {
-            std::unordered_map<ge::DataType, float> typeSizeMap = {{ge::DT_FLOAT16, FLOAT16SIZE},
-                {ge::DT_BF16, BFLOAT16SIZE}, {ge::DT_INT8, INT8SIZE}, {ge::DT_HIFLOAT8, FLOAT8SIZE},
-                {ge::DT_FLOAT8_E4M3FN, FLOAT8SIZE}};
-            uint32_t dataTypeSizeValue = FLOAT16SIZE;
+            std::unordered_map<ge::DataType, float> typeSizeMap = {
+                {ge::DT_FLOAT16, static_cast<float>(FLOAT16SIZE)},
+                {ge::DT_BF16, static_cast<float>(BFLOAT16SIZE)},
+                {ge::DT_INT8, static_cast<float>(INT8SIZE)},
+                {ge::DT_HIFLOAT8, static_cast<float>(FLOAT8SIZE)},
+                {ge::DT_FLOAT8_E4M3FN, static_cast<float>(FLOAT8SIZE)}};
+            float dataTypeSizeValue = static_cast<float>(FLOAT16SIZE);
             auto inputTypeCheck = typeSizeMap.find(fiaInfo.inputKvType);
             if (inputTypeCheck != typeSizeMap.end()) {
                 dataTypeSizeValue = inputTypeCheck->second;
             }
 
             if (enableFullQuant_ && inputName == "keyRope") {
-                dataTypeSizeValue = BFLOAT16SIZE;
+                dataTypeSizeValue = static_cast<float>(BFLOAT16SIZE);
             }
 
             d0Size = BYTE_BLOCK / dataTypeSizeValue;
@@ -389,10 +394,14 @@ ge::graphStatus PagedAttentionChecker::CheckBlockSize(const FiaTilingInfo &fiaIn
                 return ge::GRAPH_FAILED);
         }
     } else if (enableAntiQuant_) {
-        std::unordered_map<ge::DataType, float> typeSizeMap = {{ge::DT_FLOAT16, FLOAT16SIZE},
-            {ge::DT_BF16, BFLOAT16SIZE}, {ge::DT_INT8, INT8SIZE}, {ge::DT_HIFLOAT8, FLOAT8SIZE},
-            {ge::DT_FLOAT8_E4M3FN, FLOAT8SIZE}, {ge::DT_INT4, INT4SIZE}, {ge::DT_FLOAT4_E2M1, FLOAT4SIZE}};
-        uint32_t dataTypeSizeValue = FLOAT16SIZE;
+        std::unordered_map<ge::DataType, float> typeSizeMap = {{ge::DT_FLOAT16, static_cast<float>(FLOAT16SIZE)},
+                                                               {ge::DT_BF16, static_cast<float>(BFLOAT16SIZE)},
+                                                               {ge::DT_INT8, static_cast<float>(INT8SIZE)},
+                                                               {ge::DT_HIFLOAT8, static_cast<float>(FLOAT8SIZE)},
+                                                               {ge::DT_FLOAT8_E4M3FN, static_cast<float>(FLOAT8SIZE)},
+                                                               {ge::DT_INT4, INT4SIZE},
+                                                               {ge::DT_FLOAT4_E2M1, FLOAT4SIZE}};
+        float dataTypeSizeValue = static_cast<float>(FLOAT16SIZE);
         auto inputTypeCheck = typeSizeMap.find(fiaInfo.inputKvType);
         if (inputTypeCheck != typeSizeMap.end()) {
             dataTypeSizeValue = inputTypeCheck->second;
@@ -439,6 +448,25 @@ ge::graphStatus PagedAttentionChecker::CheckPADimNum(const FiaTilingInfo &fiaInf
                 "When page attention enable and input layout is %s, PA BnNBsD is not supported.", inputLayout.c_str()),
             return ge::GRAPH_FAILED);
     }
+    if (fiaInfo.socVersion == platform_ascendc::SocVersion::ASCEND910B) {
+        OP_CHECK_IF(fiaInfo.kvLayout == FiaLayout::BnBsH && (fiaInfo.qLayout != FiaLayout::BSH && fiaInfo.qLayout != FiaLayout::BSND &&
+                        fiaInfo.qLayout != FiaLayout::BNSD && fiaInfo.qLayout != FiaLayout::TND && fiaInfo.qLayout != FiaLayout::NTD),
+            OP_LOGE(fiaInfo.opName, "In %s %s situation, the key/value's layout is BnBsH, query layout must be BSH, BSND, BNSD TND and TND in page attention scene, but got %s",
+                QuantModeToSerialString(fiaInfo.quantMode).c_str(), SituationToSerialString(fiaInfo.ropeMode).c_str(), LayoutToSerialString(fiaInfo.qLayout).c_str()),
+            return ge::GRAPH_FAILED);
+
+        OP_CHECK_IF(fiaInfo.kvLayout == FiaLayout::BnNBsD && (fiaInfo.qLayout != FiaLayout::BSH && fiaInfo.qLayout != FiaLayout::BSND &&
+                        fiaInfo.qLayout != FiaLayout::BNSD && fiaInfo.qLayout != FiaLayout::TND && fiaInfo.qLayout != FiaLayout::NTD),
+            OP_LOGE(fiaInfo.opName, "In %s %s situation, the key/value's layout is BnNBsD, query layout must be BSH, BSND, BNSD TND and TND in page attention scene, but got %s",
+                QuantModeToSerialString(fiaInfo.quantMode).c_str(), SituationToSerialString(fiaInfo.ropeMode).c_str(), LayoutToSerialString(fiaInfo.qLayout).c_str()),
+            return ge::GRAPH_FAILED);
+
+        OP_CHECK_IF(fiaInfo.kvLayout == FiaLayout::NZ && (fiaInfo.qLayout != FiaLayout::BSH && fiaInfo.qLayout != FiaLayout::BSND &&
+                        fiaInfo.qLayout != FiaLayout::BNSD && fiaInfo.qLayout != FiaLayout::TND && fiaInfo.qLayout != FiaLayout::NTD),
+            OP_LOGE(fiaInfo.opName, "In %s %s situation, the key/value's layout is BnNBsD, query layout must be BSH, BSND, BNSD TND and TND in page attention scene, but got %s",
+                QuantModeToSerialString(fiaInfo.quantMode).c_str(), SituationToSerialString(fiaInfo.ropeMode).c_str(), LayoutToSerialString(fiaInfo.qLayout).c_str()),
+            return ge::GRAPH_FAILED);
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -451,14 +479,6 @@ ge::graphStatus PagedAttentionChecker::CheckSinglePara(const FiaTilingInfo &fiaI
     if (ge::GRAPH_SUCCESS != CheckBlockTableDtype(fiaInfo) ||
         ge::GRAPH_SUCCESS != CheckQDtypeSupport(fiaInfo)) {
             return ge::GRAPH_FAILED;
-    }
-
-    if (enableNonQuant_) {
-        ;
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -474,14 +494,6 @@ ge::graphStatus PagedAttentionChecker::CheckParaExistence(const FiaTilingInfo &f
         ge::GRAPH_SUCCESS != CheckSeqLengthKVExistence(fiaInfo)) {
             return ge::GRAPH_FAILED;
     }
-
-    if (enableNonQuant_) {
-        ;
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
-    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -494,13 +506,6 @@ ge::graphStatus PagedAttentionChecker::CheckFeature(const FiaTilingInfo &fiaInfo
             return ge::GRAPH_FAILED;
     }
 
-    if (enableNonQuant_) {
-        ;
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
-    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -514,14 +519,6 @@ ge::graphStatus PagedAttentionChecker::CheckMultiPara(const FiaTilingInfo &fiaIn
         ge::GRAPH_SUCCESS != CheckPADimNum(fiaInfo) ||
         ge::GRAPH_SUCCESS != CheckBlockTableShape(fiaInfo)) {
             return ge::GRAPH_FAILED;
-        }
-
-    if (enableNonQuant_) {
-        ;
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }

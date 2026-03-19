@@ -139,6 +139,22 @@ ge::graphStatus ShapeChecker::CheckPAKeyValue(const FiaTilingInfo &fiaInfo)
         return ge::GRAPH_FAILED;
     }
 
+    if (fiaInfo.socVersion == platform_ascendc::SocVersion::ASCEND910B && fiaInfo.kvLayout == FiaLayout::NZ && fiaInfo.ropeMode == RopeMode::NO_ROPE) {
+        const std::vector<std::int32_t> nzNoRopeDSupportList = {64, 128};
+        if (std::find(nzNoRopeDSupportList.begin(), nzNoRopeDSupportList.end(), keyHeadDim) ==
+                nzNoRopeDSupportList.end() ||
+            std::find(nzNoRopeDSupportList.begin(), nzNoRopeDSupportList.end(), valueHeadDim) ==
+                nzNoRopeDSupportList.end()) {
+            OP_LOGE(fiaInfo.opName,
+                    "In %s %s situation, when the dim of key&value is 5, and the headDim shared by query and key is "
+                    "equal to that of value. The headDim of query|key|value should be 64 | "
+                    "128, but got valueHeadDim:%u, queryHeadDim and keyHeadDim:%u",
+                    QuantModeToSerialString(fiaInfo.quantMode).c_str(), SituationToSerialString(fiaInfo.ropeMode).c_str(), valueHeadDim,
+                    keyHeadDim);
+            return ge::GRAPH_FAILED;
+        }
+    }
+
     OP_CHECK_IF((keyDimNum == 5) && ((keyBlockNum != valueBlockNum) || (keyHeadNum != valueHeadNum) || 
         ((keyD1 != valueD1) && (fiaInfo.mlaMode != MlaMode::ROPE_COMBINE_D128)) || (keyBlockSize != valueBlockSize) ||
         ((keyD0 != valueD0) && (fiaInfo.mlaMode != MlaMode::ROPE_COMBINE_D128))), 
@@ -460,7 +476,6 @@ ge::graphStatus ShapeChecker::CheckAxis(const FiaTilingInfo &fiaInfo)
                 fiaInfo.n1Size / fiaInfo.n2Size),
             return ge::GRAPH_FAILED);
     }
-
     OP_LOGI(fiaInfo.opName, "The axis B(%u), qkD(%u), vD(%u), G(%u), qT(%u), kT(%u).",
             fiaInfo.bSize, fiaInfo.qkHeadDim, fiaInfo.vHeadDim, fiaInfo.gSize, fiaInfo.qTSize, fiaInfo.kTSize);
     return ge::GRAPH_SUCCESS;
@@ -736,9 +751,6 @@ ge::graphStatus ShapeChecker::CheckQueryKeyConsistency(const FiaTilingInfo &fiaI
     if (fiaInfo.pageAttentionFlag || fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST) {
         return ge::GRAPH_SUCCESS;
     }
-    if (fiaInfo.isMaxWorkspace) {
-        return ge::GRAPH_SUCCESS;
-    }
     ge::DataType queryDataType = fiaInfo.opParamInfo.query.desc->GetDataType();
     ge::DataType keyDataType = fiaInfo.opParamInfo.key.desc->GetDataType();
     if (enableNonQuant_) {
@@ -839,7 +851,90 @@ ge::graphStatus ShapeChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaI
         return ge::GRAPH_FAILED;
     }
     std::string inputLayout = fiaInfo.opParamInfo.layOut;
-    if (fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D512) { // decode mla
+    if (fiaInfo.ropeMode == RopeMode::NO_ROPE) {
+        if (fiaInfo.socVersion != platform_ascendc::SocVersion::ASCEND910B) {
+            const std::vector<std::string> INPUT_LAYOUT_LIST = {
+                "BSH", "BSND", "BNSD", "TND", "NTD", "BSND_BNSD", "BSH_BNSD", "NTD_TND", "BNSD_BSND"
+            };
+            if (std::find(INPUT_LAYOUT_LIST.begin(), INPUT_LAYOUT_LIST.end(), inputLayout) == INPUT_LAYOUT_LIST.end()) {
+                OP_LOGE(fiaInfo.opName, "When gqa noquant scenario is applied, the attr inputLayout only supports BSH, "
+                    "BSND, BNSD, TND, NTD, BSND_BNSD, BSH_BNSD, NTD_TND, BNSD_BSND, but got %s", inputLayout.c_str());
+                return ge::GRAPH_FAILED;
+            }
+        } else {
+            const std::vector<std::string> INPUT_LAYOUT_LIST = {
+                "BSH", "BSND", "BNSD", "TND", "NTD", "BSH_NBSD", "BSND_NBSD", "BNSD_NBSD", "TND_NTD", "NTD_TND", "BSH_BNSD", "BSND_BNSD", "BNSD_BSND"
+            };
+            OP_CHECK_IF(std::find(INPUT_LAYOUT_LIST.begin(), INPUT_LAYOUT_LIST.end(), inputLayout) == INPUT_LAYOUT_LIST.end(),
+                OP_LOGE(fiaInfo.opName, "When gqa noquant scenario is applied, layout only supports BSH, BSND, BNSD, TND, NTD, BSH_NBSD, BSND_NBSD, BNSD_NBSD, TND_NTD, NTD_TND, BSH_BNSD, BSND_BNSD, BNSD_BSND, but got %s",
+                    inputLayout.c_str()),
+                return ge::GRAPH_FAILED);
+            const std::vector<std::string> noRopeLayoutSupportListA = {"BSH", "BSND", "BNSD"};
+            const std::vector<std::string> noRopeLayoutSupportListB = {"BNSD_BSND"};
+            const std::vector<std::string> noRopeLayoutSupportListC = {"NTD", "BSH_BNSD", "BSND_BNSD", "NTD_TND"};
+            const std::vector<std::string> noRopeLayoutSupportListD = {"TND"};
+            const std::vector<std::string> combineRopeLayoutSupportList = {
+                "BSH", "BSND", "BNSD", "BNSD_BSND", "TND", "NTD", "BSH_BNSD", "BSND_BNSD", "NTD_TND"};
+
+            if (!fiaInfo.isLegacyIfa &&
+                fiaInfo.vHeadDim % 16 != 0) { // 16: qkvD need 16 align when qs>1, in specific input layout
+                OP_CHECK_IF(std::find(noRopeLayoutSupportListA.begin(), noRopeLayoutSupportListA.end(), inputLayout) !=
+                                noRopeLayoutSupportListA.end(),
+                            OP_LOGE(fiaInfo.opName,
+                                    "In %s %s situation, when Qs>1 and input_layout is %s, headDim of query|key|value "
+                                    "should be align to 16.",
+                                    QuantModeToSerialString(fiaInfo.quantMode).c_str(),
+                                    SituationToSerialString(fiaInfo.ropeMode).c_str(), inputLayout.c_str()),
+                            return ge::GRAPH_FAILED);
+
+                OP_CHECK_IF(std::find(noRopeLayoutSupportListB.begin(), noRopeLayoutSupportListB.end(), inputLayout) !=
+                                noRopeLayoutSupportListB.end(),
+                            OP_LOGE(fiaInfo.opName,
+                                    "In %s %s situation, when Qs>1 and input_layout is %s, headDim of query|key|value "
+                                    "should be align to 16.",
+                                    QuantModeToSerialString(fiaInfo.quantMode).c_str(),
+                                    SituationToSerialString(fiaInfo.ropeMode).c_str(), inputLayout.c_str()),
+                            return ge::GRAPH_FAILED);
+            }
+
+            if (fiaInfo.isLegacyIfa &&
+                (fiaInfo.vHeadDim != 64 &&
+                 fiaInfo.vHeadDim != 128)) { // 64: qkvD need 64 128: qkvD need 128 in specific input layout
+                OP_CHECK_IF(std::find(noRopeLayoutSupportListB.begin(), noRopeLayoutSupportListB.end(), inputLayout) !=
+                                noRopeLayoutSupportListB.end(),
+                            OP_LOGE(fiaInfo.opName,
+                                    "In %s %s situation, when Qs=1 and input_layout is BNSD_BSND, only query|key|value "
+                                    "headDim = 64/128 are supported, but got %u",
+                                    QuantModeToSerialString(fiaInfo.quantMode).c_str(),
+                                    SituationToSerialString(fiaInfo.ropeMode).c_str(), fiaInfo.vHeadDim),
+                            return ge::GRAPH_FAILED);
+            }
+            if (std::find(noRopeLayoutSupportListC.begin(), noRopeLayoutSupportListC.end(), inputLayout) !=
+                noRopeLayoutSupportListC.end()) {
+                OP_CHECK_IF(fiaInfo.vHeadDim != 64 &&
+                                fiaInfo.vHeadDim !=
+                                    128, // 64: qkvD (optional) 64 128: qkvD (optional) 128 in specific input layout
+                            OP_LOGE(fiaInfo.opName,
+                                    "In %s %s situation, when input_layout is NTD, BSH_BNSD, BSND_BNSD, NTD_TND, only "
+                                    "query|key|value headDim = 64/128 are supported, but got %u",
+                                    QuantModeToSerialString(fiaInfo.quantMode).c_str(),
+                                    SituationToSerialString(fiaInfo.ropeMode).c_str(), fiaInfo.vHeadDim),
+                            return ge::GRAPH_FAILED);
+            }
+            if (std::find(noRopeLayoutSupportListD.begin(), noRopeLayoutSupportListD.end(), inputLayout) !=
+                noRopeLayoutSupportListD.end()) {
+                OP_CHECK_IF(fiaInfo.vHeadDim != 64 && fiaInfo.vHeadDim != 128 &&
+                                fiaInfo.vHeadDim != 192, // 64: qkvD (optional) 64, 128: qkvD (optional) 128, 192: qkvD
+                                                         // (optional) 192 when input_layout=TND
+                            OP_LOGE(fiaInfo.opName,
+                                    "In %s %s situation, when input_layout is TND, only query|key|value headDim = "
+                                    "64/128/192 are supported, but got %u",
+                                    QuantModeToSerialString(fiaInfo.quantMode).c_str(),
+                                    SituationToSerialString(fiaInfo.ropeMode).c_str(), fiaInfo.vHeadDim),
+                            return ge::GRAPH_FAILED);
+            }
+        }
+    } else if (fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D512) { // decode mla
         const std::vector<std::string> INPUT_LAYOUT_LIST = {
             "BSH", "BSND", "BNSD", "TND", "BNSD_NBSD", "BSND_NBSD", "BSH_NBSD", "TND_NTD"
         };
@@ -848,12 +943,12 @@ ge::graphStatus ShapeChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaI
                 "TND ,BNSD_BSND, BSND_NBSD, BSH_NBSD, TND_NTD, but got %s", inputLayout.c_str());
             return ge::GRAPH_FAILED;
         }
-    } else { // prefill mla and gqa
+    } else { // prefill mla
         const std::vector<std::string> INPUT_LAYOUT_LIST = {
             "BSH", "BSND", "BNSD", "TND", "NTD", "BSND_BNSD", "BSH_BNSD", "NTD_TND", "BNSD_BSND"
         };
         if (std::find(INPUT_LAYOUT_LIST.begin(), INPUT_LAYOUT_LIST.end(), inputLayout) == INPUT_LAYOUT_LIST.end()) {
-            OP_LOGE(fiaInfo.opName, "When prefill mla or gqa noquant scenario is applied, the attr inputLayout only supports BSH, "
+            OP_LOGE(fiaInfo.opName, "When prefill mla noquant scenario is applied, the attr inputLayout only supports BSH, "
                 "BSND, BNSD, TND, NTD, BSND_BNSD, BSH_BNSD, NTD_TND, BNSD_BSND, but got %s", inputLayout.c_str());
             return ge::GRAPH_FAILED;
         }
@@ -965,10 +1060,6 @@ bool ShapeChecker::CheckTransposeLayoutCrossover(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-// enableFullQuant 相关校验函数
-
-// enableAntiQuant 相关校验函数
-
 ge::graphStatus ShapeChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
 {
     if (enableNonQuant_) {
@@ -977,10 +1068,6 @@ ge::graphStatus ShapeChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
             CheckNonQuantAttr(fiaInfo) != ge::GRAPH_SUCCESS) {
             return ge::GRAPH_FAILED;
         }
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -989,14 +1076,6 @@ ge::graphStatus ShapeChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
 {
     if (CheckParaExistenceImpl(fiaInfo) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
-    }
-
-    if (enableNonQuant_) {
-        ;
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -1024,10 +1103,6 @@ ge::graphStatus ShapeChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
         if (!CheckTNDLayoutCrossover(fiaInfo) || !CheckNTDLayoutCrossover(fiaInfo) || !CheckTransposeLayoutCrossover(fiaInfo)) {
             return ge::GRAPH_FAILED;
         }
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -1045,10 +1120,6 @@ ge::graphStatus ShapeChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
             CheckMultiAttr(fiaInfo) != ge::GRAPH_SUCCESS) {
             return ge::GRAPH_FAILED;
         }
-    } else if (enableFullQuant_) {
-        ;
-    } else if (enableAntiQuant_) {
-        ;
     }
     return ge::GRAPH_SUCCESS;
 }

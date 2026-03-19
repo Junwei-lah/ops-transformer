@@ -12,7 +12,6 @@
  * \brief
  */
 
-
 #ifndef DEQUANT_CHECKER_H
 #define DEQUANT_CHECKER_H
 
@@ -22,7 +21,6 @@
 #include "base_checker.h"
 
 namespace optiling {
-
 class DequantChecker : public BaseChecker {
 public:
     DequantChecker(bool enableNonQuant, bool enableFullQuant, bool enableAntiQuant) :
@@ -35,8 +33,6 @@ public:
     ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) override;
 
 private:
-    // 公共校验函数
-
     // enableNonQuant 相关校验函数
     ge::graphStatus CheckExistenceNoquant(const FiaTilingInfo &fiaInfo);
 
@@ -56,7 +52,7 @@ private:
         const std::string &quantModeName, const std::string &inputName);
     ge::graphStatus CheckTensorNotExistFullquant(const FiaTilingInfo &fiaInfo, const gert::Tensor *tensor,
         const std::string &quantModeName, const std::string &inputName);
-   ge::graphStatus CheckExistencePertensorFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckExistencePertensorFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckExistenceMLAFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckExistencePerblockFullquant(const FiaTilingInfo &fiaInfo);
 
@@ -88,6 +84,7 @@ private:
     
     // Existence
     ge::graphStatus CheckExistenceForAntiquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckScaleExistenceForAntiquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDescExistenceForAntiquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckOffsetExistenceForAntiquant(const FiaTilingInfo &fiaInfo);
 

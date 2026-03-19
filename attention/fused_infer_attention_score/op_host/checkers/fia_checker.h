@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef FIA_CHECKER_H
 #define FIA_CHECKER_H
 
@@ -37,7 +36,6 @@
 #include "./system_prefix_checker.h"
 
 namespace optiling {
-
 class FIAChecker {
 public:
     FIAChecker() = default;

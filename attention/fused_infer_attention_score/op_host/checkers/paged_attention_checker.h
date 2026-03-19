@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef PAGED_ATTENTION_CHECKER_H
 #define PAGED_ATTENTION_CHECKER_H
 
@@ -53,7 +52,6 @@ private:
 
     ge::graphStatus CheckPACacheShape(const FiaTilingInfo &fiaInfo, const gert::Shape tempShape,
         const std::string& inputName);
-
 };
 
 } // namespace optiling

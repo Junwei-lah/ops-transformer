@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef SOFTMAX_LSE_CHECKER_H
 #define SOFTMAX_LSE_CHECKER_H
 
@@ -36,15 +35,9 @@ public:
 
 private:
     // 公共校验函数
-
     ge::graphStatus CheckSingleDtype(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckExistenceShapeAndDesc(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckMultiParaDimAndShape(const FiaTilingInfo &fiaInfo);
-    // enableNonQuant 相关校验函数
-
-    // enableFullQuant 相关校验函数
-
-    // enableAntiQuant 相关校验函数
 
 private:
 };

@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef ACTUAL_SEQ_LEN_CHECKER_H
 #define ACTUAL_SEQ_LEN_CHECKER_H
 

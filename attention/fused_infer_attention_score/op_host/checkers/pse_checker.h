@@ -13,7 +13,6 @@
  * \brief
  */
 
-
 #ifndef PSE_CHECKER_H
 #define PSE_CHECKER_H
 
@@ -36,7 +35,6 @@ public:
     ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) override;
 
 private:
-    // 公共校验函数
     // singlepara
     ge::graphStatus CheckPseType(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckPseShiftDataType(const FiaTilingInfo &fiaInfo);

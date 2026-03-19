@@ -35,7 +35,6 @@ public:
 private:
     // 公共校验函数
     ge::graphStatus CheckSinkDtypeSupport(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckFeatureExistence(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureSupport(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckSinkShapeSupport(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckAxisSupport(const FiaTilingInfo &fiaInfo);
