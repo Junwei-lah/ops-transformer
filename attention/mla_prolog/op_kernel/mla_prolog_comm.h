@@ -111,6 +111,7 @@ constexpr uint32_t K_STEP_SIZE_32 = 32; // for move left or right
 constexpr uint32_t SHIFTS_UNIT = 4;
 constexpr uint32_t UNIT_SIZE = 512;
 constexpr uint32_t ROUND_UP_UNIT = 15; // for round up
+constexpr uint32_t MAX_SYNC_FLAG_COUNT = 15; // 同一个flagId的计数器最多设置15次
 
 constexpr int SYNC_MODE_ALL_CUBE = 0x0;
 constexpr int SYNC_MODE_CUBE_VEC = 0x2;

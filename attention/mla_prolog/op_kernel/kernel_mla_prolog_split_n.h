@@ -1203,9 +1203,10 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::MatmulQnSyncDynamicQuantAndMu
     // MatmulQcQr ──> MatmulQn ──> query_out
     // [32, 128] * [128, 512] = [32, 512]
     // [32, 2, 128] * [2, 128, 512] = [32, 2, 512]
+    bool needSparseSync = subLoopTimes > MAX_SYNC_FLAG_COUNT;
     for (int64_t i = 0; i < subLoopTimes; i++) {
         if constexpr (MLAPT::enableDequantOpt) {
-            CrossCoreWaitFlag(FINISH_VEC_DEQUANT_QC_SPLIT_N);
+            if (!needSparseSync || i % 2 == 0 || i == subLoopTimes - 1) { CrossCoreWaitFlag(FINISH_VEC_DEQUANT_QC_SPLIT_N); }
         }
         if (unlikely(mmQnParam_.baseK < mmQnParam_.k)) {
             uint32_t nInput = baseParams_->headSizeCkv;
@@ -2058,6 +2059,9 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::DequantAndRopeSplitNSyncMMQcQ
     uint32_t deQuantScaleCqOffset = ropeCntDown * subBlockIdx_ * FP32_BLOCK_ELEMENT_NUM;
     // cube一次处理row*colCube，对应的两个vec一次处理row*colQc，两vec之间切colQc
     // 等cube生产足够数据了以后，vec开始消费
+    uint32_t dequantLoopCount = 0;
+    uint32_t totoalDequantLoops = CeilDiv(oriCol, (colQc + colQr));
+    bool needSparseSync = totoalDequantLoops > MAX_SYNC_FLAG_COUNT;
     while (colOffsetCube < oriCol) {    // 循环CeilDiv(oriCol, colCube)次
         colOffsetCube += colCube;
         if (colOffsetCube > oriCol) {   // 当oriCol不被colCube整除时，mm最后一个base块需要刷新col end
@@ -2073,7 +2077,10 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::DequantAndRopeSplitNSyncMMQcQ
                 CastQcQrSplitN(CastQcQrSplitNParams{mmQnPreDequantOffset, mmQnPreDequantResOffset, 
                                inputOffset, outputOffset, srcStride, dstStride});
             }
-            CrossCoreSetFlag<SYNC_MODE_CUBE_VEC, PIPE_MTE3>(FINISH_VEC_DEQUANT_QC_SPLIT_N);
+            if (!needSparseSync || dequantLoopCount % 2 == 0 || dequantLoopCount == totoalDequantLoops -1) {
+                CrossCoreSetFlag<SYNC_MODE_CUBE_VEC, PIPE_MTE3>(FINISH_VEC_DEQUANT_QC_SPLIT_N);
+            }
+            dequantLoopCount++;
             colOffsetVec += (colQc + colQr);
             inputOffset += (colQc + colQr);
             outputOffset += colQc;
