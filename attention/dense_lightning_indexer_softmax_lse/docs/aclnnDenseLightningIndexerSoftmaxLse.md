@@ -299,6 +299,10 @@ aclnnStatus aclnnDenseLightningIndexerSoftmaxLse(
 
 ## 约束说明
 
+  - 参数queryIndex、keyIndex的数据类型应保持一致。
+
+  - 参数weights不为float32时，参数queryIndex、keyIndex、weights的数据类型应保持一致。
+
   - 确定性计算：
     aclnnDenseLightningIndexerSoftmaxLse默认确定性实现。
 
@@ -396,12 +400,12 @@ aclnnStatus aclnnDenseLightningIndexerSoftmaxLse(
     <tr>
       <td>Nidx1</td>
       <td>8、16、32、64</td>
-      <td>SparseFA为MQA。</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>Nidx2</td>
       <td>1</td>
-      <td>SparseFA为MQA，N2=1。</td>
+      <td>-</td>
     </tr>
     <tr>
       <td>D</td>
