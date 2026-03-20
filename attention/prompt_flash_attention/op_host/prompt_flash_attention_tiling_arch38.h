@@ -87,8 +87,8 @@ protected:
         PromptFlashAttentionTilingData& tilingData, const int32_t* sparseMode, const int64_t* preTokens,
         const int64_t* nextTokens);
     bool CheckMaskShapeCrossSparse(ContextParamsForPFATiling& contextKeyParams, const int32_t* sparseMode,
-        uint32_t sQ, const uint32_t sK, const uint32_t batchSize);
-    bool CheckMaskCrossIFAMLA(ContextParamsForPFATiling& contextKeyParams, const int32_t *sparseMode, uint32_t queryS);
+        uint64_t sQ, const uint64_t sK, const uint32_t batchSize);
+    bool CheckMaskCrossIFAMLA(ContextParamsForPFATiling& contextKeyParams, const int32_t *sparseMode, uint64_t queryS);
     bool CheckIO(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, PFAShapeInfo& valueShapeInfo);
     bool CheckKV(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& keyShapeInfo, PFAShapeInfo& valueShapeInfo) const;
     bool CheckQueryAndKey(ContextParamsForPFATiling& contextKeyParams, PFAShapeInfo& queryShapeInfo, 
@@ -226,7 +226,7 @@ protected:
     bool enablePostQuant = false;
     bool enablePertensorQuant = false;
     bool enablePerblockQuant = false;
-    uint32_t gSize = 1;
+    uint64_t gSize = 1;
     InputLayout inputLayout = InputLayout::BSH;
     ge::DataType inputType{ge::DT_FLOAT16};
     ge::DataType outputType{ge::DT_FLOAT16};

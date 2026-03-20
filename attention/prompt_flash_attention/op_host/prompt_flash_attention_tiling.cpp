@@ -389,13 +389,13 @@ ge::graphStatus PromptFlashAttentionTiling::ConvertContextToPFAParams(gert::Tili
     contextKeyParams.outputShape = context->GetOutputShape(0);
     auto attrs = context->GetAttrs();
     contextKeyParams.innerPrecisePtr = attrs->GetAttrPointer<int64_t>(ATTR_INNER_PRECISE);
-    contextKeyParams.headsNumber = attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX);
+    contextKeyParams.headsNumber = attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
     contextKeyParams.sparseMode = attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE);
     contextKeyParams.preToken = attrs->GetAttrPointer<int64_t>(ATTR_PRE_TOKEN_INDEX);
     contextKeyParams.nextToken = attrs->GetAttrPointer<int64_t>(ATTR_NEXT_TOKEN_INDEX);
     contextKeyParams.scaleValue = attrs->GetAttrPointer<float>(ATTR_SCALE_INDEX);
     contextKeyParams.layout = attrs->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX);
-    contextKeyParams.numKeyValueHeads = attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX);
+    contextKeyParams.numKeyValueHeads = attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX);
     contextKeyParams.workspaceSize = context->GetWorkspaceSizes(1);
     contextKeyParams.compileInfoPtr = static_cast<const PromptFlashAttentionCompileInfo *>(context->GetCompileInfo());
     contextKeyParams.isBSNDOut = (string(contextKeyParams.layout) == "BNSD_BSND") ? 1U : 0U;
@@ -1315,7 +1315,7 @@ bool PromptFlashAttentionTiling::PromptFlashAttentionCheckBmm2(PromptFlashAttent
     if (autoBaseMNK) {
         if (enableMatmulNorm || splitCoreMode == SplitCoreMode::SPLIT_NBS_CUBE || splitCoreMode == SplitCoreMode::SPLIT_ONEN_CUBE) {
             uint32_t baseM = std::min(uint32_t(128), sOuterFactor);
-            uint32_t baseN = std::min(uint32_t(128), tilingData.promptAttentionBaseParams.get_headSize());
+            uint32_t baseN = static_cast<uint32_t>(std::min(uint64_t(128), tilingData.promptAttentionBaseParams.get_headSize()));
             uint32_t baseK = 128U;
             ret = bmm2.SetFixSplit(baseM, baseN, baseK);
             OP_CHECK_IF(ret != 0,
@@ -1722,10 +1722,10 @@ bool PromptFlashAttentionTiling::CheckInputDimAndHeadNum(ContextParamsForPFATili
 }
 
 bool PromptFlashAttentionTiling::SetTilingHeadNumRatio(ContextParamsForPFATiling& contextKeyParams,
-    const int32_t* numQueryHeads, const int32_t* numKeyValueHeads,
+    const int64_t* numQueryHeads, const int64_t* numKeyValueHeads,
     PromptFlashAttentionTilingData& tilingData) {
-    const int32_t nQ = *numQueryHeads;
-    const int32_t nKV = *numKeyValueHeads;
+    const int64_t nQ = *numQueryHeads;
+    const int64_t nKV = *numKeyValueHeads;
 
     if ((nQ < 0) || (nKV < 0)) {
         OP_LOGE(contextKeyParams.opName, "numHeads(%d) or numKeyValueHeads(%d) is negative!", nQ, nKV);
@@ -1861,7 +1861,7 @@ bool PromptFlashAttentionTiling::CheckActualSeqLength(ContextParamsForPFATiling&
 }
 
 bool PromptFlashAttentionTiling::CheckPseShiftTypeAndShape(ContextParamsForPFATiling& contextKeyParams,
-    const gert::StorageShape *pseShiftShape, uint32_t b, uint32_t n, uint32_t s1, uint32_t s2) {
+    const gert::StorageShape *pseShiftShape, uint32_t b, uint64_t n, uint32_t s1, uint32_t s2) {
     if (contextKeyParams.fromTilingSink != 0U) {
         return true;
     }
@@ -2006,7 +2006,7 @@ bool PromptFlashAttentionTiling::culActSeqLenParamsWhenPA(ContextParamsForPFATil
 }
 
 bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenBBH(ContextParamsForPFATiling& contextKeyParams, int32_t keyDim1, int32_t keyDim2, int32_t keyDim3, 
-    int64_t blockNumValid, const int32_t* curBlockSize, int32_t h, int32_t headNumRatio) {
+    int64_t blockNumValid, const int32_t* curBlockSize, int64_t h, int64_t headNumRatio) {
     auto hKV = h / headNumRatio; // the function SetTilingHeadNumRatio ensures that headNumRatio is not 0.
     int32_t tempBlockSize = keyDim2;
     int32_t tempKVH = keyDim3;
@@ -2025,7 +2025,7 @@ bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenBBH(ContextParamsForPFAT
 }
 
 bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenBNBD(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* keyShape, const gert::StorageShape* valueShape, 
-    int32_t keyDim1, int32_t keyDim2, int32_t keyDim3, int64_t blockNumValid, const int32_t* curBlockSize, int32_t n, int32_t h, int32_t headNumRatio) {
+    int32_t keyDim1, int32_t keyDim2, int32_t keyDim3, int64_t blockNumValid, const int32_t* curBlockSize, int64_t n, int64_t h, int64_t headNumRatio) {
     if (n == 0) {
         return false;
     }
@@ -2047,7 +2047,7 @@ bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenBNBD(ContextParamsForPFA
 }
 
 bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenNZ(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* keyShape, const gert::StorageShape* valueShape, 
-    int32_t keyDim1, int32_t keyDim2, int32_t keyDim3, int64_t blockNumValid, const int32_t* curBlockSize, int32_t h, int32_t n, int32_t headNumRatio) {
+    int32_t keyDim1, int32_t keyDim2, int32_t keyDim3, int64_t blockNumValid, const int32_t* curBlockSize, int64_t h, int64_t n, int64_t headNumRatio) {
     if (n == 0) {
         return false;
     }
@@ -2076,7 +2076,7 @@ bool PromptFlashAttentionTiling::checkPAKeyValueDimsWhenNZ(ContextParamsForPFATi
 }
 
 bool PromptFlashAttentionTiling::CheckPAKeyValueParams(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* keyShape, const gert::StorageShape* valueShape, 
-    int64_t blockNumValid, const int32_t* curBlockSize, int32_t n, int32_t h, int32_t headNumRatio) {
+    int64_t blockNumValid, const int32_t* curBlockSize, int64_t n, int64_t h, int64_t headNumRatio) {
     int32_t keyDim = keyShape->GetStorageShape().GetDimNum();
     int32_t valueDim = valueShape->GetStorageShape().GetDimNum();
     OP_CHECK_IF(keyDim != valueDim,
@@ -2125,7 +2125,7 @@ bool PromptFlashAttentionTiling::CheckPASparseMode(ContextParamsForPFATiling& co
 }
 
 bool PromptFlashAttentionTiling::CheckPAWhenBaseApi(ContextParamsForPFATiling& contextKeyParams, const gert::Tensor* actualSeqLenQ,
-    const gert::Tensor* actualSeqLenKV, int32_t n, int32_t h, int32_t headNumRatio) {
+    const gert::Tensor* actualSeqLenKV, int64_t n, int64_t h, int64_t headNumRatio) {
     const int32_t* curBlockSize = contextKeyParams.blockSize;
     auto b = actualSeqLenQ->GetShapeSize();
     if (!checkPABlockSizeAndBlockTable(contextKeyParams, actualSeqLenKV, curBlockSize, b)) {
@@ -2175,7 +2175,7 @@ bool PromptFlashAttentionTiling::CheckPAWhenBaseApi(ContextParamsForPFATiling& c
 }
 
 bool PromptFlashAttentionTiling::CheckPATypeAndShape(ContextParamsForPFATiling& contextKeyParams,
-    const gert::Tensor* actualSeqLenKV, int32_t b, int32_t n, int32_t h, int32_t headNumRatio) {
+    const gert::Tensor* actualSeqLenKV, int32_t b, int64_t n, int64_t h, int64_t headNumRatio) {
     const int32_t* curBlockSize = contextKeyParams.blockSize;
     if (n == 0) {
         return false;
@@ -2319,7 +2319,7 @@ bool PromptFlashAttentionTiling::CheckPATypeAndShape(ContextParamsForPFATiling& 
 bool PromptFlashAttentionTiling::CheckAttenMaskShape(ContextParamsForPFATiling& contextKeyParams,
     const int32_t* sparseMode,
     const gert::StorageShape* attenMaskShape,
-    const uint32_t sQ, const uint32_t sK, const uint32_t batchSize) {
+    const uint64_t sQ, const uint64_t sK, const uint32_t batchSize) {
     if (contextKeyParams.fromTilingSink != 0U) {
         return true;
     }
@@ -2415,7 +2415,7 @@ bool PromptFlashAttentionTiling::CheckPAAntiquantSupportScenarios(ContextParamsF
 }
 
 bool PromptFlashAttentionTiling::CheckPerchannelAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* antiquantScaleShape, const gert::StorageShape* antiquantOffsetShape,
-        const uint32_t n, const uint32_t d, const uint32_t h, uint32_t paramFirstDim) const {
+        const uint64_t n, const uint32_t d, const uint64_t h, uint32_t paramFirstDim) const {
     OP_CHECK_IF(antiquantScaleShape == nullptr, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "antiquant scale is nullptr"), return false);
     if ((inputLayout == InputLayout::BNSD) || (inputLayout == InputLayout::NSD)) {
         OP_CHECK_IF(antiquantScaleShape->GetStorageShape().GetDimNum() != 4,
@@ -2456,7 +2456,7 @@ bool PromptFlashAttentionTiling::CheckPerchannelAntiquantParamsShape(ContextPara
 }
 
 bool PromptFlashAttentionTiling::CheckPerchannelBSNDParamsShape(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* antiquantScaleShape, const gert::StorageShape* antiquantOffsetShape,
-    const uint32_t n, const uint32_t d, uint32_t paramFirstDim) const {
+    const uint64_t n, const uint32_t d, uint32_t paramFirstDim) const {
     OP_CHECK_IF(antiquantScaleShape->GetStorageShape().GetDimNum() != 3,
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "antiquant scale dim num[%zu] should be 3 if layout is BSND!", antiquantScaleShape->GetStorageShape().GetDimNum()),
         return false);
@@ -2477,7 +2477,7 @@ bool PromptFlashAttentionTiling::CheckPerchannelBSNDParamsShape(ContextParamsFor
 }
 
 bool PromptFlashAttentionTiling::CheckAntiquantParamsShape(ContextParamsForPFATiling& contextKeyParams, const gert::StorageShape* antiquantScaleShape,
-    const gert::StorageShape* antiquantOffsetShape, const uint32_t n, const uint32_t d, const uint32_t h,
+    const gert::StorageShape* antiquantOffsetShape, const uint64_t n, const uint32_t d, const uint64_t h,
     PromptFlashAttentionTilingData& tilingData) {
     if (antiquantScaleShape != nullptr && antiquantScaleShape->GetStorageShape().GetDimNum() == 1) {
         tilingData.promptAttentionBaseParams.set_isAntiPerchannel(0);
@@ -2510,7 +2510,7 @@ bool PromptFlashAttentionTiling::CheckAntiquantParamsShape(ContextParamsForPFATi
     return true;
 }
 
-ge::graphStatus PromptFlashAttentionTiling::CheckPostQuantParams(const ContextParamsForPFATiling& contextKeyParams, uint32_t h, uint32_t n) const {
+ge::graphStatus PromptFlashAttentionTiling::CheckPostQuantParams(const ContextParamsForPFATiling& contextKeyParams, uint64_t h, uint64_t n) const {
     const gert::StorageShape* quantScale2Shape = contextKeyParams.scale2Shape;
     const gert::StorageShape* quantOffset2Shape = contextKeyParams.offset2Shape;
     const ge::DataType quantScale2Type = contextKeyParams.quantScale2Type;
@@ -2521,7 +2521,7 @@ ge::graphStatus PromptFlashAttentionTiling::CheckPostQuantParams(const ContextPa
     int64_t quantScale2ShapeSize = 0;
     int64_t quantOffset2ShapeSize = 0;
     uint32_t quantD = 0;
-    uint32_t queryD = h / n;
+    uint64_t queryD = h / n;
 
     if (outputType == ge::DT_INT8) {
         // Basic verification: quantScale2 must be inputted and not an empty tensor
@@ -2613,8 +2613,8 @@ void PromptFlashAttentionTiling::Align(uint32_t &num) {
 
 // Code for ut, no pratical to use.
 ge::graphStatus PromptFlashAttentionTiling::GetBasicShape310P(uint32_t &b,
-    uint32_t &bKV, uint32_t &s, uint32_t &h, uint32_t &seqInnerSize, const gert::StorageShape *queryShape,
-    const gert::StorageShape *keyShape, const uint32_t n, size_t actualLenDims, size_t actualLenDimsKV) {
+    uint32_t &bKV, uint32_t &s, uint64_t &h, uint32_t &seqInnerSize, const gert::StorageShape *queryShape,
+    const gert::StorageShape *keyShape, const uint64_t n, size_t actualLenDims, size_t actualLenDimsKV) {
     if (n == 0U) {
         return ge::GRAPH_FAILED;
     }
@@ -2770,8 +2770,8 @@ void PromptFlashAttentionTiling::SetBaseApiTilingData(ContextParamsForPFATiling&
     uint32_t headSizeV = 0U;
     uint32_t s = 0U;
     uint32_t seqInnerSize = 0U;
-    const uint32_t headNum = *contextKeyParams.headsNumber;
-    const uint32_t kvHeadNum = (*contextKeyParams.numKeyValueHeads != 0) ? *contextKeyParams.numKeyValueHeads : headNum;
+    const uint64_t headNum = *contextKeyParams.headsNumber;
+    const uint64_t kvHeadNum = (*contextKeyParams.numKeyValueHeads != 0) ? *contextKeyParams.numKeyValueHeads : headNum;
     uint32_t maxSeqLen = 0;
     uint32_t maxKvSeqLen = 0;
     const gert::Tensor* tempData = contextKeyParams.actualSequenceLengthQ;
@@ -4079,7 +4079,7 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
             return ge::GRAPH_FAILED);
     }
 
-    const int32_t* n = contextKeyParams.headsNumber; // num_heads of q
+    const int64_t* n = contextKeyParams.headsNumber; // num_heads of q
     const int32_t* sparseMode = contextKeyParams.sparseMode;
     const int64_t* nextTokens = contextKeyParams.nextToken;
     const int64_t* preTokens = contextKeyParams.preToken;
@@ -4095,14 +4095,14 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
         "key value consistency check failed!"),
         return ge::GRAPH_FAILED);
 
-    const int32_t* numKeyValueHeads = contextKeyParams.numKeyValueHeads;
+    const int64_t* numKeyValueHeads = contextKeyParams.numKeyValueHeads;
     if (!SetTilingHeadNumRatio(contextKeyParams, n, numKeyValueHeads, tilingData)) {
         return ge::GRAPH_FAILED;
     }
 
     // Get different dims.
     uint32_t seqInnerSize = 0U; // kv_s
-    uint32_t h = 0U;
+    uint64_t h = 0U;
     uint32_t valueD = 0U;
     uint32_t s = 0U;
     uint32_t b = 0U;
@@ -4361,11 +4361,11 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
             if (!CheckPASparseMode(contextKeyParams)) {
                 return ge::GRAPH_FAILED;
             }
-            if (!CheckPAWhenBaseApi(contextKeyParams, tempData, tempDataKV, static_cast<int32_t>(*n), static_cast<int32_t>(h), static_cast<int32_t>(tilingData.promptAttentionBaseParams.get_headNumRatio()))) {
+            if (!CheckPAWhenBaseApi(contextKeyParams, tempData, tempDataKV, static_cast<int64_t>(*n), static_cast<int64_t>(h), static_cast<int64_t>(tilingData.promptAttentionBaseParams.get_headNumRatio()))) {
                 return ge::GRAPH_FAILED;
             }
         } else {
-            if (!CheckPATypeAndShape(contextKeyParams, tempDataKV, static_cast<int32_t>(b), static_cast<int32_t>(*n), static_cast<int32_t>(h), static_cast<int32_t>(tilingData.promptAttentionBaseParams.get_headNumRatio()))) {
+            if (!CheckPATypeAndShape(contextKeyParams, tempDataKV, static_cast<int64_t>(b), static_cast<int64_t>(*n), static_cast<int64_t>(h), static_cast<int64_t>(tilingData.promptAttentionBaseParams.get_headNumRatio()))) {
                 return ge::GRAPH_FAILED;
             }
         }
@@ -4506,7 +4506,7 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
     // std::vector<int64_t> actualSeqLengthsKV(lenDims);
     actualSeqLengthsKV.resize(lenDims);
 
-    OP_CHECK_IF(((*n <= 0) || (*n > static_cast<int32_t>(h))),
+    OP_CHECK_IF(((*n <= 0) || (*n > static_cast<int64_t>(h))),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "num heads is error."),
         return ge::GRAPH_FAILED);
     uint32_t needInit = 0U;
@@ -4613,7 +4613,7 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
                 i, actualSeqLengths[i], i, actualSeqLengthsKV[i], actualSharedPrefixLen, needInit);
         }
     }
-    uint32_t hDivN = h / *n; // dims: d = h / n
+    uint64_t hDivN = h / *n; // dims: d = h / n
     // Intercepting high-precision mode does not support shape currently.
     const uint32_t precisionBlockEleCut = BYTE_BLOCK / FLOAT16SIZE; // High-precision currently only supports FP16, aligned at 32/2=16.
     OP_CHECK_IF((hDivN > DLIMIT),
@@ -4707,8 +4707,8 @@ ge::graphStatus PromptFlashAttentionTiling::RunBigKernelTilingWithParams(Context
     }
 
     // Check the kv antiquant parameters and the shapes of scale and offset.
-    uint32_t nKV = *n / tilingData.promptAttentionBaseParams.get_headNumRatio();
-    uint32_t hKV = h / tilingData.promptAttentionBaseParams.get_headNumRatio();
+    uint64_t nKV = *n / tilingData.promptAttentionBaseParams.get_headNumRatio();
+    uint64_t hKV = h / tilingData.promptAttentionBaseParams.get_headNumRatio();
     if (enableKvAntiquant && !CheckAntiquantParamsShape(contextKeyParams, antiquantScaleShape, antiquantOffsetShape, nKV, hDivN, hKV, tilingData)) {
         return ge::GRAPH_FAILED;
     }
@@ -5880,8 +5880,8 @@ ge::graphStatus PromptFlashAttentionTiling::CheckBaseApiRequiredInput(ContextPar
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "kvHeadNum should not be null"),
             return ge::GRAPH_FAILED);
 
-        const int32_t headNum = *contextKeyParams.headsNumber;
-        const int32_t kvHeadNum = (*contextKeyParams.numKeyValueHeads != 0) ? *contextKeyParams.numKeyValueHeads : headNum;
+        const int64_t headNum = *contextKeyParams.headsNumber;
+        const int64_t kvHeadNum = (*contextKeyParams.numKeyValueHeads != 0) ? *contextKeyParams.numKeyValueHeads : headNum;
 
         OP_CHECK_IF((headNum < 0),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "headNum can not be less than 0"),
@@ -6024,7 +6024,7 @@ void PromptFlashAttentionTiling::InferTilingMod(const ContextParamsForPFATiling&
     }
 }
 
-ge::graphStatus PromptFlashAttentionTiling::AdjustCVTiling(uint32_t hDivN, uint32_t n, int64_t middleActualSeqLengths,
+ge::graphStatus PromptFlashAttentionTiling::AdjustCVTiling(uint64_t hDivN, uint64_t n, int64_t middleActualSeqLengths,
     int64_t ubSize, int64_t l1Size, int64_t l0CSize,
     uint32_t maskElemSize, uint32_t& sOuterFactor,
     uint32_t& sInnerFactor, PromptFlashAttentionTilingData& tilingData)

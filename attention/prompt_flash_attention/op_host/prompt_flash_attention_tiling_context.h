@@ -97,14 +97,14 @@ struct ContextParamsForPFATiling {
     ge::DataType valueAntiquantOffsetType = ge::DataType::DT_FLOAT16;
 
     const int64_t *innerPrecisePtr = nullptr;
-    const int32_t *headsNumber = nullptr;
+    const int64_t *headsNumber = nullptr;
     const int32_t *sparseMode = nullptr;
     const int64_t *preToken = nullptr;
     const int64_t *nextToken = nullptr;
     const float *scaleValue = nullptr;
     const int32_t *blockSize = nullptr;
     const char *layout = nullptr;
-    const int32_t *numKeyValueHeads = nullptr;
+    const int64_t *numKeyValueHeads = nullptr;
     size_t *workspaceSize = nullptr;
     const int64_t *pseType = nullptr;
     const PromptFlashAttentionCompileInfo *compileInfoPtr = nullptr;

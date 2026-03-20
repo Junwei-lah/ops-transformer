@@ -3805,12 +3805,12 @@ static void PFAConvertInputShapes(ContextParamsForPFATiling &contextKeyParams, c
 static void PFAConvertAttrs(ContextParamsForPFATiling &contextKeyParams, const gert::RuntimeAttrs *attrs)
 {
     contextKeyParams.innerPrecisePtr = attrs->GetAttrPointer<int64_t>(INNER_PRECISE_ATTR_INDEX);
-    contextKeyParams.headsNumber = attrs->GetAttrPointer<int32_t>(NUM_HEADS_ATTR_INDEX);
+    contextKeyParams.headsNumber = attrs->GetAttrPointer<int64_t>(NUM_HEADS_ATTR_INDEX);
 
     contextKeyParams.blockSize = attrs->GetAttrPointer<int32_t>(BLOCK_SIZE_ATTR_INDEX);
     contextKeyParams.scaleValue = attrs->GetAttrPointer<float>(SCALE_VALUE_ATTR_INDEX);
     contextKeyParams.layout = attrs->GetAttrPointer<char>(LAYOUT_ATTR_INDEX);
-    contextKeyParams.numKeyValueHeads = attrs->GetAttrPointer<int32_t>(KV_NUM_HEADS_ATTR_INDEX);
+    contextKeyParams.numKeyValueHeads = attrs->GetAttrPointer<int64_t>(KV_NUM_HEADS_ATTR_INDEX);
 }
 
 template <typename T>
