@@ -66,11 +66,12 @@ private:
     uint32_t endBlockIdx_{blockNum_ - 1};
 
 public:
-    __aicore__ inline BlockSchedulerGmmAswtWithTailSplit(int32_t baseM, int32_t baseN, int32_t baseK) :
-        baseM_(baseM), baseN_(baseN), baseK_(baseK)
-    {}
+    __aicore__ inline BlockSchedulerGmmAswtWithTailSplit(int32_t baseM, int32_t baseN, int32_t baseK)
+        : baseM_(baseM), baseN_(baseN), baseK_(baseK)
+    {
+    }
 
-    __aicore__ inline void UpdateNextProblem(const TupleShape& problemShape)
+    __aicore__ inline void UpdateNextProblem(const TupleShape &problemShape)
     {
         k_ = Get<MNK_K>(problemShape);
         if (m_ != Get<MNK_M>(problemShape) || n_ != Get<MNK_N>(problemShape)) {
@@ -99,13 +100,20 @@ public:
         }
     }
 
-    __aicore__ inline void UpdateBaseM(uint32_t baseM) {
+    __aicore__ inline void UpdateBaseM(uint32_t baseM)
+    {
         baseM_ = baseM;
     }
 
-    __aicore__ inline void SetTailAlign(uint32_t mTailAlign, uint32_t nTailAlign) {
+    __aicore__ inline void SetTailAlign(uint32_t mTailAlign, uint32_t nTailAlign)
+    {
         mTailAlign_ = mTailAlign;
         nTailAlign_ = nTailAlign;
+    }
+
+    __aicore__ inline int64_t GetTailTileCnt()
+    {
+        return Min(static_cast<int64_t>(endBlockIdx_ + 1), totalCnt_);
     }
 
     __aicore__ inline void UpdateTailTile(uint32_t mTailCnt, uint32_t nTailCnt)
@@ -113,7 +121,8 @@ public:
         mTailCnt_ = mTailCnt;
         nTailCnt_ = nTailCnt;
         tailCnt_ = mTailCnt_ * nTailCnt_;
-        int64_t newEndBlockIdx = tailCnt_ * (endBlockIdx_ + 1) - 1;
+        int64_t tailOriCnt = GetTailTileCnt();
+        int64_t newEndBlockIdx = endBlockIdx_ + tailOriCnt * (tailCnt_ - 1);
         if (blockIdx_ > endBlockIdx_ && blockIdx_ <= newEndBlockIdx) {
             round_ += 1;
         }
@@ -125,7 +134,39 @@ public:
         endBlockIdx_ = newEndBlockIdx;
     }
 
-    __aicore__ inline bool GetTileIdx(BlockCoord& blockCoord)
+    __aicore__ inline void UpdateTailTile()
+    {
+        // calc the splittable counr, set to 1 if no split
+        int64_t remainTile = (AscendC::GetBlockNum() - endBlockIdx_ - 1) / GetTailTileCnt() + 1;
+        if (remainTile <= 1) {
+            return;
+        }
+
+        // init minimum tile size
+        int64_t mMin = AscendC::BLOCK_CUBE;
+        int64_t nMin = AscendC::BLOCK_CUBE;
+
+        // adjust minimum tile size based on whether transA is T or transB is F.
+        if constexpr (TransA_) {
+            mMin = INNER_AXIS_MIN_SPLIT_VAL;
+        }
+        if constexpr (!TransB_) {
+            nMin = INNER_AXIS_MIN_SPLIT_VAL;
+        }
+
+        int64_t mTile = Min(CeilDiv(mBaseTail_, mMin), remainTile);
+        int64_t nTile = Min(CeilDiv(nBaseTail_, nMin), remainTile);
+        while (mTile * nTile > remainTile) {
+            if (mTile >= nTile) {
+                mTile -= 1;
+            } else {
+                nTile -= 1;
+            }
+        }
+        UpdateTailTile(mTile, nTile);
+    }
+
+    __aicore__ inline bool GetTileIdx(BlockCoord &blockCoord)
     {
         if (round_ == 0 || roundIdx_ > round_ - 1) {
             return false;
@@ -135,6 +176,8 @@ public:
         // add startBlockIdx
         if (blockIdx_ < startBlockIdx_) {
             index += blockNum_ - startBlockIdx_;
+        } else if (endBlockIdx_ + 1 >= tailCnt_ * totalCnt_) {
+            index -= startBlockIdx_ / tailCnt_;
         } else {
             index -= startBlockIdx_;
         }
@@ -156,7 +199,7 @@ public:
         return true;
     }
 
-    __aicore__ inline TupleShape GetBlockShape(const BlockCoord& blockCoord)
+    __aicore__ inline TupleShape GetBlockShape(const BlockCoord &blockCoord)
     {
         int64_t singleCoreM = Get<MNK_M>(blockCoord) != (mCnt_ - 1) ? baseM_ : mBaseTail_;
         int64_t singleCoreN = Get<MNK_N>(blockCoord) != (nCnt_ - 1) ? baseN_ : nBaseTail_;
@@ -185,21 +228,10 @@ public:
         return {singleCoreM, singleCoreN, mSplitAddrOffset, nSplitAddrOffset};
     }
 
-    __aicore__ inline BlockCoord GetBlockCoord(int64_t mTileIdx, int64_t nTileIdx)
-    {
-        return {mTileIdx * l1M, nTileIdx * l1N, 0, 0};
-    }
-
     __aicore__ inline int64_t GetEndBlockIdx()
     {
         return endBlockIdx_;
     }
-
-    static int64_t GetBlockNum(ProblemShape shape)
-    {
-        return DoGetBlockNum(l1M, l1N, shape);
-    }
-
 };
 
 template <class ProblemShape_, class L1TileShape_, class L0TileShape_, bool TransA_, bool TransB_>
