@@ -565,6 +565,24 @@ void AllGatherMatmulTilingBase::DoSplitMTiling(Mc2Tiling::RCSTiling& rcfCfg)
     }
 }
 
+void AllGatherMatmulTilingBase::PostDoSplitMTiling(Mc2Tiling::RCSTiling& rcfCfg, mc2tiling::Mc2QuantMode quantMmMode)
+{
+    auto splitNum = args_.mValue / PERBLOCK_SCALE_SIZE;
+    auto tileM = (args_.mValue - rcfCfg.tailM * rcfCfg.tailCnt) / rcfCfg.tileCnt;
+
+    if (tileM % PERBLOCK_SCALE_SIZE == 0) {
+        return;
+    } else {
+        tileM = (tileM / PERBLOCK_SCALE_SIZE) * PERBLOCK_SCALE_SIZE;
+    }
+
+    rcfCfg.tailM = args_.mValue - tileM * rcfCfg.tileCnt;
+    // Update tailCnt, only one tail block left.
+    rcfCfg.tailCnt = 1;
+    tileMValue_ = tileM;
+    tailMValue_ = rcfCfg.tailM;
+}
+
 void AllGatherMatmulTilingBase::Reset()
 {
     tileMValue_ = 0UL;

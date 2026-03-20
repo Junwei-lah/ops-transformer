@@ -86,7 +86,7 @@ class AllGatherQuantBmmHelper : public Mc2AdaptiveSlidingWindowTiling
 {
 public:
     AllGatherQuantBmmHelper(AllGatherQuantBmmTiling& allGatherQuantBmmTiling,
-        DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams& out);
+        DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams& out, bool isLocal = false);
     const gert::Shape GetX1Shape(const size_t index) override;
     const gert::Shape GetX2Shape(const size_t index) override;
     const gert::Shape GetOutputShape(const size_t index) override;
@@ -107,6 +107,7 @@ private:
     uint32_t batch2_{1};
     uint32_t batch3_{1};
     uint32_t batch4_{1};
+    bool isLocal_ = false;
 };
 }  // namespace optiling
 

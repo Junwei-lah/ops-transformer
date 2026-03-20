@@ -51,6 +51,7 @@ constexpr size_t IS_GATHER_OUT = 8;
 constexpr size_t IS_AMAX_OUT = 9;
 constexpr size_t Y_DTYPE = 10;
 
+constexpr uint64_t PERBLOCK_SCALE_SIZE = 128;
 constexpr uint32_t COMM_VERSION3 = 3U;
 
 class AllGatherMatmulTilingBase : public TilingBaseClass
@@ -84,6 +85,7 @@ protected:
                            ::TCubeTiling& tailTiling, uint32_t& debugMode, uint32_t& dataType);
     void SetRcsTilingData(Mc2Tiling::RCSTiling& rcsCfg);
     void DoSplitMTiling(Mc2Tiling::RCSTiling& rcfCfg);
+    void PostDoSplitMTiling(Mc2Tiling::RCSTiling& rcfCfg, mc2tiling::Mc2QuantMode quantMmMode);
     CutResult GetTilingResult();
     virtual ge::graphStatus CheckInput()
     {

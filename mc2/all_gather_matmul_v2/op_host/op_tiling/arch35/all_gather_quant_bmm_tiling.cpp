@@ -33,7 +33,6 @@ constexpr uint32_t DAVIDVER = 1;
 constexpr uint32_t HIF8 = 34;
 constexpr uint32_t FP8_E5M2 = 35;
 constexpr uint32_t FP8_E4M3 = 36;
-constexpr uint64_t PERBLOCK_SCALE_SIZE = 128;
 constexpr uint64_t MX_SCALE_OFFSET = 63;
 constexpr uint64_t MX_SCALE_ALIGN = 64;
 constexpr uint64_t EVEN_ALIGN = 2;
@@ -425,6 +424,9 @@ ge::graphStatus AllGatherQuantBmmTiling::DoOpTiling()
       OP_LOGE(opName_, "Tiling SetHcommCfg failed."), return ge::GRAPH_FAILED);
     SetRcsTilingData(MutableRCSTilingDataA5());
     DoSplitMTiling(MutableRCSTilingDataA5());
+    if (quantMmMode_ == mc2tiling::Mc2QuantMode::PERBLOCK_MODE) {
+        PostDoSplitMTiling(MutableRCSTilingDataA5(), GetQuantScene());
+    }
     GE_ASSERT_GRAPH_SUCCESS(AdjustHCCLLimit(MutableRCSTilingDataA5(), GetQuantScene()));
     GE_ASSERT_GRAPH_SUCCESS(DoAdaptSlidWindowTiling());
     DoAllGatherTiling(MutableRCSTilingDataA5(), MutableTCubeTileTilingData(), MutableTCubeTailTilingData(),
@@ -645,22 +647,22 @@ ge::graphStatus AllGatherQuantBmmTiling::DoAdaptSlidWindowTiling()
 {
     // local块切分
     args_.mValue = args_.orgMValue;
-    AllGatherQuantBmmHelper mmLocalTile(*this, allGatherMatmulTilingDataFp8_->quantBmmv3LocalTiling);
+    AllGatherQuantBmmHelper mmLocalTile(*this, allGatherMatmulTilingDataFp8_->quantBmmv3LocalTiling, true);
     GE_ASSERT_GRAPH_SUCCESS(mmLocalTile.DoTiling());
     args_.mValue = (quantMmMode_ == mc2tiling::Mc2QuantMode::PERTENSOR_MODE) ?
         (tileMValue_ * (args_.rankDim - 1) * (MutableRCSTilingDataA5().tileCnt)) : tileMValue_;
-    AllGatherQuantBmmHelper mmTile(*this, allGatherMatmulTilingDataFp8_->quantBmmv3TileTiling);
+    AllGatherQuantBmmHelper mmTile(*this, allGatherMatmulTilingDataFp8_->quantBmmv3TileTiling, false);
 
     GE_ASSERT_GRAPH_SUCCESS(mmTile.DoTiling());
-    MutableTCubeTileTilingData().M = (tileMValue_ * (args_.rankDim - 1));
+    MutableTCubeTileTilingData().M = tileMValue_;
     if (MutableRCSTilingDataA5().tailCnt == 0) {
         return ge::GRAPH_SUCCESS;
     }
     args_.mValue = (quantMmMode_ == mc2tiling::Mc2QuantMode::PERTENSOR_MODE) ?
         (tailMValue_ * (args_.rankDim - 1) * (MutableRCSTilingDataA5().tailCnt)) : tailMValue_;
-    AllGatherQuantBmmHelper mmTail(*this, allGatherMatmulTilingDataFp8_->quantBmmv3TailTiling);
+    AllGatherQuantBmmHelper mmTail(*this, allGatherMatmulTilingDataFp8_->quantBmmv3TailTiling, false);
     GE_ASSERT_GRAPH_SUCCESS(mmTail.DoTiling());
-    MutableTCubeTailTilingData().M = (tailMValue_ * (args_.rankDim - 1));
+    MutableTCubeTailTilingData().M = tailMValue_;
     return ge::GRAPH_SUCCESS;
 }
 
@@ -697,7 +699,9 @@ void AllGatherQuantBmmHelper::AnalyzeBatchInfo(const gert::Shape &oriShapeA, con
 void AllGatherQuantBmmHelper::SetBatch()
 {
     if (inputParams_.isPerBlock) {
-        batch4_ = tilingProcesser_.args_.rankDim - 1; // 本卡数据先在本卡计算，因此batch matmul只用计算rankDim - 1 张卡通信的数据
+        if (!isLocal_) {
+            batch4_ = tilingProcesser_.args_.rankDim - 1; // 本卡数据先在本卡计算，因此batch matmul只用计算rankDim - 1 张卡通信的数据
+        }
     }
 }
 
@@ -847,8 +851,9 @@ void AllGatherQuantBmmHelper::PrintTilingInputParam(Mc2QuantBatchMatmulInfo& qua
             static_cast<int32_t>(quantBatchMatmulInfo.isDoubleScale));
 }
 AllGatherQuantBmmHelper::AllGatherQuantBmmHelper(AllGatherQuantBmmTiling& allGatherQuantBmmTiling,
-                                                 DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams& data)
-    : Mc2AdaptiveSlidingWindowTiling(allGatherQuantBmmTiling.context_, &data), tilingProcesser_(allGatherQuantBmmTiling)
+                                                 DequantBmm::Mc2QuantBatchMatmulV3TilingDataParams& data, bool isLocal)
+    : Mc2AdaptiveSlidingWindowTiling(allGatherQuantBmmTiling.context_, &data), tilingProcesser_(allGatherQuantBmmTiling),
+      isLocal_(isLocal)
 {
 }
 //注册Tiling类

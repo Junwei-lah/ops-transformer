@@ -145,6 +145,7 @@ __aicore__ inline void AllGatherQuantPerBlock<AType, BType, CType, MmType, CoreT
                   this->addrs_->cGM, this->addrs_->workspaceGM, tileInfo.mmTiling, this->tPipe_, this->batchWeight_, strideCount, true);
         // batchmatmul计算
         mmOp.Process();
+        SyncAll<false>();
         // 刷新下一个tile片的A、C矩阵地址
         // 到计算尾块时，因为已经加上了所有整块的地址大小，尾块不需要重新计算起始地址
         this->addrs_->aGM += tileInfo.aAddrOffset;

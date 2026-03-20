@@ -36,8 +36,9 @@ __aicore__ inline void Mc2QuantBmmAswBlockNonContiguous::CalcGMOffset(const uint
     uint64_t nOffset = params_.nIndex * tilingData_->matmulTiling.baseN + params_.nSplitAddrOffset;
  
     // Currently only supports aTrans being false. To support aTrans being true, 'offsetA' must be recalculated.
+    uint32_t idx = static_cast<uint32_t>(offset_.batchAOffset);
     offset_.offsetA = mOffset * tilingData_->matmulTiling.Ka;
-    offset_.offsetA += offset_.batchAOffset * strideCount * tilingData_->matmulTiling.Ka;
+    offset_.offsetA += strideCount * batchWeight[idx] * tilingData_->matmulTiling.Ka;
 
     // Currently only supports CubeFormat being ND. To support other formats, 'offsetB' must be recalculated.
     if constexpr (bTrans) {
@@ -49,7 +50,7 @@ __aicore__ inline void Mc2QuantBmmAswBlockNonContiguous::CalcGMOffset(const uint
 
     offset_.offsetC = mOffset * tilingData_->matmulTiling.N + nOffset;
     // idx will < 64
-    uint32_t idx = static_cast<uint32_t>(offset_.batchCOffset);
+    idx = static_cast<uint32_t>(offset_.batchCOffset);
     offset_.offsetC += strideCount * batchWeight[idx] * tilingData_->matmulTiling.N;
     offset_.offsetPerTokenScale = mOffset;
     offset_.offsetScale = nOffset;
