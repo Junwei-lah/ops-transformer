@@ -13,7 +13,11 @@
  * \brief kernel内核实现
  */
 
+#if ASC_DEVKIT_MAJOR >= 9
 #include "basic_api/kernel_basic_intf.h"
+#else
+#include "kernel_operator.h"
+#endif
 #include "moe_distribute_dispatch_teardown_tiling.h"
 
 using namespace AscendC;
