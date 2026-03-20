@@ -16,12 +16,12 @@ BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULA
 #ifndef ASCEND_OPS_GROUPED_MATMUL_TILING_COMMON_H
 #define ASCEND_OPS_GROUPED_MATMUL_TILING_COMMON_H
 
+#include <cstdio>
+#include "ascendc/host_api/tiling/template_argument.h"
 #include "lib/matmul/bmm_tiling.h"
 #include "platform/platform_ascendc.h"
-#include "ascendc/host_api/tiling/template_argument.h"
 
 #include "op_kernel/grouped_matmul_tiling.h"
-
 #include "grouped_matmul_torch.h"
 
 namespace GroupedMatmulNs {

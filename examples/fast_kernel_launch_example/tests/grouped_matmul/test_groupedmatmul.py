@@ -14,13 +14,28 @@
 import torch
 import torch_npu
 import ascend_ops
+import pytest
 
-supported_dtypes = {torch.bfloat16}
-E = 3
-M = 64
-K = 32
-N = 32
-PERGROUP = M
+def test_grouped_matmul_interface_exist():
+    """
+    Test that the 'ascend_ops.grouped_matmul' operator is present in torch.ops.
+    This existence test asserts that the custom operator registered under the
+    'ascend_ops' namespace is discoverable from Python via torch.ops.ascend_ops.grouped_matmul.
+    It does not exercise operator functionality — only that the Python binding
+    and registration are available.
+    """
+    print(torch.ops.ascend_ops.grouped_matmul)
+    assert hasattr(torch.ops.ascend_ops, "grouped_matmul"), "The 'grouped_matmul' operator is not registered in the 'torch.ops.ascend_ops' namespace."
+
+EPS = 0.001
+
+DTYPES = [
+    torch.bfloat16,
+]
+
+TEST_CONFIGS = [
+    (4, 128, 32, 32, 128),
+]
 
 def generate_group_list_tensor(E, M, PERGROUP):
     group_list = torch.zeros(E, dtype=torch.int64)
@@ -36,29 +51,55 @@ def generate_group_list_tensor(E, M, PERGROUP):
     
     return group_list
 
-group_list = generate_group_list_tensor(E, M, PERGROUP)
-
-EPS = 0.001
-
-for data_type in supported_dtypes:
-    print(f"DataType = <{data_type}>")
+def calculate_pytorch_grouped_matmul(x_list, weight_list, group_list, M, E, data_type):
+    x = x_list[0].to(torch.float32)
+    weight = weight_list[0].to(torch.float32)
     
-    x_list = []
+    group_size = M // E
+    remainder = M % E
+    split_sizes = [group_size] * E
+    if remainder > 0:
+        split_sizes[-1] += remainder
+    
+    x_splits = torch.split(x, split_sizes, dim=0)
+    
+    split_results = []
+    for x_split in x_splits:
+        split_matmul = torch.matmul(x_split, weight)
+        split_results.append(split_matmul)
+    return torch.cat(split_results, dim=0).to(data_type)
+
+@pytest.mark.skipif(not torch.npu.is_available(), reason="NPU device not found")
+@pytest.mark.parametrize("config", TEST_CONFIGS)
+@pytest.mark.parametrize("data_type", DTYPES)
+def test_grouped_matmul_operator(config, data_type):
+    """
+    Test the functionality of the grouped_matmul operator with different configurations.
+    
+    Parameters:
+        config: Tuple of (E, M, K, N, PERGROUP)
+        data_type: Data type
+    """
+    E, M, K, N, PERGROUP = config
+    
+    print(f"\nTesting with config: E={E}, M={M}, K={K}, N={N}, PERGROUP={PERGROUP}, dtype={data_type}")
+    group_list = generate_group_list_tensor(E, M, PERGROUP)
+    
+    # Generate input data
     x_cpu = torch.rand(M, K, dtype=data_type)
-    x_list.append(x_cpu)
-
-    weight_list = []
-    weight_cpu = torch.rand(K, N, dtype=data_type)
-    weight_list.append(weight_cpu)
+    x_list = [x_cpu]
     
-    # 将数据移动到NPU
+    weight_cpu = torch.rand(K, N, dtype=data_type)
+    weight_list = [weight_cpu]
+    
+    # Move data to NPU
     x_list_npu = [x_i.npu() for x_i in x_list]
     weight_list_npu = [weight_i.npu() for weight_i in weight_list]
     group_list_npu = group_list.npu()
     
-    # 调用groupedmatmul，提供所有必需的参数
+    # Call grouped_matmul operator
     try:
-        npu_result = ascend_ops.ops.groupedmatmul(
+        npu_result = torch.ops.ascend_ops.grouped_matmul(
             x_list_npu,           # Tensor[] x
             weight_list_npu,      # Tensor[] weight
             None,                 # Tensor[]? bias (可选)
@@ -73,62 +114,36 @@ for data_type in supported_dtypes:
             1,                    # int groupListType
             0,                    # int actType
             None                  # int[]? tuningConfigOptional (可选)
-        ).cpu()
-        
-        print(f"Result shape: {npu_result.shape} \n",npu_result)
+        )
+        npu_result_cpu = npu_result.cpu()
+        print(f"Result shape: {npu_result.shape} \n",npu_result_cpu)
         
     except Exception as e:
-        print(f"Error calling groupedmatmul: {e}")
+        pytest.fail(f"Error calling grouped_matmul operator: {e}")
     
-    torch_result = None
+    # Calculate expected result using PyTorch
     try:
-        x = x_list[0].to(torch.float32)
-        weight = weight_list[0].to(torch.float32)
+        expected_result = calculate_pytorch_grouped_matmul(x_list, weight_list, group_list, M, E, data_type)
+        print(f"Expected result shape: {expected_result.shape}")
         
-        group_size = M // E
-        remainder = M % E
-        split_sizes = [group_size] * E
-        if remainder > 0:
-            split_sizes[-1] += remainder
-        
-        x_splits = torch.split(x, split_sizes, dim=0)
-        
-        split_results = []
-        for x_split in x_splits:
-            split_matmul = torch.matmul(x_split, weight)
-            split_results.append(split_matmul)
-        
-        torch_result = torch.cat(split_results, dim=0).to(data_type)
-        print(f"PyTorch Result shape: {torch_result.shape}")
-        print(f"分组大小: {split_sizes}, 各分组结果形状: {[r.shape for r in split_results]}")
     except Exception as e:
-        print(f"Error calculating PyTorch grouped matmul: {e}")
-        continue
+        pytest.fail(f"Error calculating expected result with PyTorch: {e}")
+    
+    # Compare results
+    assert npu_result_cpu.shape == expected_result.shape, \
+        f"Shape mismatch! NPU: {npu_result_cpu.shape}, PyTorch: {expected_result.shape}"
+    
+    # Convert to float32 for accurate comparison
+    npu_float = npu_result_cpu.to(torch.float32)
+    expected_float = expected_result.to(torch.float32)
+    
+    # Calculate absolute difference
+    abs_diff = torch.abs(npu_float - expected_float)
+    max_diff = torch.max(abs_diff).item()
+    
+    assert max_diff < EPS, \
+        f"Grouped matmul failed for config {config}, dtype {dtype}. " \
+        f"Max diff: {max_diff:.6f}, threshold: {EPS:.6f}"
+    
+    print(f"✓ Test passed! Max diff: {max_diff:.6f}")
 
-    try:
-        if npu_result.shape != torch_result.shape:
-            print(f"Shape mismatch! NPU: {npu_result.shape}, PyTorch: {torch_result.shape}")
-            print("精度对比失败")
-            continue
-        
-        npu_float = npu_result.to(torch.float32)
-        torch_float = torch_result.to(torch.float32)
-        
-        abs_diff = torch.abs(npu_float - torch_float)
-        bad_indices = torch.where(abs_diff > EPS)
-        bad_values = abs_diff[bad_indices]
-        
-        if len(bad_values) > 0:
-            print(f"\n精度对比失败！发现 {len(bad_values)} 个点位差值超过 {EPS}:")
-            for idx in range(min(len(bad_values), 10)):
-                i, j = bad_indices[0][idx].item(), bad_indices[1][idx].item()
-                diff = bad_values[idx].item()
-                npu_val = npu_float[i, j].item()
-                torch_val = torch_float[i, j].item()
-                print(f"点位({i}, {j}): NPU={npu_val:.6f}, PyTorch={torch_val:.6f}, 差值={diff:.6f}")
-            print("精度对比失败！")
-        else:
-            max_diff = torch.max(abs_diff).item()
-            print(f"\n精度对比通过！最大绝对误差: {max_diff:.6f} (阈值={EPS})")
-    except Exception as e:
-        print(f"Error comparing results: {e}")

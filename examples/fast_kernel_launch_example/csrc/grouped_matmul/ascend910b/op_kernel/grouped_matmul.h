@@ -15,6 +15,20 @@
 #ifndef ASCEND_OPS_GROUPED_MATMUL_H
 #define ASCEND_OPS_GROUPED_MATMUL_H
 
+// Data type definitions
+#define ORIG_DTYPE_X DT_BFLOAT16
+#define DTYPE_X bfloat16_t
+
+#define ORIG_DTYPE_WEIGHT DT_BFLOAT16
+#define DTYPE_WEIGHT bfloat16_t
+
+#define ORIG_DTYPE_Y DT_BFLOAT16
+#define DTYPE_Y bfloat16_t
+
+#define DTYPE_BIAS int
+#define DTYPE_SCALE uint64_t
+#define DTYPE_ANTIQUANT_SCALE half
+
 #include "gmm/grouped_matmul/op_kernel/grouped_matmul_utils.h"
 #include "gmm/grouped_matmul/op_kernel/grouped_matmul_tiling_key.h"
 
@@ -155,11 +169,6 @@ __aicore__ inline void GMMProcess<ComputeType>::SetMNConfig(const int32_t splitV
     }
     mnConfig.singleM = mnConfig.baseM;
     mnConfig.singleN = mnConfig.baseN;
-#if defined(GMM_QUANT_BF16) || defined(GMM_QUANT_FLOAT16) || defined(GMM_FLOAT)
-    if (gmmBaseParams->singleN > 0) {  // not sequential write
-        mnConfig.singleN = gmmBaseParams->singleN;
-    }
-#endif
 }
 
 template <typename ComputeType>

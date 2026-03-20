@@ -24,66 +24,19 @@ using namespace AscendC;
 using namespace matmul;
 using namespace GROUPED_MATMUL;
 
-#ifndef FORMAT_FRACTAL_NZ
-    #define FORMAT_FRACTAL_NZ
-#endif
-
 namespace {
-#if defined(FORMAT_WEIGHT) && FORMAT_WEIGHT == FORMAT_FRACTAL_NZ
-constexpr CubeFormat wFormat = CubeFormat::NZ;
-constexpr MatmulConfig matmulCFG = NZ_CFG_MDL;
-#else
 constexpr CubeFormat wFormat = CubeFormat::ND;
-constexpr MatmulConfig matmulCFG = CFG_MDL;
-#endif
 }
 
 template <bool trans = false>
 using xType = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, DTYPE_X, trans>;
 
 template <bool trans = false>
-using xTypeMSD = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, DTYPE_WEIGHT, trans>;
-
-template <bool trans = false>
 using weightType = MatmulType<AscendC::TPosition::GM, wFormat, DTYPE_X, trans>;
-
-template <bool trans = false>
-using weightTypeMSD = MatmulType<AscendC::TPosition::GM, wFormat, DTYPE_WEIGHT, trans>;
 
 using yType = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, MM_DTYPE_Y>;
 
-using yTypeMSD = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, int32_t>;
-
 using biasType = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, DTYPE_BIAS>;
-
-namespace {
-    __aicore__ inline static constexpr MatmulApiStaticTiling GetGmmMatmulApiTiling(bool isND2NZ, bool transB) {
-        MatmulConfig conf = GenGmmConf(isND2NZ);
-        MatmulApiStaticTiling staticTilingTmp;
-        if (transB) {
-            staticTilingTmp = GetMatmulApiTiling<xType<false>, weightType<true>, yType, biasType>(conf);
-        } else {
-            staticTilingTmp = GetMatmulApiTiling<xType<false>, weightType<false>, yType, biasType>(conf);
-        }
-        staticTilingTmp.depthA1 = STATIC_TILING_DEPTH_A1_B1;
-        staticTilingTmp.depthB1 = STATIC_TILING_DEPTH_A1_B1;
-        staticTilingTmp.stepM = 1;
-        staticTilingTmp.stepN = 1;
-        staticTilingTmp.stepKa = STATIC_TILING_STEP_KA_KB;
-        staticTilingTmp.stepKb = STATIC_TILING_STEP_KA_KB;
-        staticTilingTmp.dbL0A = DOUBLE_BUFFER_L0A_L0B;
-        staticTilingTmp.dbL0B = DOUBLE_BUFFER_L0A_L0B;
-        staticTilingTmp.dbL0C = 1;
-        return staticTilingTmp;
-    }
-#if defined(FORMAT_WEIGHT) && FORMAT_WEIGHT == FORMAT_FRACTAL_NZ
-    constexpr bool isWeightNZ = true;
-#else
-    constexpr bool isWeightNZ = false;
-#endif
-    constexpr static auto staticCFG = GetGmmMatmulApiTiling(isWeightNZ, false);
-    constexpr static auto staticCFGtransB = GetGmmMatmulApiTiling(isWeightNZ, true);
-} // namespace
 
 
 #define GMM_CUBE_IMP(processClass, transA, transB, sync, cfg)                                                          \

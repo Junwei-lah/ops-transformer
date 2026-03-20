@@ -24,5 +24,8 @@ python3 -m pip install dist/*.whl --force-reinstall --no-deps
 
 # Run tests
 echo "Running tests..."
-pytest tests/* -v
+for dir in tests/*/; do
+    test_dir=$(basename "$dir")
+    pytest "tests/$test_dir" -v
+done
 echo "execute samples success"

@@ -32,14 +32,3 @@ PyObject *PyInit__C(void)
     return PyModule_Create(&module_def);
 }
 }
-
-namespace ascend_ops {
-
-TORCH_LIBRARY(ascend_ops, m)
-{
-    m.def("groupedmatmul(Tensor[] x, Tensor[] weight, Tensor[]? bias, Tensor[]? scale, Tensor[]? offset, Tensor[]? "
-          "antiquantScale, Tensor[]? antiquantOffset, Tensor? groupList, Tensor[]? perTokenScale, int splitItem, int "
-          "groupType, int groupListType, int actType,int[]? tuningConfigOptional) -> Tensor");
-}
-
-} // namespace ascend_ops

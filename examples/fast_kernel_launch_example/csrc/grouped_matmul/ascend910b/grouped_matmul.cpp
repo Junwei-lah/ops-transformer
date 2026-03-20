@@ -10,22 +10,52 @@
  */
 
 /*!
- * \file grouped_matmul_torch.cpp
+ * \file grouped_matmul.cpp
  * \brief
  */
 #include "grouped_matmul_tiling_common.h"
-#include "acl/acl.h"
-#include "tiling/platform/platform_ascendc.h"
-
-#include "kernel_operator.h"
+#include <ATen/Operators.h>
+#include <torch/all.h>
+#include <torch/library.h>
+#include "torch_npu/csrc/core/npu/NPUStream.h"
+#include "torch_npu/csrc/framework/OpCommand.h"
+#include "platform/platform_ascendc.h"
+#include <type_traits>
 
 #include "op_kernel/grouped_matmul_kernel.h"
 
-
 namespace ascend_ops {
-
 namespace GroupedMatmul {
 
+namespace {
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_X = {at::kBFloat16};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_WEIGHT = {at::kBFloat16};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_BIAS = {at::kFloat};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_SCALE = {at::kLong};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_OFFSET = {at::kFloat};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_ANTIQUANTSCALE = {at::kHalf};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_ANTIQUANTOFFSET = {at::kHalf};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_GROUPLIST = {at::kLong};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_PERTOKENSCALE = {at::kFloat};
+const std::vector<c10::ScalarType> SUPPORTED_DTYPE_OUTPUT = {at::kBFloat16};
+
+const std::vector<TypeCombo> &getSupportedCombos()
+{
+    static const auto combos = TypeComboManager::createCombosFromLists(
+        SUPPORTED_DTYPE_X, SUPPORTED_DTYPE_BIAS, SUPPORTED_DTYPE_SCALE, SUPPORTED_DTYPE_OFFSET,
+        SUPPORTED_DTYPE_ANTIQUANTSCALE, SUPPORTED_DTYPE_ANTIQUANTOFFSET, SUPPORTED_DTYPE_GROUPLIST,
+        SUPPORTED_DTYPE_PERTOKENSCALE, SUPPORTED_DTYPE_WEIGHT, SUPPORTED_DTYPE_OUTPUT);
+    return combos;
+}
+} // namespace
+
+// Register the operator's schema
+TORCH_LIBRARY_FRAGMENT(EXTENSION_MODULE_NAME, m)
+{
+    m.def("grouped_matmul(Tensor[] x, Tensor[] weight, Tensor[]? bias, Tensor[]? scale, Tensor[]? offset, Tensor[]? "
+          "antiquantScale, Tensor[]? antiquantOffset, Tensor? groupList, Tensor[]? perTokenScale, int splitItem, int "
+          "groupType, int groupListType, int actType,int[]? tuningConfigOptional) -> Tensor");
+}
 
 __global__ __aicore__ void groupedmatmul_kernel(__gm__ uint8_t *x, __gm__ uint8_t *weight, __gm__ uint8_t *bias,
                                                 __gm__ uint8_t *scale, __gm__ uint8_t *offset,
@@ -83,31 +113,16 @@ void groupedmatmul_api(const TypeCombo &matchedCombo, int comboIndex, aclrtStrea
         (__gm__ uint8_t *)offset_ptr, (__gm__ uint8_t *)antiquantScale_ptr, (__gm__ uint8_t *)antiquantOffset_ptr,
         (__gm__ uint8_t *)groupList_ptr, (__gm__ uint8_t *)perTokenScale_ptr, (__gm__ uint8_t *)y_ptr,
         (__gm__ uint8_t *)workspace_ptr, tilingData);
+
+    // Free workspace memory
+    if (workspaceSize > 0 && workspace_ptr != nullptr) {
+        aclrtFree(workspace_ptr);
+        workspace_ptr = nullptr;
+    }
 }
 
-namespace {
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_X = {at::kBFloat16};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_WEIGHT = {at::kBFloat16};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_BIAS = {at::kFloat};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_SCALE = {at::kLong};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_OFFSET = {at::kFloat};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_ANTIQUANTSCALE = {at::kHalf};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_ANTIQUANTOFFSET = {at::kHalf};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_GROUPLIST = {at::kLong};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_PERTOKENSCALE = {at::kFloat};
-const std::vector<c10::ScalarType> SUPPORTED_DTYPE_OUTPUT = {at::kBFloat16};
 
-const std::vector<TypeCombo> &getSupportedCombos()
-{
-    static const auto combos = TypeComboManager::createCombosFromLists(
-        SUPPORTED_DTYPE_X, SUPPORTED_DTYPE_BIAS, SUPPORTED_DTYPE_SCALE, SUPPORTED_DTYPE_OFFSET,
-        SUPPORTED_DTYPE_ANTIQUANTSCALE, SUPPORTED_DTYPE_ANTIQUANTOFFSET, SUPPORTED_DTYPE_GROUPLIST,
-        SUPPORTED_DTYPE_PERTOKENSCALE, SUPPORTED_DTYPE_WEIGHT, SUPPORTED_DTYPE_OUTPUT);
-    return combos;
-}
-} // namespace
-
-torch::Tensor groupedmatmul_npu(
+torch::Tensor grouped_matmul_npu(
     const torch::TensorList &x, const torch::TensorList &weight, const c10::optional<torch::TensorList> &bias,
     const c10::optional<torch::TensorList> &scale, const c10::optional<torch::TensorList> &offset,
     const c10::optional<torch::TensorList> &antiquantScale, const c10::optional<torch::TensorList> &antiquantOffset,
@@ -115,6 +130,9 @@ torch::Tensor groupedmatmul_npu(
     const int64_t splitItem, const int64_t groupType, const int64_t groupListType, const int64_t actType,
     const c10::optional<c10::IntArrayRef> &tuningConfigOptional)
 {
+    // OptionalDeviceGuard 确保后续操作在正确的设备上下文执行
+    // 它会记录当前设备状态，执行完作用域代码后自动恢复
+    const c10::OptionalDeviceGuard guard(x[0].device());
     checkTensorOnNPU(x, "x", false);
     checkTensorOnNPU(weight, "weight", false);
     checkTensorOnNPU(bias, "bias", true);
@@ -163,14 +181,14 @@ torch::Tensor groupedmatmul_npu(
                           tuning_config_ptr);
         return 0;
     };
-    at_npu::native::OpCommand::RunOpApiV2("GroupedMatmul", acl_call);
+    at_npu::native::OpCommand::RunOpApi("GroupedMatmul", acl_call);
     return y;
 }
 
-// Register Ascend implementations for groupedmatmul
-TORCH_LIBRARY_IMPL(ascend_ops, PrivateUse1, m)
+// Register the NPU implementation
+TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, PrivateUse1, m)
 {
-    m.impl("groupedmatmul", groupedmatmul_npu);
+    m.impl("grouped_matmul", grouped_matmul_npu);
 }
 
 } // namespace GroupedMatmul
