@@ -20,6 +20,7 @@ CANN Simulator是一款面向算子开发场景的SoC级芯片仿真工具，用
 * 本工具为开发工具，不建议在生产环境使用。
 * 工具的仿真功能仅支持单卡场景，无法仿真多卡环境，代码中只能设置为0卡。若修改可见卡号，将导致仿真失败。
 * 仿真环境仅支持AI Core计算类算子（不支持MC2和HCCL类型的算子）。
+* Cannsim工具目前处于尝鲜版本阶段，仅支持Ascend950PR芯片，建议仿真器运行环境配置为16核CPU和32GB以上内存。
 * 目前不支持arm环境仿真。
 
 ## 环境准备
@@ -57,60 +58,18 @@ cannsim.log
 从仿真工具日志文件可以看到示例中的打印信息：
 
 ```
-add_example result[2011] is: 2.000000
-add_example result[2012] is: 2.000000
-add_example result[2013] is: 2.000000
-add_example result[2014] is: 2.000000
-add_example result[2015] is: 2.000000
-add_example result[2016] is: 2.000000
-add_example result[2017] is: 2.000000
-add_example result[2018] is: 2.000000
-add_example result[2019] is: 2.000000
-add_example result[2020] is: 2.000000
-add_example result[2021] is: 2.000000
+add_example first input[0] is: 1.000000, second input[0] is: 1.000000, result[0] is: 2.000000
+add_example first input[1] is: 1.000000, second input[1] is: 1.000000, result[1] is: 2.000000
+add_example first input[2] is: 1.000000, second input[2] is: 1.000000, result[2] is: 2.000000
+add_example first input[3] is: 1.000000, second input[3] is: 1.000000, result[3] is: 2.000000
+add_example first input[4] is: 1.000000, second input[4] is: 1.000000, result[4] is: 2.000000
+add_example first input[5] is: 1.000000, second input[5] is: 1.000000, result[5] is: 2.000000
+add_example first input[6] is: 1.000000, second input[6] is: 1.000000, result[6] is: 2.000000
 ```
 
 ## 查看性能流水
 
 仿真性能流水文件在本项目`examples/add_example/examples/build/bin/cannsim_*/report目录，流水相关文件为：
-
-```
-trace_core0.json
-```
-
-在Chrome浏览器中输入“chrome://tracing”地址，并将生成的指令流水图文件（trace_core0.json）拖到空白处打开，具体参数介绍参考“仿真结果解析”章节。
-
-## 执行仿真命令
-
-```
-cannsim record ./ascendc_kernels_bbit -s Ascend950 --gen-report
-```
-
-仿真工具执行日志文件在add_example/build/cannsim_*目录，执行日志文件为
-
-```
-cannsim.log
-```
-
-从仿真工具日志文件可以看到示例中的前10结果打印信息：
-
-```
-First 10 output values:
-z[0] = 0.000000
-z[1] = 3.000000
-z[2] = 6.000000
-z[3] = 9.000000
-z[4] = 12.000000
-z[5] = 15.000000
-z[6] = 18.000000
-z[7] = 21.000000
-z[8] = 24.000000
-z[9] = 27.000000
-```
-
-## 查看性能流水
-
-仿真性能流水文件在本项目`examples/add_example/build/cannsim_*/report目录，流水相关文件为：
 
 ```
 trace_core0.json
@@ -268,18 +227,19 @@ cannsim report [options]
 cannsim --help
 ```
 
-查询工具record 子命令的帮助信息：
+查询工具 record 子命令的帮助信息：
 
 ```
 cannsim record --help
 ```
-
-查询工具report子命令的帮助信息：
-
-```
-cannsim report --help
-```
-
+  
+查询工具 report 子命令的帮助信息： 
+ 
+ 
+ ``` 
+ cannsim report --help 
+ ``` 
+ 
 ## 参数说明
 
 无
@@ -296,28 +256,15 @@ cannsim report --help
 ## 输出说明
 
 ```
-Usage: cannsim [OPTIONS] COMMAND [ARGS]...
+usage: cannsim [-h] {record,report} ...
 
 Command-line tool for performance simulation analysis on Ascend hardware.
-The simulation emulates real Ascend hardware behavior—including compute
-units, memory hierarchy, and scheduling—enabling accurate performance
-modeling without physical devices.
 
-Examples:
-$ cannsim record ./app -s Ascend910B -o ./output
-$ cannsim report -e ./output/sim -o ./output/trace.json
+positional arguments:
+  {record,report}  Available commands
+    record         Run user application in AscendOps simulation environment
+    report         Generate performance analysis reports
 
-Note:
-- Input app must be a valid AscendOps-built executable.
-- Output directories are auto-created.
-- `trace.json` is compatible with Chrome tracing tools.
-- Advanced reporting features (e.g., HTML, diagrams) are planned but not yet available.
-
-Options:
---help  Show this message and exit.
-
-Commands:
-record  Run user application in AscendOps simulation environment.
-report  Command-line interface for generating performance reports.
-
+options:
+  -h, --help       show this help message and exit
 ```
