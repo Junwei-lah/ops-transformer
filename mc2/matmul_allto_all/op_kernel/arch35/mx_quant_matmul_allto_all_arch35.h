@@ -21,6 +21,40 @@
 namespace MatmulAlltoAllImpl {
 using namespace AscendC;
 
+// ============================================================================
+// 类型特征：定义打包因子（每个元素包含的标量数）
+// eg: fp4（2个打包）和 fp8（1个独立）
+// ============================================================================
+template <typename T>
+struct PackFactor {
+    static constexpr uint64_t value = 1UL; // 默认：每个元素包含1个标量（如fp8）
+};
+
+template <>
+struct PackFactor<fp4x2_e2m1_t> {
+    static constexpr uint64_t value = 2UL; // fp4x2：2个fp4打包成1个元素
+};
+
+// ============================================================================
+// 辅助函数：计算字节偏移
+// 自动处理 fp4 和 fp8 的差异
+// ============================================================================
+template <typename T>
+__aicore__ inline uint64_t ComputeByteOffset(uint64_t elementCount)
+{
+    return elementCount * sizeof(T) / PackFactor<T>::value;
+}
+
+// ============================================================================
+// 辅助函数：计算GM地址
+// 自动处理 fp4 和 fp8 的差异
+// ============================================================================
+template <typename T>
+__aicore__ inline GM_ADDR ComputeGMAddr(GM_ADDR baseAddr, uint64_t elementCount)
+{
+    return baseAddr + ComputeByteOffset<T>(elementCount);
+}
+
 template <typename T1, typename T2>
 __aicore__ inline T1 CeilDiv(T1 a, T2 b)
 {
@@ -82,6 +116,7 @@ MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllT
     workspaceGM_ = workspaceGM;
     tempComputeOutGM_ = workspaceGM;
     transOutGM_ = (GM_ADDR)(tempComputeOutGM_ + mc2Tiling_.mmResultLen);
+
     // 初始化流水线
     pipeLine_->Init();
     pipeLine_->GetContext(&pipeLineContext_);
@@ -117,14 +152,17 @@ MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllT
     pipeLineContext_.computationContext->baseData.bGM = x2_;
     pipeLineContext_.computationContext->baseData.cGM = tempComputeOutGM_;
     pipeLineContext_.computationContext->baseData.biasGM = bias_;
+
+    // 使用封装的 ComputeByteOffset 函数，自动处理 fp4/fp8 差异
     pipeLineContext_.computationContext->baseData.aOffset =
-        (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankK * sizeof(DTYPE_X1);
+        ComputeByteOffset<DTYPE_X1>((uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankK);
+
     pipeLineContext_.computationContext->baseData.bOffset = (uint64_t)0UL;
     pipeLineContext_.computationContext->baseData.cOffset =
-        (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeByteOffset<DTYPE_Y>((uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN);
     // mx的scale大小为1B
-    pipeLineContext_.computationContext->additionalData.x1ScaleOffset =
-        (uint64_t)mc2Tiling_.tileM * CeilDiv(mc2Tiling_.rankK, MXFP_GROUP_SIZE) * NUM_TWO;
+    pipeLineContext_.computationContext->additionalData.x1ScaleOffset = ComputeByteOffset<AscendC::fp8_e8m0_t>(
+        (uint64_t)mc2Tiling_.tileM * CeilDiv(mc2Tiling_.rankK, MXFP_GROUP_SIZE) * NUM_TWO);
     pipeLineContext_.computationContext->additionalData.x1Scale = x1Scale_;
     pipeLineContext_.computationContext->additionalData.x2Scale = x2Scale_;
     pipeLineContext_.computationContext->tilingDataPtr = &(tilingData_->mc2QuantBmmV3TileTilingData);
@@ -133,7 +171,7 @@ MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllT
     pipeLineContext_.transposeContext->transposeSrcAddr = tempComputeOutGM_;
     pipeLineContext_.transposeContext->transposeDstAddr = transOutGM_;
     pipeLineContext_.transposeContext->transposeSrcOffset =
-        (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeByteOffset<DTYPE_Y>((uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN);
     pipeLineContext_.transposeContext->nextSrcBlockOffset = (uint64_t)mc2Tiling_.rankN / mc2Tiling_.rankDim;
     pipeLineContext_.transposeContext->nextDstBlockOffset =
         (uint64_t)mc2Tiling_.rankM * mc2Tiling_.rankN / mc2Tiling_.rankDim;
@@ -166,31 +204,38 @@ MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllT
     uint32_t taskCnt)
 {
     auto &&mc2Tiling_ = tilingData_->quantMatmulAlltoAllTilingInfo;
+
+    // 使用封装的 ComputeGMAddr 函数，自动处理 fp4/fp8 差异
     pipeLineContext_.computationContext->baseData.aGM =
-        x1_ + mc2Tiling_.tileCnt * mc2Tiling_.tileM * mc2Tiling_.rankK * sizeof(DTYPE_X1);
+        ComputeGMAddr<DTYPE_X1>(x1_, (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankK * mc2Tiling_.tileCnt);
+
     pipeLineContext_.computationContext->baseData.bGM = x2_;
     pipeLineContext_.computationContext->baseData.cGM =
-        tempComputeOutGM_ + mc2Tiling_.tileCnt * mc2Tiling_.tileM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeGMAddr<DTYPE_Y>(tempComputeOutGM_, (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN * mc2Tiling_.tileCnt);
+
+    // 使用封装的 ComputeByteOffset 函数，自动处理 fp4/fp8 差异
     pipeLineContext_.computationContext->baseData.aOffset =
-        (uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankK * sizeof(DTYPE_X1);
+        ComputeByteOffset<DTYPE_X1>((uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankK);
+
     pipeLineContext_.computationContext->baseData.bOffset = (uint64_t)0UL;
     pipeLineContext_.computationContext->baseData.cOffset =
-        (uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeByteOffset<DTYPE_Y>((uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankN);
     // x1_scale
     pipeLineContext_.computationContext->additionalData.x1ScaleOffset =
         (uint64_t)mc2Tiling_.tailM * CeilDiv(mc2Tiling_.rankK, MXFP_GROUP_SIZE) * NUM_TWO;
-    pipeLineContext_.computationContext->additionalData.x1Scale =
-        x1Scale_ + mc2Tiling_.tileCnt * mc2Tiling_.tileM * CeilDiv(mc2Tiling_.rankK, MXFP_GROUP_SIZE) * NUM_TWO;
+    pipeLineContext_.computationContext->additionalData.x1Scale = ComputeGMAddr<AscendC::fp8_e8m0_t>(
+        x1Scale_,
+        (uint64_t)mc2Tiling_.tileM * CeilDiv(mc2Tiling_.rankK, MXFP_GROUP_SIZE) * NUM_TWO * mc2Tiling_.tileCnt);
     pipeLineContext_.computationContext->additionalData.x2Scale = x2Scale_;
     pipeLineContext_.computationContext->tilingDataPtr = &(tilingData_->mc2QuantBmmV3TailTilingData);
 
     pipeLineContext_.transposeContext->transposeSrcAddr =
-        tempComputeOutGM_ + mc2Tiling_.tileCnt * mc2Tiling_.tileM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeGMAddr<DTYPE_Y>(tempComputeOutGM_, (uint64_t)mc2Tiling_.tileM * mc2Tiling_.rankN * mc2Tiling_.tileCnt);
     pipeLineContext_.transposeContext->transposeDstAddr = transOutGM_ + mc2Tiling_.tileCnt * mc2Tiling_.tileM *
                                                                             mc2Tiling_.rankN * sizeof(DTYPE_Y) /
                                                                             (uint64_t)mc2Tiling_.rankDim;
     pipeLineContext_.transposeContext->transposeSrcOffset =
-        (uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankN * sizeof(DTYPE_Y);
+        ComputeByteOffset<DTYPE_Y>((uint64_t)mc2Tiling_.tailM * mc2Tiling_.rankN);
     pipeLineContext_.transposeContext->transposeDstOffset =
         pipeLineContext_.transposeContext->transposeSrcOffset / (uint64_t)mc2Tiling_.rankDim;
     pipeLineContext_.transposeContext->transM = (uint64_t)mc2Tiling_.tailM;
