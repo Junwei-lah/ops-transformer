@@ -157,26 +157,103 @@ protected:
 TEST_F(MlaPrologV3Kernel, test_case_v3_noQuant)
 {
     uint32_t B = 1;
-    uint32_t N = 8; 
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
+    
+    // 输入变量
+    uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
+    uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(half));
+    uint8_t* weightUqQr = (uint8_t*)AscendC::GmAlloc(Hcq * N*(D + Dr) * sizeof(half));
+    uint8_t* weightUk = (uint8_t*)AscendC::GmAlloc(N * D * Hckv *sizeof(half));
+    uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(half));
+    uint8_t* rmsnormGammaCq = (uint8_t*)AscendC::GmAlloc(Hcq * sizeof(half));
+    uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
+    uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
+    uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(half));
+    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = nullptr;
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = nullptr;
+    uint8_t* quantScaleCkr = nullptr;
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
+    // 输出类变量
+    uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
+    uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16777216);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    // ===================tiligndata赋值====================
+    optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
+    baseParams_->queryNormFlag = 0U;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
+    baseParams_->qcQrScale = 1U;
+    baseParams_->kcScale = 1U;
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
                                                 1, // SCENARIO
-                                                1, // QUANT_MODE
+                                                0, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
                                                 0, // ENABLE_GROUP_COMPUTE_OPTIONAL
                                                 0, // EMPTY_TENSOR_MODE
@@ -184,85 +261,6 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_noQuant)
                                                 0, // SPLIT_M_MODE
                                                 7 // CV_MODE
                                                 >(PARAM_LIST);};
-    // 输入变量
-    uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
-    uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(half));
-    uint8_t* weightUqQr = (uint8_t*)AscendC::GmAlloc(Hcq * N*(D + Dr) * sizeof(uint8_t));
-    uint8_t* weightUk = (uint8_t*)AscendC::GmAlloc(N * D * Hckv *sizeof(half));
-    uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(half));
-    uint8_t* rmsnormGammaCq = (uint8_t*)AscendC::GmAlloc(Hcq * sizeof(half));
-    uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
-    uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(half));
-    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(half));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(float));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(B * sizeof(int32_t));
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
-    // 输出类变量
-    uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
-    uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
-
-    // ===================tiligndata赋值====================
-    optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
-    baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(0);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
-    baseParams_->qcQrScale = 1U;
-    baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -284,33 +282,22 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_noQuant)
 TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVNoQuant)
 {
     uint32_t B = 1;
-    uint32_t N = 8;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
-    AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                1, // SCENARIO
-                                                1, // QUANT_MODE
-                                                0, // ENABLE_DEQUANT_OPTIONAL
-                                                1, // ENABLE_GROUP_COMPUTE_OPTIONAL
-                                                0, // EMPTY_TENSOR_MODE
-                                                0, // ACTUAL_SEQ_LEN_MODE
-                                                0, // SPLIT_M_MODE
-                                                7 // CV_MODE
-                                                >(PARAM_LIST);};
+    
     // 输入变量
     uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
     uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(half));
@@ -321,75 +308,84 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVNoQuant)
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(half));
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(half));
     uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(half));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(half));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = nullptr;
+    uint8_t* quantScaleCkr = nullptr;
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(0);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
+    std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
+                                                2, // SCENARIO
+                                                1, // QUANT_MODE
+                                                0, // ENABLE_DEQUANT_OPTIONAL
+                                                0, // ENABLE_GROUP_COMPUTE_OPTIONAL
+                                                0, // EMPTY_TENSOR_MODE
+                                                0, // ACTUAL_SEQ_LEN_MODE
+                                                0, // SPLIT_M_MODE
+                                                7 // CV_MODE
+                                                >(PARAM_LIST);};
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -411,25 +407,25 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVNoQuant)
 TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuant)
 {
     uint32_t B = 1;
-    uint32_t N = 8;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                2, // SCENARIO
+                                                3, // SCENARIO
                                                 2, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
                                                 0, // ENABLE_GROUP_COMPUTE_OPTIONAL
@@ -448,75 +444,73 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuant)
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(int8_t));
-    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(half));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(half));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(int8_t));
+    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(int8_t));
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(float));
+    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(Dr * sizeof(float));
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(2);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -537,29 +531,29 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuant)
 // 半量化kv量化pertile场景
 TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuantPerfill)
 {
-    uint32_t B = 1;
-    uint32_t N = 8;
+   uint32_t B = 1;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
     uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                2, // SCENARIO
-                                                5, // QUANT_MODE
+                                                4, // SCENARIO
+                                                2, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
-                                                1, // ENABLE_GROUP_COMPUTE_OPTIONAL
+                                                0, // ENABLE_GROUP_COMPUTE_OPTIONAL
                                                 0, // EMPTY_TENSOR_MODE
                                                 0, // ACTUAL_SEQ_LEN_MODE
                                                 0, // SPLIT_M_MODE
@@ -575,75 +569,73 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuantPerfill)
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(int8_t));
-    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(float));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(float));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(int8_t));
+    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(int8_t));
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(float));
+    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(Dr * sizeof(float));
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(3);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -664,27 +656,28 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_semiQuantKVQuantPerfill)
 // 全量化kv非量化场景
 TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVNoQuant)
 {
+   
     uint32_t B = 1;
-    uint32_t N = 8;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                2, // SCENARIO
-                                                3, // QUANT_MODE
+                                                5, // SCENARIO
+                                                2, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
                                                 0, // ENABLE_GROUP_COMPUTE_OPTIONAL
                                                 0, // EMPTY_TENSOR_MODE
@@ -694,83 +687,81 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVNoQuant)
                                                 >(PARAM_LIST);};
     // 输入变量
     uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
-    uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(int8_t));
+    uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(half));
     uint8_t* weightUqQr = (uint8_t*)AscendC::GmAlloc(Hcq * N*(D + Dr) * sizeof(int8_t));
     uint8_t* weightUk = (uint8_t*)AscendC::GmAlloc(N * D * Hckv *sizeof(half));
-    uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(int8_t));
+    uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(half));
     uint8_t* rmsnormGammaCq = (uint8_t*)AscendC::GmAlloc(Hcq * sizeof(half));
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(int8_t));
-    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(float));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(float));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(int8_t));
+    uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(int8_t));
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(float));
+    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(Dr * sizeof(float));
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(0);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -792,26 +783,26 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVNoQuant)
 TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVQuant)
 {
     uint32_t B = 1;
-    uint32_t N = 8;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                2, // SCENARIO
-                                                4, // QUANT_MODE
+                                                5, // SCENARIO
+                                                2, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
                                                 0, // ENABLE_GROUP_COMPUTE_OPTIONAL
                                                 0, // EMPTY_TENSOR_MODE
@@ -820,84 +811,82 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVQuant)
                                                 7 // CV_MODE
                                                 >(PARAM_LIST);};
     // 输入变量
-   uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
-   uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(int8_t));
-   uint8_t* weightUqQr = (uint8_t*)AscendC::GmAlloc(Hcq * N*(D + Dr) * sizeof(int8_t));
-   uint8_t* weightUk = (uint8_t*)AscendC::GmAlloc(N * D * Hckv *sizeof(half));
-   uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(int8_t));
+    uint8_t* tokenX = (uint8_t*)AscendC::GmAlloc(B * S1 * He * sizeof(half));
+    uint8_t* weightDq = (uint8_t*)AscendC::GmAlloc(He * Hcq * sizeof(half));
+    uint8_t* weightUqQr = (uint8_t*)AscendC::GmAlloc(Hcq * N*(D + Dr) * sizeof(int8_t));
+    uint8_t* weightUk = (uint8_t*)AscendC::GmAlloc(N * D * Hckv *sizeof(half));
+    uint8_t* weightDkvKr = (uint8_t*)AscendC::GmAlloc(He * (Hckv + Dr) * sizeof(half));
     uint8_t* rmsnormGammaCq = (uint8_t*)AscendC::GmAlloc(Hcq * sizeof(half));
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(int8_t));
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(int8_t));
     uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(float));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(float));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(float));
+    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(Dr * sizeof(float));
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(1);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(0);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(0);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
@@ -919,26 +908,26 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVQuant)
 TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVQuantPerfill)
 {
     uint32_t B = 1;
-    uint32_t N = 8;
+    uint32_t N = 4; 
     uint32_t N2 = 1;
     uint32_t D = 128;
-    uint32_t Dr = 63;
+    uint32_t Dr = 64;
     uint32_t S1 = 1;
-    uint32_t S2 = 0;
+    uint32_t S2 = 1;
     uint32_t He = 7168;
     uint32_t Hckv = 512;
     uint32_t T = 0;
-    uint32_t Block_Number = 3;
-    uint32_t Block_Size = 64;
+    uint32_t Block_Number = 1;
+    uint32_t Block_Size = 16;
     uint32_t Nkv = 1;
-    uint32_t Dtile = 656;
-    uint32_t blockDim = 12;
+    uint32_t Dtile = 512;
+    uint32_t blockDim = 20;
     uint32_t Hcq= 1536;
-
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
+
     std::function<void(PARAM_LIST_DEF)> func = [](PARAM_LIST_DEF){return mla_prolog_v3< 1, // CACHE_MODE
-                                                2, // SCENARIO
-                                                6, // QUANT_MODE
+                                                6, // SCENARIO
+                                                2, // QUANT_MODE
                                                 0, // ENABLE_DEQUANT_OPTIONAL
                                                 0, // ENABLE_GROUP_COMPUTE_OPTIONAL
                                                 0, // EMPTY_TENSOR_MODE
@@ -956,75 +945,73 @@ TEST_F(MlaPrologV3Kernel, test_case_v3_QuantKVQuantPerfill)
     uint8_t* rmsnormGammaCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(half));
     uint8_t* ropeSin = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
     uint8_t* ropeCos = (uint8_t*)AscendC::GmAlloc(B * S1 * Dr * sizeof(half));
-    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dtile * sizeof(int8_t));
+    uint8_t* cacheIndex = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(int64_t));
+    uint8_t* kvCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Hckv * sizeof(int8_t));
     uint8_t* krCache = (uint8_t*)AscendC::GmAlloc(Block_Number * Block_Size * Nkv * Dr * sizeof(half));
-    uint8_t* dequantScaleX = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWDq = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(1 * N * (D + Dr) * sizeof(float));
-    uint8_t* dequantScaleWDkvKr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* smoothScalesCq = (uint8_t*)AscendC::GmAlloc(1 * Hcq * sizeof(float));
-    uint8_t* actualSeqLen = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* kNopeClipAlpha = (uint8_t*)AscendC::GmAlloc(0);
-    uint8_t* dequantScaleQNopeOut = (uint8_t*)AscendC::GmAlloc(0);
+    uint8_t* dequantScaleX = nullptr;
+    uint8_t* dequantScaleWDq = nullptr;
+    uint8_t* dequantScaleWUqQr = (uint8_t*)AscendC::GmAlloc(N*(D+Dr)*sizeof(float));
+    uint8_t* dequantScaleWDkvKr = nullptr;
+    uint8_t* quantScaleCkv = (uint8_t*)AscendC::GmAlloc(Hckv * sizeof(float));
+    uint8_t* quantScaleCkr = (uint8_t*)AscendC::GmAlloc(Dr * sizeof(float));
+    uint8_t* smoothScalesCq = nullptr;
+    uint8_t* actualSeqLen = nullptr;
+    uint8_t* kNopeClipAlpha = nullptr;
+    uint8_t* dequantScaleQNopeOut = nullptr;
     // 输出类变量
     uint8_t* queryOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Hckv * sizeof(half));
     uint8_t* queryRopeOut = (uint8_t*)AscendC::GmAlloc(B * S1 * N * Dr * sizeof(half));
-    uint8_t* queryNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * Hcq* sizeof(half));
-    uint8_t* dequantScaleQNormOut = (uint8_t*)AscendC::GmAlloc(B * S1 * sizeof(half));
-    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(2048 * 2048 * 2048);
-    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(sizeof(optiling::MlaPrologBaseParams));
+    uint8_t* queryNormOut = nullptr;
+    uint8_t* dequantScaleQNormOut = nullptr;
+    uint8_t* workspace = (uint8_t*)AscendC::GmAlloc(16788608);
+    size_t tilingDataSize = sizeof(optiling::MlaPrologBaseParams);
+    uint8_t* tiling = (uint8_t*)AscendC::GmAlloc(tilingDataSize);
 
     // ===================tiligndata赋值====================
     optiling::MlaPrologBaseParams* baseParams_ = reinterpret_cast<optiling::MlaPrologBaseParams*>(tiling);
-    uint32_t aicNum_ = 12;
-    uint32_t aivNum_ = 12;
-    baseParams_->batchSize = B;
-    baseParams_->seq1Size = S1;
-    baseParams_->headSizeKr = Dr;
-    baseParams_->numHeadSize = N;
-    baseParams_->numHeadKvSize = Nkv;
-    baseParams_->dimHeadSizeQc = D;
-    baseParams_->dimHeadRope = Dr;
-    baseParams_->headSizeX = He;
-    baseParams_->headSizeCq = Hcq;
-    baseParams_->headSizeCkv =  Hckv;
-    baseParams_->dtileSize = Dtile;
-    baseParams_->blockNum = Block_Number;
-    baseParams_->blockSize = Block_Size;
-    baseParams_->tokenSize = baseParams_->batchSize * baseParams_->seq1Size;
-    baseParams_->stepBatchSize = std::min(64U, baseParams_->tokenSize);
-    baseParams_->stepNumHeadDequant = std::min(64U, N);
-    baseParams_->mSubCoreNum =  baseParams_->tokenSize - (baseParams_->mSubSize - 1U) * aicNum_;
-    baseParams_->mSubSize =(baseParams_->tokenSize + aicNum_ - 1U) / aicNum_;
-    baseParams_->seq2Size = baseParams_->numHeadKvSize;
-    baseParams_->headSizeQc = baseParams_->dimHeadSizeQc * baseParams_->numHeadSize;
-    baseParams_->headSizeQr =  baseParams_->headSizeKr * baseParams_->numHeadSize;
-    baseParams_->mm1SingleCoreN =optiling::CalcSingleCoreNV3(baseParams_->headSizeCq, aicNum_, Block_Size / 1);
-    baseParams_->mm2SingleCoreN = 64U;
-    baseParams_->mm3SingleCoreN = optiling::CalcSingleCoreNV3(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), aicNum_, D + Dr);
-    baseParams_->mm4SingleCoreBatch = CeilDiv(baseParams_->numHeadSize, aicNum_);
-    baseParams_->mm1BlockNum = CeilDiv(baseParams_->headSizeCq, baseParams_->mm1SingleCoreN);
-    baseParams_->mm2BlockNum =(baseParams_->headSizeCkv + baseParams_->dimHeadRope) / baseParams_->mm2SingleCoreN;
-    baseParams_->mm3BlockNum = CeilDiv(baseParams_->numHeadSize * (baseParams_->headSizeKr + baseParams_->dimHeadSizeQc), baseParams_ ->mm3SingleCoreN);
-    baseParams_->mm4BlockNum = CeilDiv(baseParams_->numHeadSize, baseParams_->mm4SingleCoreBatch);
-    baseParams_->vectorBlockNum = std::min(std::min(128U, baseParams_->tokenSize), aivNum_);
-    baseParams_->reciprocalCq =1.0f / baseParams_->headSizeCq;
-    baseParams_->epsilonCq = 0.00461f;
-    baseParams_->reciprocalCkv = 1.0f / baseParams_->headSizeCkv;
-    baseParams_->epsilonCkv = 0.001166f;
-    // v3
+    baseParams_->batchSize = 1;
+    baseParams_->stepBatchSize = 1;
+    baseParams_->stepNumHeadDequant = 4;
+    baseParams_->mSubSize = 0;
+    baseParams_->mSubCoreNum = 0;
+    baseParams_->tokenSize = 1;
+    baseParams_->seq1Size = 1;
+    baseParams_->seq2Size = 1;
+    baseParams_->headSizeX = 7168;
+    baseParams_->headSizeCq = 1536;
+    baseParams_->headSizeCkv = 512;
+    baseParams_->dtileSize = 512;
+    baseParams_->headSizeQc = 512;
+    baseParams_->headSizeQr = 256;
+    baseParams_->headSizeKr = 64;
+    baseParams_->numHeadSize = 4;
+    baseParams_->numHeadKvSize = 1;
+    baseParams_->dimHeadSizeQc = 128;
+    baseParams_->dimHeadRope = 64;
+    baseParams_->blockNum = 1;
+    baseParams_->blockSize = 16;
+    baseParams_->mm1BlockNum = 24;
+    baseParams_->mm2BlockNum = 9;
+    baseParams_->mm3BlockNum = 24;
+    baseParams_->mm4BlockNum = 4;
+    baseParams_->mm1SingleCoreN = 64;
+    baseParams_->mm2SingleCoreN = 64;
+    baseParams_->mm3SingleCoreN = 32;
+    baseParams_->mm4SingleCoreBatch = 1;
+    baseParams_->vectorBlockNum = 1;
+    baseParams_->reciprocalCq = 0.000651;
+    baseParams_->epsilonCq = 0.000010;
+    baseParams_->reciprocalCkv = 0.001953;
+    baseParams_->epsilonCkv = 0.000010;
     baseParams_->queryNormFlag = 0U;
-    baseParams_->kvQuantMode = static_cast<uint32_t>(3);
-    baseParams_->ckvkrRepoMode = static_cast<uint32_t>(1);
-    baseParams_->quantScaleRepoMode = static_cast<uint32_t>(1);
-    baseParams_->tileSize = baseParams_->batchSize * baseParams_->stepBatchSize;
+    baseParams_->kvQuantMode = 0U;
+    baseParams_->ckvkrRepoMode = 0U;
+    baseParams_->quantScaleRepoMode = 0U;
+    baseParams_->tileSize = 0U;
     baseParams_->qcQrScale = 1U;
     baseParams_->kcScale = 1U;
-    baseParams_->isQcQrScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->qcQrScale - 1.0f) >= std::numeric_limits<float>::epsilon());
-    baseParams_->isKcScaleEnable = static_cast<uint16_t>(std::abs(baseParams_->kcScale - 1.0f) >= std::numeric_limits<float>::epsilon());
+    baseParams_->isQcQrScaleEnable = 0U;
+    baseParams_->isKcScaleEnable = 0U;
 
     ICPU_RUN_KF(func, blockDim, tokenX, weightDq, weightUqQr,
         weightUk, weightDkvKr, rmsnormGammaCq, rmsnormGammaCkv,
