@@ -122,7 +122,7 @@ ge::graphStatus NCAITiling::CheckQkvShape()
     // key的第2维 和 value的第2维 和 参数中的pageBlockSize是否相同
     uint32_t blockSizeInK = ncaiContext_->key.shape->GetStorageShape().GetDim(DIM_1);
     uint32_t blockSizeInV = ncaiContext_->value.shape->GetStorageShape().GetDim(DIM_1);
-    OP_CHECK_IF(blockSizeInK != blockSizeInV || blockSizeInV != *ncaiContext_->blockSize,
+    OP_CHECK_IF(blockSizeInK != blockSizeInV || blockSizeInV != static_cast<uint32_t>(*ncaiContext_->blockSize),
         OP_LOGE(ncaiContext_->opName, "pageBlockSize in k, v, attr must be equal"), return ge::GRAPH_FAILED);
     
     return ge::GRAPH_SUCCESS;
@@ -162,9 +162,9 @@ ge::graphStatus NCAITiling::CheckAttr()
         OP_LOGE(ncaiContext_->opName, "compressStride must be 16 or 32 or 48 or 64"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(selectSize_ < 16U || selectSize_ > 128U || selectSize_ % 16U != 0, 
         OP_LOGE(ncaiContext_->opName, "selectBlockSize must be a multiple of 16 and selectBlockSize must not be greater than 128"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(*ncaiContext_->blockSize <= 0 || *ncaiContext_->blockSize > 128U, 
+    OP_CHECK_IF(static_cast<uint32_t>(*ncaiContext_->blockSize) <= 0 || static_cast<uint32_t>(*ncaiContext_->blockSize) > 128U, 
         OP_LOGE(ncaiContext_->opName, "pageBlockSize must be within (0, 128]"), return ge::GRAPH_FAILED);
-    OP_CHECK_IF(*ncaiContext_->blockSize % 16U != 0, 
+    OP_CHECK_IF(static_cast<uint32_t>(*ncaiContext_->blockSize) % 16U != 0, 
         OP_LOGE(ncaiContext_->opName, "pageBlockSize must be a multiple of 16"), return ge::GRAPH_FAILED);
     OP_CHECK_IF(*this->ncaiContext_->numHeads % *this->ncaiContext_->kvHeadNums != 0, 
         OP_LOGE(ncaiContext_->opName, "numHeads must be a multiple of kvHeadNums"), return ge::GRAPH_FAILED);
@@ -212,8 +212,8 @@ ge::graphStatus NCAITiling::ProcessQkv()
         return ge::GRAPH_FAILED;
     }
     batchSize_ = ncaiContext_->blockTable.tensor->GetStorageShape().GetDim(DIM_0);
-    qHeadNum_ = *this->ncaiContext_->numHeads;
-    kvHeadNum_ = *this->ncaiContext_->kvHeadNums;
+    qHeadNum_ = static_cast<uint32_t>(*this->ncaiContext_->numHeads);
+    kvHeadNum_ = static_cast<uint32_t>(*this->ncaiContext_->kvHeadNums);
     scaleValue_ = *this->ncaiContext_->scaleValue;
     qSeqSize_ = 1U;
     if (pagedAttentionFlag_ == true) {
@@ -242,10 +242,10 @@ ge::graphStatus NCAITiling::ProcessQkv()
 
 ge::graphStatus NCAITiling::ProcessEpilogue()
 {
-    selectSize_ = *this->ncaiContext_->selectSize;
-    selectNum_ = *this->ncaiContext_->selectNum;
-    compSizeL_ = *this->ncaiContext_->compSizeL;
-    compStrideD_ = *this->ncaiContext_->compStrideD;
+    selectSize_ = static_cast<uint32_t>(*this->ncaiContext_->selectSize);
+    selectNum_ = static_cast<uint32_t>(*this->ncaiContext_->selectNum);
+    compSizeL_ = static_cast<uint32_t>(*this->ncaiContext_->compSizeL);
+    compStrideD_ = static_cast<uint32_t>(*this->ncaiContext_->compStrideD);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -481,16 +481,16 @@ ge::graphStatus NCAITiling::ConvertContext(gert::TilingContext &context, NsaComp
     auto attrs = context.GetAttrs();
     OP_CHECK_IF(attrs == nullptr, OP_LOGE(context.GetNodeName(), "attrs got from GE is nullptr"),
                return ge::GRAPH_FAILED);
-    ncaiContext.numHeads = attrs->GetAttrPointer<uint32_t>(NUM_HEADS_ATTR_INDEX);
-    ncaiContext.kvHeadNums = attrs->GetAttrPointer<uint32_t>(KV_NUM_HEADS_ATTR_INDEX);
-    ncaiContext.selectSize = attrs->GetAttrPointer<uint32_t>(SELECT_SIZE_ATTR_INDEX);
-    ncaiContext.selectNum = attrs->GetAttrPointer<uint32_t>(SELECT_NUM_ATTR_INDEX);
-    ncaiContext.compSizeL = attrs->GetAttrPointer<uint32_t>(COMP_SIZE_ATTR_INDEX);
-    ncaiContext.compStrideD = attrs->GetAttrPointer<uint32_t>(COMP_STRIDE_ATTR_INDEX);
+    ncaiContext.numHeads = attrs->GetAttrPointer<int64_t>(NUM_HEADS_ATTR_INDEX);
+    ncaiContext.kvHeadNums = attrs->GetAttrPointer<int64_t>(KV_NUM_HEADS_ATTR_INDEX);
+    ncaiContext.selectSize = attrs->GetAttrPointer<int64_t>(SELECT_SIZE_ATTR_INDEX);
+    ncaiContext.selectNum = attrs->GetAttrPointer<int64_t>(SELECT_NUM_ATTR_INDEX);
+    ncaiContext.compSizeL = attrs->GetAttrPointer<int64_t>(COMP_SIZE_ATTR_INDEX);
+    ncaiContext.compStrideD = attrs->GetAttrPointer<int64_t>(COMP_STRIDE_ATTR_INDEX);
     ncaiContext.scaleValue = attrs->GetAttrPointer<float>(SCALE_VALUE_ATTR_INDEX);
     ncaiContext.layOut = attrs->GetAttrPointer<char>(LAYOUT_ATTR_INDEX);
-    ncaiContext.blockSize = attrs->GetAttrPointer<uint32_t>(BLOCK_SIZE_ATTR_INDEX);
-    ncaiContext.sparseMode = attrs->GetAttrPointer<uint32_t>(SPARSE_MODE_ATTR_INDEX);
+    ncaiContext.blockSize = attrs->GetAttrPointer<int64_t>(BLOCK_SIZE_ATTR_INDEX);
+    ncaiContext.sparseMode = attrs->GetAttrPointer<int64_t>(SPARSE_MODE_ATTR_INDEX);
 
     OP_CHECK_IF(context.GetWorkspaceSizes(1) == nullptr,
                OPS_REPORT_VECTOR_INNER_ERR("NsaCompressAttentionInfer", "workSpaceSize got from GE is nullptr"),

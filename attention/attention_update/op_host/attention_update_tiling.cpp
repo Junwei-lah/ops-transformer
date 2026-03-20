@@ -207,9 +207,9 @@ ge::graphStatus AttentionUpdateTiling::GetShapeAttrsInfo()
     auto attrs = context_->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context_, attrs);
 
-    const uint64_t *spPtr = attrs->GetAttrPointer<uint64_t>(ATTR_SP_INDEX);
+    const int64_t *spPtr = attrs->GetAttrPointer<int64_t>(ATTR_SP_INDEX);
     OP_CHECK_IF(spPtr == nullptr, OP_LOGE("AttentionUpdate", "spPtr is null"), return ge::GRAPH_FAILED);
-    sp_ = *spPtr;
+    sp_ = static_cast<uint64_t>(*spPtr);
 
     uint32_t allTensorCount = context_->GetComputeNodeInputNum();
     OP_CHECK_IF(allTensorCount != sp_ * NUM_2,
@@ -232,9 +232,9 @@ ge::graphStatus AttentionUpdateTiling::GetShapeAttrsInfo()
     d_ = goShape_.GetDim(DIM_1);
     bshSize_ = goShape_.GetDim(DIM_0);
 
-    const uint64_t *updateTypePtr = attrs->GetAttrPointer<uint64_t>(ATTR_UPDATE_TYPE_INDEX);
+    const int64_t *updateTypePtr = attrs->GetAttrPointer<int64_t>(ATTR_UPDATE_TYPE_INDEX);
     OP_CHECK_IF(updateTypePtr == nullptr, OP_LOGE("AttentionUpdate", "updateTypePtr is null"), return ge::GRAPH_FAILED);
-    updateType_ = *updateTypePtr;
+    updateType_ = static_cast<int64_t>(*updateTypePtr);
     goDtypeSize_ = GetSizeByDataType(goType_);
     OP_CHECK_IF(goDtypeSize_ == 0,
                 OP_LOGE(context_->GetNodeName(), "UpdateAttention get go dtype[%s] size is 0.",

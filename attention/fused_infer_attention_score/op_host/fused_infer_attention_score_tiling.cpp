@@ -775,8 +775,8 @@ static ge::graphStatus ConvertContextToParamsIFA(gert::TilingContext &context, I
 
 static ge::graphStatus CheckDequantParams(gert::TilingContext &context, const int64_t s)
 {
-    OP_CHECK_IF((context.GetAttrs()->GetAttrPointer<uint64_t>(ANTIQUANT_MODE_INDEX) != nullptr) &&
-        (*context.GetAttrs()->GetAttrPointer<uint64_t>(ANTIQUANT_MODE_INDEX) != 0),
+    OP_CHECK_IF((context.GetAttrs()->GetAttrPointer<int64_t>(ANTIQUANT_MODE_INDEX) != nullptr) &&
+        (*context.GetAttrs()->GetAttrPointer<int64_t>(ANTIQUANT_MODE_INDEX) != 0),
         OPS_REPORT_VECTOR_INNER_ERR(context.GetNodeName(), "antiquant_mode is not supported!"),
         return ge::GRAPH_FAILED);
 
@@ -822,13 +822,13 @@ static ge::graphStatus CheckLseShape(gert::TilingContext &context, bool lseFlag,
             OPS_REPORT_VECTOR_INNER_ERR(context.GetNodeName(), "SoftmaxLse shape dim should be 4!"),
             return ge::GRAPH_FAILED);
 
-        uint32_t tempN = *context.GetAttrs()->GetAttrPointer<uint32_t>(ATTR_N_INDEX);
+        int64_t tempN = *context.GetAttrs()->GetAttrPointer<int64_t>(ATTR_N_INDEX);
         OP_CHECK_IF(((lseFlag != false) &&
             ((tempLse->GetStorageShape().GetDim(0) != b) || (tempLse->GetStorageShape().GetDim(1) != tempN) ||
             (tempLse->GetStorageShape().GetDim(DIM_2) != s) || (tempLse->GetStorageShape().GetDim(DIM_3) != 1))),
             OPS_REPORT_VECTOR_INNER_ERR(
                 context.GetNodeName(),
-                "SoftmaxLse shape size[%ld, %ld, %ld, %ld] does not match BNS1[%ld, %u, %ld, 1]!",
+                "SoftmaxLse shape size[%ld, %ld, %ld, %ld] does not match BNS1[%ld, %ld, %ld, 1]!",
                 tempLse->GetStorageShape().GetDim(0), tempLse->GetStorageShape().GetDim(1),
                 tempLse->GetStorageShape().GetDim(DIM_2), tempLse->GetStorageShape().GetDim(DIM_3), b, tempN, s),
             return ge::GRAPH_FAILED);
@@ -1039,8 +1039,8 @@ ge::graphStatus CheckFAIIsTND(gert::TilingContext *context, bool isPageAttention
     if (CheckFAISeqlenDataInTND(context, isPageAttention, actSeqLenDims, actSeqLenKVDims) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
-    int32_t sparseMode = *(context->GetAttrs()->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
-    if (sparseMode == 4U && CheckSparseModeParams(context, actSeqLenDims) != ge::GRAPH_SUCCESS) {
+    int32_t sparseMode = static_cast<int32_t>(*(context->GetAttrs()->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
+    if (sparseMode == 4 && CheckSparseModeParams(context, actSeqLenDims) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -1086,42 +1086,46 @@ ge::graphStatus CheckFAIQKV(gert::TilingContext *context, bool isPageAttention)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus CheckFAILearnableSink(const gert::TilingContext *context) {
- 	         auto qDataType = context->GetInputDesc(QUERY_INDEX)->GetDataType();
- 	         auto sinkDataType = context->GetOptionalInputDesc(LEARNABLE_SINK_INDEX)->GetDataType();
-             auto queryShape = context->GetInputShape(QUERY_INDEX);
-             auto learnableSinkShape = context->GetOptionalInputShape(LEARNABLE_SINK_INDEX);
+ge::graphStatus CheckFAILearnableSink(const gert::TilingContext *context)
+{
+    auto qDataType = context->GetInputDesc(QUERY_INDEX)->GetDataType();
+    auto sinkDataType = context->GetOptionalInputDesc(LEARNABLE_SINK_INDEX)->GetDataType();
+    auto queryShape = context->GetInputShape(QUERY_INDEX);
+    auto learnableSinkShape = context->GetOptionalInputShape(LEARNABLE_SINK_INDEX);
 
- 	         auto attrs = context->GetAttrs();
- 	         int32_t tempInnerPrecise = *(attrs->GetAttrPointer<int32_t>(ATTR_INNER_PRECISE_INDEX));
- 	         int32_t sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
- 	 
- 	        OP_CHECK_IF((sinkDataType != qDataType),
- 	             OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Input dtype of Q and learnable sink must be consistent"),
- 	                 return ge::GRAPH_FAILED);
+    auto attrs = context->GetAttrs();
+    int32_t tempInnerPrecise = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_INNER_PRECISE_INDEX)));
+    int32_t sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
 
- 	        OP_CHECK_IF(((sinkDataType != ge::DT_FLOAT16) && (sinkDataType != ge::DT_BF16)),
- 	             OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Input dtype of learnable sink must be FP16 or BF16"),
- 	                 return ge::GRAPH_FAILED);
+    OP_CHECK_IF(
+        (sinkDataType != qDataType),
+        OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Input dtype of Q and learnable sink must be consistent"),
+        return ge::GRAPH_FAILED);
 
-            auto sinkDim = learnableSinkShape->GetStorageShape().GetDimNum();
-            OP_CHECK_IF(sinkDim != 1U,
+    OP_CHECK_IF(
+        ((sinkDataType != ge::DT_FLOAT16) && (sinkDataType != ge::DT_BF16)),
+        OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "Input dtype of learnable sink must be FP16 or BF16"),
+        return ge::GRAPH_FAILED);
+
+    auto sinkDim = learnableSinkShape->GetStorageShape().GetDimNum();
+    OP_CHECK_IF(sinkDim != 1U,
                 OP_LOGE(context->GetNodeName(), "learnable_sink enable, sink shape dim(%u) must be 1!", sinkDim),
                 return ge::GRAPH_FAILED);
 
-            auto sinkDimValue = learnableSinkShape->GetStorageShape().GetDim(DIM_0);
-            auto queryN = queryShape->GetStorageShape().GetDim(DIM_1);
-            OP_CHECK_IF(sinkDimValue != queryN,
-                OP_LOGE(context->GetNodeName(), "learnable_sink enable, sink shape(%u) must be same equal queryN(%u)!", sinkDimValue, queryN),
+    auto sinkDimValue = learnableSinkShape->GetStorageShape().GetDim(DIM_0);
+    auto queryN = queryShape->GetStorageShape().GetDim(DIM_1);
+    OP_CHECK_IF(sinkDimValue != queryN,
+                OP_LOGE(context->GetNodeName(), "learnable_sink enable, sink shape(%u) must be same equal queryN(%u)!",
+                        sinkDimValue, queryN),
                 return ge::GRAPH_FAILED);
 
- 	         OP_CHECK_IF((tempInnerPrecise == 1 || tempInnerPrecise == 2 || tempInnerPrecise == 3), 
- 	             OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(),
- 	             "When learnable sink is enabled, innerPrecise shall not be 1, 2 or 3"),
- 	                 return ge::GRAPH_FAILED);
- 	 
- 	         return ge::GRAPH_SUCCESS;
- 	 }
+    OP_CHECK_IF((tempInnerPrecise == 1 || tempInnerPrecise == 2 || tempInnerPrecise == 3),
+                OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(),
+                                            "When learnable sink is enabled, innerPrecise shall not be 1, 2 or 3"),
+                return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
 
 ge::graphStatus CheckFAISinglePara(const gert::TilingContext *context, bool isPageAttention)
 {
@@ -1139,8 +1143,8 @@ ge::graphStatus CheckFAISinglePara(const gert::TilingContext *context, bool isPa
         tempKD = tempK->GetStorageShape().GetDim(DIM_2);
         tempVD = tempV->GetStorageShape().GetDim(DIM_2);
     } else {
-        int32_t kvHeadNum = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
-        int32_t inputBlockSize = *(attrs->GetAttrPointer<int32_t>(ATTR_BLOCK_SIZE_INDEX));
+        int64_t kvHeadNum = *(attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX));
+        int64_t inputBlockSize = *(attrs->GetAttrPointer<int64_t>(ATTR_BLOCK_SIZE_INDEX));
         tempKD = (tempK->GetStorageShape().GetDim(DIM_2)) / kvHeadNum;
         tempVD = (tempV->GetStorageShape().GetDim(DIM_2)) / kvHeadNum;
         int64_t cacheBlockSize = tempK->GetStorageShape().GetDim(DIM_1);
@@ -1205,8 +1209,8 @@ ge::graphStatus CheckFAIMask(gert::TilingContext *context)
 {
     auto tempAttnMaskShape = context->GetOptionalInputShape(ATTEN_MASK_INDEX);
     auto attrs = context->GetAttrs();
-    int32_t sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
-    OP_CHECK_IF((sparseMode != 0) && (sparseMode != 3U) && (sparseMode != 4U),
+    int32_t sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
+    OP_CHECK_IF((sparseMode != 0) && (sparseMode != 3) && (sparseMode != 4),
         OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "In split fuse senario, sparseMode shall be 0 or 3 or 4"),
             return ge::GRAPH_FAILED);
     if (tempAttnMaskShape == nullptr) {
@@ -1215,10 +1219,10 @@ ge::graphStatus CheckFAIMask(gert::TilingContext *context)
                 return ge::GRAPH_FAILED);
     } else {
         auto maskDimNum = tempAttnMaskShape->GetStorageShape().GetDimNum();
-        OP_CHECK_IF(sparseMode != 3U && sparseMode != 4U,
+        OP_CHECK_IF(sparseMode != 3 && sparseMode != 4,
             OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(), "When attnMask is provided, sparseMode must be 3 or 4"),
                 return ge::GRAPH_FAILED);
-        OP_CHECK_IF(maskDimNum != 2U && maskDimNum != 3U && maskDimNum != 4U,
+        OP_CHECK_IF(maskDimNum != 2 && maskDimNum != 3 && maskDimNum != 4,
             OPS_REPORT_VECTOR_INNER_ERR(context->GetNodeName(),
                 "When attnMask is provided, it must have 2 or 3 or 4 dims"),
                 return ge::GRAPH_FAILED);
@@ -1279,12 +1283,12 @@ static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, F
     auto pseShift = context->GetOptionalInputShape(PSE_SHIFT_INDEX);
     auto attrs = context->GetAttrs();
     faInfo.pagedCacheFlag = blockTable != nullptr;
-    faInfo.numHeads = *(attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX));
-    int32_t tmpNKv = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
-    int32_t tmpBlkSize = *(attrs->GetAttrPointer<int32_t>(ATTR_BLOCK_SIZE_INDEX));
-    int32_t sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
+    faInfo.numHeads = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX)));
+    int32_t tmpNKv = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX)));
+    int32_t tmpBlkSize = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_BLOCK_SIZE_INDEX)));
+    int32_t sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
     float scaleValue = *(attrs->GetAttrPointer<float>(ATTR_SCALE_INDEX));
-    faInfo.sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
+    faInfo.sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
     int64_t preToken  = *(attrs->GetAttrPointer<int64_t>(ATTR_PRE_TOKEN_INDEX));
     int64_t nextToken = *(attrs->GetAttrPointer<int64_t>(ATTR_NEXT_TOKEN_INDEX));
     if (preToken > SPARSE_MODE_INT_MAX) {
@@ -1305,7 +1309,7 @@ static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, F
     string inputLayoutStr = string(attrs->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
     bool lseFlag = *(attrs->GetAttrPointer<bool>(SOFTMAX_LSE_FLAG_INDEX));
     bool learnableSinkFlag = context->GetOptionalInputTensor(LEARNABLE_SINK_INDEX) != nullptr ? true : false;
-    int32_t innerPrecise = *(attrs->GetAttrPointer<int32_t>(ATTR_INNER_PRECISE_INDEX));
+    int32_t innerPrecise = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_INNER_PRECISE_INDEX)));
     faInfo.numBlocks = tempK->GetStorageShape().GetDim(DIM_0);
     faInfo.blockSize = tmpBlkSize;
     faInfo.kvHeads = tmpNKv;
@@ -1383,7 +1387,7 @@ static ge::graphStatus ConvertContextToParamsFAI(gert::TilingContext *context, F
     return ge::GRAPH_SUCCESS;
 }
 
-static bool IsUsingFAI(gert::TilingContext &context, const string inputLayoutStr, const uint32_t tempD)
+static bool IsUsingFAI(gert::TilingContext &context, const string inputLayoutStr, const int64_t tempD)
 {
     bool isPageAttention = context.GetOptionalInputShape(BLOCK_TABLE_INDEX) != nullptr ? true : false;
     auto tempAttnMaskShape = context.GetOptionalInputShape(ATTEN_MASK_INDEX);
@@ -1392,10 +1396,10 @@ static bool IsUsingFAI(gert::TilingContext &context, const string inputLayoutStr
     auto tempV = context.GetInputShape(VALUE_INDEX);
     auto kvDimNum = tempK->GetStorageShape().GetDimNum();
     auto attrs = context.GetAttrs();
-    int32_t headNum = *(attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX));
-    int32_t kvHeadNum = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
-    int32_t sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
-    int32_t innerPrecise = *(attrs->GetAttrPointer<int32_t>(ATTR_INNER_PRECISE_INDEX));
+    int64_t headNum = *(attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX));
+    int64_t kvHeadNum = *(attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX));
+    int32_t sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
+    int32_t innerPrecise = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_INNER_PRECISE_INDEX)));
     bool isLearnableSink = context.GetOptionalInputTensor(LEARNABLE_SINK_INDEX) != nullptr ? true : false;
     bool isLearnableSinkFlag = true;
     constexpr int64_t QUERY_HEAD_DIM_64 = 64;
@@ -1424,7 +1428,7 @@ static bool IsUsingFAI(gert::TilingContext &context, const string inputLayoutStr
         if (!isPageAttention) {
             int64_t tempKD = tempK->GetStorageShape().GetDim(DIM_2);
             int64_t tempVD = tempV->GetStorageShape().GetDim(DIM_2);
-            bool isFAIDSize = (tempD <= 256U && tempKD <= 256 && tempVD <= 256) &&
+            bool isFAIDSize = (tempD <= 256 && tempKD <= 256 && tempVD <= 256) &&
                     (tempD == tempKD && tempD == tempVD);
             if (isFAIDSize) {
                 usingFAI = true;
@@ -1433,7 +1437,7 @@ static bool IsUsingFAI(gert::TilingContext &context, const string inputLayoutStr
             int64_t tempKD = (tempK->GetStorageShape().GetDim(DIM_2)) / kvHeadNum;
             int64_t tempVD = (tempV->GetStorageShape().GetDim(DIM_2)) / kvHeadNum;
             int64_t blockSize = tempK->GetStorageShape().GetDim(DIM_1);
-            bool isFAIDSize = (tempD <= 256U && tempKD <= 256 && tempVD <= 256) &&
+            bool isFAIDSize = (tempD <= 256 && tempKD <= 256 && tempVD <= 256) &&
                     (tempD == tempKD && tempD == tempVD);
             bool blockSizeSupported = (blockSize % BLOCK_SIZE_ALIGN_16 == 0) && 
                     (blockSize <= MAX_BLOCK_SIZE);
@@ -1629,7 +1633,7 @@ bool IsSlidingAttention(gert::TilingContext &context, const string inputLayoutSt
         if (queryD != 512) { // 512: qD need 512
             return false;
         }
-        if (*context.GetAttrs()->GetAttrPointer<uint32_t>(ATTR_SPARSE_MODE_INDEX) == 4) { // 4: sparseMode =4
+        if (*context.GetAttrs()->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX) == 4) { // 4: sparseMode =4
             return true;
         }
     }
@@ -1795,7 +1799,7 @@ static ge::graphStatus GetQueryN(const gert::TilingContext *context, const strin
     } else if (inputLayoutStr == "BSH" || 
         inputLayoutStr == "BSH_NBSD") {
         auto attrs = context->GetAttrs();
-        int64_t numHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
+        int64_t numHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
         queryN = numHeads;
     } else {
         queryN = tempQ->GetStorageShape().GetDim(DIM_1);
@@ -1859,7 +1863,7 @@ static ge::graphStatus GetQueryD(const gert::TilingContext *context, const strin
     } else {
         int64_t queryH = tempQ->GetStorageShape().GetDim(DIM_2);
         auto attrs = context->GetAttrs();
-        int64_t numHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
+        int64_t numHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
         queryD = queryH / numHeads;
     }
     const int64_t maxDlimit = 512;
@@ -1875,9 +1879,9 @@ static ge::graphStatus GetPAValueD(const gert::TilingContext *context, int64_t &
     auto tempV = context->GetInputShape(VALUE_INDEX);
     if (tempV->GetStorageShape().GetDimNum() == DIM_BSH) { // BnBsH
         auto attrs = context->GetAttrs();
-        int64_t numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_NUM_KV_HEADS_INDEX));
+        int64_t numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX);
         if (numKvHeads == 0) {
-            numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
+            numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
         }
         valueD = tempV->GetStorageShape().GetDim(DIM_2) / numKvHeads;
     } else if (tempV->GetStorageShape().GetDimNum() == DIM_BNSD_OR_BSND) { // BnNBsD
@@ -1920,9 +1924,9 @@ static ge::graphStatus GetValueD(gert::TilingContext *context, const string inpu
     } else {
         int64_t valueH = tempV->GetStorageShape().GetDim(DIM_2);
         auto attrs = context->GetAttrs();
-        int64_t numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_NUM_KV_HEADS_INDEX));
+        int64_t numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX);
         if (numKvHeads == 0) {
-            numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
+            numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
         }
         valueD = valueH / numKvHeads;
     }

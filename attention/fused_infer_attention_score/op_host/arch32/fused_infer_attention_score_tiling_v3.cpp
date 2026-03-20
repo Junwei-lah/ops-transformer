@@ -743,8 +743,8 @@ FIA_EXTERN_C ge::graphStatus TilingFusedInferAttentionScoreV3(gert::TilingContex
 bool GetPaValueD(const gert::TilingContext *context, int64_t &valueD)
 {
     auto attrs = context->GetAttrs();
-    int64_t numHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
-    int64_t numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_NUM_KV_HEADS_INDEX));
+    int64_t numHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
+    int64_t numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX);
     if (numKvHeads == 0) {
         numKvHeads = numHeads;
     }
@@ -775,8 +775,8 @@ bool GetValueD(gert::TilingContext *context, int64_t &valueD)
     }
 
     auto attrs = context->GetAttrs();
-    int64_t numHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
-    int64_t numKvHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_NUM_KV_HEADS_INDEX));
+    int64_t numHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
+    int64_t numKvHeads = *attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX);
     if (numKvHeads == 0) {
         numKvHeads = numHeads;
     }
@@ -855,7 +855,7 @@ bool GetQkvD(gert::TilingContext *context, int64_t &queryD, int64_t &queryRopeD,
         return false;
     }
 
-    int64_t numHeads = static_cast<int64_t>(*attrs->GetAttrPointer<uint32_t>(ATTR_N_INDEX));
+    int64_t numHeads = *attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX);
     const std::string inputLayoutStr = std::string(context->GetAttrs()->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
     if (inputLayoutStr == "BNSD_BSND" ||
         inputLayoutStr == "BSND_BNSD" ||
@@ -1001,10 +1001,10 @@ bool CheckSpecConditions(const gert::TilingContext *context)
 
     auto attrs = context->GetAttrs();
     string inputLayoutStr = string(attrs->GetAttrPointer<char>(ATTR_INPUT_LAYOUT_INDEX));
-    int32_t headNum = *(attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX));
-    int32_t kvHeadNum = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
-    int32_t innerPrecise = *(attrs->GetAttrPointer<int32_t>(ATTR_INNER_PRECISE_INDEX));
-    int32_t sparseMode = *(attrs->GetAttrPointer<int32_t>(ATTR_SPARSE_MODE_INDEX));
+    int64_t headNum = *(attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX));
+    int64_t kvHeadNum = *(attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX));
+    int32_t innerPrecise = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_INNER_PRECISE_INDEX)));
+    int32_t sparseMode = static_cast<int32_t>(*(attrs->GetAttrPointer<int64_t>(ATTR_SPARSE_MODE_INDEX)));
     
     bool isLayoutSupported = (inputLayoutStr == "TND");
     bool isPageAttention = (context->GetOptionalInputShape(BLOCK_TABLE_INDEX) != nullptr);
@@ -1183,8 +1183,8 @@ bool RouteToFia(gert::TilingContext *context)
 
     if ((qDataType == ge::DT_FLOAT16 || qDataType == ge::DT_BF16) && (qDataType == kDataType)) {
         auto attrs = context->GetAttrs();
-        int32_t headNum = *(attrs->GetAttrPointer<int32_t>(ATTR_N_INDEX));
-        int32_t kvHeadNum = *(attrs->GetAttrPointer<int32_t>(ATTR_NUM_KV_HEADS_INDEX));
+        int64_t headNum = *(attrs->GetAttrPointer<int64_t>(ATTR_N_INDEX));
+        int64_t kvHeadNum = *(attrs->GetAttrPointer<int64_t>(ATTR_NUM_KV_HEADS_INDEX));
         bool isMha = (kvHeadNum == 0) || (headNum == kvHeadNum);
         bool isPageAttention = (context->GetOptionalInputShape(BLOCK_TABLE_INDEX) != nullptr);
         bool isPrefix = (context->GetOptionalInputShape(KEY_SHARED_PREFIX_INDEX) != nullptr) ||

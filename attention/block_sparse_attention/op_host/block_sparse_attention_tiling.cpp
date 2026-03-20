@@ -597,7 +597,7 @@ ge::graphStatus BSATiling::ProcessBlockShape(gert::TilingContext *rfaContext)
 
 ge::graphStatus BSATiling::ProcessSoftmaxLse(gert::TilingContext *rfaContext)
 {
-    auto softmaxLsePtr = rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(SOFTMAX_LSE_FLAG_INDEX);
+    auto softmaxLsePtr = rfaContext->GetAttrs()->GetAttrPointer<int64_t>(SOFTMAX_LSE_FLAG_INDEX);
     if (softmaxLsePtr == nullptr) {
         OP_LOGE(rfaContext->GetNodeName(), "softmaxLsePtr is null");
         return ge::GRAPH_FAILED;
@@ -748,11 +748,11 @@ ge::graphStatus BSATiling::ProcessInput(gert::TilingContext *rfaContext)
 
 ge::graphStatus BSATiling::CheckAttr(gert::TilingContext *rfaContext)
 {
-    if (rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(NUM_KEY_VALUE_HEADS_INDEX) == nullptr) {
+    if (rfaContext->GetAttrs()->GetAttrPointer<int64_t>(NUM_KEY_VALUE_HEADS_INDEX) == nullptr) {
         OP_LOGE(rfaContext->GetNodeName(), "numKeyValueHeads is null");
         return ge::GRAPH_FAILED;
     }
-    kvHeads_ = *rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(NUM_KEY_VALUE_HEADS_INDEX);
+    kvHeads_ = static_cast<uint32_t>(*rfaContext->GetAttrs()->GetAttrPointer<int64_t>(NUM_KEY_VALUE_HEADS_INDEX));
     
     if (rfaContext->GetAttrs()->GetAttrPointer<float>(SCALE_VALUE_INDEX) == nullptr) {
         scaleValue_ = 1.0f / std::sqrt(static_cast<float>(embeddingSize_));
@@ -760,15 +760,15 @@ ge::graphStatus BSATiling::CheckAttr(gert::TilingContext *rfaContext)
         scaleValue_ = *rfaContext->GetAttrs()->GetAttrPointer<float>(SCALE_VALUE_INDEX);
     }
     
-    if (rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(MASK_TYPE_INDEX) != nullptr) {
-        maskType_ = *rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(MASK_TYPE_INDEX);
+    if (rfaContext->GetAttrs()->GetAttrPointer<int64_t>(MASK_TYPE_INDEX) != nullptr) {
+        maskType_ = static_cast<uint32_t>(*rfaContext->GetAttrs()->GetAttrPointer<int64_t>(MASK_TYPE_INDEX));
     }
     
     // 获取innerPrecise参数
-    if (rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(INNER_PRECISE_INDEX) != nullptr) {
-        innerPrecise_ = *rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(INNER_PRECISE_INDEX);
+    if (rfaContext->GetAttrs()->GetAttrPointer<int64_t>(INNER_PRECISE_INDEX) != nullptr) {
+        innerPrecise_ = static_cast<uint32_t>(*rfaContext->GetAttrs()->GetAttrPointer<int64_t>(INNER_PRECISE_INDEX));
     }
-    auto softmaxLsePtr = rfaContext->GetAttrs()->GetAttrPointer<uint32_t>(SOFTMAX_LSE_FLAG_INDEX);
+    auto softmaxLsePtr = rfaContext->GetAttrs()->GetAttrPointer<int64_t>(SOFTMAX_LSE_FLAG_INDEX);
     if (softmaxLsePtr == nullptr) {
         softmaxLseFlag_ = false;
     } else {

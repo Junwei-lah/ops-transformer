@@ -66,8 +66,8 @@ ge::graphStatus DecodeUpdateTiling(gert::TilingContext *context) {
     OP_LOGD(nodeName, "Tiling initing");
 
     auto attrs = context->GetAttrs();
-    const uint32_t* updateTypePtr = attrs->GetAttrPointer<uint32_t>(ATTR_UPDATETYPE_INDEX);
-    const uint32_t* spPtr = attrs->GetAttrPointer<uint32_t>(ATTR_SP_INDEX);
+    const int64_t* updateTypePtr = attrs->GetAttrPointer<int64_t>(ATTR_UPDATETYPE_INDEX);
+    const int64_t* spPtr = attrs->GetAttrPointer<int64_t>(ATTR_SP_INDEX);
 
     auto updateType = *updateTypePtr;
     auto sp = *spPtr;
@@ -84,7 +84,7 @@ ge::graphStatus DecodeUpdateTiling(gert::TilingContext *context) {
     const uint32_t totalLength = lseShape.GetDim(LSE_TOTAL_LENGTH_DIM);
     const uint32_t hd = inShape.GetDim(IN_HD_DIM);
 
-    OP_LOGD(nodeName, "TotalLength of b*s*hc is %u, sp is %u, hd is %u",
+    OP_LOGD(nodeName, "TotalLength of b*s*hc is %u, sp is %ld, hd is %u",
                                             totalLength, sp, hd);
     
     uint32_t blockDims = 0;

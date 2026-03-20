@@ -43,8 +43,8 @@ static ge::graphStatus InferShapeNsaCompressAttentionInfer(gert::InferShapeConte
     
     auto attrs = context->GetAttrs();
     OP_CHECK_NULL_WITH_CONTEXT(context, attrs);
-    const uint32_t *kvHeadNumsPtr = attrs->GetAttrPointer<uint32_t>(KV_NUM_HEADS_ATTR_INDEX);
-    const int *selectBlockCountPtr = attrs->GetAttrPointer<int32_t>(SELECT_BLOCK_ATTR_INDEX);
+    const int64_t *kvHeadNumsPtr = attrs->GetAttrPointer<int64_t>(KV_NUM_HEADS_ATTR_INDEX);
+    const int64_t *selectBlockCountPtr = attrs->GetAttrPointer<int64_t>(SELECT_BLOCK_ATTR_INDEX);
     const char *layOutPtr = attrs->GetAttrPointer<char>(LAYOUT_ATTR_INDEX);
     OP_CHECK_NULL_WITH_CONTEXT(context, layOutPtr);
 

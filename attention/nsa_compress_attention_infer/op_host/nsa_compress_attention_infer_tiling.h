@@ -127,17 +127,17 @@ struct NsaCompressAttentionInferContext {
     RequiredParaInfo attenOut;
     RequiredParaInfo selectOut;
 
-    const uint32_t *numHeads;
-    const uint32_t *kvHeadNums;
-    const uint32_t *selectSize;
-    const uint32_t *selectNum;
-    const uint32_t *compSizeL;
-    const uint32_t *compStrideD;
+    const int64_t *numHeads;
+    const int64_t *kvHeadNums;
+    const int64_t *selectSize;
+    const int64_t *selectNum;
+    const int64_t *compSizeL;
+    const int64_t *compStrideD;
     const float *scaleValue;
     
     const char *layOut;
-    const uint32_t *blockSize;
-    const uint32_t *sparseMode;
+    const int64_t *blockSize;
+    const int64_t *sparseMode;
 
     size_t *workSpaces;
     uint64_t tilingKey;
