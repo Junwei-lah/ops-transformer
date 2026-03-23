@@ -92,6 +92,7 @@ public:
         this->Attr("quant_scale_repo_mode").AttrType(OPTIONAL).Int(1);
         this->Attr("tile_size").AttrType(OPTIONAL).Int(128);     // 128:默认值
         this->Attr("rope_head_dim").AttrType(OPTIONAL).Int(64);  // 64:默认值
+        this->Attr("key_block_stride").AttrType(OPTIONAL).Int(-1);  // -1:默认值
         OpAICoreConfig aicore_config;
         aicore_config.DynamicCompileStaticFlag(true)
             .DynamicFormatFlag(true)

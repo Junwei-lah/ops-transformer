@@ -53,6 +53,7 @@ constexpr uint32_t ATTENTION_MODE_ATTR_INDEX = 9;
 constexpr uint32_t QUANT_SCALE_REPO_MODE_ATTR_INDEX = 10;
 constexpr uint32_t TILE_SIZE_ATTR_INDEX = 11;
 constexpr uint32_t ROPE_HEAD_DIM_ATTR_INDEX = 12;
+constexpr uint32_t ATTR_KEY_BLOCK_STRIDE_INDEX = 13;
 // Dim Num
 constexpr size_t DIM_NUM_TWO = 2;
 constexpr size_t DIM_NUM_THREE = 3;
@@ -147,6 +148,7 @@ struct QSFAParaInfo {
     const int64_t *ropeHeadDim = nullptr;
     const int64_t *preTokens = nullptr;
     const int64_t *nextTokens = nullptr;
+    int64_t keyBlockStride = 0;
 };
 
 struct InnerSplitParams {
@@ -160,6 +162,7 @@ TILING_DATA_FIELD_DEF(uint32_t, batchSize)
 TILING_DATA_FIELD_DEF(uint32_t, seqSize)
 TILING_DATA_FIELD_DEF(uint32_t, qSeqSize)
 TILING_DATA_FIELD_DEF(int64_t, blockSize)
+TILING_DATA_FIELD_DEF(int64_t, keyBlockStride)
 TILING_DATA_FIELD_DEF(uint32_t, maxBlockNumPerBatch)
 TILING_DATA_FIELD_DEF(float, scaleValue)
 TILING_DATA_FIELD_DEF(uint32_t, nNumOfQInOneGroup)
@@ -266,6 +269,7 @@ struct QSFATilingInfo {
 
     bool pageAttentionFlag = false;
     int64_t blockSize = 0;
+    int64_t keyBlockStride = 0;
     uint32_t blockTypeSize = 0;
     uint32_t maxBlockNumPerBatch = 0;
     uint32_t totalBlockNum = 0;

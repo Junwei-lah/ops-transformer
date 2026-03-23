@@ -208,6 +208,7 @@ struct RunInfo {
     /* service mm1 mm2 pageAttention */ \
     uint32_t oriBlockSize; \
     uint32_t cmpBlockSize; \
+    uint32_t keyBlockStride; \
     uint32_t paLayoutType; \
     uint32_t oriMaxBlockNumPerBatch; \
     uint32_t cmpMaxBlockNumPerBatch; \
@@ -244,6 +245,7 @@ struct RunInfo {
     /* pa params */  \
     uint32_t oriBlockSize : 12; \
     uint32_t cmpBlockSize : 12; \
+    uint32_t keyBlockStride; \
     uint32_t oriMaxBlockNumPerBatch; \
     uint32_t cmpMaxBlockNumPerBatch; \
     uint32_t usedCoreNum
