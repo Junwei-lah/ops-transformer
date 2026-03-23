@@ -40,6 +40,7 @@ public:
     __aicore__ inline void ReleaseEvents();
     __aicore__ inline void InitOutputDqAndDweights(GlobalTensor<dataType> dweightsGmTensor, GlobalTensor<dataType> dqTensor,
         LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo);
+    __aicore__ inline void InitOutputDkcoreGm(GlobalTensor<float> dkCoreWorkspaceGM, LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo);
     __aicore__ inline void GatherTopk(GlobalTensor<int32_t> sparseIndicesTensor, GlobalTensor<dataType> keyTensor,
         GlobalTensor<dataType> gatherKTensor, LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo);
     __aicore__ inline void ScatterAdd(GlobalTensor<int32_t> sparseIndicesTensor, GlobalTensor<float> scatterAddTensor,
@@ -104,7 +105,7 @@ protected:
     constexpr static int64_t reduceUbOffset = reduceFloatUbOffset + reduceFloatUbSize;
     constexpr static int64_t reduceUbSize = LIMIT_GROUPNUM * 2;
 
-    constexpr static int64_t MAX_DETERMINISTIC_SIZE = TOTAL_SIZE / sizeof(float) / 2;
+    constexpr static int64_t MAX_UB_SIZE = TOTAL_SIZE / sizeof(float) / 2;
 
     TPipe *pipe;
     TBuf<> unifiedBuffer;
@@ -321,9 +322,9 @@ __aicore__ inline void LIGVector<LIGT>::DeterministicMerge(GlobalTensor<float> d
         return;
     }
 
-    uint64_t maxTileRows = MAX_DETERMINISTIC_SIZE / constInfo.headDim;
+    uint64_t maxTileRows = MAX_UB_SIZE / constInfo.headDim;
     uint64_t stridePerRow = constInfo.headNumK * constInfo.headDim;
-    LocalTensor<float> dkCoreWorkspaceUb = unifiedBuffer.GetWithOffset<float>(MAX_DETERMINISTIC_SIZE, gatherPingUbOffset);
+    LocalTensor<float> dkCoreWorkspaceUb = unifiedBuffer.GetWithOffset<float>(MAX_UB_SIZE, gatherPingUbOffset);
 
     AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMTE2);
     for (int core = 0; core < constInfo.splitCores; core++) {
@@ -398,6 +399,32 @@ __aicore__ inline void LIGVector<LIGT>::InitOutputDqAndDweights(GlobalTensor<dat
     AscendC::WaitFlag<HardEvent::V_MTE3>(eventIdVToMte3);
     AscendC::DataCopy(dweightsGmTensor[dweightsGmOffset], zeroDataTensor, blockGroupNum);
     AscendC::DataCopy(dqTensor[dqGmOffset], zeroDataTensor, blockGroupNum * constInfo.headDim);
+    AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
+    AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
+}
+
+template <typename LIGT>
+__aicore__ inline void LIGVector<LIGT>::InitOutputDkcoreGm(GlobalTensor<float> dkCoreWorkspaceGM, LIGCommon::ConstInfo constInfo, LIGCommon::RunInfo runInfo)
+{
+    uint32_t dkCorePerSize;
+    if constexpr (LIGT::layout == LIG_LAYOUT::BSND) {
+        dkCorePerSize =  constInfo.seqlenK * constInfo.headDim / 2;
+    } else if constexpr (LIGT::layout == LIG_LAYOUT::TND) {
+        dkCorePerSize =  runInfo.actualSeqK * constInfo.headDim / 2;
+    }
+
+    LocalTensor<float> zeroDataTensor = unifiedBuffer.GetWithOffset<float>(MAX_UB_SIZE, gatherPingUbOffset);
+    AscendC::Duplicate(zeroDataTensor, static_cast<float>(0.0), MAX_UB_SIZE);
+    AscendC::SetFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+    AscendC::WaitFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+
+    uint64_t processed = 0;
+    while (processed < dkCorePerSize) {
+        uint64_t curBlockSize = MAX_UB_SIZE < (dkCorePerSize - processed) ? MAX_UB_SIZE : (dkCorePerSize - processed);
+        AscendC::DataCopy(dkCoreWorkspaceGM[GetBlockIdx() * dkCorePerSize + processed], zeroDataTensor, curBlockSize);
+        processed += curBlockSize;
+    }
+
     AscendC::SetFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
     AscendC::WaitFlag<HardEvent::MTE3_MTE2>(eventIdMte3ToMte2);
 }

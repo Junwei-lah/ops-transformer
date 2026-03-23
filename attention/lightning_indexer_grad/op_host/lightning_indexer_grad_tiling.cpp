@@ -76,6 +76,7 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
     uint32_t dyShapeDim = opParamInfo.dy.shape->GetStorageShape().GetDimNum();
     uint32_t dataType = static_cast<uint32_t>(queryDataType);
     uint32_t inputLayout = -1;
+
     if (std::string(opParamInfo.layout) == "BSND") {
         batch = static_cast<uint32_t>(opParamInfo.query.shape->GetStorageShape().GetDim(DIM_IDX_ONE));
         seqlenQ = static_cast<uint32_t>(opParamInfo.query.shape->GetStorageShape().GetDim(DIM_IDX_TWO));
@@ -107,8 +108,8 @@ ge::graphStatus LightningIndexerGradTiling::DoTiling()
         OP_LOGE(context_, "only support layout is BSND and TND.\n", opParamInfo.layout);
         return ge::GRAPH_FAILED; 
     }
-    uint32_t dkCoreSize =  seqlenK * headDim;
 
+    uint32_t dkCoreSize = seqlenK * headDim;
     // check headDim, groupNum, headNumK
     OP_CHECK_IF((headDim != MAX_HEADIM) || (groupNum != MAX_GROUPNUM) || (headNumK != LIMIT_HEADNUMK),
             OPS_REPORT_VECTOR_INNER_ERR(context_->GetNodeName(), 

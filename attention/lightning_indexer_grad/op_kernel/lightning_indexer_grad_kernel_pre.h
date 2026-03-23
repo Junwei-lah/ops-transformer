@@ -82,11 +82,6 @@ __aicore__ inline void LIGVectorPre<LIGT>::Process()
     if (g_coreType == AIV && cBlockIdx < kPreBlockTotal) {
         InitOutput<float>(dkWorkSpaceGm[dkOffset], initdkSize, 0);
     }
-    if (tilingData->deterministic && g_coreType == AIV && cBlockIdx < tilingData->usedCoreNum) {
-        uint32_t perCoreSize = tilingData->dkCoreSize / 2;
-        uint64_t offset = (uint64_t)cBlockIdx * perCoreSize;
-        InitOutput<float>(dkCoreWorkspaceGM[offset], perCoreSize, 0);
-    }
 }
 
 template <typename LIGT> 

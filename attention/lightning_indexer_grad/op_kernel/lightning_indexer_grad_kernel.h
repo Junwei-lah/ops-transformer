@@ -448,11 +448,12 @@ __aicore__ inline void LIGKernel<LIGT>::ProcessVec3(uint64_t taskId)
     if (likely(!constInfo.deterministic)) {
         vectorService.ScatterAdd(sparseIndicesGm, scatterAddGm, dkWorkSpaceGm, constInfo, runInfoStore[taskId]);
     } else {
+        SyncAll();
+        vectorService.InitOutputDkcoreGm(dkCoreWorkspaceGM, constInfo, runInfoStore[taskId]);
+        SyncAll();
         vectorService.ScatterAdd(sparseIndicesGm, scatterAddGm, dkCoreWorkspaceGM, constInfo, runInfoStore[taskId]);
         SyncAll();
         vectorService.DeterministicMerge(dkCoreWorkspaceGM, dkWorkSpaceGm, constInfo, runInfoStore[taskId]);
-        SyncAll();
-        InitOutput<float>(dkCoreWorkspaceGM[GetBlockIdx() * constInfo.dkCoreSize / 2], constInfo.dkCoreSize / 2, 0);
     }
 }
 
@@ -598,9 +599,10 @@ __aicore__ inline void LIGKernel<LIGT>::Process()
         if ASCEND_IS_AIV {
             if (unlikely(constInfo.deterministic && !runInfo.isRemainderCore)) {
                 SyncAll();
-                vectorService.DeterministicMerge(dkCoreWorkspaceGM, dkWorkSpaceGm, constInfo, runInfoStore[(runInfo.loopTimes - 1) % 4]);
+                vectorService.InitOutputDkcoreGm(dkCoreWorkspaceGM, constInfo, runInfoStore[(runInfo.loopTimes - 1) % 4]);
                 SyncAll();
-                InitOutput<float>(dkCoreWorkspaceGM[GetBlockIdx() * constInfo.dkCoreSize / 2], constInfo.dkCoreSize / 2, 0);
+                SyncAll(); // 轮空AIV核保持与非轮空核同步等待，等待scatterAdd结果放入dkCoreWorkspaceGM后累加
+                vectorService.DeterministicMerge(dkCoreWorkspaceGM, dkWorkSpaceGm, constInfo, runInfoStore[(runInfo.loopTimes - 1) % 4]);
             }
         }
 
