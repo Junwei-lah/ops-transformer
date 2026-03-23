@@ -86,8 +86,7 @@ constexpr uint32_t LAYOUT_ATTR_IDX = 5;
 constexpr uint32_t SEED_ATTR_IDX = 9;
 constexpr uint32_t OFFSET_ATTR_IDX = 10;
 constexpr uint32_t OUTDTYPE_ATTR_IDX = 11;
-constexpr uint32_t DS_SCALE_ATTR_IDX = 13;
-constexpr uint32_t P_SCALE_ATTR_IDX = 14;
+constexpr uint32_t TND_SOFTMAX_IN_ATTR_IDX = 12;
 
 constexpr uint32_t GM_ALIGN = 512;
 
@@ -485,6 +484,7 @@ struct FuzzyBaseInfoParamsRegbase { // 频繁使用的基础参数
     uint64_t sinkSize = 0;
     uint64_t s1SinkOuter = 0;
     uint64_t s2SinkOuter = 0;
+    uint32_t tndMaxSumLayout = 0; // 0: BNS8, 1: TND
 };
 
 inline int64_t CeilCommon(int64_t num1, int64_t num2)

@@ -105,6 +105,9 @@ constexpr uint32_t SBNGD = 2;
 constexpr uint32_t BNGSD = 3;
 constexpr uint32_t TND = 4;
 
+constexpr uint32_t MAX_SUM_BNS8 = 0;
+constexpr uint32_t MAX_SUM_TND = 1;
+
 constexpr uint32_t PREFIX_LENGTH = 64;
 constexpr uint32_t SEQ_ARR_LENGTH = 256;
 constexpr uint32_t ADDR_ALIGN_SIZE = 512;
@@ -262,6 +265,8 @@ struct FagConstInfo {
     uint64_t s2SinkOuter = 0;
     // 核数
     uint32_t aicCoreNum = 0;
+    // tnd max sum layout
+    uint32_t tndMaxSumLayout = 0;
 };
 
 // fp8反量化因子

@@ -29,9 +29,6 @@ public:
 protected:
     bool IsCapable() override
     {
-        const char *tndSoftmaxIn = context_->GetAttrs()->GetAttrNum() > static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN) ? context_->GetAttrs()->GetAttrPointer<char>(static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN)) : "";
-        if (strcmp(tndSoftmaxIn, "") != 0) return false;
-
         auto actualSeqQLenTensor = context_->GetOptionalInputTensor(static_cast<size_t>(InputIndex::ACTUAL_SEQ_Q_LEN));
         OP_LOGD(context_, "coreNum is %lu", fBaseParams.coreNum);
         if (npuArch == NpuArch::DAV_3510 && actualSeqQLenTensor != nullptr &&

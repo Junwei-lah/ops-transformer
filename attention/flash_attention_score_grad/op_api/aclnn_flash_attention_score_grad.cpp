@@ -2509,6 +2509,19 @@ static aclnnStatus FlashAttentionScoreGradV4GetWorkspace(
         return ret;
     }
 
+    if (softmaxInLayout != nullptr) {
+        if (strcmp(inputLayout, "TND") == 0 && strcmp(softmaxInLayout, "same_as_input") != 0 &&
+            strcmp(softmaxInLayout, "") != 0) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+                    "softmaxInLayout %s is not same_as_input or Empty string, invalid softmaxInLayout, please check",
+                    softmaxInLayout);
+            return ACLNN_ERR_PARAM_INVALID;
+        } else if (strcmp(inputLayout, "TND") != 0 && strcmp(softmaxInLayout, "") != 0) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "softmaxInLayout only support inputLayout TND, please check");
+            return ACLNN_ERR_PARAM_INVALID;
+        }
+    }
+
     // 输入连续性转换
     const aclTensor *queryCngs = nullptr;
     const aclTensor *keyCngs = nullptr;
@@ -2563,7 +2576,7 @@ static aclnnStatus FlashAttentionScoreGradV4GetWorkspace(
         attentionInOptionalCngs, prefixOptional, actualSeqQLenOptional, actualSeqKvLenOptional, qStartIdxOptional,
         kvStartIdxOptional, dScaleQOptionalCngs, dScaleKOptionalCngs, dScaleVOptionalCngs, dScaleDyOptionalCngs,
         dScaleOOptionalCngs, nullptr, nullptr, queryRopeOptionalCngs, keyRopeOptionalCngs, sinkInOptionalCngs, scaleValue, keepProb, preTokens, nextTokens,
-        headNum, inputLayoutUnderTrans, innerPrecise, sparseMode, pseType, seed, offset, outDtypeOptional, defaultSoftmaxInLayout, executor);
+        headNum, inputLayoutUnderTrans, innerPrecise, sparseMode, pseType, seed, offset, outDtypeOptional, softmaxInLayout, executor);
     CHECK_RET(fagRes[0] != nullptr && fagRes[1] != nullptr && fagRes[2] != nullptr,  // 0: dqOut 1: dkOut 2:dvOut
               ACLNN_ERR_PARAM_NULLPTR);
 

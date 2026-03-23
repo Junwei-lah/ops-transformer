@@ -66,6 +66,52 @@ ge::graphStatus CheckSoftmaxSumShape(gert::TilingContext *context, int64_t b, in
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus CheckSoftmaxMaxSumTndShape(gert::TilingContext *context, int64_t t1, int64_t n1)
+{
+    if (context->GetAttrs()->GetAttrNum() > static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN)) {
+        // read 13th attr softmax_out_layout
+        const char *softmaxInLayout =
+            context->GetAttrs()->GetAttrPointer<char>(static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN));
+        if (strcmp(softmaxInLayout, "same_as_input") != 0) {
+            // check whether softmax_out_layout is TND
+            return ge::GRAPH_SUCCESS;
+        }
+    } else {
+        return ge::GRAPH_SUCCESS;
+    }
+    auto softmaxSumShape = context->GetOptionalInputShape(static_cast<size_t>(InputIndex::SOFTMAX_SUM));
+    auto softmaxMaxShape = context->GetOptionalInputShape(static_cast<size_t>(InputIndex::SOFTMAX_MAX));
+    if (softmaxMaxShape != nullptr) {
+        auto softmaxMaxShapeDim = softmaxMaxShape->GetStorageShape().GetDimNum();
+        if (softmaxMaxShapeDim != DIM_3) { // softmax TND only support 3 dimensions
+            OP_LOGE(context, "The shape of softmaxMax is invalid, got %lu dimensions", softmaxMaxShapeDim);
+            return ge::GRAPH_FAILED;
+        }
+        auto dim0 = softmaxMaxShape->GetStorageShape().GetDim(DIM_0); // 0:t1
+        auto dim1 = softmaxMaxShape->GetStorageShape().GetDim(DIM_1); // 1:n1
+        auto dim2 = softmaxMaxShape->GetStorageShape().GetDim(DIM_2); // 2:8
+        OP_CHECK_IF((dim0 != t1 || dim1 != n1 || dim2 != BIT_NUMS),
+                    OP_LOGE(context, "The shape of softmaxMax is invalid, got (%ld,%ld,%ld), should be (%ld,%ld,%ld)",
+                            dim0, dim1, dim2, t1, n1, BIT_NUMS),
+                    return ge::GRAPH_FAILED);
+    }
+    if (softmaxSumShape != nullptr) {
+        auto softmaxSumShapeDim = softmaxSumShape->GetStorageShape().GetDimNum();
+        if (softmaxSumShapeDim != DIM_3) { // softmax TND only support 3 dimensions
+            OP_LOGE(context, "The shape of softmaxSum is invalid, got %lu dimensions", softmaxSumShapeDim);
+            return ge::GRAPH_FAILED;
+        }
+        auto dim0 = softmaxSumShape->GetStorageShape().GetDim(DIM_0); // 0:t1
+        auto dim1 = softmaxSumShape->GetStorageShape().GetDim(DIM_1); // 1:n1
+        auto dim2 = softmaxSumShape->GetStorageShape().GetDim(DIM_2); // 2:8
+        OP_CHECK_IF((dim0 != t1 || dim1 != n1 || dim2 != BIT_NUMS),
+                    OP_LOGE(context, "The shape of softmaxSum is invalid, got (%ld,%ld,%ld), should be (%ld,%ld,%ld)",
+                            dim0, dim1, dim2, t1, n1, BIT_NUMS),
+                    return ge::GRAPH_FAILED);
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus CheckAttentionInShape(gert::TilingContext *context)
 {
     auto attentionInShape = context->GetOptionalInputShape(static_cast<size_t>(InputIndex::ATTENTION_IN));
@@ -121,6 +167,11 @@ ge::graphStatus CheckTndShapeValid(gert::TilingContext *context, int64_t t1, int
               return ge::GRAPH_FAILED);
 
     auto ret = CheckAttentionInShape(context);
+    if (ret != ge::GRAPH_SUCCESS) {
+        return ret;
+    }
+
+    ret = CheckSoftmaxMaxSumTndShape(context, t1, n1);
     if (ret != ge::GRAPH_SUCCESS) {
         return ret;
     }
@@ -898,6 +949,17 @@ ge::graphStatus ProcessOptionalInput(gert::TilingContext *context_, FuzzyBaseInf
         fBaseParams.vSize = static_cast<uint64_t>(fBaseParams.b) * fBaseParams.n2 * 1 * fBaseParams.s2 * fBaseParams.d1;
         fBaseParams.dropMaskSize =
             static_cast<uint64_t>(fBaseParams.b) * fBaseParams.n2 * fBaseParams.g * fBaseParams.s2 * fBaseParams.s1;
+    }
+
+    // process tnd softmax layout
+    if (context_->GetAttrs()->GetAttrNum() > static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN)) {
+        const char *tndMaxSumLayout =
+            context_->GetAttrs()->GetAttrPointer<char>(static_cast<size_t>(AttrIndex::TND_SOFTMAX_IN));
+        if (strcmp(inputLayout, "TND") == 0 && strcmp(tndMaxSumLayout, "same_as_input") == 0) {
+            fBaseParams.tndMaxSumLayout = 1;
+        }
+        OP_LOGD("TND Max Sum Layout", "FAG tndMaxSumLayout = %d, tndMaxSumLayout = %s.", fBaseParams.tndMaxSumLayout,
+                tndMaxSumLayout);
     }
 
     // mBaseParams is used for matmal tiling module

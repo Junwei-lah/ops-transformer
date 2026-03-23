@@ -1511,6 +1511,7 @@ ge::graphStatus FlashAttentionScoreGradTilingNormalRegbase::SaveToTilingData()
     s1s2BNGS1S2BaseParams_->set_attenMaskShapeType(fBaseParams.attenMaskShapeType);
     s1s2BNGS1S2BaseParams_->set_attenMaskDtype(fBaseParams.attenMaskDtype);
     s1s2BNGS1S2BaseParams_->set_layout(fBaseParams.layoutType);
+    s1s2BNGS1S2BaseParams_->set_tndMaxSumLayout(fBaseParams.tndMaxSumLayout);
     s1s2BNGS1S2BaseParams_->set_scaleValue(fBaseParams.scaleValue);
     s1s2BNGS1S2BaseParams_->set_keepProb(fBaseParams.keepProb);
     s1s2BNGS1S2BaseParams_->set_keepProbUint8(fBaseParams.keepProbUint8);

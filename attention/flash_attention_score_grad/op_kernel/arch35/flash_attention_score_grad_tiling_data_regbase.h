@@ -102,6 +102,7 @@ public:
     int64_t offset;
     int64_t totalPerBatchNum;
     uint32_t layout;
+    uint32_t tndMaxSumLayout;
     uint32_t pseOptional;
     uint32_t pseType;
     uint32_t pseShapeType;
@@ -136,6 +137,7 @@ public:
     int64_t get_keepProbUint8() const {return keepProbUint8;}
     uint8_t get_dropMaskOuter() const {return dropMaskOuter;}
     uint32_t get_layout() const {return layout;}
+    uint32_t get_tndMaxSumLayout() const {return tndMaxSumLayout;}
     uint32_t get_pseOptional() const {return pseOptional;}
     uint32_t get_pseType() const {return pseType;}
     uint32_t get_qStartIdx() const {return qStartIdx;}
@@ -170,6 +172,7 @@ public:
     void set_keepProbUint8(int64_t keepProbUint8Param) { this->keepProbUint8 = keepProbUint8Param; }
     void set_dropMaskOuter(uint8_t dropMaskOuterParam) { this->dropMaskOuter = dropMaskOuterParam; }
     void set_layout(uint32_t layoutParam) { this->layout = layoutParam; }
+    void set_tndMaxSumLayout(uint32_t tndMaxSumLayoutParam) { this->tndMaxSumLayout = tndMaxSumLayoutParam; }
     void set_pseOptional(uint32_t pseOptionalParam) { this->pseOptional = pseOptionalParam; }
     void set_pseType(uint32_t pseTypeParam) { this->pseType = pseTypeParam; }
     void set_pseShapeType(uint32_t pseShapeTypeParam) { this->pseShapeType = pseShapeTypeParam; }

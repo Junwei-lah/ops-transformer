@@ -682,6 +682,7 @@ __aicore__ inline void FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockTy
         constInfo.sfmgMaxLoopSize = VECTOR_BASEM * VECTOR_BASEN / HEAD_DIM_ALIGN; // softmaxGrad每次最大能处理的m轴大小
         constInfo.dAlignToBlock = AlignTo(constInfo.commonConstInfo.dSizeV, INPUT_BLOCK_NUM);
         constInfo.dAlignToBlockForFp8 = AlignTo(constInfo.commonConstInfo.dSizeV, INPUT_BLOCK_NUM_FOR_FP8);
+        constInfo.tndMaxSumLayout = tilingData->s1s2BNGS1S2BaseParams.tndMaxSumLayout;
     }
     SetSwizzleConstInfo();
     GetDerived()->SetUniqueConstInfo(constInfo);
@@ -1059,12 +1060,6 @@ __aicore__ inline void FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockTy
     }
     GetDerived()->SetUniqueRunInfo(runInfo);
 
-    if constexpr (SPLIT_AXIS == BN2GS1S2) {
-        if ASCEND_IS_AIV {
-            return;
-        }
-    }
-
     // preload next query and dy offset for l1 preload
     if (taskId == 0) {
         runInfo.commonRunInfo.queryOffset = GetQueryOffset(runInfo);
@@ -1077,6 +1072,12 @@ __aicore__ inline void FlashAttentionScoreGradKernelBase<ChildClass, CubeBlockTy
         runInfo.commonRunInfo.queryOffset = preloadArgs.nextQueryOffset;
         runInfo.dyOffset = preloadArgs.nextDyOffset;
         GetNextDxAndQueryOffset(runInfo, nextRunInfo, nextIndex, preloadArgs); // get nextQueryOffset, nextDyOffset, nextMorN
+    }
+
+    if constexpr (SPLIT_AXIS == BN2GS1S2) {
+        if ASCEND_IS_AIV {
+            return;
+        }
     }
 
     runInfo.commonRunInfo.keyOffset = GetKeyOffset(runInfo);
