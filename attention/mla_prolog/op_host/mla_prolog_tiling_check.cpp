@@ -974,7 +974,7 @@ bool MlaPrologTilingCheck::CheckActSeqLen() const
     };
     ge::DataType dtype = context_.actualSeqLen.desc->GetDataType();
     OP_CHECK_IF((ge::DT_INT32 != dtype),
-        OP_LOGE(context_.opName, "ActSeqLen datatype only supports %s, but got %s.",
+        OP_LOGE(context_.opName, "actualSeqLen datatype only supports %s, but got %s.",
            TypeUtils::DataTypeToSerialString(ge::DT_INT32).c_str(),
             TypeUtils::DataTypeToSerialString(dtype).c_str()),
         return false);
