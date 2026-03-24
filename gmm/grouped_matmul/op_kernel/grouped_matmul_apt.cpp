@@ -178,8 +178,7 @@ using biasType = MatmulType<AscendC::TPosition::GM, CubeFormat::ND, DTYPE_BIAS>;
             op.Process();                                                                                              \
         }                                                                                                              \
         if ASCEND_IS_AIV {                                                                                             \
-            GQmmEmptyTensor<DTYPE_Y>(groupList, y, &gmmQuantParams_, gmmArrayAddr_, mmTilingData_.usedCoreNum,         \
-                                     &tPipe);                                                                          \
+            GQmmEmptyTensor<DTYPE_Y>(groupList, y, &gmmQuantParams_, mmTilingData_.M, mmTilingData_.N);                \
         }                                                                                                              \
     } while (0)
 

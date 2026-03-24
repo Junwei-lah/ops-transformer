@@ -22,9 +22,9 @@ using GMMQuantParams = GroupedMatmulTilingData::GMMQuantParams;
 namespace AscendC {
 template <typename T>
 __aicore__ inline void GQmmEmptyTensor(GM_ADDR groupListPtr, GM_ADDR y, const GMMQuantParams *__restrict gmmQuantParams,
-                                       TILING_TYPE *gmmArrayAddrIn, int32_t usedCoreNum, TPipe *pipe)
+                                       uint32_t m, uint32_t n)
 {
-    if (GetSubBlockIdx() >  1) {
+    if (GetSubBlockIdx() > 1) {
         return;
     }
     // 只有K轴分组k=0时才需要创建空tensor
@@ -36,37 +36,28 @@ __aicore__ inline void GQmmEmptyTensor(GM_ADDR groupListPtr, GM_ADDR y, const GM
     GlobalTensor<int64_t> groupListGm;
     LocalTensor<T> initLocal;
     yGm.SetGlobalBuffer(GROUPED_MATMUL::GetTensorAddr<T>(0, y));
-    groupListGm.SetGlobalBuffer((__gm__ int64_t*)groupListPtr);
+    groupListGm.SetGlobalBuffer((__gm__ int64_t *)groupListPtr);
     if (GetSubBlockIdx() == 0) {
-        initLocal = LocalTensor<T>(TPosition::VECCALC, 0, QuantUtils::MAX_REPEAT_TIMES * QuantUtils::UB_ALIGN_SIZE / sizeof(T));
+        initLocal =
+            LocalTensor<T>(TPosition::VECCALC, 0, QuantUtils::MAX_REPEAT_TIMES * QuantUtils::UB_ALIGN_SIZE / sizeof(T));
     }
     uint64_t yBaseOffset = 0;
     int32_t preOffset = 0;
-    bool isSingleX = static_cast<bool>(gmmQuantParams->singleX);
-    bool isSingleW = static_cast<bool>(gmmQuantParams->singleW);
-
-    TILING_TYPE *mList = gmmArrayAddrIn;
-    TILING_TYPE *kList = gmmArrayAddrIn + GROUPED_MATMUL::MKN_LIST_LEN;
-    TILING_TYPE *nList = gmmArrayAddrIn + GROUPED_MATMUL::MKN_LIST_LEN * 2; // 2: mListGm_ + kListGm_
-
     bool isKZeroInit = false;
     for (uint32_t groupIdx = 0; groupIdx < gmmQuantParams->groupNum; ++groupIdx) {
-        int32_t splitValue = QuantUtils::GetSplitValueFromGroupList(groupIdx, preOffset, gmmQuantParams->groupType,
-                                                                    gmmQuantParams->groupListType, groupListGm);
-        int32_t mSize = isSingleX ? mList[0] : mList[groupIdx];
-        int32_t kSize = splitValue;
-        int32_t nSize = isSingleW ? nList[0] : nList[groupIdx];
-        if (mSize <= 0 || nSize <= 0) {
+        int32_t kSize = QuantUtils::GetSplitValueFromGroupList(groupIdx, preOffset, gmmQuantParams->groupType,
+                                                               gmmQuantParams->groupListType, groupListGm);
+        if (m == 0 || n == 0) {
             continue;
         }
-        uint64_t ySize = static_cast<uint64_t>(mSize) * nSize;
+        uint64_t ySize = static_cast<uint64_t>(m) * n;
         if (kSize == 0) {
-            QuantUtils::InitOutputWithZero(yGm[yBaseOffset], initLocal, ySize, usedCoreNum, isKZeroInit);
+            QuantUtils::InitOutputWithZero(yGm[yBaseOffset], initLocal, ySize, AscendC::GetBlockNum(), isKZeroInit);
         }
         yBaseOffset += ySize;
     }
 }
 
-}  // namespace GROUPED_MATMUL
+} // namespace AscendC
 
-#endif  // GQMM_INIT_OUTPUT_H
+#endif // GQMM_INIT_OUTPUT_H
