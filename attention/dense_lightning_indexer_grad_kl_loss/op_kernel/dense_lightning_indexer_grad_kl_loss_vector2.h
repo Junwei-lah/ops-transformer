@@ -166,6 +166,7 @@ __aicore__ inline void DLIKLLossVector2Service<DLIT>::DeterSumLoss()
     if (constInfo.aivIdx == 0) {
         event_t mte2ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>());
         event_t vToMte3 = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::V_MTE3>());
+        event_t mte3ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE3_V>());
 
         int64_t count = constInfo.aivNum;
         int64_t countAlign = BlockAlign<T>(count);
@@ -189,15 +190,19 @@ __aicore__ inline void DLIKLLossVector2Service<DLIT>::DeterSumLoss()
 
         AscendC::Sum(ubLossOut_, ubLossIn_, tmpUb_, sumParams);
 
-        SetFlag<HardEvent::MTE2_V>(vToMte3);
-        WaitFlag<HardEvent::MTE2_V>(vToMte3);
+        SetFlag<HardEvent::V_MTE3>(vToMte3);
+        WaitFlag<HardEvent::V_MTE3>(vToMte3);
 
         AscendC::DataCopyPad(lossGm, ubLossOut_,
             {static_cast<uint32_t>(1), static_cast<uint32_t>(sizeof(float)),
             static_cast<uint32_t>(0), static_cast<uint32_t>(0)});
+
+        SetFlag<HardEvent::MTE3_V>(mte3ToV);
+        WaitFlag<HardEvent::MTE3_V>(mte3ToV);
         
         GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE2_V>(mte2ToV);
         GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::V_MTE3>(vToMte3);
+        GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE3_V>(mte3ToV);
     }
 }
 
