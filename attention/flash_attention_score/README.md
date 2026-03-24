@@ -186,7 +186,7 @@
     -   D：取值范围为1\~768。输入query、key、value类型为FLOAT8_E5M2、FLOAT8_E4M3FN、HIFLOAT8时，D取值范围为1\~128。
 - 输入query、key、value类型为FLOAT8_E5M2、FLOAT8_E4M3FN、HIFLOAT8时, 不支持queryRopeOptional、keyRopeOptional、realShiftOptional、attenMaskOptional、dropMaskOptional、keepProb、pseType等相关可选参数。
 - keepProb的取值范围为(0, 1]。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - pseType为2或3的时候，当前只支持Sq和Skv等长。
 
 ## 调用说明

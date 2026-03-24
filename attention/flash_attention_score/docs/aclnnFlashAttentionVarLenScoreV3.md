@@ -490,7 +490,7 @@ aclnnStatus aclnnFlashAttentionVarLenScoreV3(
   - 配置为3时，不支持无效行计算，需要满足每个batch的Sq<=Skv。
   - 配置为7时，不支持可选输入realShiftOptional。
   - 配置为8时，当每个sequence的q、kv等长时支持可选输入realShiftOptional，针对全局做pse生成。支持q方向进行外切，需要外切前每个sequence的q、kv等长，外切后传入的actualSeqQLenOptional[0] - actualSeqKvLenOptional[0] + qStartIdxOptional - kvStartIdxOptional == 0（本功能属实验性功能）。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - band场景，preTokens和nextTokens之间必须要有交集。
 - actualSeqQLenOptional输入支持某个Batch上的S长度为0，此时不支持可选输入realShiftOptional。actualSeqQLenOptional的长度取值范围为1\~2K。当存在prefixOptional输入的时候，其长度最大支持1K。
 - attenMaskOptional输入不支持补pad，即attenMaskOptional中不能存在某一行全1的场景。

@@ -199,7 +199,7 @@ aclnnStatus aclnnScatterPaKvCache(
       <td class="tg-0pky">x</td>
     </tr>
     <tr>
-      <td class="tg-0pky">valueCacheRef(aclTensor*）</td>
+      <td class="tg-0pky">valueCacheRef(aclTensor*)</td>
       <td class="tg-0pky">输入/输出</td>
       <td class="tg-0pky">需要更新的value cache，当前layer的value cache。</td>
       <td class="tg-0pky">支持0维或4维，非0维下shape与keyCacheRef一致，当传空指针或"Norm"时，仅支持ND内存排布格式。当传"PA_NZ"时，仅支持FRACTAL_NZ内存排布。</td>
@@ -289,7 +289,7 @@ aclnnStatus aclnnScatterPaKvCache(
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
-      <td class="tg-0lax">executor(aclOpExecutor**）</td>
+      <td class="tg-0lax">executor(aclOpExecutor**)</td>
       <td class="tg-0lax">输出</td>
       <td class="tg-0lax">返回op执行器，包含了算子计算流程。</td>
       <td class="tg-0lax">-</td>
@@ -395,7 +395,7 @@ aclnnStatus aclnnScatterPaKvCache(
     - aclnnScatterPaKvCache默认确定性实现。
     - key、value、keyCacheRef、valueCacheRef的数据类型必须一致；
     - slotMapping、compressLensOptional、compressSeqOffsetOptional、seqLensOptional的数据类型必须一致；
-    - slotMapping的值范围[0,num_blocks*block_size-1]，且slotMapping内的元素值保证不重复，重复时不保证正确性；
+    - slotMapping的取值范围[0,num_blocks*block_size-1]，且slotMapping内的元素值保证不重复，重复时不保证正确性；
     - 当key和value都是3维，则key和value的前两维shape必须相同；
     - 当key和value都是4维，则key和value的前三维shape必须相同，且keyCacheRef和valueCacheRef的第三维必须是1；
     - 当key和value是4维时，compressLensOptional、seqLensOptional为必选参数；当key和value是3维时，compressLensOptional、compressSeqOffsetOptional、seqLensOptional为可选参数；

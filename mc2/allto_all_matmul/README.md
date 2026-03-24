@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-- 算子功能：完成AlltoAll通信、Permute(保证通信后地址连续)和Matmul计算的融合，**先通信后计算**，支持非量化、K-C量化、K-C动态量化和mx[量化模式](../../docs/zh/context/量化介绍.md)。
+- 算子功能：完成AlltoAll通信、Permute（保证通信后地址连续）和Matmul计算的融合，**先通信后计算**，支持非量化、K-C量化、K-C动态量化和mx[量化模式](../../docs/zh/context/量化介绍.md)。
 - 计算公式：假设x1输入shape为(BS, H)，mx量化场景下x1Scale输入shape为(BS, ceil(H/64), 2)，rankSize为NPU卡数
 
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
@@ -177,7 +177,7 @@
     <tr>
     <td>all2all_axes</td>
     <td>可选属性</td>
-    <td>AlltoAll和Pemute数据交换的方向，支持配置空或者[-2, -1]，传入空时默认按[-2, -1]处理，表示将输入由(BS, H)转为(BS/rankSize, H*rankSize)。</td>
+    <td>AlltoAll和Permute数据交换的方向，支持配置空或者[-2, -1]，传入空时默认按[-2, -1]处理，表示将输入由(BS, H)转为(BS/rankSize, H*rankSize)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
     <td>ND</td>
     </tr>

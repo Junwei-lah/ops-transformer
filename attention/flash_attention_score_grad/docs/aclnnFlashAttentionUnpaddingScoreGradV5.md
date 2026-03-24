@@ -216,7 +216,7 @@ aclnnStatus aclnnFlashAttentionUnpaddingScoreGradV5(
         <td>pseShiftOptional</td>
         <td>可选输入</td>
         <td>公式中的pse。</td>
-        <td>数据类型与query的数据类型一致,该参数需要与pseType配套使用。</td>
+        <td>数据类型与query的数据类型一致，该参数需要与pseType配套使用。</td>
         <td>FLOAT16、BFLOAT16</td>
         <td>ND</td>
         <td>[B,N,1024,Skv]、[1,N,1024,Skv]、[B,N]、[N]</td>
@@ -643,7 +643,7 @@ aclnnStatus aclnnFlashAttentionUnpaddingScoreGradV5(
   - 配置为7时，不支持可选输入pseShiftOptional。
   - 配置为8时，当每个sequence的q、kv等长时支持可选输入pseShiftOptional，针对全局做pse生成。支持q方向进行外切，需要外切前每个sequence的q、kv等长，外切后传入的actualSeqQLenOptional[0] - actualSeqKvLenOptional[0] + qStartIdxOptional - kvStartIdxOptional == 0（本功能属实验性功能）。
 - 不同数据格式详情请参见[数据格式](../../../docs/zh/context/数据格式.md)。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - prefixOptional稀疏计算仅支持压缩场景，sparseMode=6，当Sq > Skv时，prefix的N值取值范围\[0, Skv\]，当Sq <= Skv时，prefix的N值取值范围\[Skv-Sq, Skv\]。
 - actualSeqQLenOptional输入支持某个Batch上的S长度为0，此时不支持可选输入pseShiftOptional。
 - 关于softmaxMax与softmaxSum参数的约束：输入格式固定为\[B, N, S, 8\]，TND的输入格式除外，此时为\[T, N, 8\]，注：T=B*S。

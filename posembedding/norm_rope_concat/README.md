@@ -89,7 +89,7 @@
     seqRope <= min(seqQuery+seqEncoderQuery, seqKey+seqEncoderKey)
     $$
     
-    6. 当场景为训练时，会输出`queryMean, queryRstd，encoderQueryMean, encoderQueryRstd`供后续反向使用。
+    6. 当场景为训练时，会输出`queryMean, queryRstd, encoderQueryMean, encoderQueryRstd`供后续反向使用。
   
 ## 参数说明
 

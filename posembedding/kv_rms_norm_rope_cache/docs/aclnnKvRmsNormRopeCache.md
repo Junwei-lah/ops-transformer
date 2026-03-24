@@ -381,7 +381,7 @@ aclnnStatus aclnnKvRmsNormRopeCache(
     <tr>
       <td>workspaceSize</td>
       <td>输入</td>
-      <td>在Device侧申请的workspace大小，由第一段接口clnnKvRmsNormRopeCacheGetWorkspaceSize获取。</td>
+      <td>在Device侧申请的workspace大小，由第一段接口aclnnKvRmsNormRopeCacheGetWorkspaceSize获取。</td>
     </tr>
     <tr>
       <td>executor</td>

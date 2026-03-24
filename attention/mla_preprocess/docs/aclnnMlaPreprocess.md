@@ -381,7 +381,7 @@ aclnnStatus aclnnMlaPreprocess(
       <td>输入</td>
       <td>输出量化处理中参与计算的系数</td>
       <td>仅在cacheMode为2时传入。</td>
-      <td>BLOAT16、BFLOAT16</td>
+      <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
       <td>[1]</td>
       <td>-</td>
@@ -391,7 +391,7 @@ aclnnStatus aclnnMlaPreprocess(
       <td>输入</td>
       <td>输出量化处理中参与计算的系数。</td>
       <td>仅在cacheMode为2时传入</td>
-      <td>BLOAT16、BFLOAT16</td>
+      <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
       <td>[1]</td>
       <td>-</td>
@@ -715,7 +715,7 @@ aclnnStatus aclnnMlaPreprocess(
     -  headNum：表示多头数，取值范围：16、32、64、128
     -  blockNum：PagedAttention场景下的块数，取值范围：192
     -  blockSize：PagedAttention场景下的块大小，取值范围：128
-    -  当wdqkv和wuq的数据类型为bfloat16时，输入input也需要为bflot16，且hiddenSize只支持6144，cacheMode只支持0和1
+    -  当wdqkv和wuq的数据类型为bfloat16时，输入input也需要为bfloat16，且hiddenSize只支持6144，cacheMode只支持0和1
 
 
 ## 调用示例

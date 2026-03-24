@@ -538,7 +538,7 @@ aclnnStatus aclnnNormRopeConcat(
 
 - **参数说明**
 
-  <table style="undifined;table-layout: fixed; width: 1149px">
+  <table style="undefined;table-layout: fixed; width: 1149px">
   <colgroup>
     <col style="width: 281px">
     <col style="width: 119px">

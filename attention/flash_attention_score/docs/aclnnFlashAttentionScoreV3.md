@@ -144,7 +144,7 @@ aclnnStatus aclnnFlashAttentionScoreV3(
         <td>realShiftOptional</td>
         <td>可选输入</td>
         <td>公式中的pse。</td>
-        <td>数据类型与query的数据类型一致,该参数需要与pseType配套使用。</td>
+        <td>数据类型与query的数据类型一致，该参数需要与pseType配套使用。</td>
         <td>FLOAT16、BFLOAT16、FLOAT32</td>
         <td>ND</td>
         <td>[B,N,Sq,Skv]、[B,N,1,Skv]、[1,N,Sq,Skv]、[B,N,1024,Skv]、[1,N,1024,Skv]、[B,N]、[N]</td>
@@ -498,7 +498,7 @@ aclnnStatus aclnnFlashAttentionScoreV3(
   - sparseMode配置为0、4时，须保证attenMaskOptional与preTokens、nextTokens的范围一致。
   - 用户不特意指定时建议传入0。
   - sparse不同模式的详细说明请参见[sparse模式说明](../../../docs/zh/context/sparse_mode参数说明.md)。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - band场景，preTokens和nextTokens之间必须要有交集。
 - prefixOptional稀疏计算场景即sparseMode=5或者sparseMode=6，当Sq > Skv时，prefix的N值取值范围\[0, Skv\]，当Sq <= Skv时，prefix的N值取值范围\[Skv-Sq, Skv\]。
 - realShiftOptional中的Sq在大于1024场景下，且此时shape取值为BNHS或1NHS时，需要满足Sq和Skv等长。

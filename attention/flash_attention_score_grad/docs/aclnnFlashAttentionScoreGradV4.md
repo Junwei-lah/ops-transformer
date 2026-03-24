@@ -712,7 +712,7 @@ aclnnStatus aclnnFlashAttentionScoreGradV4(
     -   S：取值范围为1\~1M。
     -   D：取值范围为1\~768。
     -   KeepProb：取值范围为(0, 1]。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error），此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - prefixOptional稀疏计算仅支持压缩场景，sparseModeOptional=6，当Sq > Skv时，prefix的N值取值范围\[0, Skv\]，当Sq <= Skv时，prefix的N值取值范围\[Skv-Sq, Skv\]。当sparseModeOptional=5、prefix的N > Skv或prefixOptional不传时执行全计算，sparseModeOptional=6要求prefixOptional必传。
 - sparseModeOptional=7时，不支持可选输入pseShiftOptional。
 - sparseModeOptional=8时，当每个sequence的q、kv等长时支持可选输入pseShiftOptional，针对全局做pse生成。支持q方向进行外切，需要外切前每个sequence的q、kv等长，外切后传入的actualSeqQLenOptional[0] - actualSeqKvLenOptional[0] + qStartIdxOptional - kvStartIdxOptional == 0（本功能属实验性功能）。

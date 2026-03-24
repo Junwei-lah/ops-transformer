@@ -113,7 +113,7 @@ npu_low_latency_dispatch(x, topk_idx, num_experts, *, quant_mode = 0, comm_alg="
 -   该接口支持推理场景下使用。
 -   该接口支持静态图模式，`npu_low_latency_dispatch`和`npu_low_latency_combine`必须配套使用。
 -   在不同产品型号、不同通信算法或不同版本中，`npu_low_latency_dispatch`的Tensor输出`assist_info_for_combine`、`ep_recv_counts`、`tp_recv_counts`、`expand_scales`中的元素值可能不同，使用时直接将上述Tensor传给`npu_low_latency_combine`对应参数即可，模型其他业务逻辑不应对其存在依赖。
--   调用接口过程中使用的`num_experts`、`expert_shard_type`、`shared_expert_num`、`shared_expert_rank_num`、`num_max_dispatch_tokens_per_rank`参数取值所有卡需保持一致, `expert_shard_type`、`num_max_dispatch_tokens_per_rank`网络中不同层中也需保持一致，且和[npu\_low\_latency\_combine](npu_low_latency_combine.md)对应参数也保持一致。
+-   调用接口过程中使用的`num_experts`、`expert_shard_type`、`shared_expert_num`、`shared_expert_rank_num`、`num_max_dispatch_tokens_per_rank`参数取值所有卡需保持一致，`expert_shard_type`、`num_max_dispatch_tokens_per_rank`网络中不同层中也需保持一致，且和[npu\_low\_latency\_combine](npu_low_latency_combine.md)对应参数也保持一致。
 -   该场景下单卡包含双DIE（简称为“晶粒”或“裸片”），因此参数说明里的“本卡”均表示单DIE。
 -   num_experts + zero_expert_num + copy_expert_num + const_expert_num < MAX_INT32。
 -   参数里Shape使用的变量如下：

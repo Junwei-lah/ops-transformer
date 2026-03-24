@@ -198,7 +198,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
-      <td class="tg-0lax">executor(aclOpExecutor**）</td>
+      <td class="tg-0lax">executor(aclOpExecutor**)</td>
       <td class="tg-0lax">输出</td>
       <td class="tg-0lax">返回op执行器，包含了算子计算流程。</td>
       <td class="tg-0lax">-</td>

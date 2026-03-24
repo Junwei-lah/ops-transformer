@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-- 接口功能：完成AlltoAll通信、Permute(保证通信后地址连续)和Matmul计算的融合，**先通信后计算**。
+- 接口功能：完成AlltoAll通信、Permute（保证通信后地址连续）和Matmul计算的融合，**先通信后计算**。
 - 计算公式：假设x1输入shape为(BS, H)，rankSize为NPU卡数
 
   $$
@@ -82,7 +82,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     <td>该输入进行AlltoAll通信与Permute操作后结果作为MatMul计算的左矩阵输入。</td>
     <td>FLOAT16、BFLOAT16</td>
     <td>ND</td>
-    <td>2维, shape为(BS, H)</td>
+    <td>2维，shape为(BS, H)</td>
     <td>x</td>
     </tr>
     <tr>
@@ -108,7 +108,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     <tr>
     <td>alltoAllAxesOptional</td>
     <td>输入</td>
-    <td>AlltoAll和Pemute数据交换的方向。</td>
+    <td>AlltoAll和Permute数据交换的方向。</td>
     <td>支持配置空或者[-2,-1]，传入空时默认按[-2,-1]处理，表示将输入由(BS, H)转为(BS/rankSize, rankSize*H)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
     <td>-</td>
@@ -158,7 +158,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     <tr>
     <td>alltoAllOutOptional</td>
     <td>输出</td>
-    <td>接收AlltoAll和Pemute后的内容。</td>
+    <td>接收AlltoAll和Permute后的内容。</td>
     <td>传入nullptr时表示不输出通信输出。</td>
     <td>FLOAT16、BFLOAT16</td>
     <td>ND</td>

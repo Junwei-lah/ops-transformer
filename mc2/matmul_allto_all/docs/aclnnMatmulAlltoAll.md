@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-- 接口功能：完成Matmul计算、Permute(保证通信后地址连续)和AlltoAll通信的融合，**先计算后通信**。
+- 接口功能：完成Matmul计算、Permute（保证通信后地址连续）和AlltoAll通信的融合，**先计算后通信**。
 - 计算公式：假设x1的shape为(BS, H1)，x2的shape为(H1, H2)，rankSize为NPU卡数。
 
   $$
@@ -107,7 +107,7 @@ aclnnStatus aclnnMatmulAlltoAll(
     <tr>
     <td>alltoAllAxesOptional</td>
     <td>输入</td>
-    <td>可选输入，AlltoAll和Pemute数据交换的方向。</td>
+    <td>可选输入，AlltoAll和Permute数据交换的方向。</td>
     <td>支持配置空或者[-1, -2]，传入空时默认按[-1, -2]处理，表示将输入由(BS, H2)转为(BS * rankSize, H2 / rankSize)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
     <td>-</td>

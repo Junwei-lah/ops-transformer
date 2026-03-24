@@ -188,7 +188,7 @@ aclnnStatus aclnnFlashAttentionScoreGradV3(
         <td>pseShiftOptional</td>
         <td>可选输入</td>
         <td>公式中的pse。</td>
-        <td>数据类型与query的数据类型一致,该参数需要与pseType配套使用。</td>
+        <td>数据类型与query的数据类型一致，该参数需要与pseType配套使用。</td>
         <td>FLOAT16、BFLOAT16</td>
         <td>ND</td>
         <td>[B,N,Sq,Skv]、[B,N,1,Skv]、[1,N,Sq,Skv]、[B,N,1024,Skv]、[1,N,1024,Skv]、[B,N]、[N]</td>
@@ -580,7 +580,7 @@ aclnnStatus aclnnFlashAttentionScoreGradV3(
     - 配置为0、4时，须保证attenMaskOptional与preTokens、nextTokens的范围一致。
     - 用户不特意指定时建议传入0。
     - sparse不同模式的详细说明请参见[sparse模式说明](../../../docs/zh/context/sparse_mode参数说明.md)。
-- 部分场景下，如果计算量过大可能会导致算子执行超时(aicore error类型报错，errorStr为：timeout or trap error)
+- 部分场景下，如果计算量过大可能会导致算子执行超时（aicore error类型报错，errorStr为：timeout or trap error）
   ，此时建议做轴切分处理，注：这里的计算量会受B、S、N、D等参数的影响，值越大计算量越大。
 - 关于softmaxMax与softmaxSum参数的约束：输入格式固定为\[B, N, S, 8\],TND的输入格式除外，此时为\[T, N, 8\],注：T=B*S。
 - headNum的取值必须和传入的Query中的N值保持一致。

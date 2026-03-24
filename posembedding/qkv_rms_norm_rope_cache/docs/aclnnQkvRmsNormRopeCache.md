@@ -329,7 +329,7 @@ aclnnStatus aclnnQkvRmsNormRopeCache(
       <td>-</td>
     </tr>
     <tr>
-      <td>cacheModeOptioanl</td>
+      <td>cacheModeOptional</td>
       <td>输入</td>
       <td>表示cache的格式。</td>
       <td><ul><li>建议值为"PA_NZ"。</ul></td>

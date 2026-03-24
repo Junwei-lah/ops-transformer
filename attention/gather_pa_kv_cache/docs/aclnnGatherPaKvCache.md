@@ -133,7 +133,7 @@ aclnnStatus aclnnGatherPaKvCache(
       <td class="tg-0pky">x</td>
     </tr>
     <tr>
-      <td class="tg-0pky">keyRef(aclTensor*）</td>
+      <td class="tg-0pky">keyRef(aclTensor*)</td>
       <td class="tg-0pky">输入/输出</td>
       <td class="tg-0pky">表示key向量。</td>
       <td class="tg-0pky">当cacheMode为"Norm"时，shape为[num_tokens, num_heads, head_size_k]。<br>当cacheMode为"PA_NZ"时，shape为[num_tokens, num_heads * head_size_k]。</td>
@@ -193,7 +193,7 @@ aclnnStatus aclnnGatherPaKvCache(
       <td class="tg-0lax">-</td>
     </tr>
     <tr>
-      <td class="tg-0lax">executor(aclOpExecutor**）</td>
+      <td class="tg-0lax">executor(aclOpExecutor**)</td>
       <td class="tg-0lax">输出</td>
       <td class="tg-0lax">返回op执行器，包含了算子计算流程。</td>
       <td class="tg-0lax">-</td>

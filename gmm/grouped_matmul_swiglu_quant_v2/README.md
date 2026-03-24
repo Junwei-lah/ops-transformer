@@ -241,14 +241,14 @@
   <tr>
     <td>xScale</td>
     <td rowspan="1">输入</td>
-    <td>表示左矩阵的的量化因子，公式中的xScale。</td>
+    <td>表示左矩阵的量化因子，公式中的xScale。</td>
     <td>FLOAT8_E8M0、FLOAT</td>
     <td>ND</td>
   </tr>
   <tr>
     <td>smoothScale</td>
     <td rowspan="1">可选输入</td>
-    <td>表示左矩阵的的量化因子。</td>
+    <td>表示左矩阵的量化因子。</td>
     <td>-</td>
     <td>-</td>
   </tr>

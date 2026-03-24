@@ -128,7 +128,7 @@ aclnnStatus aclnnFlashAttentionVarLenScoreV4(
         <td>realShiftOptional</td>
         <td>可选输入</td>
         <td>公式中的pse。</td>
-        <td>数据类型与query的数据类型一致,该参数需要与pseType配套使用。</td>
+        <td>数据类型与query的数据类型一致，该参数需要与pseType配套使用。</td>
         <td>FLOAT16、BFLOAT16、FLOAT32</td>
         <td>ND</td>
         <td>[B,N,1024,Skv]、[1,N,1024,Skv]</td>

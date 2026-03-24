@@ -32,7 +32,7 @@
       permuteTokensOut[sortedIndicesOut[i]]=tokens[i//topK]
       $$
 
-    - paddedMode为`true`时(暂不支持)：
+    - paddedMode为`true`时（暂不支持）：
 
       $$
       permuteTokensOut[i]=tokens[indices[i]]

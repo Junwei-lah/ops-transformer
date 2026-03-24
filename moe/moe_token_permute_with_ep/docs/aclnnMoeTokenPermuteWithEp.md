@@ -34,7 +34,7 @@
     permuteTokensOut[sortedIndicesOut[i] - rangeOptional[1]]=tokens[i//topK]
     $$
 
-  - paddedMode为`true`时(暂不支持)：
+  - paddedMode为`true`时（暂不支持）：
 
     $$
     permuteTokensOut[i]=tokens[Indices[i]]

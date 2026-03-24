@@ -101,4 +101,4 @@
     -  headNum：表示多头数，取值范围：16、32、64、128
     -  blockNum：PagedAttention场景下的块数，取值范围：192
     -  blockSize：PagedAttention场景下的块大小，取值范围：128
-    -  当wdqkv和wuq的数据类型为bfloat16时，输入input也需要为bflot16，且hiddenSize只支持6144
+    -  当wdqkv和wuq的数据类型为bfloat16时，输入input也需要为bfloat16，且hiddenSize只支持6144

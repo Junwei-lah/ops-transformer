@@ -396,7 +396,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
       <tr>
         <td>xScale</td>
         <td rowspan="1">输入</td>
-        <td>表示左矩阵的的量化因子，公式中的xScale。</td>
+        <td>表示左矩阵的量化因子，公式中的xScale。</td>
         <td>-</td>
         <td>FLOAT8_E8M0、FLOAT</td>
         <td>ND</td>

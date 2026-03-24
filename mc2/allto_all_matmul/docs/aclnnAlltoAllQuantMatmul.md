@@ -13,7 +13,7 @@
 
 ## 功能说明
 
-- 接口功能：完成AlltoAll通信、Permute(保证通信后地址连续)、Quant、Matmul和Dequant计算的融合，**先通信后计算**，支持K-C量化、K-C动态量化和mx[量化模式](../../../docs/zh/context/量化介绍.md)。
+- 接口功能：完成AlltoAll通信、Permute（保证通信后地址连续）、Quant、Matmul和Dequant计算的融合，**先通信后计算**，支持K-C量化、K-C动态量化和mx[量化模式](../../../docs/zh/context/量化介绍.md)。
 - 计算公式：假设x1输入shape为(BS, H)，mx量化场景下x1ScaleOptional输入shape为(BS, ceil(H/64), 2)，rankSize为NPU卡数
 
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
@@ -131,7 +131,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <td>该输入进行AlltoAll通信与Permute操作后结果作为MatMul计算的左矩阵输入。根据设备型号对数据类型有不同限制，详细参见<a href="#约束说明">约束说明</a>。</td>
     <td>FLOAT16、BFLOAT16、FLOAT8_E4M3FN、FLOAT8_E5M2、INT4</td>
     <td>ND</td>
-    <td>2维, shape为(BS, H)</td>
+    <td>2维，shape为(BS, H)</td>
     <td>x</td>
     </tr>
     <tr>
@@ -205,7 +205,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <tr>
     <td>alltoAllAxesOptional</td>
     <td>输入</td>
-    <td>可选输入，AlltoAll和Pemute数据交换的方向。</td>
+    <td>可选输入，AlltoAll和Permute数据交换的方向。</td>
     <td>仅支持配置空或者[-2, -1]，传入空时默认按[-2, -1]处理，表示将输入由(BS, H)转为(BS/rankSize, rankSize*H)。</td>
     <td>aclIntArray*(元素类型INT64)</td>
     <td>-</td>

@@ -197,7 +197,7 @@ key/value数据类型仅支持：FLOAT16、BFLOAT16、INT8；<br>cacheMode当传
       * 当key和value是4维时，compressLensOptional、seqLensOptional为必选参数；当key和value是3维时，compressLensOptional、compressSeqOffsetOptional、seqLensOptional为可选参数。
       * 当cacheMode为“PA_NZ”时，keyCacheRef和valueCacheRef的倒数第二维必须小于UINT16_MAX(对应场景一)。
   * 输入值域限制：
-      * slotMapping的值范围[0,num_blocks*block_size-1]，且slotMapping内的元素值保证不重复，重复时不保证正确性。
+      * slotMapping的取值范围[0,num_blocks*block_size-1]，且slotMapping内的元素值保证不重复，重复时不保证正确性。
       * 当key和value都是4维时，slotMapping是二维，且slotMapping的第一维值等于key的第一维为batch，slotMapping的第二维值等于key的第三维为num_head(对应场景三)。
       * 当key和value都是4维时，seqLensOptional是一维，且seqLensOptional的值等于key的第一维为batch(对应场景三)。
       * 当key和value是3维且存在seqLensOptional时，seqLensOptional中所有值的和等于key的第一维为num_blocks(对应场景四、五)。

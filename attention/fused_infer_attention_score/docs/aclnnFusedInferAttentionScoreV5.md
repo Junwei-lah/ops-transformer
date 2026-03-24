@@ -1912,12 +1912,12 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <tr>
             <td rowspan="2">MLA</td>
             <td>queryRope</td>
-            <td>dtype与query一致,shape中b、n、s与query一致，d为64</td>
+            <td>dtype与query一致，shape中b、n、s与query一致，d为64</td>
             <td>-</td>
         </tr>
         <tr>
             <td>keyRope</td>
-            <td>dtype与key一致,shape中b、n、s与key一致，d为64</td>
+            <td>dtype与key一致，shape中b、n、s与key一致，d为64</td>
             <td>kv为tensorlist时，keyRope的shape中b需要与tensorlist长度保持一致，n、s需要与tensorlist中每个tensor的n、s相等，d为64</td>
         </tr>
         <tr>

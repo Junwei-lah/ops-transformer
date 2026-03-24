@@ -359,7 +359,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingV3(
   - sharedInputOptional支持二维，维度为(bsdp,n)，bsdp代表batchSize / dataParallelSize。
   - perTokenScaleOptional支持FLOAT8_E8M0。shape支持三维，维度为(m,Ceil(k/64),2)。
   - x1、x2、scaleOptional、pertokenScaleOptional、groupListOptional、logitOptional、rowIndexOptional是必选参数，biasOptional，sharedInputOptional是可选参数。目前暂不支持offsetOptional参数。所有参数均不支持空tensor。
-  - out的第一维bacth、sharedInputOffset必须大于等于0。
+  - out的第一维batch、sharedInputOffset必须大于等于0。
   - x1支持M为0的空Tensor。
   - x2支持N为0的空Tensor。
 - **返回值**
