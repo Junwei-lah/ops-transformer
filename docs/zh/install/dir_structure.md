@@ -37,7 +37,6 @@
 │   │   │   ├── ${op_name}_proto.h                      # 算子原型定义，用于图优化和融合阶段识别算子
 │   │   │   └── fusion_pass                             # 算子融合规则目录
 │   │   ├── op_host                                     # Host侧实现
-│   │   │   ├── CMakeLists.txt                          # Host侧cmakelist文件
 │   │   │   ├── config                                  # 可选，二进制配置文件，若未配置工程自动生成
 │   │   │   │   ├── ${soc_version}                      # 算子在NPU上配置的二进制信息，${soc_version}表示NPU型号
 │   │   │   │   │   ├── ${op_name}_binary.json          # 算子二进制配置文件
@@ -49,12 +48,13 @@
 │   │   │   ├── ${op_name}_tiling_${sub_case}.h         # 可选，${sub_case}子场景下Tiling实现用的头文件
 │   │   │   ├── ${op_name}_tiling.cpp                   # 可选，若无该文件表明对应场景下无Tiling实现(将张量划分为多个小块，区分数据类型进行并行计算)
 │   │   │   ├── ${op_name}_tiling.h                     # 可选，Tiling实现用的头文件
-│   │   │   └── op_api                                  # 可选，算子aclnn实现文件目录，若未配置工程自动生成
-│   │   │       ├── aclnn_${op_name}.cpp                # 算子aclnn接口实现文件
-│   │   │       ├── aclnn_${op_name}.h                  # 算子aclnn接口实现头文件
-│   │   │       ├── ${op_name}.cpp                      # 算子l0接口实现文件
-│   │   │       ├── ${op_name}.h                        # 算子l0接口实现头文件
-│   │   │       └── CMakeLists.txt
+│   │   │   └── CMakeLists.txt                          # Host侧cmakelist文件
+│   │   ├── op_api                                      # 可选，算子aclnn实现文件目录，若未配置工程自动生成
+│   │   │   ├── aclnn_${op_name}.cpp                    # 算子aclnn接口实现文件
+│   │   │   ├── aclnn_${op_name}.h                      # 算子aclnn接口实现头文件
+│   │   │   ├── ${op_name}.cpp                          # 算子l0接口实现文件
+│   │   │   ├── ${op_name}.h                            # 算子l0接口实现头文件
+│   │   │   └── CMakeLists.txt
 │   │   │── op_kernel                                   # AI Core算子Device侧Kernel实现
 │   │   │   ├── ${sub_case}                             # 可选，${sub_case}子场景使用的目录
 │   │   │   │   ├── ${op_name}_${model}.h               # 算子kernel实现文件，${model}表示用户自定义文件名后缀，通常为Tiling模板名

@@ -1,11 +1,12 @@
 # 算子调用
 
-## 前提条件
+## 使用须知
 
-- 环境部署：调用项目算子之前，请先参考[环境部署](../install/quick_install.md)完成基础环境搭建。
-- 调用算子列表：项目可调用的算子参见[算子列表](../op_list.md)，算子对应的aclnn接口参见[aclnn列表](../op_api_list.md)。
-- build.sh：算子调用依赖根目录build.sh脚本，可通过`bash build.sh --help`命令查看功能，参数介绍参考[build参数说明](../install/build.md)。
-  
+- 前提条件：调用项目算子前，请先参考[环境部署](../install/quick_install.md)完成基础环境搭建和源码下载。
+- 算子范围：可调用的项目算子范围参见[算子列表](../op_list.md)，算子对应的aclnn接口参见[aclnn列表](../op_api_list.md)。
+- build.sh：基于build.sh实现算子调用，命令选项通过`bash build.sh --help`查看，参数介绍参考[build参数说明](../install/build.md)。
+- 算子调用方式：目前算子支持aclnn API（推荐）和图模式调用，调用原理和流程详见[算子调用方式](op_invocation.md)。
+
 ## 源码编译
 
 ### 第三方软件依赖
@@ -233,7 +234,7 @@
 
 ## 本地验证
 
-通过项目根目录build.sh执行算子和UT用例。目前算子支持API方式（aclnn接口）和图模式调用，**推荐aclnn调用**。
+通过项目根目录build.sh执行算子和UT用例。目前算子支持aclnn API（推荐）和图模式调用，调用原理和流程详见[算子调用方式](op_invocation.md)。
 
 ### 执行算子样例
 
@@ -277,7 +278,7 @@
 
     2. **创建run.sh**
 
-        在待执行算子`examples\test_aclnn_${op_name}.cpp`同级目录下创建run.sh文件。
+        在待执行算子`examples/test_aclnn_${op_name}.cpp`同级目录下创建run.sh文件。
 
         以FlashAttentionScore算子执行test_aclnn_flash_attention_score.cpp为例，示例如下:
 
@@ -294,11 +295,16 @@
         source ${_ASCEND_INSTALL_PATH}/bin/setenv.bash
     
         # 编译可执行文件
-        g++ test_aclnn_flash_attention_score.cpp -I ${static_lib_path}/include -L ${static_lib_path}/lib64 -L ${ASCEND_HOME_PATH}/lib64 -Wl,--allow-multiple-definition \
-        -Wl,--start-group -lcann_transformer_static -lcann_math_static -lcann_legacy_static -Wl,--end-group -lgraph -lmetadef \
-        -lascendalog -lregister -lopp_registry -lops_base -lascendcl -ltiling_api -lplatform -ldl -lnnopbase -lgraph_base \
-        -lc_sec -lunified_dlog -lruntime -lhccl_fwk -o test_aclnn_flash_attention_score   # 替换为实际算子可执行文件名
-    
+        g++ test_aclnn_flash_attention_score.cpp \
+        -I ${static_lib_path}/include -I ${ASCEND_HOME_PATH}/include -I ${ASCEND_HOME_PATH}/include/aclnnop \
+        -L ${static_lib_path}/lib64 -L ${ASCEND_HOME_PATH}/lib64 -Wl,--allow-multiple-definition \
+        -Wl,--start-group -lcann_transformer_static -lcann_math_static -lcann_legacy_static -Wl,--end-group \
+        -lgraph -lmetadef -lascendalog -lregister -lopp_registry -lops_base -lascendcl -ltiling_api -lplatform -ldl 
+        -lnnopbase -lgraph_base -lc_sec -lunified_dlog -lruntime -o test_aclnn_flash_attention_score   # 替换为实际算子可执行文件名
+
+        # 编译MC2算子可执行文件时，在编译命令的末尾添加如下链接库
+        # -lruntime -lpthread -Wl,--no-as-needed -lhccl -lhccl_fwk -o 
+
         # 执行程序
         ./test_aclnn_flash_attention_score
         ```
