@@ -2143,7 +2143,7 @@ bool PromptFlashAttentionTilingV2::CheckPrefix(ContextParamsForPFATiling& contex
         (layoutStr == "BSND_BNSD" || layoutStr == "BSH_BNSD"),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "when %s is used, system prefix is not supported!",
         layoutStr.c_str()), return false);
-    // The prefix does not support TND, tensorlist, pfa mla, ifa mla, left padding and alibi
+    // The prefix does not support TND, tensorlist, pfa mla, ifa mla, left padding, PA and alibi
     OP_CHECK_IF(
         (inputLayout == InputLayout::TND || inputLayout == InputLayout::NTD),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName, "when TND/NTD is used, system prefix is not supported!"),
@@ -2163,6 +2163,9 @@ bool PromptFlashAttentionTilingV2::CheckPrefix(ContextParamsForPFATiling& contex
     OP_CHECK_IF((contextKeyParams.inputDataType == ge::DT_INT8) && (contextKeyParams.kDataType == ge::DT_INT8),
         OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "when system prefix is used, query and key/value should not both be int8!"),
+        return false);
+    OP_CHECK_IF(enablePA, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "when system prefix is used, PA is not supported!"),
         return false);
     OP_CHECK_IF(enableAlibiPse, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "When pseType = 2/3, system prefix is not supported!"),

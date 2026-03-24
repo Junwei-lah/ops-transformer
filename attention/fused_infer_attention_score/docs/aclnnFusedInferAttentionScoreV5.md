@@ -1501,7 +1501,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                     <ul>
                         <li>伪量化per-token模式、伪量化per-token叠加per-head模式antiquantScale和antiquantOffset输入最后一维需要大于等于maxBlockNumPerSeq
                             * blockSize</li>
-                        <li>伪量化per-token-group模式，keyAntiquantScale/valueAntiquantScale输入最后一维需要大于等于maxBlockNumPerSeq * blockSize</li>
+                        <li>伪量化per-token-group模式，keyAntiquantScale/valueAntiquantScale输入的倒数第二维需要大于等于maxBlockNumPerSeq * blockSize</li>
                     </ul>
                 </td>
                 <td>-</td>
