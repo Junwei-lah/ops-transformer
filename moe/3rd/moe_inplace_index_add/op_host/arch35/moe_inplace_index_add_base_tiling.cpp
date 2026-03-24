@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License")
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /* !
  * \file moe_inplace_index_add_base_tiling.cpp
@@ -28,6 +28,11 @@ constexpr int64_t DCACHE_SIZE_SIMT = 32L * 1024L;
 constexpr int64_t MIN_SIZE_SIMD_HANDLE = 128L;
 constexpr int64_t THRESHOLD_USE_SORT = 5L;
 constexpr int64_t SIMT_SORT_LASTDIM_LIMIT = 1024L;
+static constexpr uint64_t CAST_INT32_TO_INT16 = 1;   // int32 Cast int16
+static constexpr uint64_t CAST_INT64_TO_INT32 = 2;   // int64 Cast int32
+static constexpr uint64_t CAST_INT64_TO_INT16 = 3;   // int64 Cast int16
+static constexpr uint64_t CAST_INT32_TO_UINT8 = 4;   // int32 Cast uint8
+static constexpr uint64_t CAST_INT64_TO_UINT8 = 5;   // int64 Cast uint8
 
 constexpr int64_t ASCENDC_TOOLS_WORKSPACE = 16L * 1024L * 1024L;
 static const std::set<ge::DataType> VAR_DTYPE = {ge::DT_FLOAT, ge::DT_FLOAT16, ge::DT_BF16, ge::DT_INT64, ge::DT_INT32,
@@ -41,6 +46,36 @@ static const std::set<ge::DataType> DETERMIN_DTYPE = { ge::DT_FLOAT, ge::DT_FLOA
 bool MoeInplaceIndexAddTiling::IsCapable()
 {
     return true;
+}
+
+void MoeInplaceIndexAddTiling::GetCastTypeForSort()
+{
+    indicesCastDtype_ = indicesDtype_;
+
+    if (indicesDtype_ == ge::DT_INT32) {
+        if (varInAxis_ < UINT8_MAX) {
+            indicesCastMode_ = CAST_INT32_TO_UINT8;          // int32 Cast uint8
+            indicesCastDtype_ = ge::DT_UINT8;
+        } else if (varInAxis_ < INT16_MAX) {
+            indicesCastMode_ = CAST_INT32_TO_INT16;          // int32 Cast int16
+            indicesCastDtype_ = ge::DT_INT16;
+        }
+    } else {
+        if (varInAxis_ < UINT8_MAX) {
+            indicesCastMode_ = CAST_INT64_TO_UINT8;          // int64 Cast uint8
+            indicesCastDtype_ = ge::DT_UINT8;
+        } else if (varInAxis_ < INT16_MAX) {
+            indicesCastMode_ = CAST_INT64_TO_INT16;          // int64 Cast int16
+            indicesCastDtype_ = ge::DT_INT16;
+        } else if (varInAxis_ < INT32_MAX) {
+            indicesCastMode_ = CAST_INT64_TO_INT32;          // int64 Cast int32
+            indicesCastDtype_ = ge::DT_INT32;
+        }
+    }
+
+    if (indicesCastMode_ != 0) {
+        indicesCastDtypeSize_ = ge::GetSizeByDataType(indicesCastDtype_);
+    }
 }
 
 void MoeInplaceIndexAddTiling::SelTemplateByInput()

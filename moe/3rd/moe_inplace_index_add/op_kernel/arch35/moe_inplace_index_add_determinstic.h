@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License")
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file moe_inplace_index_add_determinstic.h
@@ -16,6 +16,8 @@
 #define ASCENDC_MOE_INPLACE_INDEX_ADD_DETERMINSTIC_H_
 
 #include "kernel_operator.h"
+#include "op_kernel/math_util.h"
+#include "op_kernel/platform_util.h"
 #include "moe_inplace_index_add_common.h"
 
 namespace MoeInplaceIndexAdd {
@@ -157,6 +159,9 @@ __aicore__ inline void MoeInplaceIndexAddDeterminstic<VAR_T, IDX_T>::Init(
                                     GetBlockIdx() * tilingData_.eachCoreIndexCount, tilingData_.eachCoreIndexCount);
 
     InitGlobalMemory(updateSumWsGm_, sumWsSize_, (float)(0));
+    auto vWaitMte3EventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE3_V));
+    SetFlag<HardEvent::MTE3_V>(vWaitMte3EventID);
+    WaitFlag<HardEvent::MTE3_V>(vWaitMte3EventID);
     InitGlobalMemory(updateSumIdxWsGm_, tilingData_.eachCoreIndexCount, (IDX_T)(-1));
     AscendC::SyncAll();
 }
@@ -558,7 +563,7 @@ __aicore__ inline void MoeInplaceIndexAddDeterminstic<VAR_T, IDX_T>::CopyRValueA
     LocalTensor<float> rValueLocal = rValueQue_.AllocTensor<float>();  
     LocalTensor<int32_t> sumQuanToIntLocal = sumQuanToIntQue_.AllocTensor<int32_t>();
 
-    int64_t outOfset = rowIdx * tilingData_.ubQuantaIndxFactor;
+    int64_t outOfset = rowIdx * tilingData_.ubVarOptiFactor;
     CopyIn<IDX_T>(sumIdxLocal, updateSumIdxWsGm_[outOfset], rowLen);         
     event_t eventIdMte2ToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_S));
     SetFlag<HardEvent::MTE2_S>(eventIdMte2ToS);
@@ -679,6 +684,10 @@ __aicore__ void MoeInplaceIndexAddDeterminstic<VAR_T, IDX_T>::CopyInverseQuantiz
                                     static_cast<uint32_t>(0),
                                     static_cast<uint32_t>(0)};
     Muls(inverseQuantData, inverseQuantData, alphaValue_, rowLen * afterAxisAlignSize_);
+    event_t eventIdVToMte3 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE3));
+    SetFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+    WaitFlag<HardEvent::V_MTE3>(eventIdVToMte3);
+    
     SetAtomicAdd<VAR_T>();
     DataCopyPad(var_[outOfset], inverseQuantData, copyParams);
     SetAtomicNone();
@@ -789,7 +798,7 @@ __aicore__ inline void MoeInplaceIndexAddDeterminstic<VAR_T, IDX_T>::ProcessThir
     pipe_.InitBuffer(sumQuanToIntQue_, DOUBLE_BUFFER, rowMainDataLen * afterAxisAlignFp32_ * sizeof(int32_t));
     pipe_.InitBuffer(rValueQue_, DOUBLE_BUFFER, rowMainDataLen * afterAxisAlignFp32_ * sizeof(float));
     pipe_.InitBuffer(invQuanDataQue_, DOUBLE_BUFFER, rowMainDataLen * afterAxisAlignSize_ * sizeof(VAR_T));
-    pipe_.InitBuffer(sumIdxQue_, DOUBLE_BUFFER, rowMainDataLen * afterAxisAlignSize_ * sizeof(IDX_T));
+    pipe_.InitBuffer(sumIdxQue_, DOUBLE_BUFFER, rowMainDataLen * sizeof(IDX_T));
     for (uint64_t rowIdx = 0; rowIdx < rowLoopNum - 1; rowIdx++) {
         CopyRValueAndIntWsAndIndexInOpti(preAxisIdx, rowIdx, 0, rowMainDataLen, tilingData_.afterAxis);
         InverseQuantize(uniqueSumIdNum_, tilingData_.afterAxis);

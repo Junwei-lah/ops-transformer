@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License")
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /* !
  * \file moe_inplace_index_add_tiling_arch35.h
@@ -41,15 +41,6 @@ TILING_DATA_FIELD_DEF(int64_t, indicesUbFactor);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(MoeInplaceIndexAdd, MoeInplaceIndexAddForAscendcTilingData)
-
-/*
- * @brief: ceil(u_value/d_value)*d_value
- *         eg. MoeCeilAlign(4,3) -> 6, MoeCeilAlign(4,2) -> 4, MoeCeilAlign(4,0) -> 4
- * @param [in] u_value: int64_t
- * @param [in] d_value: int64_t
- * @return int64: ceil
- */
-int64_t MoeCeilAlign(int64_t u_value, int64_t d_value);
 
 /*
  * @brief: get the json class of compile info from context
@@ -126,7 +117,8 @@ protected:
     void CombineAxis(const gert::Shape& varShape, const gert::Shape& updatesShape);
     void GetCastTypeSize();
     uint32_t GetSortTmpSize(ge::DataType dataType, uint32_t lastAxisNum, bool isDescend);
-    
+    void GetCastTypeForSort();
+
 public:
     int64_t ubSize_ = 0;
     int64_t totalCoreNum_ = 0;
@@ -192,9 +184,12 @@ public:
     int64_t ubVarOptiFactor_ = 0;
     int64_t isOpti_ = 0;
     int64_t indicesStride_ = 1;
+    uint64_t indicesCastMode_ = 0;  // 0: 不Cast; 1：int32 Cast int16; 2：int64 Cast int32; 3：int64 Cast int16; 4:int32 Cast uint8; 5:int64 Cast uint8.
+    int64_t indicesCastDtypeSize_ = 0;
 
     ge::DataType dtype_ = ge::DT_UNDEFINED;
     ge::DataType indicesDtype_ = ge::DT_UNDEFINED;
+    ge::DataType indicesCastDtype_ = ge::DT_UNDEFINED;
 };
 }  // namespace optiling
 #endif  // AIR_CXX_RUNTIME_V2_OP_IMPL_MOE_INPLACE_INDEX_ADD_TILING_H_

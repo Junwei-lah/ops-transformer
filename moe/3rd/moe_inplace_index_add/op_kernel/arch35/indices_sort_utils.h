@@ -1,13 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License")
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+ 
 /*!
  * \file indices_sort_utils.h
  * \brief indices_sort_utils
@@ -29,7 +29,7 @@ static constexpr MicroAPI::CastTrait castTraitInt16ToFp32 = {
 * 用于计算
 */
 template<typename INDICE_TYPE>
-__aicore__ void IndexStatisticInt32(
+__aicore__ void inline IndexStatisticInt32(
     LocalTensor<INDICE_TYPE>& srcLocal, LocalTensor<float>& dstLocal, float& maxScore, int64_t rowLen, int64_t lastDim)
 {
     __local_mem__ uint32_t* srcLocalAddr = (__local_mem__ uint32_t*)srcLocal.GetPhyAddr();
@@ -46,7 +46,7 @@ __aicore__ void IndexStatisticInt32(
     }
     uint16_t mainLoop = rowLen / INDICES_BUCKETS_SIZE;
     uint32_t tailNum = rowLen % INDICES_BUCKETS_SIZE;
-    uint16_t tailLoop = Ops::Base::CeilDiv(tailNum, 64U);
+    uint16_t tailLoop = Ops::Base::CeilDiv(tailNum, static_cast<uint32_t>(64));
     __VEC_SCOPE__
     {
         using namespace AscendC::MicroAPI;
@@ -124,7 +124,7 @@ __aicore__ void IndexStatisticInt32(
 }
 
 template<typename INDICE_TYPE>
-__aicore__ void IndexStatisticInt64(
+__aicore__ void inline IndexStatisticInt64(
     LocalTensor<INDICE_TYPE>& srcLocal, LocalTensor<float>& dstLocal, float& maxScore, int64_t rowLen, int64_t lastDim)
 {
     __local_mem__ uint64_t* srcLocalAddr = (__local_mem__ uint64_t*)srcLocal.GetPhyAddr();

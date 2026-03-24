@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License")
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /* !
  * \file moe_inplace_index_add_tiling.cc
@@ -122,15 +122,15 @@ void MoeInplaceIndexAddDeterminsticTiling::DoOpTilingForDeterminsticSplitAfter()
 int64_t MoeInplaceIndexAddDeterminsticTiling::GetRestAvailableSize(int64_t sampleNum, int64_t valueTypeBytes,
                  int64_t originalSize, int64_t postAxisSize, ge::DataType idType)
 {
-    auto ubBlock = Ops::Base::GetUbBlockSize(context_);
-    int64_t occupy = MoeCeilAlign(sampleNum * indicesTypeSize_, ubBlock) +
-                      MoeCeilAlign(sampleNum * (indicesTypeSize_ + SIZE_TWO * ALIGN_SIZE), ubBlock) + 
-                      MoeCeilAlign(sampleNum * INT32_BYTES, ubBlock) + 
-                      MoeCeilAlign(sampleNum * (INT32_BYTES * SIZE_TWO), ubBlock) +
-                      MoeCeilAlign(sampleNum * indicesTypeSize_, ubBlock) + 
-                      sampleNum * MoeCeilAlign((varTypeSize_) * postAxisSize, ubBlock) + 
-                      sampleNum * MoeCeilAlign((FP32_BYTES) * postAxisSize, ubBlock) + 
-                      sampleNum * MoeCeilAlign((FP32_BYTES) * postAxisSize, ubBlock) + 
+    auto ubBlock = static_cast<int64_t>(Ops::Base::GetUbBlockSize(context_));
+    int64_t occupy = Ops::Base::CeilAlign(sampleNum * indicesTypeSize_, ubBlock) +
+                      Ops::Base::CeilAlign(sampleNum * (indicesTypeSize_ + SIZE_TWO * ALIGN_SIZE), ubBlock) + 
+                      Ops::Base::CeilAlign(sampleNum * INT32_BYTES, ubBlock) + 
+                      Ops::Base::CeilAlign(sampleNum * (INT32_BYTES * SIZE_TWO), ubBlock) +
+                      Ops::Base::CeilAlign(sampleNum * indicesTypeSize_, ubBlock) + 
+                      sampleNum * Ops::Base::CeilAlign((varTypeSize_) * postAxisSize, ubBlock) + 
+                      sampleNum * Ops::Base::CeilAlign((FP32_BYTES) * postAxisSize, ubBlock) + 
+                      sampleNum * Ops::Base::CeilAlign((FP32_BYTES) * postAxisSize, ubBlock) + 
                       GetSortTmpSize(idType, sampleNum, false);
     return originalSize - occupy;
 }
@@ -142,7 +142,7 @@ void MoeInplaceIndexAddDeterminsticTiling::DoOpTilingForDeterminstic()
 
     /* 优先分pre和after */
     int64_t splitCoreNumThresh = totalCoreNum_ / SIZE_TWO;
-    if ((preAxis_ > splitCoreNumThresh) || (afterAxis_ > splitCoreNumThresh) || (indicesAxis_ < splitCoreNumThresh)) {
+    if ((preAxis_ > splitCoreNumThresh) || (afterAxis_ > splitCoreNumThresh) || (indicesAxis_ <= splitCoreNumThresh)) {
         if (afterAxis_ >= preAxis_) {
             DoOpTilingForDeterminsticSplitAfter();
         } else {
@@ -185,13 +185,13 @@ void MoeInplaceIndexAddDeterminsticTiling::DoOpTilingForDeterminstic()
         ubQuantaIndxFactor_ = halfUbSize / oneBlockSize;
         
         restSize = static_cast<int64_t>(-1);
-        auto ubBlock = Ops::Base::GetUbBlockSize(context_);
+        auto ubBlock = static_cast<int64_t>(Ops::Base::GetUbBlockSize(context_));
         while (restSize <= 0) {
             --ubQuantaIndxFactor_;
-            int64_t occupy = MoeCeilAlign(ubQuantaIndxFactor_ * indicesTypeSize_, ubBlock) +
-                          ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
-                          ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
-                          ubQuantaIndxFactor_ * MoeCeilAlign(INT32_BYTES * afterAxis_, ubBlock);
+            int64_t occupy = Ops::Base::CeilAlign(ubQuantaIndxFactor_ * indicesTypeSize_, ubBlock) +
+                          ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
+                          ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
+                          ubQuantaIndxFactor_ * Ops::Base::CeilAlign(INT32_BYTES * afterAxis_, ubBlock);
             restSize = halfUbSize - occupy;
         }
         if (ubQuantaIndxFactor_ > indicesAxis_) {
@@ -205,9 +205,9 @@ void MoeInplaceIndexAddDeterminsticTiling::DoOpTilingForDeterminstic()
         restSize = static_cast<int64_t>(-1);
         while (restSize <= 0) {
             --ubVarFactor_;
-            int64_t occupy = ubQuantaIndxFactor_ * MoeCeilAlign(INT32_BYTES * afterAxis_, ubBlock) + 
-                        ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
-                        ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock);
+            int64_t occupy = ubQuantaIndxFactor_ * Ops::Base::CeilAlign(INT32_BYTES * afterAxis_, ubBlock) + 
+                        ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
+                        ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock);
             restSize = halfUbSize - occupy;
         }
         if (ubVarFactor_ > eachCoreVarCount_) {
@@ -225,10 +225,10 @@ void MoeInplaceIndexAddDeterminsticTiling::DoOpTilingForDeterminstic()
         restSize = static_cast<int64_t>(-1);
         while (restSize <= 0) {
             --ubVarOptiFactor_;
-            int64_t occupy = MoeCeilAlign(ubQuantaIndxFactor_ * indicesTypeSize_, ubBlock) +
-                            ubQuantaIndxFactor_ * MoeCeilAlign(INT32_BYTES * afterAxis_, ubBlock) + 
-                            ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
-                            ubQuantaIndxFactor_ * MoeCeilAlign(FP32_BYTES * afterAxis_, ubBlock);
+            int64_t occupy = Ops::Base::CeilAlign(ubQuantaIndxFactor_ * indicesTypeSize_, ubBlock) +
+                            ubQuantaIndxFactor_ * Ops::Base::CeilAlign(INT32_BYTES * afterAxis_, ubBlock) + 
+                            ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock) + 
+                            ubQuantaIndxFactor_ * Ops::Base::CeilAlign(FP32_BYTES * afterAxis_, ubBlock);
             restSize = halfUbSize - occupy;
         }
         if (ubVarOptiFactor_ > eachCoreVarCount_) {
