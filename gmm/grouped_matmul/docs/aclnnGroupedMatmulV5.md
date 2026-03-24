@@ -801,7 +801,7 @@ aclnnStatus aclnnGroupedMatmulV5(
 
       |groupType| 使用场景 | shape限制 |
       |:---------:|:---------:| :------ |
-      |0/2|weight单tensor|perchannel场景：每个tensor 2维， shape为（g, N）；  pertensor场景：每个tensor 2维或1维，shape为 （g, 1）或（g,）|
+      |0/2|weight单tensor|perchannel场景：每个tensor 2维， shape为（g, N）；  pertensor场景：每个tensor 2维或1维，shape为 （g, 1）或（g,），输出为INT8时不支持pertensor场景|
 
     </details>
 
