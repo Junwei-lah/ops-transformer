@@ -74,9 +74,9 @@ aclnnStatus aclnnDistributeBarrierV2(
     <td>输入</td>
     <td>无业务语义，仅用于输入Tensor依赖，接口内不做任何操作。</td>
     <td>无</td>
-    <td>BFLOAT16、FLOAT16、FLOAT32、BOOL、INT8、INT16、INT32、INT64、UINT8、UINT16、UINT32、UINT64</td>
+    <td>BFLOAT16、FLOAT16、FLOAT32、BOOL、INT8、INT16、INT32、INT64、UINT8、UINT16、UINT32、UINT64、FLOAT8_E5M2、FLOAT8_E4M3FN、FLOAT4_E1M2、FLOAT4_E2M1、HIFLOAT8、INT4</td>
     <td>ND</td>
-    <td>0-8</td>
+    <td>0-8，其中INT4支持2-3</td>
     <td>√</td>
     </tr>
     <tr>
@@ -141,7 +141,8 @@ aclnnStatus aclnnDistributeBarrierV2(
     </tr>
     </tbody></table>
 
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：该产品下`timeOutOptional`与`elasticInfoOptional`仅支持传入空指针。
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：不支持FLOAT8_E5M2、FLOAT8_E4M3FN、FLOAT4_E1M2、FLOAT4_E2M1、HIFLOAT8、INT4类型。
+    - <term>Ascend 950PR/Ascend 950DT</term>：timeOutOptional参数里的超时时间单位为us，建议配置5000000us，根据实际环境不同超时时间下限可能不同。
     
 - **返回值**
 
@@ -277,7 +278,7 @@ aclnnStatus aclnnDistributeBarrierV2(
         aclrtContext context;
     };
     
-    constexpr uint32_t EP_WORLD_SIZE = 8;
+    constexpr uint32_t EP_WORLD_SIZE = 2;
     constexpr uint32_t TP_WORLD_SIZE = 1;
     constexpr uint32_t DEV_NUM = EP_WORLD_SIZE * TP_WORLD_SIZE;
     
@@ -320,15 +321,14 @@ aclnnStatus aclnnDistributeBarrierV2(
         ret = HcclGetCommName(args.hcclEpBarrierComm, hcomEpBarrierName);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("[ERROR] HcclGetEpBarrierCommName failed, ret %d\n", ret); return -1);
         char hcomTpName[128] = {0};
-        ret = HcclGetCommName(args.hcclTpComm, hcomTpName);
     
         int64_t Bs = 8;
         int64_t H = 7168;
-        int64_t K = 3;
+        int64_t K = 2;
         int64_t expertShardType = 0;
-        int64_t sharedExpertNum = 1;
-        int64_t sharedExpertRankNum = 1;
-        int64_t moeExpertNum = 7;
+        int64_t sharedExpertNum = 0;
+        int64_t sharedExpertRankNum = 0;
+        int64_t moeExpertNum = 2;
         int64_t quantMode = 0;
         int64_t globalBs = Bs * EP_WORLD_SIZE;
         int64_t expertTokenNumsType = 1;
@@ -427,8 +427,8 @@ aclnnStatus aclnnDistributeBarrierV2(
         std::vector<int32_t> tpRecvCountsHostData(tpRecvCountsShapeSize, 0);
         std::vector<float> expandScalesHostData(expandScalesShapeSize, 0);
 
-        int32_t isElastic = 1;
-        int32_t rankNumAfterElastic = 4;
+        int32_t isElastic = 0;
+        int32_t rankNumAfterElastic = 2;
         int32_t sharedExpertRankNumAfterElastic = sharedExpertRankNum;
         int32_t moeExpertNumAfterElastic = rankNumAfterElastic - sharedExpertRankNumAfterElastic;
         std::unordered_set<int16_t> availableRank{
@@ -509,7 +509,7 @@ aclnnStatus aclnnDistributeBarrierV2(
         if (availableRank.find(args.rankId) != availableRank.end()) {
             // 调用第一阶段接口
             ret = aclnnMoeDistributeDispatchV3GetWorkspaceSize(x, expertIds, (quantMode > 0 ? scales : nullptr), nullptr,
-                    expertScales, elasticInfo, hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE,
+                    expertScales, nullptr, hcomEpName, EP_WORLD_SIZE, args.epRankId, moeExpertNum, hcomTpName, TP_WORLD_SIZE,
                     args.tpRankId, expertShardType, sharedExpertNum,sharedExpertRankNum, quantMode, globalBs,
                     expertTokenNumsType, nullptr, 0, 0, 0, expandX, dynamicScales, expandIdx, expertTokenNums, epRecvCounts,
                     tpRecvCounts, expandScales, &dispatchWorkspaceSize, &dispatchExecutor);

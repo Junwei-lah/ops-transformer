@@ -128,7 +128,7 @@ __aicore__ inline void DistributeBarrier<TemplateDistributeBarrierTypeFunc>::Tim
       if (duration >= timeOut_) {
         // 超时后做dfx，通过assert做aicore退出处理
         PipeBarrier<PIPE_ALL>();
-        assert(duration < timeOut_);
+        assert((duration < timeOut_) && "Operator execution timed out");
         PipeBarrier<PIPE_ALL>();
       }
     }
