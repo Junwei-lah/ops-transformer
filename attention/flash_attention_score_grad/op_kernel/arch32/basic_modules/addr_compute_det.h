@@ -205,7 +205,7 @@ private:
         if (layout == BSNGD) {  // BSH格式
             return bIdx * dimS2 * dimN2 * dimD + (s2Idx * dimN2 * dimD) + ((n1Idx / dimG) * dimD);
         } else if (layout == SBNGD) {
-            return s2Idx * dimB * dimN2 * dimD + (bIdx * dimN2 * dimD) + (n1Idx * dimD);
+            return s2Idx * dimB * dimN2 * dimD + (bIdx * dimN2 * dimD) + ((n1Idx / dimG) * dimD);
         } else if (layout == BNGSD) {
             return bIdx * dimN2 * dimS2 * dimD + ((n1Idx / dimG) * dimS2 * dimD) + (s2Idx * dimD);
         } else { 
