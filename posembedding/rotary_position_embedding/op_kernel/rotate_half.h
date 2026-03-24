@@ -261,9 +261,13 @@ __aicore__ inline void RotateHalf<T>::CopyInX(uint64_t xStartOffset, uint16_t sL
 #if (defined(__CCE_AICORE__) && __CCE_AICORE__ == 200)
             DataCopyParams dataCopyParams;
             dataCopyParams.blockCount = copyParams.blockCount;
-            dataCopyParams.blockLen = copyParams.blockLen / BYTE_OF_BLOCK;
-            dataCopyParams.srcGap= copyParams.srcStride / BYTE_OF_BLOCK;
-            dataCopyParams.dstGap= copyParams.dstStride / BYTE_OF_BLOCK;
+            dataCopyParams.blockLen = this->dBytes / BYTE_OF_BLOCK;
+            dataCopyParams.dstGap= 0;
+            if (this->layout == LAYOUT_BSND) {
+                dataCopyParams.srcGap = (this->bcSecondDim - 1) * this->dBytes / BYTE_OF_BLOCK;   //layout = BSND
+            } else {
+                dataCopyParams.srcGap = (this->bnSize - 1) * this->dBytes / BYTE_OF_BLOCK;   //layout = SBND
+            }
             DataCopy(xLocal, xGm[xStartOffset], dataCopyParams);
 #else
             DataCopyPad(xLocal, xGm[xStartOffset], copyParams, this->noPadParams);
@@ -323,9 +327,13 @@ __aicore__ inline void RotateHalf<T>::CopyOut(uint64_t yStartOffset, uint16_t sL
 #if (defined(__CCE_AICORE__) && __CCE_AICORE__ == 200)
             DataCopyParams dataCopyParams;
             dataCopyParams.blockCount = copyParams.blockCount;
-            dataCopyParams.blockLen = copyParams.blockLen / BYTE_OF_BLOCK;
-            dataCopyParams.srcGap= copyParams.srcStride / BYTE_OF_BLOCK;
-            dataCopyParams.dstGap= copyParams.dstStride / BYTE_OF_BLOCK;
+            dataCopyParams.blockLen = this->dBytes / BYTE_OF_BLOCK;
+            dataCopyParams.srcGap= 0;
+            if (this->layout == LAYOUT_BSND) {
+                dataCopyParams.dstGap = (this->bcSecondDim - 1) * this->dBytes / BYTE_OF_BLOCK;   //layout = BSND
+            } else {
+                dataCopyParams.dstGap = (this->bnSize - 1) * this->dBytes / BYTE_OF_BLOCK;   //layout = SBND
+            }
             DataCopy(yGm[yStartOffset], yLocal, dataCopyParams);
 #else
             DataCopyPad(yGm[yStartOffset], yLocal, copyParams);
