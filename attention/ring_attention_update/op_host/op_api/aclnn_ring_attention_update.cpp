@@ -213,47 +213,44 @@ static aclnnStatus AnalysisAxis(const aclTensor *prevAttnOut, const aclTensor *p
         return ACLNN_ERR_PARAM_INVALID;
     }
 
-    // 判断prevAttnOut数据类型
-    auto prevAttnDtype = prevAttnOut->GetDataType();
-    uint32_t inputDataSize;
-    if (prevAttnDtype == op::DataType::DT_FLOAT) {
-        inputDataSize = SIZE_B32;
-    } else if (prevAttnDtype == op::DataType::DT_FLOAT16 || prevAttnDtype == op::DataType::DT_BF16) {
-        inputDataSize = SIZE_B16;
-    } else {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Dtype only support fp16, fp32, bf16 currently, but got Dtype = %d", inputDataSize);
-        return ACLNN_ERR_PARAM_INVALID;
-    }
+    if (inputLayoutStr == "TND") {
+        // 判断prevAttnOut数据类型
+        const auto prevAttnDtype = prevAttnOut->GetDataType();
+        uint32_t inputDataSize = 0;
 
-    // 判断是否为TND，是tndSoftmaxLayout = 1
-    uint8_t tndSoftmaxLayout = 0;
-    if (inputLayoutStr == "SBH") {
-        tndSoftmaxLayout = 0;
-    } else if (inputLayoutStr == "TND") {
-        tndSoftmaxLayout = 1;
-    } else {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "SoftmaxLayout only support \"\" or \"SBH\" or \"TND\".");
-        return ACLNN_ERR_PARAM_INVALID;
-    }
+        if (prevAttnDtype == op::DataType::DT_FLOAT) {
+            inputDataSize = SIZE_B32;
+        } else if (prevAttnDtype == op::DataType::DT_FLOAT16 || prevAttnDtype == op::DataType::DT_BF16) {
+            inputDataSize = SIZE_B16;
+        } else {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Dtype only support fp16, fp32, bf16 currently, but got Dtype = %s", op::ToString(DataType(prevAttnDtype)).GetString());
+            return ACLNN_ERR_PARAM_INVALID;
+        }
 
-    int64_t headNum = paShape.GetDim(1);
-    int64_t headDim = paShape.GetDim(2);
+        const int64_t headNum = paShape.GetDim(1);
+        const int64_t headDim = paShape.GetDim(2);
 
-    int64_t headNumAllCount = MAX_UB_SIZE - REPEAT_NUM_B32 * (inputDataSize * 6 + 8) - REPEAT_NUM_B32 * 56;
-    int64_t headDimEach = headDim * (inputDataSize * 6 + 8) + 8 * 56;
-    int64_t loopEachMax = headNumAllCount / headDimEach;
+        if (headNum > MAX_HEAD_NUM_LIMIT_SIZE) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Don't support this shape currently, please try to set N <= %lu!", MAX_HEAD_NUM_LIMIT_SIZE);
+            return ACLNN_ERR_PARAM_INVALID;
+        }
 
-    int64_t headNumLoopEach = tndSoftmaxLayout == 1 || headNum == 1 ? loopEachMax :
-                            loopEachMax > headNum ? headNum : loopEachMax;
-    
-    if (headNumLoopEach == 0 || headDim > MAX_HEAD_DIM_LIMIT_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Don't support this shape currently, please try to set D < %lu!", MAX_HEAD_DIM_LIMIT_SIZE);
-        return ACLNN_ERR_PARAM_INVALID;
-    }
+        if (headDim > MAX_HEAD_DIM_LIMIT_SIZE) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Don't support this shape currently, please try to set D <= %lu!", MAX_HEAD_DIM_LIMIT_SIZE);
+            return ACLNN_ERR_PARAM_INVALID;
+        }
 
-    if (headNum > MAX_HEAD_NUM_LIMIT_SIZE) {
-        OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Don't support this shape currently, please try to set N < %lu!", MAX_HEAD_NUM_LIMIT_SIZE);
-        return ACLNN_ERR_PARAM_INVALID;
+        const int64_t headNumAllCount = MAX_UB_SIZE - REPEAT_NUM_B32 * (inputDataSize * 6 + 8) - REPEAT_NUM_B32 * 56;
+        const int64_t headDimEach = headDim * (inputDataSize * 6 + 8) + 8 * 56;
+        const int64_t loopEachMax = headNumAllCount / headDimEach;
+
+        const int64_t headNumLoopEach = (headNum == 1) ? loopEachMax :
+                                std::min(loopEachMax, headNum);
+        
+        if (headNumLoopEach == 0) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "Don't support this shape currently, please try to use smaller D!");
+            return ACLNN_ERR_PARAM_INVALID;
+        }
     }
 
     return ACLNN_SUCCESS;
