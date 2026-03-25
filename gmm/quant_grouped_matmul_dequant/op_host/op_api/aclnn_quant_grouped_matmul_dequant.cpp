@@ -14,6 +14,7 @@
  */
 
 #include "aclnn_quant_grouped_matmul_dequant.h"
+#include "aclnn_quant_grouped_matmul_dequant_weight_nz.h"
 #include "quant_grouped_matmul_dequant.h"
 #include "level0/padv3.h"
 #include "aclnn_kernels/contiguous.h"
@@ -134,43 +135,75 @@ static op::Shape GetWeightNzShape(const aclTensor *weight)
 }
 }
 
-aclnnStatus aclnnQuantGroupedMatmulDequantGetWorkspaceSize(const aclTensor *x, const aclTensor *weight,
-                                                    const aclTensor *weightScale, const aclTensor *groupList, const aclTensor *biasOptional,
-                                                    const aclTensor *xScaleOptional, const aclTensor *xOffsetOptional, const aclTensor *smoothScaleOptional,
-                                                    char *xQuantMode, bool transposeWeight, const aclTensor *out,
-                                                    uint64_t *workspaceSize, aclOpExecutor **executor) {
-  L2_DFX_PHASE_1(aclnnQuantGroupedMatmulDequant, DFX_IN(x, weight, weightScale, groupList, biasOptional, xScaleOptional, xOffsetOptional, smoothScaleOptional, xQuantMode, transposeWeight), DFX_OUT(out));
-  // 创建OpExecutor
+static aclnnStatus ConvertWeightNdToNz(const aclTensor *&weight, aclOpExecutor *exec) {
+  if (weight->GetViewShape().GetDim(N_IDX) % FRACTAL_N_INT8 != 0 ||
+      weight->GetViewShape().GetDim(K_IDX) % FRACTAL_N_INT8 != 0) {
+    OP_LOGE(ACLNN_ERR_PARAM_INVALID, "weight shape (N, K) must both align to 16, please check");
+    return ACLNN_ERR_PARAM_INVALID;
+  }
+  if (weight->GetViewShape().GetDim(K_IDX) % FRACTAL_K_INT8 != 0) {
+    auto padArray = exec->AllocIntArray(PAD_VEC_QGMMDQ, PAD_VEC_SIZE_QGMMDQ);
+    auto padTensor = exec->ConvertToTensor(padArray, DataType::DT_INT64);
+    auto valueTensor = exec->ConvertToTensor(exec->AllocScalar(0), DataType::DT_INT8);
+    auto weight_ = exec->CreateView(weight, weight->GetViewShape(), weight->GetViewOffset());
+    weight_->SetStorageShape(weight->GetViewShape());
+    weight = l0op::PadV3(weight_, padTensor, valueTensor, PAD_MODE_QGMMDQ, true, exec);
+  }
+  op::Shape weightNzShape = GetWeightNzShape(weight);
+  auto weight_ = exec->CreateView(weight, weightNzShape, weight->GetViewOffset());
+  auto perm = exec->AllocIntArray(PERM_VEC_QGMMDQ, PERM_VEC_SIZE_QGMMDQ);
+  weight = l0op::Transpose(weight_, perm, exec);
+  weight_ = exec->CreateView(weight, weight->GetViewShape(), weight->GetViewOffset());
+  weight_->SetStorageFormat(op::Format::FORMAT_FRACTAL_NZ);
+  weight = weight_;
+  return ACLNN_SUCCESS;
+}
+
+static aclnnStatus PrepareWeightFormat(const aclTensor *&weight, aclOpExecutor *exec) {
+  uint64_t weightDimNum = weight->GetViewShape().GetDimNum();
+  if (weightDimNum == ND_DIMNUM &&
+      (weight->GetStorageFormat() == op::Format::FORMAT_ND || weight->GetStorageFormat() == op::Format::FORMAT_NCL)) {
+    return ConvertWeightNdToNz(weight, exec);
+  } else if (weightDimNum != NZ_DIMNUM || weight->GetStorageFormat() != op::Format::FORMAT_FRACTAL_NZ) {
+    OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+            "weight is not in 3-dim shape (G, N, K) or 5-dim (G, K//32, N//16, 16, 32), please check");
+    return ACLNN_ERR_PARAM_INVALID;
+  }
+  return ACLNN_SUCCESS;
+}
+
+static aclnnStatus aclnnQuantGroupedMatmulDequantGetWorkspaceSizeCommon(
+    const aclTensor *x, const aclTensor *weight, const aclTensor *weightScale, const aclTensor *groupList,
+    const aclTensor *biasOptional, const aclTensor *xScaleOptional, const aclTensor *xOffsetOptional,
+    const aclTensor *smoothScaleOptional, char *xQuantMode, bool transposeWeight, const aclTensor *out,
+    uint64_t *workspaceSize, aclOpExecutor **executor) {
   auto uniqueExecutor = CREATE_EXECUTOR();
   CHECK_RET(uniqueExecutor.get() != nullptr, ACLNN_ERR_INNER_CREATE_EXECUTOR);
 
-  if(!transposeWeight){
+  if (!transposeWeight) {
     return ACLNN_ERR_PARAM_INVALID;
   }
 
-  // 参数检查
   auto ret = CheckParamsNullOrNot(x, weight, weightScale, groupList, biasOptional, xOffsetOptional, out);
   CHECK_RET(ret == ACLNN_SUCCESS, ret);
   ret = CheckParamsDateType(x, weight, weightScale, groupList, xScaleOptional, smoothScaleOptional, out);
   CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
-  // QuantMatmulDequant算子的空tensor在kernel中支持，对标竞品根据算子实际情况补充
   if (x->IsEmpty() || weight->IsEmpty() || weightScale->IsEmpty() || groupList->IsEmpty()) {
-    // 根据实际支持情况补充
     *workspaceSize = static_cast<uint64_t>(0);
     uniqueExecutor.ReleaseTo(executor);
     return ACLNN_SUCCESS;
   }
-  // 将输入转换成连续的tensor
+
   auto xContiguous = l0op::Contiguous(x, uniqueExecutor.get());
   auto weightScaleContiguous = l0op::Contiguous(weightScale, uniqueExecutor.get());
   auto groupListContiguous = l0op::Contiguous(groupList, uniqueExecutor.get());
   auto xScaleContiguous = xScaleOptional;
-  if(xScaleOptional!=nullptr) {
+  if (xScaleOptional != nullptr) {
     xScaleContiguous = l0op::Contiguous(xScaleOptional, uniqueExecutor.get());
   }
   auto smoothScaleContiguous = smoothScaleOptional;
-  if(smoothScaleContiguous!=nullptr) {
+  if (smoothScaleContiguous != nullptr) {
     smoothScaleContiguous = l0op::Contiguous(smoothScaleOptional, uniqueExecutor.get());
   }
   if (!IsContiguous(weight) || !IsContiguous(out)) {
@@ -178,48 +211,70 @@ aclnnStatus aclnnQuantGroupedMatmulDequantGetWorkspaceSize(const aclTensor *x, c
     return ACLNN_ERR_PARAM_INVALID;
   }
 
-  uint64_t weightDimNum = weight->GetViewShape().GetDimNum();
-  if(weightDimNum == ND_DIMNUM && (weight->GetStorageFormat()==op::Format::FORMAT_ND || weight->GetStorageFormat()==op::Format::FORMAT_NCL)) {
-    if(weight->GetViewShape().GetDim(N_IDX) % FRACTAL_N_INT8 != 0 || weight->GetViewShape().GetDim(K_IDX) % FRACTAL_N_INT8 != 0){
-      OP_LOGE(ACLNN_ERR_PARAM_INVALID, "weight shape (N, K) must both align to 16, please check");
-      return ACLNN_ERR_PARAM_INVALID;
-    }
-    if(weight->GetViewShape().GetDim(K_IDX) % FRACTAL_K_INT8 != 0){
-      auto padArray = uniqueExecutor.get()->AllocIntArray(PAD_VEC_QGMMDQ, PAD_VEC_SIZE_QGMMDQ);
-      auto padTensor = uniqueExecutor.get()->ConvertToTensor(padArray, DataType::DT_INT64);
-      auto valueTensor = uniqueExecutor.get()->ConvertToTensor(uniqueExecutor.get()->AllocScalar(0), DataType::DT_INT8);
-      auto weight_ = uniqueExecutor.get()->CreateView(weight, weight->GetViewShape(), weight->GetViewOffset());
-      weight_->SetStorageShape(weight->GetViewShape());
-      weight = l0op::PadV3(weight_, padTensor, valueTensor, PAD_MODE_QGMMDQ, true, uniqueExecutor.get());
-    }
-    op::Shape weightNzShape = GetWeightNzShape(weight);
-    auto weight_ = uniqueExecutor.get()->CreateView(weight, weightNzShape, weight->GetViewOffset());
-    auto perm = uniqueExecutor.get()->AllocIntArray(PERM_VEC_QGMMDQ, PERM_VEC_SIZE_QGMMDQ);
-    weight = l0op::Transpose(weight_, perm, uniqueExecutor.get());
-    weight_ = uniqueExecutor.get()->CreateView(weight, weight->GetViewShape(), weight->GetViewOffset());
-    weight_->SetStorageFormat(op::Format::FORMAT_FRACTAL_NZ);
-    weight = weight_;
-  } else if(weightDimNum != NZ_DIMNUM || weight->GetStorageFormat()!=op::Format::FORMAT_FRACTAL_NZ){
-    OP_LOGE(ACLNN_ERR_PARAM_INVALID, "weight is not in 3-dim shape (G, N, K) or 5-dim (G, K//32, N//16, 16, 32), please check");
-    return ACLNN_ERR_PARAM_INVALID;
-  }
+  ret = PrepareWeightFormat(weight, uniqueExecutor.get());
+  CHECK_RET(ret == ACLNN_SUCCESS, ret);
 
   auto out_ = uniqueExecutor.get()->CreateView(out, out->GetViewShape(), out->GetViewOffset());
   out_->SetStorageShape(out->GetViewShape());
   out = out_;
 
-  auto matmulRet = l0op::QuantGroupedMatmulDequant(xContiguous, weight, weightScaleContiguous, groupListContiguous, biasOptional, xScaleContiguous,
-                                            xOffsetOptional, smoothScaleContiguous, xQuantMode, transposeWeight, out,
-                                            uniqueExecutor.get());
+  auto matmulRet = l0op::QuantGroupedMatmulDequant(xContiguous, weight, weightScaleContiguous, groupListContiguous,
+                                                    biasOptional, xScaleContiguous, xOffsetOptional,
+                                                    smoothScaleContiguous, xQuantMode, transposeWeight, out,
+                                                    uniqueExecutor.get());
 
   *workspaceSize = uniqueExecutor->GetWorkspaceSize();
   uniqueExecutor.ReleaseTo(executor);
   return ACLNN_SUCCESS;
 }
 
+aclnnStatus aclnnQuantGroupedMatmulDequantGetWorkspaceSize(const aclTensor *x, const aclTensor *weight,
+                                                    const aclTensor *weightScale, const aclTensor *groupList, const aclTensor *biasOptional,
+                                                    const aclTensor *xScaleOptional, const aclTensor *xOffsetOptional, const aclTensor *smoothScaleOptional,
+                                                    char *xQuantMode, bool transposeWeight, const aclTensor *out,
+                                                    uint64_t *workspaceSize, aclOpExecutor **executor) {
+  OP_CHECK_COMM_INPUT(workspaceSize, executor);
+  L2_DFX_PHASE_1(aclnnQuantGroupedMatmulDequant, DFX_IN(x, weight, weightScale, groupList, biasOptional, xScaleOptional, xOffsetOptional, smoothScaleOptional, xQuantMode, transposeWeight), DFX_OUT(out));
+  return aclnnQuantGroupedMatmulDequantGetWorkspaceSizeCommon(x, weight, weightScale, groupList, biasOptional,
+                                                              xScaleOptional, xOffsetOptional, smoothScaleOptional,
+                                                              xQuantMode, transposeWeight, out, workspaceSize, executor);
+}
+
+aclnnStatus aclnnQuantGroupedMatmulDequantWeightNZGetWorkspaceSize(
+    const aclTensor *x, const aclTensor *weight, const aclTensor *weightScale, const aclTensor *groupList,
+    const aclTensor *biasOptional, const aclTensor *xScaleOptional, const aclTensor *xOffsetOptional,
+    const aclTensor *smoothScaleOptional, char *xQuantMode, bool transposeWeight, aclTensor *out,
+    uint64_t *workspaceSize, aclOpExecutor **executor) {
+  OP_CHECK_COMM_INPUT(workspaceSize, executor);
+  L2_DFX_PHASE_1(aclnnQuantGroupedMatmulDequantWeightNZ,
+                  DFX_IN(x, weight, weightScale, groupList, biasOptional, xScaleOptional, xOffsetOptional, smoothScaleOptional, xQuantMode, transposeWeight),
+                  DFX_OUT(out));
+  CHECK_RET(weight != nullptr, ACLNN_ERR_PARAM_NULLPTR);
+  auto storageShape = weight->GetStorageShape();
+  auto viewShape = weight->GetViewShape();
+  aclTensor *weightNZ = const_cast<aclTensor *>(weight);
+  CHECK_COND((storageShape.GetDimNum() == NZ_DIMNUM), ACLNN_ERR_PARAM_INVALID,
+             "aclnnQuantGroupedMatmulDequantWeightNZ, The dimnum of storageShape for second input (weight)"
+             "must be 5. \n But StorageShape got %s , and dimNum is %lu.",
+             op::ToString(storageShape).GetString(), storageShape.GetDimNum());
+  weightNZ->SetStorageFormat(op::Format::FORMAT_FRACTAL_NZ);
+  if (viewShape.GetDimNum() == NZ_DIMNUM) {
+      weightNZ->SetViewFormat(op::Format::FORMAT_FRACTAL_NZ);
+  } else if (viewShape.GetDimNum() == ND_DIMNUM) {
+      weightNZ->SetViewFormat(op::Format::FORMAT_ND);
+  }
+  return aclnnQuantGroupedMatmulDequantGetWorkspaceSizeCommon(x, weight, weightScale, groupList, biasOptional,
+                                                              xScaleOptional, xOffsetOptional, smoothScaleOptional,
+                                                              xQuantMode, transposeWeight, out, workspaceSize, executor);
+}
+
 aclnnStatus aclnnQuantGroupedMatmulDequant(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream) {
   L2_DFX_PHASE_2(aclnnQuantGroupedMatmulDequant);
-  // 固定写法，调用框架能力，完成计算
+  return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);
+}
+
+aclnnStatus aclnnQuantGroupedMatmulDequantWeightNZ(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor, aclrtStream stream) {
+  L2_DFX_PHASE_2(aclnnQuantGroupedMatmulDequantWeightNZ);
   return CommonOpExecutorRun(workspace, workspaceSize, executor, stream);
 }
 
