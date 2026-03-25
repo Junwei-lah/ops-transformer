@@ -23,7 +23,6 @@ namespace {
 constexpr int64_t INVALID_INT_VAL = -1;
 const std::string SO_NAME = "libccl_kernel.so";
 const std::string KERNEL_NAME_V1 = "RunAicpuKfcSrvLaunch";
-constexpr uint32_t VERSION_SIZE = 32;
 
 // 对已有结构的重复定义，只在本文件插入 aicpu desc 的时候使用
 struct HcclCommParamDescTemp {
@@ -41,35 +40,6 @@ bool Mc2GenTaskOpsUtils::IsComputationOnly()
 {
     const char *env = getenv("ASCEND_MC2_DEBUG_MODE");
     return (env != nullptr && std::atoi(env) == 1);
-}
-
-bool Mc2GenTaskOpsUtils::IsTargetPlatformSocVersion(const char *nodeName, const std::set<std::string> &targetPlatform)
-{
-    fe::PlatFormInfos platform_info;
-    fe::OptionalInfos optional_info;
-    if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info) !=
-        ge::GRAPH_SUCCESS) {
-        OPS_LOG_E(nodeName, "Cannot get platform info!");
-        return false;
-    }
-    std::string short_soc_version;
-    if (!platform_info.GetPlatformRes("version", "Short_SoC_version", short_soc_version) || short_soc_version.empty()) {
-        OPS_LOG_E(nodeName, "Cannot get short soc version!");
-        return false;
-    }
-    OPS_LOG_D(nodeName, "Get soc version: %s", short_soc_version.c_str());
-    return targetPlatform.count(short_soc_version) > 0;
-}
-
-bool Mc2GenTaskOpsUtils::IsTargetPlatformNpuArch(const char *nodeName, const std::set<std::string> &targetPlatform)
-{
-    char versionValNpuArch[VERSION_SIZE];
- 	if (rtGetSocSpec("version", "NpuArch", versionValNpuArch, VERSION_SIZE) != RT_ERROR_NONE) {
- 	    OPS_LOG_E(nodeName, "Cannot get npuArch info in infershape!");
- 	    return false;
- 	}
- 	OPS_LOG_D(nodeName, "(IsTargetNpuArchInfershape)Get NpuArch %s", versionValNpuArch);
- 	return (targetPlatform.count(versionValNpuArch) > 0);
 }
 
 int64_t Mc2GenTaskOpsUtils::GetAttachStreamIdByContext(const gert::ExeResGenerationContext *context, size_t idx)

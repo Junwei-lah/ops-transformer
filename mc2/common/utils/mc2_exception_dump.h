@@ -18,7 +18,6 @@
 #include "../op_kernel/moe_distribute_comm_ctx.h"
 #include "mc2_log.h"
 #include "mc2_tiling_utils.h"
-#include "op_graph/mc2_gen_task_ops_utils.h"
 #include <chrono>
 #include <iomanip>
 #include <sstream>
@@ -28,8 +27,6 @@
 #include <errno.h>
 #include <vector>
 
-using ops::Mc2GenTaskOpsUtils;
-using ops::NPUARCH_A5;
 
 namespace Mc2Exception {
 

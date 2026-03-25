@@ -22,6 +22,7 @@
 #include "op_graph/mc2_gen_task_ops_utils_arch35.h"
 #include "op_graph/mc2_moe_gen_task_ops_utils.h"
 #include "mc2_log.h"
+#include "mc2_platform_info.h"
 #else
 #include "ops_error.h"
 #include "register/op_ext_gentask_registry.h"
@@ -37,7 +38,7 @@ namespace ops {
 
 static ge::Status QuantAllReduceCalcOpParam(gert::ExeResGenerationContext *context)
 {
-    if (Mc2GenTaskOpsUtils::IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) {
+    if (IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) {
         OPS_LOG_D(context->GetNodeName(), "Do A5 MTE CalcParam in QuantAllReduce BUILD_OPEN_PROJECT");
         return Mc2GenTaskOpsUtils::CommonKFCMc2CalcParamFunc(context, "mte server", "mte_stream");
     }
@@ -48,7 +49,7 @@ static ge::Status QuantAllReduceCalcOpParam(gert::ExeResGenerationContext *conte
 static ge::Status QuantAllReduceGenTask(const gert::ExeResGenerationContext *context,
                                         std::vector<std::vector<uint8_t>> &tasks)
 {
-    if (Mc2GenTaskOpsUtils::IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) {
+    if (IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) {
         OPS_LOG_D(context->GetNodeName(), "Do MTE general GenTask in QuantAllReduce BUILD_OPEN_PROJECT");
         // 这里调用moe的接口
         return Mc2MoeGenTaskOpsUtils::Mc2MoeGenTaskCallbackV2(context, tasks);

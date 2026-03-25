@@ -44,6 +44,9 @@ if(BUILD_OPEN_PROJECT)
             target_link_directories(${OPHOST_NAME}_tiling_obj PRIVATE mc2_tiling_ut_stub)
         endif()
     endif()
+    file(GLOB COMMON_UTILS_SRCS
+        utils/mc2_platform_info.cpp
+    )
     file(GLOB GENTASK_SRCS
         op_graph/mc2_gen_task_ops_utils.cpp
         op_graph/matmul_all_reduce_gen_task_ops_utils.cpp
@@ -56,7 +59,10 @@ if(BUILD_OPEN_PROJECT)
     endif()
     if(GENTASK_SRCS)
         add_gentask_modules()
-        target_sources(${OPGRAPH_NAME}_gentask_obj PRIVATE ${GENTASK_SRCS})
+        target_sources(${OPGRAPH_NAME}_gentask_obj PRIVATE
+            ${COMMON_UTILS_SRCS}
+            ${GENTASK_SRCS}
+        )
     endif()
     if(NOT ENABLE_TEST)
         file(GLOB OPPROTO_SRCS)

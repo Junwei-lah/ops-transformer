@@ -23,15 +23,9 @@
 #include "platform/platform_ascendc.h"
 
 namespace ops {
-const std::set<std::string> PLATFORM_A2 = {"Ascend910B"};
-const std::set<std::string> PLATFORM_A3 = {"Ascend910_93"};
-const std::set<std::string> NPUARCH_A5 = {std::to_string(static_cast<uint32_t>(NpuArch::DAV_3510))};
-
 class Mc2GenTaskOpsUtils {
 public:
     static bool IsComputationOnly();
-    static bool IsTargetPlatformSocVersion(const char *nodeName, const std::set<std::string> &targetPlatform);
-    static bool IsTargetPlatformNpuArch(const char *nodeName, const std::set<std::string> &targetPlatform);
     static int64_t GetAttachStreamIdByContext(const gert::ExeResGenerationContext *context, size_t idx = 0);
     static ge::Status CommonKFCMc2CalcParamFunc(const gert::ExeResGenerationContext *context, 
                                                 const ge::AscendString &name, const ge::AscendString &reuse_key);

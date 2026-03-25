@@ -19,6 +19,7 @@
 #include "op_graph/mc2_moe_gen_task_ops_utils.h"
 #include "register/op_impl_registry.h"
 #include "mc2_log.h"
+#include "mc2_platform_info.h"
 #else
 #include "ops_error.h"
 #include "mc2_gen_task_moe.h"
@@ -40,7 +41,7 @@ ge::Status MoeDistributeCombineGenTaskFunc(const gert::ExeResGenerationContext *
                                             std::vector<std::vector<uint8_t>> &tasks)
 {
     const char *nodeName = context->GetNodeName();
-    if (Mc2GenTaskOpsUtils::IsTargetPlatformSocVersion(nodeName, PLATFORM_A2)) {
+    if (IsTargetPlatformSocVersion(nodeName, PLATFORM_A2)) {
         OPS_LOG_D(context->GetNodeName(), "Do A2 gen task");
         return Mc2MoeGenTaskOpsUtils::Mc2MoeGenTaskCallback(context, tasks);
     }

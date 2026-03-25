@@ -22,6 +22,7 @@
 #include "op_graph/mc2_gen_task_ops_utils_arch35.h"
 #include "register/op_impl_registry.h"
 #include "mc2_log.h"
+#include "mc2_platform_info.h"
 #else
 #include "ops_error.h"
 #include "mc2_gen_task_moe.h"
@@ -36,7 +37,7 @@ static const size_t ATTR_INDEX_COMM_ALG_DISTRIBUTE_COMBINE_V2 = 14;
 #ifdef BUILD_OPEN_PROJECT
 ge::Status MoeDistributeCombineV2CalcParamFunc(gert::ExeResGenerationContext *context)
 {
-    if ((Mc2GenTaskOpsUtils::IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) &&
+    if ((IsTargetPlatformNpuArch(context->GetNodeName(), NPUARCH_A5)) &&
         (Mc2Arch35GenTaskOpsUtils::GetCommAlg(context, ATTR_INDEX_COMM_ALG_DISTRIBUTE_COMBINE_V2) != COMM_ALG_MTE)) {
         OPS_LOG_D(context->GetNodeName(), "Do A5 ccu calc param.");
         return Mc2GenTaskOpsUtils::CommonKFCMc2CalcParamFunc(context, "ccu server", "ccu_stream");
@@ -49,11 +50,11 @@ ge::Status MoeDistributeCombineV2GenTaskFunc(const gert::ExeResGenerationContext
                                              std::vector<std::vector<uint8_t>> &tasks)
 {
     const char *nodeName = context->GetNodeName();
-    if (Mc2GenTaskOpsUtils::IsTargetPlatformSocVersion(nodeName, PLATFORM_A2)) {
+    if (IsTargetPlatformSocVersion(nodeName, PLATFORM_A2)) {
         OPS_LOG_D(nodeName, "Do A2 gen task.");
         return Mc2MoeGenTaskOpsUtils::Mc2MoeGenTaskCallback(context, tasks);
     }
-    if (Mc2GenTaskOpsUtils::IsTargetPlatformNpuArch(nodeName, NPUARCH_A5)) {
+    if (IsTargetPlatformNpuArch(nodeName, NPUARCH_A5)) {
         const std::string commAlg =
             Mc2Arch35GenTaskOpsUtils::GetCommAlg(context, ATTR_INDEX_COMM_ALG_DISTRIBUTE_COMBINE_V2);
         if (commAlg == COMM_ALG_MTE) {
