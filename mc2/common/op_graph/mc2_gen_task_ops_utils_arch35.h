@@ -34,6 +34,8 @@ const std::string MOE_DISTRIBUTE_DISPATCH_V2_OP_TYPE = "MoeDistributeDispatchV2"
 const std::string MOE_DISTRIBUTE_COMBINE_V2_OP_TYPE = "MoeDistributeCombineV2";
 const std::string ALL_TO_ALLV_GROUPED_MM_OP_TYPE = "AlltoAllvGroupedMatMul";
 const std::string GROUPED_MM_ALL_TO_ALLV_OP_TYPE = "GroupedMatMulAlltoAllv";
+const std::string ALL_TO_ALLV_QUANT_GROUPED_MM_OP_TYPE = "AlltoAllvQuantGroupedMatMul";
+const std::string QUANT_GROUPED_MM_ALL_TO_ALLV_OP_TYPE = "QuantGroupedMatMulAlltoAllv";
 const std::string ALL_GATHER_MM_V2_OP_TYPE = "AllGatherMatmulV2";
 const std::string MM_REDUCE_SCATTER_V2_OP_TYPE = "MatmulReduceScatterV2";
 const std::string MM_ALL_REDUCE_OP_TYPE = "MatmulAllReduce";
@@ -61,6 +63,8 @@ static const std::map<const std::string, const GroupInfo> GROUP_INFO_MAP_ARCH35{
     {ALLTO_ALL_MATMUL_OP_TYPE, {1, {ATTR_NAME_GROUP}}},
     {ALL_TO_ALLV_GROUPED_MM_OP_TYPE, {1, {ATTR_NAME_GROUP}}},
     {GROUPED_MM_ALL_TO_ALLV_OP_TYPE, {1, {ATTR_NAME_GROUP}}},
+    {ALL_TO_ALLV_QUANT_GROUPED_MM_OP_TYPE, {1, {ATTR_NAME_GROUP}}},
+    {QUANT_GROUPED_MM_ALL_TO_ALLV_OP_TYPE, {1, {ATTR_NAME_GROUP}}},
     {MOE_DISTRIBUTE_DISPATCH_OP_TYPE, {2, {ATTR_NAME_GROUP_EP}}},
     {MOE_DISTRIBUTE_COMBINE_OP_TYPE, {2, {ATTR_NAME_GROUP_EP}}},
     {MOE_DISTRIBUTE_DISPATCH_V2_OP_TYPE, {2, {ATTR_NAME_GROUP_EP}}},

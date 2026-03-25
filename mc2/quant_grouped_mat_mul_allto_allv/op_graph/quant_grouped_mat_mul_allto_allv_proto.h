@@ -58,6 +58,8 @@ namespace ge {
 * @li comm_quant_mode: An int. Quantization mode of communication. Default: 0.
 * @li group_size: An int. Default: 0.
 * @li comm_quant_dtype: An int. Default: 0.
+* @li y_dtype: An int. Default: DT_UNDEFINED
+* @li mm_dtype: An int. Default: DT_UNDEFINED
 
 * @par Outputs:
 * @li y: A matrix tensor of shape [BSK, N1] containing result of grouped matmul. The data type of elements supports float16 or bfloat16; the format supports ND.
@@ -91,6 +93,8 @@ REG_OP(QuantGroupedMatMulAlltoAllv)
       .ATTR(comm_quant_mode, Int, 0)
       .ATTR(group_size, Int, 0)
       .ATTR(comm_quant_dtype, Int, 0)
+      .ATTR(y_dtype, Int, DT_UNDEFINED)
+      .ATTR(mm_dtype, Int, DT_UNDEFINED)
       .OP_END_FACTORY_REG(QuantGroupedMatMulAlltoAllv)
 
 

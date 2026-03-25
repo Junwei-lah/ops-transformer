@@ -107,7 +107,10 @@ ge::graphStatus QuantGroupedMatmulAllToAllvTilingBase::CheckOpInputSingleParamsT
     bool isMmXNull = (mmXTensorShape == nullptr);
     bool isMmWeightNull = (mmWeightTensorShape == nullptr);
     bool isMmYNull = (mmYShape == nullptr);
-
+    if (!isMmYNull) {
+        auto mmYDimNum = mmYShape->GetStorageShape().GetDimNum();
+        isMmYNull = mmYDimNum == 0;
+    }
     bool isAllSame = (isMmXNull == isMmWeightNull) && (isMmWeightNull == isMmYNull);
     OP_TILING_CHECK(!isAllSame, 
                     OP_LOGE(opName_, "mmXTensor, mmWeightTensor, mmYTensor must exist or not exist at same time."),
