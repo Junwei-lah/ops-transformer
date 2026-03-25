@@ -484,7 +484,7 @@ UT编写指导如下，如需查看详细实现，请参考样例UT实现[test_a
 
 **1. 组织结构与命名建议**
 
-- **头文件**：统一包含`iostream`, `gtest/gtest.h`、`infershape_context_faker.h`、`infershape_case_executor.h`。
+- **头文件**：统一包含`iostream`, `gtest/gtest.h`、`infer_shape_context_faker.h`、`infer_shape_case_executor.h`。
 - **测试类**：继承`testing::Test`，实现`SetUpTestCase/TearDownTestCase`统一做数据准备与清理。
 - **命名**：测试类建议`${OpName}InfershapeTest`，用例名建议`test_case_xxx`，可读性更高。
 
@@ -694,7 +694,7 @@ TEST_F(${OpName}KernelTest, test_case_basic)
 
 **3. Tiling数据准备方式**
 - **手动构造**：适合字段少、逻辑简单。
-- **调用Tiling函数自动生成**：适合字段多、依赖属性/shape复杂。可复用`tests/ut/common/tiling_context_faker.h`与`tiling_case_executor.h`。示例：
+- **调用Tiling函数自动生成**：适合字段多、依赖属性/shape复杂。可复用`tests/ut/framework_normal/common/tiling_context_faker.h`与`tiling_case_executor.h`。示例：
 
 ```CPP
 gert::TilingContextPara para("OpName",
@@ -712,7 +712,7 @@ uint32_t blockDim = tilingInfo.blockNum;
 ```
 
 **4. 数据生成与结果比对**
-- 可使用`tests/ut/op_kernel/data_utils.h`的`ReadFile/WriteFile`读写二进制。
+- 可使用`tests/ut/framework_normal/op_kernel/data_utils.h`的`ReadFile/WriteFile`读写二进制。
 - 结合`gen_data.py`/`compare_data.py`脚本生成与比对数据，可参考`add_example`的`add_example_data`目录：
   [gen_data.py](../../../examples/add_example/tests/ut/op_kernel/add_example_data/gen_data.py)、
   [compare_data.py](../../../examples/add_example/tests/ut/op_kernel/add_example_data/compare_data.py)。
