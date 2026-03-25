@@ -38,6 +38,7 @@ operator_group_5:
   - sparse_flash_attention_grad
   - gather_pa_kv_cache
   - rain_fusion_attention
+  - block_sparse_attention
   - recurrent_gated_delta_rule
   - ring_attention_update
 operator_group_6:
