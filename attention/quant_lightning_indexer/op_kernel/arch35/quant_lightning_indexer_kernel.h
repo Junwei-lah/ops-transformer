@@ -157,6 +157,8 @@ __aicore__ inline void QLIPreload<QLIT>::InitTilingData(const QLITilingData *__r
     constInfo.kCacheBlockSize = tilingData->blockSize;
     constInfo.maxBlockNumPerBatch = tilingData->maxBlockNumPerBatch;
     constInfo.sparseCount = tilingData->sparseCount;
+    constInfo.keyBlockStride = tilingData->keyBlockStride;
+    constInfo.keyDequantScaleBlockStride = tilingData->keyDequantScaleBlockStride;
     constInfo.outputLayout = Q_LAYOUT_T;  // 输出和输入形状一致
     if (Q_LAYOUT_T == LI_LAYOUT::TND) {
         constInfo.isAccumSeqS1 = true;

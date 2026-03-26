@@ -62,6 +62,8 @@ constexpr uint32_t ATTR_SPARSE_COUNT_INDEX = 4;
 constexpr uint32_t ATTR_SPARSE_MODE_INDEX = 5;
 constexpr uint32_t ATTR_PRE_TOKENS_INDEX = 6;
 constexpr uint32_t ATTR_NEXT_TOKENS_INDEX = 7;
+constexpr uint32_t ATTR_KEY_BLOCK_STRIDE_INDEX = 8;
+constexpr uint32_t ATTR_KEY_DEQUANT_SCALE_BLOCK_STRIDE_INDEX = 9;
 // Dim Index
 constexpr uint32_t DIM_IDX_ZERO = 0;
 constexpr uint32_t DIM_IDX_ONE = 1;
@@ -90,6 +92,8 @@ TILING_DATA_FIELD_DEF(uint32_t, gSize)
 TILING_DATA_FIELD_DEF(uint32_t, s1Size)
 TILING_DATA_FIELD_DEF(uint32_t, s2Size)
 TILING_DATA_FIELD_DEF(uint32_t, sparseCount)
+TILING_DATA_FIELD_DEF(uint32_t, keyBlockStride)
+TILING_DATA_FIELD_DEF(uint32_t, keyDequantScaleBlockStride)
 TILING_DATA_FIELD_DEF(uint32_t, usedCoreNum)
 TILING_DATA_FIELD_DEF(uint32_t, blockSize)
 TILING_DATA_FIELD_DEF(uint32_t, maxBlockNumPerBatch)
@@ -121,6 +125,8 @@ struct QLIParaInfo {
     const int32_t *sparseCount = nullptr;
     const int64_t *preTokens = nullptr;
     const int64_t *nextTokens = nullptr;
+    int64_t keyBlockStride = 0;
+    int64_t keyDequantScaleBlockStride = 0;
 };
 
 // -----------算子Tiling入参信息类---------------
@@ -148,6 +154,8 @@ public:
     uint32_t sparseCount = 0;
     int64_t preTokens = 0;
     int64_t nextTokens = 0;
+    int64_t keyBlockStride = 0;
+    int64_t keyDequantScaleBlockStride = 0;
     // DType
     ge::DataType inputQType = ge::DT_FLOAT16;
     ge::DataType inputKType = ge::DT_FLOAT16;
@@ -196,6 +204,8 @@ public:
     ge::graphStatus GetActualSeqInfo();
     void GenerateInfo(QLITilingInfo &QLIInfo);
     ge::graphStatus ParseAndCheck(QLITilingInfo &QLIInfo);
+    size_t GetTensorDimNum(const uint32_t tensorIdx);
+    int64_t GetTensorDim(const uint32_t tensorIdx, const size_t idx);
 
 public:
     gert::TilingContext *context_ = nullptr;
