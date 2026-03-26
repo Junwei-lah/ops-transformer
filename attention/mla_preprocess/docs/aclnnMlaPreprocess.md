@@ -102,10 +102,10 @@ aclnnStatus aclnnMlaPreprocessGetWorkspaceSize(
   int64_t          quantMode, 
   bool             doRmsNorm, 
   int64_t          wdkvSplitCount, 
-  aclTensor       *qOut, 
-  aclTensor       *kvCacheOut, 
-  aclTensor       *qRopeOut, 
-  aclTensor       *krCacheOut, 
+  const aclTensor  *qOut, 
+  const aclTensor  *kvCacheOut, 
+  const aclTensor  *qRopeOut, 
+  const aclTensor  *krCacheOut, 
   uint64_t        *workspaceSize, 
   aclOpExecutor   **executor)
 ```
