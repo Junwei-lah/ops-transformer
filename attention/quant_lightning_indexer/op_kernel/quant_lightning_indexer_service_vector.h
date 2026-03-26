@@ -185,15 +185,15 @@ __aicore__ inline void QLIVector<QLIT>::InitBuffers(TPipe *pipe)
     // step3. 初始化vec1ParamGm，是否进行LD的标志位设为-1(needFd=-1)
     // vec1ResIn32Gm = [aic, 2, s1BaseSize_, 16] int32
     // ws清零 [needFd, s2AcSeq, s2Start, s2End, isS2End, bn2idx, s1Idx, ......]
-    LocalTensor<float> tmpfBuff = outQueue_.AllocTensor<float>();
-    Duplicate(tmpfBuff.template ReinterpretCast<int32_t>(), -1, 2 * (s1BaseSize_ / 2) * paramNum_ * 2);
-    SetWaitFlag<HardEvent::V_MTE3>(HardEvent::V_MTE3);
+    LocalTensor<float> tmpBuff = outQueue_.AllocTensor<float>();
+    Duplicate(tmpBuff.template ReinterpretCast<int32_t>(), -1, 2 * (s1BaseSize_ / 2) * paramNum_ * 2);
+    outQueue_.EnQue<float>(tmpBuff);
+    tmpBuff = outQueue_.DeQue<float>();
     int64_t wsInfoOffset = (blockId_ / 2) * s1BaseSize_ * 2 * paramNum_ +       // 2个AIV共同地址偏移
                            (blockId_ % 2) * (s1BaseSize_ / 2) * 2 * paramNum_;  // 每个AIV的地址偏移，S1方向
-    DataCopyPad(vec1ParamGm[wsInfoOffset], tmpfBuff.template ReinterpretCast<int64_t>(),
+    DataCopyPad(vec1ParamGm[wsInfoOffset], tmpBuff.template ReinterpretCast<int64_t>(),
                 {1, static_cast<uint16_t>((s1BaseSize_ / 2) * 2 * paramNum_ * sizeof(int64_t)), 0, 0});
-    SetWaitFlag<HardEvent::MTE3_V>(HardEvent::MTE3_V);
-    outQueue_.FreeTensor(tmpfBuff);
+    outQueue_.FreeTensor(tmpBuff);
 }
 
 template <typename QLIT>
@@ -287,7 +287,7 @@ __aicore__ inline void QLIVector<QLIT>::ProcessVec0(const QLICommon::RunInfo &in
     int64_t weightGmOffset = info.tensorWeightsOffset + cuBaseS1Idx * qHeadNum_;
     // 当前需要计算的S1行数，处理尾块场景
     int32_t cuS1ProcNum = cuBaseS1Idx + s1BaseSize_ > info.actS1Size ? info.actS1Size % s1BaseSize_ : s1BaseSize_;
-    int32_t cuProcEleNum = cuS1ProcNum * gSize_;
+    int32_t cuProcEleNum = CeilAlign(cuS1ProcNum * gSize_, 32); // 32: UB对齐
 
     LocalTensor<half> inWeightsUb = inQueue_.AllocTensor<half>();
     LocalTensor<half> inQScaleUb = inWeightsUb[cuProcEleNum];
@@ -313,7 +313,7 @@ __aicore__ inline void QLIVector<QLIT>::ProcessVec0(const QLICommon::RunInfo &in
     resUb = outQueue_.DeQue<half>();
     AscendC::DataCopyParams copyOutParams;
     copyOutParams.blockCount = 1;
-    copyOutParams.blockLen = cuProcEleNum * BLOCK_CUBE * sizeof(half);
+    copyOutParams.blockLen = cuS1ProcNum * gSize_ * BLOCK_CUBE * sizeof(half);
     copyOutParams.srcStride = 0;
     copyOutParams.dstStride = 0;
     AscendC::DataCopyPad(vec0OutGm[vec0OutGmOffset], resUb, copyOutParams);

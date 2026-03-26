@@ -60,6 +60,8 @@ public:
 
     static constexpr uint64_t S8_BLOCK_CUBE = 32;
 
+    static constexpr uint64_t S1_L0C_OFFSET = 64;
+
     static constexpr uint32_t MTE2_MTE1_EVENT = EVENT_ID2;
     static constexpr uint32_t MTE1_M_EVENT = EVENT_ID2;
 
@@ -258,9 +260,9 @@ __aicore__ inline void QLIMatmul<QLIT>::ComputeMm1(const QLICommon::RunInfo &run
     }
     int64_t loopIdx = 0;
     int64_t s2L0LoopCnt = CeilDiv(runInfo.actualSingleProcessSInnerSize, S2_BASIC_BLOCK_L0);  // 2048取128
-    int64_t s1L0LoopCnt = CeilDiv(runInfo.actMBaseSize, S1G_BASIC_BLOCK_L0);                  // 256取128
-    int64_t s1gL1Offset[2] = {0, static_cast<int64_t>(S1G_BASIC_BLOCK_L0)};
-    int64_t s1gL0RealSize[2] = {s1L0LoopCnt > 1 ? static_cast<int64_t>(S1G_BASIC_BLOCK_L0) : runInfo.actMBaseSize,
+    int64_t s1L0LoopCnt = CeilDiv(runInfo.actMBaseSize / constInfo_.gSize, constInfo_.s1BaseSize / 2);  // 2 :一次取constInfo.s1BaseSize的一半
+    int64_t s1gL1Offset[2] = {0, static_cast<int64_t>(constInfo_.gSize * constInfo_.s1BaseSize / 2)};
+    int64_t s1gL0RealSize[2] = {s1L0LoopCnt > 1 ? static_cast<int64_t>(constInfo_.gSize * constInfo_.s1BaseSize / 2) : runInfo.actMBaseSize,
                                 runInfo.actMBaseSize - s1gL1Offset[1]};
     MmInfo mmInfo[2];
     CalcMmInfo(mmInfo[loopIdx & 1], loopIdx, s1L0LoopCnt, mmInfo[(loopIdx + 1) & 1], runInfo);
@@ -404,7 +406,7 @@ __aicore__ inline void QLIMatmul<QLIT>::LoadQueryToL0a(uint64_t s1gL1Offset, uin
     loadData3DParams.padList[3] = 255;  // 尾部数据不影响滑窗的结果
 
     // SetLoadToA0Params
-    loadData3DParams.mExtension = CeilAlign(s1gL0RealSize, BLOCK_CUBE);  // M height维度目的
+    loadData3DParams.mExtension = s1gL0RealSize;                         // M height维度目的
     loadData3DParams.kExtension = constInfo_.headDim;                    // K   width维度目的
     loadData3DParams.mStartPt = s1gL1Offset;
     loadData3DParams.kStartPt = 0;
@@ -502,8 +504,9 @@ __aicore__ inline void QLIMatmul<QLIT>::ComputeWs(uint64_t s1gL0RealSize, uint64
     mmadParams.k = constInfo_.gSize;
     mmadParams.cmatrixInitVal = true;
     mmadParams.cmatrixSource = false;
+    uint32_t s1gOffsetNum = s1gOffset / constInfo_.gSize;
     Mmad(cL0_.template ReinterpretCast<float>()[(l0cBufIdx_ % DOUBLE_BUF_NUM) * L0C_BUFFER_OFFSET +
-                                                s1gOffset * S2_BASIC_BLOCK_L0],
+                                                s1gOffsetNum * S1_L0C_OFFSET * S2_BASIC_BLOCK_L0],
             l0a_.template ReinterpretCast<half>()[(l0BufIdx_ % L0AB_BUF_NUM) * L0AB_BUFFER_OFFSET_FP16_16K],
             l0b_.template ReinterpretCast<half>()[(l0BufIdx_ % L0AB_BUF_NUM) * L0AB_BUFFER_OFFSET_FP16_16K],
             mmadParams);
@@ -564,8 +567,8 @@ __aicore__ inline void QLIMatmul<QLIT>::FixpResToGm(uint64_t s1L0RealCount, uint
     intriParams.quantPre = QuantMode_t::NoQuant;
     intriParams.nz2ndEn = true;
     intriParams.reluPre = 0;
-    AscendC::SetFixpipeNz2ndFlag(s1L0RealCount, CeilDiv(constInfo_.gSize, BLOCK_CUBE) * S2_BASIC_BLOCK_L0 / BLOCK_CUBE,
-                                 2048);
+    AscendC::SetFixpipeNz2ndFlag(s1L0RealCount, constInfo_.s1BaseSize * S2_BASIC_BLOCK_L0 / BLOCK_CUBE,
+                                 constInfo_.s2BaseSize);
     AscendC::DataCopy(mm1ResGm_[(runInfo.loop % 2) * constInfo_.mBaseSize / constInfo_.gSize * constInfo_.s2BaseSize +
                                 s1GmOffset * intriParams.dstStride + s2GmOffset],
                       cL0_.template ReinterpretCast<float>()[(l0cBufIdx_ % DOUBLE_BUF_NUM) * L0C_BUFFER_OFFSET],
