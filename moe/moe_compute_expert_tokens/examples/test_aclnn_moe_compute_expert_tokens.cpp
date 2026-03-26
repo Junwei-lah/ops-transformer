@@ -99,7 +99,7 @@ int main()
 
     std::vector<int32_t> sortedExpertForSourceRowData = {0, 0, 1, 1, 2, 2};
     std::vector<int32_t> outData = {3, 4, 5};
-    std::int32_t numExperts = 3;
+    std::int64_t numExperts = 3;
 
     // 创建input aclTensor
     ret = CreateAclTensor(sortedExpertForSourceRowData,

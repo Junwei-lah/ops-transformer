@@ -62,8 +62,8 @@
 
 ## 约束说明
 
-- sortedExperts的shape大小需要小于2\*\*24。
-- numExperts的输入大于0，但不能超过2048。
+- sortedExperts的shape大小需要小于$2^(24)$。
+- numExperts的输入常值需要大于0，但不能超过2048。
 - 输入shape大小不要超过device可分配的内存上限，否则会导致异常终止。
 
 ## 调用说明

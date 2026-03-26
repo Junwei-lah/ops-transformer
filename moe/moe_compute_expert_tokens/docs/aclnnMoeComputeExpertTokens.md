@@ -88,7 +88,7 @@ aclnnStatus aclnnMoeComputeExpertTokens(
       <td>输入</td>
       <td>表示总专家数。</td>
       <td>需要大于0，但不能超过2048。</td>
-      <td>-</td>
+      <td>INT64</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
