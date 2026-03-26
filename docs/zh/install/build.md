@@ -34,7 +34,7 @@ bash build.sh --help
 | -u               | 可选     | 启用单元测试（UT）编译模式，编译所有UT目标。                                                     |
 | --help，-h        | 可选     | 打印脚本使用帮助信息。                                                                  |
 | --ops            | 可选     | 指定待编译的算子，如：apply_rotary_pos_emb,rope_quant_kvcache，多个算子用英文逗号“,”分隔，不可与--ophost、--opapi、--opgraph同时使用。 |
-| --soc            | 可选     | 指定NPU型号，多个soc用英文逗号“,”分隔。                                               |
+| --soc            | 可选     | 指定NPU型号，每次编译只支持1个NPU型号。                                               |
 | --jit            | 可选     | 静态图场景下，编译`cann-${soc_name}-ops-transformer_${cann_version}_linux-${arch}.run`整包时不需要编译算子二进制文件（图的运行态会在线编译），可以配置该选项，以提升编译速度。 |
 | --static         | 可选     | 配置后，表示生成静态库文件，包含libcann_transformer_static.a和aclnn接口头文件，搭配--pkg参数，生成静态库压缩包。|
 | --vendor_name    | 可选     | 指定自定义算子包的名称，默认值为custom。                                                      |
