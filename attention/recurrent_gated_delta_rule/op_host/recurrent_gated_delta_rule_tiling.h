@@ -76,6 +76,7 @@ protected:
     ge::graphStatus GetScale();
     ge::graphStatus GetOptionalInput();
     ge::graphStatus AnalyzeFormat();
+    ge::graphStatus CheckOptionalInputContext(const size_t optionalIndex, const std::string &optionalName);
 
     bool CheckDim(const gert::Shape shape, const size_t dim, const std::string &dimDesc);
     bool CheckFormat(ge::Format format, const std::string &Desc);

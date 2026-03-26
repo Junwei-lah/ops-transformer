@@ -150,6 +150,19 @@ ge::graphStatus RecurrentGatedDeltaRuleTiling::PostTiling()
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus RecurrentGatedDeltaRuleTiling::CheckOptionalInputContext(const size_t optionalIndex, const std::string &optionalName)
+{
+    OP_CHECK_IF(context_->GetOptionalInputDesc(optionalIndex) == nullptr && context_->GetOptionalInputTensor(optionalIndex) != nullptr,
+        OP_LOGE(context_->GetNodeName(), "The desc of %s is nullptr, but the tensor of %s is not nullptr. They must be either both null or both non-null.",
+            optionalName, optionalName),
+            return ge::GRAPH_FAILED);
+    OP_CHECK_IF(context_->GetOptionalInputDesc(optionalIndex) != nullptr && context_->GetOptionalInputTensor(optionalIndex) == nullptr,
+        OP_LOGE(context_->GetNodeName(), "The tensor of %s is nullptr, but the desc of %s is not nullptr. They must be either both null or both non-null.",
+            optionalName, optionalName),
+            return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus RecurrentGatedDeltaRuleTiling::CheckContext()
 {
     OP_CHECK_NULL_WITH_CONTEXT(context_, context_->GetInputShape(QUERY_INDEX));
@@ -176,6 +189,12 @@ ge::graphStatus RecurrentGatedDeltaRuleTiling::CheckContext()
     OP_CHECK_NULL_WITH_CONTEXT(context_, context_->GetOutputShape(OUT_INDEX));
     OP_CHECK_NULL_WITH_CONTEXT(context_, context_->GetOutputDesc(OUT_INDEX));
 
+    // 可选参数校验
+    if (CheckOptionalInputContext(G_INDEX, "g") != ge::GRAPH_SUCCESS ||
+        CheckOptionalInputContext(GK_INDEX, "gk") != ge::GRAPH_SUCCESS ||
+        CheckOptionalInputContext(NUM_ACCEPTED_TOKENS_INDEX, "num_accepted_tokens") != ge::GRAPH_SUCCESS) {
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -526,6 +545,7 @@ void RecurrentGatedDeltaRuleTiling::PrintTilingData()
     OP_LOGD(context_->GetNodeName(), "vStep: [%u]", tilingData_.vStep);
     OP_LOGD(context_->GetNodeName(), "scale: [%f]", tilingData_.scale);
     OP_LOGD(context_->GetNodeName(), "hasGama: [%u]", tilingData_.hasGama);
+    OP_LOGD(context_->GetNodeName(), "hasGamaK: [%u]", tilingData_.hasGamaK);
     OP_LOGD(context_->GetNodeName(), "hasAcceptedTokens: [%u]", tilingData_.hasAcceptedTokens);
 }
 
