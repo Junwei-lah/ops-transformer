@@ -1251,6 +1251,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <td colspan="4"><ul>
             <li>当attenMask数据类型取INT8、UINT8时，其tensor中的值需要为0或1</li>
             <li>非<a href="#MLA">MLA场景</a> sparseMode Q_S>1时生效</li>
+            <li><a href="#MLA">MLA场景</a> 当query dtype为FLOAT8_E4M3FN时，Q_S=1，只支持sparseMode=0且不传Mask，Q_S>1，支持sparseMode=3且传入Mask或sparseMode=0且不传Mask；当query dtype为INT8时，Q_S=1，只支持sparseMode=0且不传Mask，Q_S>1，支持sparseMode=3且传入Mask</li>
         </ul></td>
         </tr>
         </tbody>
@@ -1440,7 +1441,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                             MLA场景blocksize需要16对齐且最大不超过1024；
                             GQA场景且query、key、value的headdim=64/128时，blocksize需要16对齐且最大不超过1024；
                             GQA场景且query、key、value的headdim≠64/128，Q_S>1时，blocksize需要128对齐且最大不超过512；
-                            GQA场景且query、key、value的headdim≠64/128，Q_S=1时，blocksize需要16对齐且最大不超过512。</li>
+                            GQA场景且query、key、value的headdim≠64/128，Q_S=1时，blocksize需要16对齐且最大不超过512；在MLA全量化场景下，blocksize需等于128。</li>
                         <li>在使能PagedAttention，并且全量化场景下，blockSize需要传入非0值, 且blocksize最大不超过512。</li>
                         <li>在使能PagedAttention，并且全量化场景下，Q_S=1时：</li>
                             key、value输入类型为FLOAT16/BFLOAT16时需要16对齐；</br>
@@ -1468,6 +1469,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
                         <li>在MLA全量化场景下，当query的inputLayout为BNSD、TND时，kv cache排布支持BnBsH（blocknum, blocksize, H）、BnNBsD（blocknum, KV_N,
  	                        blocksize, D）和NZ（blocknum，KV_N，D/16，blocksize，16）三种格式；</li>
                         <li>在MLA全量化场景下，当query的inputLayout为BSH、BSND时，kv cache排布只支持BnBsH和NZ两种格式</li>
+                        <li>在MLA全量化场景下，当query dtype为INT8时，kv cache排布仅支持NZ格式</li>
                         <li>伪量化场景下，当kv cache为五维时，kv cache排布为（blocknum，KV_N，D/16，blocksize，16）；同时，当key、value dtype为INT32时，kv
                             cache排布为（blocknum，KV_N，D/2，blocksize，2）</li>
                         <li>GQA全量化场景不支持PagedAttention</li>
@@ -1845,17 +1847,17 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <tr>
             <td rowspan="10">全量化</td>
             <td>query</td>
-            <td>FLOAT8_E4M3FN；Q_N=[32,64,128]</td>
+            <td>当dtype为FLOAT8_E4M3FN时，Q_N=[32,64,128]；当dtype为INT8时，Q_N=[1,2,4,8,16,32,64,128]</td>
             <td>-</td>
         </tr>
         <tr>
             <td>key</td>
-            <td>FLOAT8_E4M3FN</td>
+            <td>FLOAT8_E4M3FN、INT8</td>
             <td>-</td>
         </tr>
         <tr>
             <td>value</td>
-            <td>FLOAT8_E4M3FN</td>
+            <td>FLOAT8_E4M3FN、INT8</td>
             <td>-</td>
         </tr>
         <tr>
@@ -1896,7 +1898,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </tr>
         <tr>
             <td>inputLayout</td>
-            <td>支持BSH、BSND、BNSD、TND</td>
+            <td>当query dtype为FLOAT8_E4M3FN时，支持BSH、BSND、BNSD、TND；当query dtype为INT8时，支持BSH、BSND、TND、BSH_NBSD、BSND_NBSD、TND_NTD</td>
             <td>-</td>
         </tr>
         <tr>
