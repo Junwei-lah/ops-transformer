@@ -5,7 +5,7 @@
 | 产品                                                         | 是否支持 |
 | :----------------------------------------------------------- | :------: |
 | <term>Ascend 950PR/Ascend 950DT</term>                             |    √     |
-| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    ×     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>     |    √     |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √     |
 | <term>Atlas 200I/500 A2 推理产品</term>                      |    ×     |
 | <term>Atlas 推理系列产品</term>                             |    ×     |
@@ -44,6 +44,15 @@
         output_{quant} = x1_{quant} @ x2 \\
         output = output_{quant} \times x1_{scale} \times x2_{scale} \\
         output = output + bias
+        $$
+
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+      - 非量化场景：
+
+        $$
+        commOut = AlltoAll(x1.view(rankSize, BS/rankSize, H)) \\
+        permutedOut = commOut.permute(1, 0, 2).view(BS/rankSize, rankSize*H) \\
+        output = permutedOut @ x2 + bias \\
         $$
 
     - <term>Ascend 950PR/Ascend 950DT</term>：
@@ -261,10 +270,11 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
 * 默认支持确定性计算。
 * NPU卡数（rankSize），根据设备型号有不同限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡。
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持2、4、8、16卡。
     - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 空tensor和非连续tensor的支持度根据不同设备型号有不同的限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：不支持任何空tensor；不支持任何非连续tensor。
-    - <term>Ascend 950PR/Ascend 950DT</term>：仅支持非量化场景下输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持；仅支持输入x2的转置非连续tensor，其它非连续tensor均不支持。
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品、Ascend 950PR/Ascend 950DT</term>：仅支持非量化场景下输入x1的第一维度（BS）为0的空tensor，其它空tensor均不支持；仅支持输入x2的转置非连续tensor，其它非连续tensor均不支持。
 * 输入x1必须是2维，其shape为(BS, H)，BS必须整除NPU卡数，BS和N的值不得超过2147483647(INT32_MAX)，不支持转置。
 * 输入x2必须是2维，其shape为(H\*rankSize, N)，H*rankSize范围根据芯片型号和场景不同有不同约束，详见[量化aclnn约束说明](./docs/aclnnAlltoAllQuantMatmul.md#约束说明)
   和[非量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。当处于mx量化场景时，x2必须转置，其shape为(N, H\*rankSize)，transpose_x2配置为True。
@@ -274,6 +284,7 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
 * all2all_axes为1维数组，shape必须为(2)。
 * 目前支持的量化模式，根据设备型号有不同限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持K-C量化和K-C动态量化模式，x1QuantMode=3或7，x2QuantMode=2。
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：目前不支持量化场景。
     - <term>Ascend 950PR/Ascend 950DT</term>：支持K-C动态量化模式，x1QuantMode=7，x2QuantMode=2；mx量化模式，x1QuantMode=6，x2QuantMode=6。
 * 非量化场景x1、x2计算输入的数据类型要和output、alltoAllOutOptional计算输出的数据类型一致，传入的x1、x2与output均不为空指针。
 * 量化场景x1和alltoAllOutOptional的数据类型一致，传入的x1、x2、x2Scale与output均不为空指针。
@@ -281,6 +292,9 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
         - 非量化场景下，output计算输出的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16；output计算输出的数据类型为BFLOAT16时，bias计算输入的数据类型支持FLOAT32。
         - 量化场景下，数据类型组合详见[量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。
+    - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
+        - 非量化场景下，output计算输出的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16；output计算输出的数据类型为BFLOAT16时，bias计算输入的数据类型支持FLOAT32。
+        - A3目前不支持量化场景。
     - <term>Ascend 950PR/Ascend 950DT</term>：
         - 非量化场景下，x1/x2计算输入的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16和FLOAT32；x1/x2计算输入的数据类型为BFLOAT16时，bias计算输入的数据类型支持BFLOAT16和FLOAT32。
         - 量化场景下，支持K-C动态量化模式和mx量化模式，x1计算输入数据类型根据量化模式有所不同。在K-C动态量化模式下，x1计算输入的数据类型为FLOAT16、BFLOAT16；在mx量化模式下，x1计算输入的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2。x2计算输入的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2，bias的数据类型为FLOAT32或者bias为空，可自由组合。
