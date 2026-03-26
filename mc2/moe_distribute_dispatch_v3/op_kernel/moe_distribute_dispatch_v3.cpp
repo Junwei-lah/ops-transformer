@@ -12,7 +12,11 @@
  * \file moe_distribute_dispatch_v3.cpp
  * \brief
  */
+#if ASC_DEVKIT_MAJOR >= 9
 #include "basic_api/kernel_basic_intf.h"
+#else
+#include "kernel_operator.h"
+#endif
 
 #if __has_include("../moe_distribute_dispatch_v2/moe_distribute_dispatch_v2_tiling.h")
 #include "../moe_distribute_dispatch_v2/moe_distribute_dispatch_v2.h"
