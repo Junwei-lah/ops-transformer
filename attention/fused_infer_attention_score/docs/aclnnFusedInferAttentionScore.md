@@ -171,7 +171,7 @@ aclnnStatus aclnnFusedInferAttentionScore(
         <td>输入</td>
         <td>不同Batch中query的有效序列长度。</td>
         <td><ul><li>不指定序列长度可传入nullptr。</li>
-            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li><ul></td>
+            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li></ul></td>
         <td>INT64</td>
         <td>-</td>
         <td>-</td>
@@ -431,7 +431,7 @@ aclnnStatus aclnnFusedInferAttentionScore(
         <td>输入</td>
         <td>是否输出softmax_lse。</td>
           <td><ul><li>支持S轴外切（增加输出）。</li>
-              <li>用户不特意指定时建议传入false。</li></td>
+              <li>用户不特意指定时建议传入false。</li></ul></td>
         <td>BOOL</td>
         <td>-</td>
         <td>-</td>
@@ -457,7 +457,6 @@ aclnnStatus aclnnFusedInferAttentionScore(
         <td>4</td>
         <td>-</td>
       </tr>
-      <tr>        
       <tr>
         <td>workspaceSize</td>
         <td>输出</td>

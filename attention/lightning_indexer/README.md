@@ -241,8 +241,7 @@
       <td>sparseIndicesOut</td>
       <td>输出</td>
       <td>公式中的Indices输出。</td>
-      <td>不支持空tensor。</ul>
-      </td>
+      <td>不支持空tensor。</td>
       <td>INT32</td>
       <td>-</td>
       <td>

@@ -55,49 +55,310 @@
 
 ## 参数说明
 
-| 参数名                     | 输入/输出/属性 | 描述  | 数据类型       | 数据格式   |
-|----------------------------|-----------|--------------------------------------------------------------------|----------------|------------|
-| input                     | 输入      | Device侧的aclTensor，用于计算Query和Key的x，shape为[tokenNum,hiddenSize] | FLOAT16, BFLOAT16 | ND         |
-| gamma0                   | 输入      | Device侧的aclTensor，首次RmsNorm计算中的γ参数，shape为[hiddenSize] | FLOAT16, BFLOAT16 | ND |
-| beta0                 | 输入      | Device侧的aclTensor，首次RmsNorm计算中的β参数，shape为[hiddenSize]| FLOAT16, BFLOAT16 | ND |
-| quantScale0                   | 输入      | Device侧的aclTensor，首次RmsNorm公式中量化缩放的参数，shape为[1] | FLOAT16, BFLOAT16       | ND         |
-| quantOffset0                | 输入      | Device侧的aclTensor，首次RmsNorm公式中的量化偏移参数，shape为[1] | INT8    | NZ |
-| wdqkv             | 输入      | Device侧的aclTensor，与输入首次做矩阵乘的降维矩阵，shape为[2112,hiddenSize] | INT8, BFLOAT16      | ND         |
-| deScale0            | 输入      | Device侧的aclTensor，输入首次做矩阵乘的降维矩阵中的系数，shape为[2112]。input输入dtype为FLOAT16支持INT64，输入BFLOAT16时支持FLOAT | INT64, FLOAT    | ND         |
-| bias0                    | 输入      | Device侧的aclTensor，输入首次做矩阵乘的降维矩阵中的系数，shape为[2112]。支持传入空tensor，quantMode为1、3时不传入 | INT32     | ND         |
-| gamma1                    | 输入      | Device侧的aclTensor，第二次RmsNorm计算中的γ参数，shape为[1536] | FLOAT16, BFLOAT16       | ND         |
-| beta1                 | 输入      | Device侧的aclTensor，第二次RmsNorm计算中的β参数，shape为[1536] | FLOAT16, BFLOAT16          | ND         |
-| quantScale1                 | 输入  | Device侧的aclTensor，第二次RmsNorm公式中量化缩放的参数，shape为[1536]。仅在quantMode为0时传入| FLOAT16，BFLOAT16 | ND         |
-| quantOffset1                 | 输入 | Device侧的aclTensor，第二次RmsNorm公式中的量化偏移参数，shape为[1]。仅在quantMode为0时传入 | INT8 | ND         |
-| wuq      | 输入      | Device侧的aclTensor，权重矩阵，shape为[headNum * 192,1536]  | INT8, BFLOAT16          | NZ         |
-| deScale1    | 输入      | Device侧的aclTensor，参与wuq矩阵乘的系数，shape为[headNum*192,1536]。input输入dtype为FLOAT16支持INT64，输入BFLOAT16时支持FLOAT | INT64, FLOAT          | ND         |
-| bias1  | 输入      | Device侧的aclTensor，参与wuq矩阵乘的系数，shape为[[headNum*192]]。quantMode为1、3时不传入 | INT32          | NZ         |
-| gamma2 | 输入      | Device侧的aclTensor，参与RmsNormAndreshapeAndCache计算的γ参数，shape为[512]。 | FLOAT16, BFLOAT16          | ND         |
-| cos      | 输入      | Device侧的aclTensor，表示用于计算旋转位置编码的正弦参数矩阵，shape为[tokenNum,64] | INT8          | NZ         |
-| sin      | 输入      | Device侧的aclTensor，表示用于计算旋转位置编码的余弦参数矩阵，shape为[tokenNum,64] | INT8          | NZ         |
-| wuk     | 输入      | Device侧的aclTensor，表示计算Key的上采样权重，shape为[headNum * 192, 1536]。ND格式时的shape为[headNum,128,512]，NZ格式时的shape为[headNum,32,128,16] | FLOAT16，BFLOAT16          | ND, NZ         |
-| kvCache           | 输入      | Device侧的aclTensor，与输出的kvCacheOut为同一tensor，输入格式随cacheMode变化。</br><li>cacheMode为0：shape为[blockNum,blockSize,1,576]<li>cacheMode为1：shape为[blockNum,blockSize,1,512]<li> cacheMode为2：shape为[blockNum,headNum\*512/32,block_size,32]<li> cacheMode为3：shape为[blockNum,headNum*512/16,block_size,16]| <li>与input一致<li>与input一致</li>INT8<li>与input一致         | <li>ND<li>ND<li>NZ<li>NZ         |
-| kvCacheRope          | 输入      | Device侧的aclTensor，可选参数，支出传入空指针。与输出的krCacheOut为同一tensor，输入格式随cacheMode变化。</br> <li>cacheMode为0：不传入。<li>cacheMode为1：shape为[blockNum,blockSize,1,64]<li>cacheMode为2或3：shape为[blockNum, headNum*64 / 16 ,block_size, 16]| 与input一致         |  <li><li>ND<li>NZ          |
-| slotmapping          | 输入      | Device侧的aclTensor，表示用于存储kv_cache和kr_cache的索引，shape为[tokenNum] | INT32          | ND          |
-| ctkvScale                  | 输入      | Device侧的aclTensor，输出量化处理中参与计算的系数，仅在cacheMode为2时传入，shape为[1] | FLOAT16, BFLOAT16 | ND         |
-| qNopeScale              | 输出      | Device侧的aclTensor，输出量化处理中参与计算的系数，仅在cacheMode为2时传入，shape为[headNum] | FLOAT16, BFLOAT16       | ND |
-| wdqDim      | 输入      | 表示经过matmul后拆分的dim大小。预留参数，目前只支持1536 | int64_t          | -         |
-| qRopeDim      | 输入      | 表示q传入rope的dim大小。预留参数，目前只支持64。 | int64_t          | -         |
-| kRopeDim     | 输入      | 表示k传入rope的dim大小。预留参数，目前只支持64。 | int64_t          | -         |
-| epsilon         | 输入      | 表示加在分母上防止除0 | float          | -          |
-| qRotaryCoeff                  | 输入      | 表示q旋转系数。预留参数，目前只支持2 | int64_t | -         |
-| kRotaryCoeff              | 输入      | 表示k旋转系数。预留参数，目前只支持2 | int64_t       | - |
-| transposeWdq      | 输入      | 表示wdq是否转置。预留参数，目前只支持true | bool          | -         |
-| transposeWuq      | 输入      | 表示wuq是否转置。预留参数，目前只支持true | bool          | -         |
-| transposeWuk     | 输入      | 表示wuk是否转置。预留参数，目前只支持true | bool          | -         |
-| cacheMode           | 输入      | 表示指定cache的类型，取值范围[0, 3]</br><li>0：kcache和q均经过拼接后输出<li>1：输出的kvCacheOut拆分为kvCacheOut和krCacheOut，qOut拆分为qOut和qRopeOut<li>2：krope和ctkv转为NZ格式输出，ctkv和qnope经过per_head静态对称量化为int8类型<li>3：krope和ctkv转为NZ格式输出 | int64_t         | -          |
-| quantMode         | 输入      | 表示指定RmsNorm量化的类型，取值范围[0, 3]</br>0：per_tensor静态非对称量化，默认量化类型</br>1：per_token动态对称量化，未实现</br>2：per_token动态非对称量化，未实现</br>3：不量化，浮点输出，未实现 | int64_t         | -          |
-| doRmsNorm        | 输入      | 表示是否对input输入进行RmsNormQuant操作，false表示不操作，true表示进行操作。预留参数，目前只支持true | bool          | -          |
-| wdkvSplitCount                  | 输入      | 表示指定wdkv拆分的个数，支持[1-3]，分别表示不拆分、拆分为2个、拆分为3个降维矩阵。预留参数，目前只支持1 | int64_t | -         |
-| qOut             | 输出      | 表示Query的输出tensor，对应计算流图中右侧经过NOPE和矩阵乘后的输出，shape和dtype随cacheMode变化</br><li>cacheMode为0：shape为[tokenNum, headNum, 576]<li>cacheMode为1或3：shape为[tokenNum, headNum, 512]<li>cacheMode为2：shape为[tokenNum, headNum, 512] | <li>与input一致<li>与input一致<li>INT8       | ND |
-| kvCacheOut             | 输出      | 表示Key经过ReshapeAndCache后的输出，shape和dtype随cacheMode变化</br><li>cacheMode为0：shape为[blockNum, blockSize, 1, 576] <li> cacheMode为1：shape为[blockNum, blockSize, 1, 512]<li>cacheMode为2：shape为[blockNum, headNum\*512/32, block_size, 32] <li>cacheMode为3：shape为[blockNum, headNum*512/16, block_size, 16] | <li>与input一致<li>与input一致<li>INT8<li>与input一致       | <li>ND<li>ND<li>NZ<li>NZ |
-| qRopeOut             | 输出      | 表示Query经过旋转编程后的输出，shape和dtype随cacheMode变化</br><li>cacheMode为0：不输出<li> cacheMode为1或3：shape为[tokenNum, headNum, 64]<li>cacheMode为2：shape为[tokenNum, headNum, 64] | <li><li>与input一致<li>与input一致       | <li><li>ND<li>ND |
-| krCacheOut             | 输出      | 表示Key经过ROPE和ReshapeAndCache后的输出，shape和dtype随cacheMode变化，</br><li>cacheMode为0：不输出<li> cacheMode为1：shape为[blockNum, blockSize, 1, 64]<li>cacheMode为2或3：shape为[blockNum, headNum*64 / 16 ,block_size, 16] | <li><li>与input一致<li>与input一致       | <li><li>ND<li>NZ |
+<table style="undefined;table-layout: fixed; width: 1427px"><colgroup>
+<col style="width: 194px">
+<col style="width: 146px">
+<col style="width: 721px">
+<col style="width: 230px">
+<col style="width: 136px">
+</colgroup>
+<thead>
+  <tr>
+    <th>参数名</th>
+    <th>输入/输出/属性</th>
+    <th>描述</th>
+    <th>数据类型</th>
+    <th>数据格式</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>input</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，用于计算Query和Key的x，shape为[tokenNum,hiddenSize]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>gamma0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，首次RmsNorm计算中的γ参数，shape为[hiddenSize]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>beta0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，首次RmsNorm计算中的β参数，shape为[hiddenSize]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>quantScale0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，首次RmsNorm公式中量化缩放的参数，shape为[1]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>quantOffset0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，首次RmsNorm公式中的量化偏移参数，shape为[1]</td>
+    <td>INT8</td>
+    <td>NZ</td>
+  </tr>
+  <tr>
+    <td>wdqkv</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，与输入首次做矩阵乘的降维矩阵，shape为[2112,hiddenSize]</td>
+    <td>INT8, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>deScale0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，输入首次做矩阵乘的降维矩阵中的系数，shape为[2112]。input输入dtype为FLOAT16支持INT64，输入BFLOAT16时支持FLOAT</td>
+    <td>INT64, FLOAT</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>bias0</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，输入首次做矩阵乘的降维矩阵中的系数，shape为[2112]。支持传入空tensor，quantMode为1、3时不传入</td>
+    <td>INT32</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>gamma1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，第二次RmsNorm计算中的γ参数，shape为[1536]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>beta1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，第二次RmsNorm计算中的β参数，shape为[1536]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>quantScale1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，第二次RmsNorm公式中量化缩放的参数，shape为[1536]。仅在quantMode为0时传入</td>
+    <td>FLOAT16，BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>quantOffset1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，第二次RmsNorm公式中的量化偏移参数，shape为[1]。仅在quantMode为0时传入</td>
+    <td>INT8</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>wuq</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，权重矩阵，shape为[headNum * 192,1536]</td>
+    <td>INT8, BFLOAT16</td>
+    <td>NZ</td>
+  </tr>
+  <tr>
+    <td>deScale1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，参与wuq矩阵乘的系数，shape为[headNum*192,1536]。input输入dtype为FLOAT16支持INT64，输入BFLOAT16时支持FLOAT</td>
+    <td>INT64, FLOAT</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>bias1</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，参与wuq矩阵乘的系数，shape为[[headNum*192]]。quantMode为1、3时不传入</td>
+    <td>INT32</td>
+    <td>NZ</td>
+  </tr>
+  <tr>
+    <td>gamma2</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，参与RmsNormAndreshapeAndCache计算的γ参数，shape为[512]。</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>cos</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，表示用于计算旋转位置编码的正弦参数矩阵，shape为[tokenNum,64]</td>
+    <td>INT8</td>
+    <td>NZ</td>
+  </tr>
+  <tr>
+    <td>sin</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，表示用于计算旋转位置编码的余弦参数矩阵，shape为[tokenNum,64]</td>
+    <td>INT8</td>
+    <td>NZ</td>
+  </tr>
+  <tr>
+    <td>wuk</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，表示计算Key的上采样权重，shape为[headNum * 192, 1536]。ND格式时的shape为[headNum,128,512]，NZ格式时的shape为[headNum,32,128,16]</td>
+    <td>FLOAT16，BFLOAT16</td>
+    <td>ND, NZ</td>
+  </tr>
+  <tr>
+    <td>kvCache</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，与输出的kvCacheOut为同一tensor，输入格式随cacheMode变化。<br><br>cacheMode为0：shape为[blockNum,blockSize,1,576]<br>cacheMode为1：shape为[blockNum,blockSize,1,512]<br>cacheMode为2：shape为[blockNum,headNum*512/32,block_size,32]<br>cacheMode为3：shape为[blockNum,headNum*512/16,block_size,16]</td>
+    <td>与input一致<br>与input一致<br>INT8<br>与input一致</td>
+    <td>ND<br>ND<br>NZ<br>NZ</td>
+  </tr>
+  <tr>
+    <td>kvCacheRope</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，可选参数，支出传入空指针。与输出的krCacheOut为同一tensor，输入格式随cacheMode变化。<br><br>cacheMode为0：不传入。<br>cacheMode为1：shape为[blockNum,blockSize,1,64]<br>cacheMode为2或3：shape为[blockNum, headNum*64 / 16 ,block_size, 16]</td>
+    <td>与input一致</td>
+    <td><br>ND<br>NZ</td>
+  </tr>
+  <tr>
+    <td>slotmapping</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，表示用于存储kv_cache和kr_cache的索引，shape为[tokenNum]</td>
+    <td>INT32</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>ctkvScale</td>
+    <td>输入</td>
+    <td>Device侧的aclTensor，输出量化处理中参与计算的系数，仅在cacheMode为2时传入，shape为[1]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>qNopeScale</td>
+    <td>输出</td>
+    <td>Device侧的aclTensor，输出量化处理中参与计算的系数，仅在cacheMode为2时传入，shape为[headNum]</td>
+    <td>FLOAT16, BFLOAT16</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>wdqDim</td>
+    <td>输入</td>
+    <td>表示经过matmul后拆分的dim大小。预留参数，目前只支持1536</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>qRopeDim</td>
+    <td>输入</td>
+    <td>表示q传入rope的dim大小。预留参数，目前只支持64。</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>kRopeDim</td>
+    <td>输入</td>
+    <td>表示k传入rope的dim大小。预留参数，目前只支持64。</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>epsilon</td>
+    <td>输入</td>
+    <td>表示加在分母上防止除0</td>
+    <td>float</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>qRotaryCoeff</td>
+    <td>输入</td>
+    <td>表示q旋转系数。预留参数，目前只支持2</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>kRotaryCoeff</td>
+    <td>输入</td>
+    <td>表示k旋转系数。预留参数，目前只支持2</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>transposeWdq</td>
+    <td>输入</td>
+    <td>表示wdq是否转置。预留参数，目前只支持true</td>
+    <td>bool</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>transposeWuq</td>
+    <td>输入</td>
+    <td>表示wuq是否转置。预留参数，目前只支持true</td>
+    <td>bool</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>transposeWuk</td>
+    <td>输入</td>
+    <td>表示wuk是否转置。预留参数，目前只支持true</td>
+    <td>bool</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>cacheMode</td>
+    <td>输入</td>
+    <td>表示指定cache的类型，取值范围[0, 3]<br><br>0：kcache和q均经过拼接后输出<br>1：输出的kvCacheOut拆分为kvCacheOut和krCacheOut，qOut拆分为qOut和qRopeOut<br>2：krope和ctkv转为NZ格式输出，ctkv和qnope经过per_head静态对称量化为int8类型<br>3：krope和ctkv转为NZ格式输出</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>quantMode</td>
+    <td>输入</td>
+    <td>表示指定RmsNorm量化的类型，取值范围[0, 3]<br>0：per_tensor静态非对称量化，默认量化类型<br>1：per_token动态对称量化，未实现<br>2：per_token动态非对称量化，未实现<br>3：不量化，浮点输出，未实现</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>doRmsNorm</td>
+    <td>输入</td>
+    <td>表示是否对input输入进行RmsNormQuant操作，false表示不操作，true表示进行操作。预留参数，目前只支持true</td>
+    <td>bool</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>wdkvSplitCount</td>
+    <td>输入</td>
+    <td>表示指定wdkv拆分的个数，支持[1-3]，分别表示不拆分、拆分为2个、拆分为3个降维矩阵。预留参数，目前只支持1</td>
+    <td>int64_t</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>qOut</td>
+    <td>输出</td>
+    <td>表示Query的输出tensor，对应计算流图中右侧经过NOPE和矩阵乘后的输出，shape和dtype随cacheMode变化<br><br>cacheMode为0：shape为[tokenNum, headNum, 576]<br>cacheMode为1或3：shape为[tokenNum, headNum, 512]<br>cacheMode为2：shape为[tokenNum, headNum, 512]</td>
+    <td>与input一致<br>与input一致<br>INT8</td>
+    <td>ND</td>
+  </tr>
+  <tr>
+    <td>kvCacheOut</td>
+    <td>输出</td>
+    <td>表示Key经过ReshapeAndCache后的输出，shape和dtype随cacheMode变化<br><br>cacheMode为0：shape为[blockNum, blockSize, 1, 576]<br>cacheMode为1：shape为[blockNum, blockSize, 1, 512]<br>cacheMode为2：shape为[blockNum, headNum*512/32, block_size, 32]<br>cacheMode为3：shape为[blockNum, headNum*512/16, block_size, 16]</td>
+    <td>与input一致<br>与input一致<br>INT8<br>与input一致</td>
+    <td>ND<br>ND<br>NZ<br>NZ</td>
+  </tr>
+  <tr>
+    <td>qRopeOut</td>
+    <td>输出</td>
+    <td>表示Query经过旋转编程后的输出，shape和dtype随cacheMode变化<br><br>cacheMode为0：不输出<br>cacheMode为1或3：shape为[tokenNum, headNum, 64]<br>cacheMode为2：shape为[tokenNum, headNum, 64]</td>
+    <td><br>与input一致<br>与input一致</td>
+    <td><br>ND<br>ND</td>
+  </tr>
+  <tr>
+    <td>krCacheOut</td>
+    <td>输出</td>
+    <td>表示Key经过ROPE和ReshapeAndCache后的输出，shape和dtype随cacheMode变化，<br><br>cacheMode为0：不输出<br>cacheMode为1：shape为[blockNum, blockSize, 1, 64]<br>cacheMode为2或3：shape为[blockNum, headNum*64 / 16 ,block_size, 16]</td>
+    <td><br>与input一致<br>与input一致</td>
+    <td><br>ND<br>NZ</td>
+  </tr>
+</tbody></table>
 
 ## 约束说明
 

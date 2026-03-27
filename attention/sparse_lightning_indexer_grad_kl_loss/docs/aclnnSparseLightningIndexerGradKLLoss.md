@@ -276,6 +276,7 @@ aclnnStatus aclnnSparseLightningIndexerGradKLLoss(
             <td>-</td>
             <td>-</td>
             <td>x</td>
+        </tr>
         <tr>
             <td>layout</td>
             <td>输入</td>

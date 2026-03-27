@@ -97,7 +97,6 @@ aclnnStatus aclnnScatterPaCache(
 
 - **参数说明**
 
-  </style>
   <table class="tg" style="undefined;table-layout: fixed; width: 1548px"><colgroup>
   <col style="width: 265px">
   <col style="width: 86px">
@@ -124,7 +123,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">key(aclTensor*)</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">待更新的key值，公式中的key。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>HIFLOAT8、FLOAT8_E5M2、FLOAT8_E4M3FN、FLOAT4_E2M1、FLOAT4_E1M2仅支持key是3维的场景。</li><li>shape满足[batch * seq_len, num_head, k_head_size]或[batch, seq_len, num_head, k_head_size]，FLOAT4_E2M1、FLOAT4_E1M2情况下，k_head_size必须是偶数。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>HIFLOAT8、FLOAT8_E5M2、FLOAT8_E4M3FN、FLOAT4_E2M1、FLOAT4_E1M2仅支持key是3维的场景。</li><li>shape满足[batch * seq_len, num_head, k_head_size]或[batch, seq_len, num_head, k_head_size]，FLOAT4_E2M1、FLOAT4_E1M2情况下，k_head_size必须是偶数。</li></ul></td>
       <td class="tg-0pky">FLOAT16、FLOAT、BFLOAT16、INT8、UINT8、INT16、UINT16、INT32、UINT32、HIFLOAT8、FLOAT8_E5M2、FLOAT8_E4M3FN、FLOAT4_E2M1、FLOAT4_E1M2</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">3-4</td>
@@ -134,7 +133,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">keyCacheRef(aclTensor*)</td>
       <td class="tg-0pky">输入/输出</td>
       <td class="tg-0pky">需要更新的keyCache，公式中的keyCache。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是3维时，shape满足[num_blocks, block_size, num_head, k_head_size]，当key是4维时，shape满足[num_blocks, block_size, 1, k_head_size]。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是3维时，shape满足[num_blocks, block_size, num_head, k_head_size]，当key是4维时，shape满足[num_blocks, block_size, 1, k_head_size]。</li></ul></td>
       <td class="tg-0pky">与key一致。</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">4</td>
@@ -144,7 +143,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">slotMapping(aclTensor*)</td>
       <td class="tg-0pky">输入</td>
       <td class="tg-0pky">key的每个token在cache中的存储偏移，公式中的slotMapping。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是3维时，shape满足[batch * seq_len]，当key是4维时，shape满足[batch, num_head]。</li><li>值范围为[0, num_blocks * block_size-1]，且元素值不能重复，重复时不保证正确性。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是3维时，shape满足[batch * seq_len]，当key是4维时，shape满足[batch, num_head]。</li><li>值范围为[0, num_blocks * block_size-1]，且元素值不能重复，重复时不保证正确性。</li></ul></td>
       <td class="tg-0pky">INT32、INT64</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">1-2</td>
@@ -154,7 +153,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">compressLensOptional(aclTensor*)</td>
       <td class="tg-0pky">可选输入</td>
       <td class="tg-0pky">压缩量，公式中的compressLens。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是4维且compressSeqOffsetOptional不为空指针时，shape满足[batch, num_head]，当key是4维且compressSeqOffsetOptional为空指针时，shape满足[batch * num_head]。</li><li>场景一传空指针。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>当key是4维且compressSeqOffsetOptional不为空指针时，shape满足[batch, num_head]，当key是4维且compressSeqOffsetOptional为空指针时，shape满足[batch * num_head]。</li><li>场景一传空指针。</li></ul></td>
       <td class="tg-0pky">与slotMapping一致。</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">1-2</td>
@@ -164,7 +163,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">compressSeqOffsetOptional(aclTensor*)</td>
       <td class="tg-0pky">可选输入</td>
       <td class="tg-0pky">每个batch中每个head的压缩起点，公式中的compressSeqOffset。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>shape满足[batch * num_head]。</li><li>场景一和场景三传空指针。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>shape满足[batch * num_head]。</li><li>场景一和场景三传空指针。</li></ul></td>
       <td class="tg-0pky">与slotMapping一致。</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">1</td>
@@ -174,7 +173,7 @@ aclnnStatus aclnnScatterPaCache(
       <td class="tg-0pky">seqLensOptional(aclTensor*)</td>
       <td class="tg-0pky">可选输入</td>
       <td class="tg-0pky">每个batch的实际seqLens，公式中的seqLens。</td>
-      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>shape满足[batch]。</li><li>场景一传空指针。</li><ul></td>
+      <td class="tg-0pky"><ul><li>支持空tensor。</li><li>shape满足[batch]。</li><li>场景一传空指针。</li></ul></td>
       <td class="tg-0pky">与slotMapping一致。</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">1</td>

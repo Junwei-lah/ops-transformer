@@ -188,7 +188,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
         <td>输入</td>
         <td>不同Batch中query的有效序列长度。</td>
         <td><ul><li>不指定序列长度可传入nullptr。</li>
-            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li><ul></td>
+            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li></ul></td>
         <td>INT64</td>
         <td>-</td>
         <td>-</td>
@@ -578,7 +578,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
         <td>输入</td>
         <td>是否输出softmax_lse。</td>
           <td><ul><li>支持S轴外切（增加输出）。</li>
-              <li>用户不特意指定时建议传入false。</li></td>
+              <li>用户不特意指定时建议传入false。</li></ul></td>
         <td>BOOL</td>
         <td>-</td>
         <td>-</td>
@@ -629,7 +629,6 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
         <td>softmaxLseFlag为True时，一般情况下，shape必须为[B, N, Q_S, 1]，当inputLayout为TND/NTD_TND时，shape必须为[T, N, 1]。</td>
         <td>-</td>
       </tr>
-      <tr>        
       <tr>
         <td>workspaceSize</td>
         <td>输出</td>
@@ -887,7 +886,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV3(
               <td>
                 <ul style="margin: 0; padding-left: 20px;">
                   <li>需要传入优化后的attenmask矩阵（2048*2048）；</li>
-                  <li>要求preTokens > -actualSeqLengths，nextTokens > -actualSeqLengthsKv，preTokens + nextTokens >= 0，在prefix场景，actualSeqLengthsKv要叠加prefix长度。</li>
+                  <li>要求preTokens > -actualSeqLengths，nextTokens > -actualSeqLengthsKv，preTokens + nextTokens >= 0，在prefix场景，actualSeqLengthsKv要叠加prefix长度。</li></ul>
               </td>
           </tr>
           <tr>

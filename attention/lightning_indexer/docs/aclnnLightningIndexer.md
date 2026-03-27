@@ -63,7 +63,6 @@ aclnnStatus aclnnLightningIndexer(
 - **参数说明：**
 
 > [!NOTE]
-
 > - query、key、weights参数维度含义：B（Batch Size）表示输入样本批量大小、S（Sequence Length）表示输入样本序列长度、H（Head Size）表示hidden层的大小、N（Head Num）表示多头数、D（Head Dim）表示hidden层最小的单元尺寸，且满足D=H/N、T表示所有Batch输入样本序列长度的累加和。
 > - S1表示query shape中的S，S2表示key shape中的S，T1表示query shape中的T，T2表示key shape中的T，N1表示query shape中的N，N2表示key shape中的N。
 
@@ -283,8 +282,7 @@ aclnnStatus aclnnLightningIndexer(
       <td>sparseIndicesOut</td>
       <td>输出</td>
       <td>公式中的Indices输出。</td>
-      <td>不支持空tensor。</ul>
-      </td>
+      <td>不支持空tensor。</td>
       <td>INT32</td>
       <td>-</td>
       <td>

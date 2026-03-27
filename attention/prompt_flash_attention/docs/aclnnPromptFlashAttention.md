@@ -292,13 +292,12 @@ aclnnStatus aclnnPromptFlashAttention(
 
 - **参数说明**
 
-    <div style="overflow-x: auto;">
-    <table style="undefined;table-layout: fixed; width: 1030px"><colgroup>
-    <col style="width: 250px">
-    <col style="width: 130px">
-    <col style="width: 650px">
-    </colgroup>
-    <table><thead>
+  <table style="undefined;table-layout: fixed; width: 1143px"><colgroup>
+  <col style="width: 178px">
+  <col style="width: 134px">
+  <col style="width: 831px">
+  </colgroup>
+  <thead>
     <tr>
       <th>参数名</th>
       <th>输入/输出</th>
@@ -325,9 +324,8 @@ aclnnStatus aclnnPromptFlashAttention(
       <td>输入</td>
       <td>指定执行任务的Stream。</td>
     </tr>
-    </tbody>
-    </table>
-    </div>
+  </tbody>
+  </table>
     
 - **返回值**
 

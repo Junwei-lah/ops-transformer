@@ -84,6 +84,7 @@ maxIndex，sumIndex作为输出传递给算子DenseLightningIndexerGradKlLoss作
       <td>INT64</td>
       <td>ND</td>
      </tr>
+     <tr>
       <td>layout</td>
       <td>输入</td>
       <td>layout格式。</td>

@@ -31,7 +31,6 @@
 
 ## 参数说明
 
-</center>
 <table class="tg"><thead>
   <tr>
     <th class="tg-0pky">参数名</th>

@@ -161,19 +161,19 @@ N1 * G * alignedS1 * alignedS2 <= bestBasicBlockNum。 </td>
   <tr>
     <td>SameAB模板</td>
     <td>UB切S1S2多核切S2</td>
-    <td>确定性计算场景，非FP32或者S1 >= 1024 or S2 >= 1024，走SameAB模板；其余走1.2模板。</br>
-        TND场景，平均S1 >= 1024 and 平均S2 >= 1024，走SameAB模板；其余走1.1模板。</br>
+    <td>确定性计算场景，非FP32或者S1 >= 1024 or S2 >= 1024，走SameAB模板；其余走1.2模板。<br>
+        TND场景，平均S1 >= 1024 and 平均S2 >= 1024，走SameAB模板；其余走1.1模板。<br>
         普通场景，S1 >= 1024 or S2 >= 1024。
     </td>
-    <td>确定性计算场景</br>TND场景</br>普通场景</td>
+    <td>确定性计算场景<br>TND场景<br>普通场景</td>
   </tr>
   <tr>
     <td>S1S2模板</td>
     <td>UB切S1S2多核切N2</td>
-    <td>确定性计算场景，不满足SameAB模板条件。</br>
+    <td>确定性计算场景，不满足SameAB模板条件。<br>
         普通场景，不满足其他模板条件。
     </td>
-    <td>确定性计算场景</br>普通场景</td>
+    <td>确定性计算场景<br>普通场景</td>
   </tr>
   <tr>
     <td>TND模板</td>

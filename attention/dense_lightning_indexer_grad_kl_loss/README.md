@@ -162,7 +162,7 @@
       <tr>
           <td>keyRope</td>
           <td>输入</td>
-          <td>MLA rope部分：Key位置编码的输出。</<td>
+          <td>MLA rope部分：Key位置编码的输出。</td>
           <td>FLOAT16、BFLOAT16</td>
           <td>ND</td>
       </tr>
@@ -255,4 +255,3 @@
 | 调用方式 | 调用样例                                                                   | 说明                                                           |
 |--------------|------------------------------------------------------------------------|--------------------------------------------------------------|
 | aclnn调用 | [test_aclnn_dense_lightning_indexer_grad_kl_loss](examples/test_aclnn_dense_lightning_indexer_grad_kl_loss.cpp) | 通过[aclnnDenseLightningIndexerGradKLLoss](docs/aclnnDenseLightningIndexerGradKLLoss.md)接口方式调用dense_lightning_indexer_grad_kl_loss算子。 |
-

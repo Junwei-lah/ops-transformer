@@ -156,7 +156,8 @@ aclnnStatus aclnnMlaPrologV2WeightNz(
 
 - **返回值**
 
-  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。</br>
+  aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
+
   第一段接口完成入参校验，出现以下场景时报错：
     
     | 返回值                 | 错误码               | 描述                                                                 |
@@ -257,7 +258,6 @@ aclnnStatus aclnnMlaPrologV2WeightNz(
           入参：tokenX传入pertoken量化数据，weightDq、weightUqQr、weightDkvKr传入perchannel量化数据，其余入参皆为非量化数据 <br> 
           出参：所有出参皆为非量化数据
       </td>
-    </tr>
     </tr>
     <tr>
       <td> kv_cache量化 </td>
