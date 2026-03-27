@@ -390,6 +390,8 @@ ge::graphStatus IFATilingV2::ProcessBaseTensors() {
   sparseMode_ = ifaContext_->sparseMode == nullptr ? 0 : *ifaContext_->sparseMode;
   preToken_ = ifaContext_->preToken == nullptr ? 0 : *ifaContext_->preToken;
   nextToken_ = ifaContext_->nextToken == nullptr ? 0 : *ifaContext_->nextToken;
+  OP_LOGI(ifaContext_->opName, "DBG host sparseMode_=%u preToken_=%ld nextToken_=%ld blockSize_=%u",
+          sparseMode_, preToken_, nextToken_, blockSize_);
 
   OP_CHECK_IF(numHeads_ == 0, OP_LOGE(ifaContext_->opName, "NumHeads is zero."), return ge::GRAPH_FAILED);
   numKvHeads_ = (numKvHeads_ == 0) ? numHeads_ : numKvHeads_;
@@ -478,6 +480,10 @@ ge::graphStatus IFATilingV2::ProcessBaseTensors() {
       }
       sOfQuery_ = GetMaxSeqLength(ifaContext_->actualSeqLengthsQ.tensor);
       batchSize_ = actualLenQDims_;
+      const int64_t *actSeqKv = ifaContext_->actualSeqLengths.tensor->GetData<int64_t>();
+      for (uint32_t i = 0; i < actualLenDims_; ++i) {
+        OP_LOGI(ifaContext_->opName, "DBG host actual_seq_lengths[%u]=%ld", i, actSeqKv[i]);
+      }
       int64_t tOfQuery = static_cast<int64_t>(ifaContext_->query.shape->GetStorageShape().GetDim(NUM0));
       int64_t tOfkv = static_cast<int64_t>(ifaContext_->key.shape->GetStorageShape().GetDim(NUM0));
       int64_t actualSeqLastSizeOfQuery = ifaContext_->actualSeqLengthsQ.tensor->GetData<int64_t>()[batchSize_ - 1U];
@@ -3478,7 +3484,7 @@ void IFATilingV2::SetfaRunBaseSize()
       sInnerSize_ = NUM512;
     }
   } else if (headDim_ <= NUM128) {
-    sInnerSize_ = NUM512;
+    sInnerSize_ = NUM256;
   } else if (headDim_ <= NUM256) {
     sInnerSize_ = NUM256;
   } else {
@@ -4039,6 +4045,8 @@ void IFATilingV2::UpdateTilingKeyConfig() {
     config = Config_S1Aligned16_S2Aligned512_DAligned64_DVAligned64;
   } else if (sInner == 512 && sOuter == 16 && dSize <= 128 && dVsize <= 128) {
     config = Config_S1Aligned16_S2Aligned512_DAligned128_DVAligned128;
+  } else if (sInner == 256 && sOuter == 16 && dSize <= 128 && dVsize <= 128) {
+    config = Config_S1Aligned16_S2Aligned256_DAligned128_DVAligned128;
   } else if (sInner == 256 && sOuter == 16 && dSize <= 256 && dVsize <= 256) {
     config = Config_S1Aligned16_S2Aligned256_DAligned256_DVAligned256;
   } else if (sInner == 128 && sOuter == 16 && dSize <= 512 && dVsize <= 512) {

@@ -1398,7 +1398,6 @@ __aicore__ inline void IncreFlashAttentionAntiqSplitBbn2s2Us2<IFAT>::WaitQK(uint
 {
     mm1Processor.Wait();
 }
-
 template <typename IFAT>
 __aicore__ inline void IncreFlashAttentionAntiqSplitBbn2s2Us2<IFAT>::Vector1(uint32_t loop)
 {
@@ -1735,6 +1734,7 @@ __aicore__ inline void IncreFlashAttentionAntiqSplitBbn2s2Us2<IFAT>::Process()
             for (sOuterLoopIdx = curS1Idx; sOuterLoopIdx < sOuterLoopEnd; sOuterLoopIdx++) {
                 if constexpr (!FLASH_DECODE) {
                     if (qSeqSize > 1) {
+                        // 给当前 s1 查询块算出需要遍历的 s2（KV）块范围，并处理 padding/零长度场景
                         UpdateZeroActualSeqLenPFA(curBIdx, kvPaddingBeginOffset, sInnerLoopTimes, curActualSeqLen,
                             sOuterLoopIdx, preTokenPerBatch, nextTokenPerBatch, sInnerStartIndex);
                     }
@@ -1746,6 +1746,7 @@ __aicore__ inline void IncreFlashAttentionAntiqSplitBbn2s2Us2<IFAT>::Process()
                     task.s1Idx = sOuterLoopIdx;
                     task.s2Idx = sInnerLoopIdx;
                     bool isLast = (bnIdx == bnLoopTimes - 1) && (sOuterLoopIdx == sOuterLoopEnd - 1) && (sInnerLoopIdx == sInnerLoopTimes - 1);
+                    // 如果还没攒满 BUFFER_NUM 且不是全局最后一个任务，就 continue 继续攒批：
                     if (taskIdx < BUFFER_NUM && !isLast) {
                         continue;
                     }
@@ -1767,11 +1768,13 @@ __aicore__ inline void IncreFlashAttentionAntiqSplitBbn2s2Us2<IFAT>::Process()
                         AntiquantValue(loop);
                         SendSV(loop);
                     }
+                    // gloop是全局任务序列号,taskIdx是当前批次的任务数
                     gLoop += taskIdx;
                     taskIdx = 0;
                 }
             }
         }
+        // 单头没处理的尾部，在最后处理掉（上方的V2计算都在第二轮才计算第一轮的，这边的V2作为收尾）
         for (uint32_t i = 0; i < BUFFER_NUM; i++) {
             uint32_t loop = gLoop + i;
             if (loop >= BUFFER_NUM) {

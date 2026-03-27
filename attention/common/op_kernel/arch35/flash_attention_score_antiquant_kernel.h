@@ -583,7 +583,7 @@ __aicore__ inline void FlashAttentionScoreAntiquantKernel<AntiquantCubeBlockType
             } else {
                 s2LoopLimit = 0;
             }
-
+            // 4槽流水,实际三任务并行
             for (int64_t s2LoopCount = 0; s2LoopCount <= s2LoopLimit; s2LoopCount++) {
                 if (notLastTwoLoop) {
                     RunInfo<isInfer> &runInfo1 = runInfo[taskId & 3];  // 3 is mod 4

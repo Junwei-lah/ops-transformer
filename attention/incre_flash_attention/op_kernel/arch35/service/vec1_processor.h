@@ -335,6 +335,14 @@ __aicore__ inline void Vec1Processor<IFAT>::Softmax(
     LocalTensor<Q_T> bmm2InResUb = vec1ResOutUb.AllocTensor<Q_T>();
     Vec1Compute(bmm2InResUb, softmaxMaxOutUb, softmaxSumOutUb, softmaxExpUb, mm1ResUb, softmaxMaxInUb, softmaxSumInUb,
                 softmaxTmpUb, maskInputQue, pseInputQue, taskParam);
+    // softmax注释
+    // if (taskParam.bIdx == 0 && taskParam.n2Idx == 0 && taskParam.gIdx == 0) {
+    //     uint32_t len = taskParam.dealRowCount * taskParam.columnCount;
+    //     DO_DUMP_DATA(mm1ResUb, 21, len);          // softmax输入
+    //     DO_DUMP_DATA(bmm2InResUb, 22, len);       // softmax输出
+    //     DO_DUMP_DATA(softmaxMaxOutUb, 23, taskParam.dealRowCount);
+    //     DO_DUMP_DATA(softmaxSumOutUb, 24, taskParam.dealRowCount);
+    // }
     vec1ResOutUb.EnQue(bmm2InResUb);
     vec1ResOutUb.DeQue<Q_T>();
     Vec1CopyResToL1(mm2AScm, bmm2InResUb, taskParam);

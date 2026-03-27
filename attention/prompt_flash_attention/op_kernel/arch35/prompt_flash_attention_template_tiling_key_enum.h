@@ -154,6 +154,7 @@ static constexpr ConfigParams ConfigValue[] ={
    {inferS1TemplateType::Aligned128, inferS2TemplateType::Aligned128, inferDTemplateType::Aligned64, inferDTemplateType::Aligned128}, //24
    {inferS1TemplateType::Aligned64, inferS2TemplateType::Aligned256, inferDTemplateType::Aligned128, inferDTemplateType::Aligned64}, //25
    {inferS1TemplateType::Aligned64, inferS2TemplateType::Aligned256, inferDTemplateType::Aligned64, inferDTemplateType::Aligned128}, //26
+   {inferS1TemplateType::Aligned16, inferS2TemplateType::Aligned256, inferDTemplateType::Aligned128, inferDTemplateType::Aligned128}, //27
 };
 
 #define Config_S1Aligned64_S2Aligned256_DAligned64_DVAligned64 0
@@ -183,6 +184,7 @@ static constexpr ConfigParams ConfigValue[] ={
 #define Config_S1Aligned128_S2Aligned128_DAligned64_DVAligned128 24
 #define Config_S1Aligned64_S2Aligned256_DAligned128_DVAligned64 25
 #define Config_S1Aligned64_S2Aligned256_DAligned64_DVAligned128 26
+#define Config_S1Aligned16_S2Aligned256_DAligned128_DVAligned128 27
 
 
 //PseMode

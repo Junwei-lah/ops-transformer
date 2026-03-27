@@ -237,6 +237,10 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
         runParam, constInfo, bIdx, actualSeqQlenAddr, actualSeqMin);
     int64_t actualS2Size = CalculateActualS2Size<TEMPLATE_INTF_ARGS>(
         runParam, constInfo, bIdx, actualSeqKvlenAddr, actualSeqKVMin);
+    if (bIdx < 4) {
+        printf("DBG kernel bIdx=%d rawActualSeqKv=%ld actualS2Size=%ld\n",
+               static_cast<int32_t>(bIdx), static_cast<long>(actualSeqKvlenAddr[bIdx]), static_cast<long>(actualS2Size));
+    }
 
     // 初始化padding大小
     InitQueryLeftPaddingSize<TEMPLATE_INTF_ARGS>(runParam, constInfo, actualS1Size);
@@ -245,6 +249,11 @@ __aicore__ inline void GetSingleCoreParam(RunParamStr<isInfer>& runParam,
     runParam.actualS1Size = actualS1Size;
     runParam.actualS2Size = actualS2Size;
     GetSparseParam<TEMPLATE_INTF_ARGS>(constInfo, attenMaskInfo, runParam);
+    if (bIdx < 4) {
+        printf("DBG kernel bIdx=%d actualS1=%ld actualS2=%ld preTokensPerBatch=%ld nextTokensPerBatch=%ld\n",
+               static_cast<int32_t>(bIdx), static_cast<long>(runParam.actualS1Size), static_cast<long>(runParam.actualS2Size),
+               static_cast<long>(runParam.preTokensPerBatch), static_cast<long>(runParam.nextTokensPerBatch));
+    }
 
     // 调整S1大小以适应per token、next token设置
     AdjustActualS1Size<TEMPLATE_INTF_ARGS>(runParam, constInfo);
