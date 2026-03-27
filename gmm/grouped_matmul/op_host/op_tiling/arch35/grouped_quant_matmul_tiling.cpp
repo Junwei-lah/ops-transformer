@@ -12,8 +12,12 @@
  * \file grouped_quant_matmul_tiling.cpp
  * \brief
  */
-#include <alog_pub.h>
 #include "grouped_quant_matmul_tiling.h"
+#include <sstream>
+
+#include <alog_pub.h>
+
+#include "grouped_quant_basic_api_matmul_tiling.h"
 #include "grouped_quant_matmul_info_factory.h"
 
 #include "log/log.h"
@@ -44,7 +48,6 @@ bool GroupedQmmTiling::IsCapable()
 void GroupedQmmTiling::Reset()
 {
     tilingData_ = GMMQuantTilingData();
-    inputParams_.Reset();
 }
 
 ge::graphStatus GroupedQmmTiling::GetPlatformInfo()
@@ -122,6 +125,10 @@ bool GroupedQmmTiling::AnalyzeAttrs()
                     OP_LOGE(inputParams_.opName, "When group type is 2, transA can only be true."), return false);
         OP_CHECK_IF(inputParams_.transB,
                     OP_LOGE(inputParams_.opName, "When group type is 2, transB can only be false."), return false);
+        OP_CHECK_IF(
+            inputParams_.bFormat == ge::FORMAT_FRACTAL_NZ,
+            OP_LOGE(inputParams_.opName, "When group type is 2, FRACTAL_NZ format is not supportted for weight."),
+            return false);
     }
 
     inputParams_.isSingleX = (context_->GetDynamicInputDesc(X_INDEX, 1) == nullptr);
@@ -179,27 +186,39 @@ is INT8 or INT32, actual is %s.",
 
 bool GroupedQmmTiling::CheckDtypeForWeightNz(bool isPertokenScaleNull) const
 {
-    OP_CHECK_IF(inputParams_.aDtype != ge::DT_INT8 || inputParams_.bDtype != ge::DT_INT8,
+    bool isA8W8Int = inputParams_.aDtype == ge::DT_INT8 && inputParams_.bDtype == ge::DT_INT8;
+    bool isA8W8Fp = inputParams_.aDtype == ge::DT_FLOAT8_E4M3FN && inputParams_.bDtype == ge::DT_FLOAT8_E4M3FN;
+    OP_CHECK_IF(
+        !(isA8W8Int || isA8W8Fp),
+        OP_LOGE(
+            context_->GetNodeName(),
+            "When the weight is in Nz format, the dtype of x/weight should be INT8 or FLOAT8_E4M3FN, actual are %s/%s.",
+            ge::TypeUtils::DataTypeToSerialString(inputParams_.aDtype).c_str(),
+            ge::TypeUtils::DataTypeToSerialString(inputParams_.bDtype).c_str()),
+        return false);
+    OP_CHECK_IF(isA8W8Int && inputParams_.cDtype == ge::DT_INT8,
                 OP_LOGE(context_->GetNodeName(),
-                        "When the weight is in Nz format, the dtype of x/weight should be INT8, actual is %s, %s.",
-                        ge::TypeUtils::DataTypeToSerialString(inputParams_.aDtype).c_str(),
-                        ge::TypeUtils::DataTypeToSerialString(inputParams_.bDtype).c_str()),
-                return false);
-    OP_CHECK_IF(inputParams_.cDtype == ge::DT_INT8,
-                OP_LOGE(context_->GetNodeName(), "When the weight is in Nz format, the dtype of y should not be INT8."),
+                        "When the weight is in Nz format and x is INT8, the dtype of y should not be INT8."),
                 return false);
     if (!isPertokenScaleNull) {
-        OP_CHECK_IF(inputParams_.perTokenScaleDtype != ge::DT_FLOAT,
-                    OP_LOGE(context_->GetNodeName(),
-                            "When the weight is in Nz format and the pertokenScale should be FLOAT, actual is %s.",
-                            ge::TypeUtils::DataTypeToSerialString(inputParams_.perTokenScaleDtype).c_str()),
-                    return false);
-        OP_CHECK_IF(inputParams_.scaleDtype != ge::DT_BF16 && inputParams_.scaleDtype != ge::DT_FLOAT,
-                    OP_LOGE(context_->GetNodeName(),
-                            "When the weight is in Nz format and the pertokenScale is FLOAT, the dtype of scale \
-should be in {BF16, FLOAT}, actual is %s.",
-                            ge::TypeUtils::DataTypeToSerialString(inputParams_.scaleDtype).c_str()),
-                    return false);
+        if (isA8W8Int) {
+            OP_CHECK_IF(inputParams_.perTokenScaleDtype != ge::DT_FLOAT ||
+                            (inputParams_.scaleDtype != ge::DT_BF16 && inputParams_.scaleDtype != ge::DT_FLOAT),
+                        OP_LOGE(context_->GetNodeName(),
+                                "When the weight is Nz format and x/weight's dtype are INT8 and pertokenScale exists, \
+the dtype of pertokenScale should be FLOAT and the dtype of scale should be in {BF16, FLOAT}, actual are %s/%s.",
+                                ge::TypeUtils::DataTypeToSerialString(inputParams_.perTokenScaleDtype).c_str(),
+                                ge::TypeUtils::DataTypeToSerialString(inputParams_.scaleDtype).c_str()),
+                        return false);
+        } else if (isA8W8Fp) {
+            OP_CHECK_IF(
+                inputParams_.perTokenScaleDtype != ge::DT_FLOAT8_E8M0 || inputParams_.scaleDtype != ge::DT_FLOAT8_E8M0,
+                OP_LOGE(context_->GetNodeName(), "When the weight is Nz format and x/weight's dtype are FLOAT8_E4M3, \
+the dtype of pertokenScaleand and scale should be FLOAT8_E8M0, actual are %s/%s.",
+                        ge::TypeUtils::DataTypeToSerialString(inputParams_.perTokenScaleDtype).c_str(),
+                        ge::TypeUtils::DataTypeToSerialString(inputParams_.scaleDtype).c_str()),
+                return false);
+        }
     } else {
         static const std::vector<ge::DataType> legalScaleDtypes = {ge::DT_UINT64, ge::DT_INT64, ge::DT_FLOAT,
                                                                    ge::DT_BF16};
@@ -255,8 +274,7 @@ actual is %s.",
     auto pertokenScaleDesc = context_->GetOptionalInputDesc(PER_TOKEN_SCALE_INDEX);
     inputParams_.perTokenScaleDtype =
         pertokenScaleDesc != nullptr ? pertokenScaleDesc->GetDataType() : inputParams_.perTokenScaleDtype;
-    isWeightNz_ = inputParams_.bFormat == ge::FORMAT_FRACTAL_NZ;
-    if (isWeightNz_) {
+    if (inputParams_.bFormat == ge::FORMAT_FRACTAL_NZ) {
         OP_CHECK_IF(!CheckDtypeForWeightNz(nullptr == pertokenScaleDesc),
                     OP_LOGE(inputParams_.opName, "CheckDtypeForWeightNz failed."), return false);
     }
@@ -622,7 +640,6 @@ bool GroupedQmmTiling::AnalyzeInputs()
 
     OP_CHECK_IF(!SetGroupNum(GROUPLIST_INDEX), OP_LOGE(inputParams_.opName, "SetGroupNum failed."), return false);
     OP_CHECK_IF(!SetMKN(xShape, wShape), OP_LOGE(inputParams_.opName, "SetMKN failed."), return false);
-    OP_CHECK_IF(!SetMKNList(), OP_LOGE(inputParams_.opName, "SetMKNList failed."), return false);
 
     if (inputParams_.cDtype == ge::DT_INT32) {
         return true;
@@ -644,7 +661,7 @@ bool GroupedQmmTiling::AnalyzeInputs()
     OP_CHECK_IF(!CheckQuantParams(xScaleStorageShape, wScaleShape),
                 OP_LOGE(inputParams_.opName, "CheckQuantParams failed."), return false);
 
-    if (isWeightNz_) {
+    if (inputParams_.bFormat == ge::FORMAT_FRACTAL_NZ) {
         OP_CHECK_IF(!CheckShapeForWeightNz(weightNzStorageShape),
                     OP_LOGE(context_->GetNodeName(), "CheckShapeForWeightNz failed."), return false);
     }
@@ -858,6 +875,7 @@ ge::graphStatus GroupedQmmTiling::DoOpTiling()
     tilingData_.gmmQuantParams.groupType = static_cast<int8_t>(inputParams_.groupType);
     tilingData_.gmmQuantParams.groupListType = static_cast<uint8_t>(inputParams_.groupListType);
     tilingData_.gmmQuantParams.hasBias = static_cast<uint8_t>(inputParams_.hasBias);
+    OP_CHECK_IF(!SetMKNList(), OP_LOGE(inputParams_.opName, "SetMKNList failed."), return ge::GRAPH_FAILED);
     errno_t retM = memcpy_s(tilingData_.gmmArray.mList, sizeof(tilingData_.gmmArray.mList), mList_, sizeof(mList_));
     if (retM != EOK) {
         OP_LOGE(context_->GetNodeName(), "memcpy_s failed, ret = %d", retM);
@@ -965,27 +983,15 @@ ge::graphStatus GroupedQmmTiling::GetWorkspaceSize()
 
 ge::graphStatus GroupedQmmTiling::PostTiling()
 {
-    context_->SetBlockDim(aicoreParams_.aicNum);
-    OP_CHECK_IF(sizeof(tilingData_) % sizeof(uint64_t) != 0,
-                OP_LOGE(context_->GetNodeName(), "Tiling data size[%zu] is not aligned to 8", sizeof(tilingData_)),
-                return ge::GRAPH_FAILED);
-    errno_t ret = memcpy_s(context_->GetRawTilingData()->GetData(), context_->GetRawTilingData()->GetCapacity(),
-                           reinterpret_cast<void *>(&tilingData_), sizeof(tilingData_));
-    if (ret != EOK) {
-        OP_LOGE(context_->GetNodeName(), "memcpy_s failed, ret = %d", ret);
-        return ge::GRAPH_FAILED;
-    }
-    context_->GetRawTilingData()->SetDataSize(sizeof(tilingData_));
-    return ge::GRAPH_SUCCESS;
+    return SaveTilingDataToContext(tilingData_);
 }
 
-void GroupedQmmTiling::PrintQuantParams()
+void GroupedQmmTiling::LogQuantParams(const GMMQuantParams &params) const
 {
     int32_t enable = CheckLogLevel(static_cast<int32_t>(OP), DLOG_DEBUG);
     if (enable != 1) {
         return;
     }
-    GMMQuantParams &params = tilingData_.gmmQuantParams;
     std::ostringstream oss;
     oss << "GMMQuantParams: groupNum = " << params.groupNum << ", activeType = " << params.activeType
         << ", aQuantMode = " << params.aQuantMode << ", bQuantMode = " << params.bQuantMode
@@ -996,6 +1002,11 @@ void GroupedQmmTiling::PrintQuantParams()
         << ", groupListType = " << static_cast<uint32_t>(params.groupListType)
         << ", hasBias = " << static_cast<int32_t>(params.hasBias);
     OP_LOGD(inputParams_.opName, "%s", oss.str().c_str());
+}
+
+void GroupedQmmTiling::PrintQuantParams()
+{
+    LogQuantParams(tilingData_.gmmQuantParams);
 }
 
 void GroupedQmmTiling::CalBasicBlock()
@@ -1040,35 +1051,58 @@ bool GroupedQmmTiling::IsBiasInL1() const
     return inputParams_.hasBias && inputParams_.biasDtype == ge::DT_INT32;
 }
 
-ge::graphStatus GroupedQmmTiling::CalL1Tiling()
+void GroupedQmmTiling::InitCommonL1TilingFields()
 {
     basicTiling_.stepM = 1UL;
     basicTiling_.stepN = 1UL;
     basicTiling_.singleCoreM = std::min(inputParams_.mSize, basicTiling_.baseM);
     basicTiling_.singleCoreN = std::min(inputParams_.nSize, basicTiling_.baseN);
     basicTiling_.singleCoreK = inputParams_.kSize;
-
-    uint64_t biasDtypeSize = ge::GetSizeByDataType(inputParams_.biasDtype);
-    uint64_t scaleDtypeSize = ge::GetSizeByDataType(inputParams_.scaleDtype);
-    uint64_t totalL1Size = aicoreParams_.l1Size;
-
     basicTiling_.iterateOrder = 0U;
     basicTiling_.dbL0c =
         (basicTiling_.baseM * basicTiling_.baseN * DATA_SIZE_L0C * DB_SIZE <= aicoreParams_.l0cSize) ? DB_SIZE : 1;
-    if (inputParams_.kSize == 0) {
-        return ge::GRAPH_SUCCESS;
-    }
+}
+
+ge::graphStatus GroupedQmmTiling::CalcLeftL1Size(uint64_t &leftL1Size) const
+{
+    uint64_t biasDtypeSize = ge::GetSizeByDataType(inputParams_.biasDtype);
+    uint64_t scaleDtypeSize = ge::GetSizeByDataType(inputParams_.scaleDtype);
+    uint64_t totalL1Size = aicoreParams_.l1Size;
     uint64_t singleCoreBiasSize = IsBiasInL1() ? basicTiling_.baseN * biasDtypeSize : 0;
     uint64_t singleCoreScaleSize = inputParams_.bQuantMode == optiling::QuantMode::PERCHANNEL_MODE &&
                                            inputParams_.kernelType == 0 && inputParams_.cDtype != ge::DT_INT32 ?
                                        basicTiling_.baseN * scaleDtypeSize :
                                        0;
     uint64_t usedSize = singleCoreBiasSize + singleCoreScaleSize;
-    OP_CHECK_IF(
-        totalL1Size <= usedSize,
-        OP_LOGE(context_->GetNodeName(), "L1 space overflow. L1Size: %lu, used space: %lu", totalL1Size, usedSize),
-        return ge::GRAPH_FAILED);
-    uint64_t leftL1Size = totalL1Size - usedSize;
+    OP_CHECK_IF(totalL1Size <= usedSize,
+                OP_LOGE(context_->GetNodeName(), "L1 space overflow. L1Size: %lu, used space: %lu", totalL1Size,
+                        usedSize),
+                return ge::GRAPH_FAILED);
+    leftL1Size = totalL1Size - usedSize;
+    return ge::GRAPH_SUCCESS;
+}
+
+void GroupedQmmTiling::CalcAlignedMxBaseScaleSize(uint64_t &baseScaleASize, uint64_t &baseScaleBSize) const
+{
+    baseScaleASize =
+        GetSizeWithDataType(CeilAlign(CeilDiv(basicTiling_.baseK, MX_GROUP_SIZE), MXFP_MULTI_BASE_SIZE) *
+                                basicTiling_.baseM,
+                            inputParams_.perTokenScaleDtype);
+    baseScaleBSize =
+        GetSizeWithDataType(CeilAlign(CeilDiv(basicTiling_.baseK, MX_GROUP_SIZE), MXFP_MULTI_BASE_SIZE) *
+                                basicTiling_.baseN,
+                            inputParams_.scaleDtype);
+}
+
+ge::graphStatus GroupedQmmTiling::CalL1Tiling()
+{
+    InitCommonL1TilingFields();
+    if (inputParams_.kSize == 0) {
+        return ge::GRAPH_SUCCESS;
+    }
+    uint64_t leftL1Size = 0;
+    OP_CHECK_IF(CalcLeftL1Size(leftL1Size) != ge::GRAPH_SUCCESS,
+                OP_LOGE(context_->GetNodeName(), "CalcLeftL1Size failed"), return ge::GRAPH_FAILED);
     return CalL1Depth(leftL1Size);
 }
 
@@ -1081,12 +1115,7 @@ ge::graphStatus GroupedQmmTiling::CalL1Depth(uint64_t leftL1Size)
     uint64_t baseScaleBSize = 0;
     if (inputParams_.bQuantMode == optiling::QuantMode::MX_PERGROUP_MODE) {
         if (inputParams_.groupType == SPLIT_M) {
-            baseScaleASize =
-                GetSizeWithDataType(CeilAlign(CeilDiv(basicTiling_.baseK, MX_GROUP_SIZE), 2UL) * basicTiling_.baseM,
-                                    inputParams_.perTokenScaleDtype);
-            baseScaleBSize =
-                GetSizeWithDataType(CeilAlign(CeilDiv(basicTiling_.baseK, MX_GROUP_SIZE), 2UL) * basicTiling_.baseN,
-                                    inputParams_.scaleDtype);
+            CalcAlignedMxBaseScaleSize(baseScaleASize, baseScaleBSize);
         } else {
             baseScaleASize = GetSizeWithDataType(
                 (basicTiling_.baseK / (MX_GROUP_SIZE * MXFP_MULTI_BASE_SIZE) + inputParams_.groupNum) *
@@ -1290,5 +1319,6 @@ void GQmmInputInfo::Reset()
     initFlag = false; // 避免重复解析flag
 }
 
-REGISTER_OPS_TILING_TEMPLATE(GroupedMatmul, GroupedQmmTiling, 0);
+REGISTER_OPS_TILING_TEMPLATE(GroupedMatmul, GroupedQmmBasicApiTiling, 0);
+REGISTER_OPS_TILING_TEMPLATE(GroupedMatmul, GroupedQmmTiling, 1);
 } // namespace optiling

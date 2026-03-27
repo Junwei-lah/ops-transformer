@@ -153,7 +153,6 @@ public:
         if constexpr (!TransB_) {
             nMin = INNER_AXIS_MIN_SPLIT_VAL;
         }
-
         int64_t mTile = Min(CeilDiv(mBaseTail_, mMin), remainTile);
         int64_t nTile = Min(CeilDiv(nBaseTail_, nMin), remainTile);
         while (mTile * nTile > remainTile) {
@@ -228,7 +227,7 @@ public:
         return {singleCoreM, singleCoreN, mSplitAddrOffset, nSplitAddrOffset};
     }
 
-    __aicore__ inline int64_t GetEndBlockIdx()
+    __aicore__ inline int64_t GetEndBlockIdx() const
     {
         return endBlockIdx_;
     }

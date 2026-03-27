@@ -43,6 +43,9 @@
     #define V310_GMM_QUANT
     #if defined(ORIG_DTYPE_SCALE) && defined(DT_FLOAT8_E8M0) && ORIG_DTYPE_SCALE == DT_FLOAT8_E8M0
       #define V310_GMM_QUANT_MX
+      #if ORIG_DTYPE_X == DT_FLOAT8_E4M3FN || ORIG_DTYPE_X == DT_FLOAT8_E5M2
+         #define V310_MXFP8_LOW_API
+      #endif
     #elif defined(ORIG_DTYPE_SCALE) && defined(DT_UINT64) && defined(DT_INT64) && \
         (ORIG_DTYPE_SCALE != DT_UINT64 && ORIG_DTYPE_SCALE != DT_INT64)
       #define V310_GMM_QUANT_MIX

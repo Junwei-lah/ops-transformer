@@ -26,6 +26,12 @@ void QuantGroupedInplaceAddTiling::Reset()
     return;
 }
 
+ge::graphStatus QuantGroupedInplaceAddTiling::GetShapeAttrsInfo()
+{
+    inputParams_.Reset();
+    return GroupedQmmTiling::GetShapeAttrsInfo();
+}
+
 bool QuantGroupedInplaceAddTiling::AnalyzeAttrs()
 {
     auto attrs = context_->GetAttrs();
