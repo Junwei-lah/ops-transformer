@@ -59,9 +59,9 @@ __inline__ __attribute__((always_inline)) __aicore__ void InitMetaData(const __g
             meta_data = &metaDataTmp;                                                                                  \
         }                                                                                                              \
         if ASCEND_IS_AIC {                                                                                             \
-            op.blockNum = sysArgs->skBlockNum;                                                                         \
+            op.blockNum = sysArgs->skNumBlocks;                                                                        \
         } else {                                                                                                       \
-          op.blockNum = sysArgs->skBlockNum/2;                                                                         \
+          op.blockNum = sysArgs->skNumBlocks/2;                                                                        \
         }                                                                                                              \
         op.Init(query, key, value, pseShift, attenMask, actualSeqLengthsQ, actualSeqLengths, blocktable, kvPaddingSize,\
                 meta_data, attentionOut, softmaxLse, user, tiling_data, &tPipe);                                       \
