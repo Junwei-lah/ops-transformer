@@ -267,8 +267,12 @@ static bool CheckMXQuantDtypesValidA5(const aclTensor* x1, const aclTensor* x2, 
                                       const aclTensor* output, const aclTensor* alltoAllOutOptional) {
     OP_CHECK_DTYPE_NOT_SUPPORT(x1, X_DTYPE_FP4ANDFP8_SUPPORT_LIST_A5, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(x2, X_DTYPE_FP4ANDFP8_SUPPORT_LIST_A5, return false);
-    if (x1->GetDataType() == op::DataType::DT_FLOAT4_E2M1 || x2->GetDataType() == op::DataType::DT_FLOAT4_E2M1) {
-        OP_CHECK_DTYPE_NOT_SAME(x1, x2, return false);
+    if (x1->GetDataType() != x2->GetDataType() &&
+        (x1->GetDataType() == op::DataType::DT_FLOAT4_E2M1 || x2->GetDataType() == op::DataType::DT_FLOAT4_E2M1)) {
+        OP_LOGE(ACLNN_ERR_PARAM_INVALID, 
+            "In mxquant scenario, x1 and x2 must have same dtype when one is fp4_e2m1, but found x1: %s, x2: %s.",
+            op::ToString(x1->GetDataType()).GetString(), op::ToString(x2->GetDataType()).GetString());
+        return false;
     }
     OP_CHECK_DTYPE_NOT_SUPPORT(x1ScaleOptional, SCALE_DTYPE_FP8_SUPPORT_LIST_A5, return false);
     OP_CHECK_DTYPE_NOT_SUPPORT(x2Scale, SCALE_DTYPE_FP8_SUPPORT_LIST_A5, return false);
@@ -410,11 +414,8 @@ static bool ReFormatNotND(const aclTensor* x1, const aclTensor* x2, const aclTen
 
 static aclnnStatus CheckAndHandleParams(const aclTensor *x1, const aclTensor *x2, const aclTensor *biasOptional,
                                         const aclTensor* x1ScaleOptional, const aclTensor *x2Scale,
-                                        const aclTensor* commScaleOptional, const aclTensor* x1OffsetOptional,
-                                        const aclTensor* x2OffsetOptional,
                                         const aclIntArray* alltoAllAxesOptional, const char *group,
-                                        int64_t x1QuantMode, int64_t x2QuantMode, int64_t commQuantMode,
-                                        int64_t commQuantDtype,int64_t x1QuantDtype,
+                                        int64_t x1QuantMode, int64_t x2QuantMode, int64_t x1QuantDtype,
                                         bool transposeX1, bool transposeX2,
                                         const aclTensor *output, const aclTensor *alltoAllOutOptional)
 {
@@ -445,8 +446,6 @@ static aclnnStatus CheckAndHandleParams(const aclTensor *x1, const aclTensor *x2
     CHECK_RET(CheckTransposeX1(transposeX1), ACLNN_ERR_PARAM_INVALID);
     // 检查group长度是否小于等于128
     CHECK_RET(CheckGroupLength(group), ACLNN_ERR_PARAM_INVALID);
-    // 检查预留参数，不影响场景
-    CheckReservedParams(commScaleOptional, x1OffsetOptional, x2OffsetOptional, commQuantMode, commQuantDtype);
     // 如果所有检查都通过，且reformat也通过，输出参数检查成功
     OP_LOGD("aclnnAlltoAllQuantMatmul checkParams success");
     return ACLNN_SUCCESS;
@@ -501,7 +500,8 @@ extern "C" aclnnStatus aclnnAlltoAllQuantMatmulGetWorkspaceSize(const aclTensor*
     bool transposeX1, bool transposeX2, const aclTensor* output, const aclTensor* alltoAllOutOptional, uint64_t* workspaceSize, aclOpExecutor** executor)
 {
     // 处理非连续Tensor，目前只有支持转置的x2涉及该处理
-    CHECK_RET(CheckX2Valid(x2), ACLNN_ERR_PARAM_INVALID);	// 先检查x2是否合法，避免非法操作
+    aclnnStatus checkX2Ret = CheckX2Valid(x2);
+    CHECK_RET(checkX2Ret == ACLNN_SUCCESS, checkX2Ret); // 先检查x2是否合法，避免非法操作
     bool notContiguous = IsTransposeLastTwoDims(x2);    // notContiguous标识x2是否是非连续的，通常在pytorch经过.t()会导致x2非连续
     auto transX2 = x2;    // 复制一个x2
     OP_LOGI("The notContiguous is: %d , and transposeX2 is: %d", notContiguous, transposeX2);
@@ -523,10 +523,8 @@ extern "C" aclnnStatus aclnnAlltoAllQuantMatmulGetWorkspaceSize(const aclTensor*
         InputPreProcessInt4(x1, transX2, alltoAllOutOptional, uniqueExecutor.get());
         uniqueExecutor.ReleaseTo(executor);
     }
-    aclnnStatus retParam = CheckAndHandleParams(x1, transX2, biasOptional, x1ScaleOptional, x2Scale,
-        commScaleOptional, x1OffsetOptional, x2OffsetOptional, alltoAllAxesOptional, group,
-        x1QuantMode, x2QuantMode, commQuantMode, commQuantDtype, x1QuantDtype,
-        transposeX1, transposeX2, output, alltoAllOutOptional);
+    aclnnStatus retParam = CheckAndHandleParams(x1, transX2, biasOptional, x1ScaleOptional, x2Scale, alltoAllAxesOptional,
+        group, x1QuantMode, x2QuantMode, x1QuantDtype, transposeX1, transposeX2, output, alltoAllOutOptional);
     CHECK_RET(retParam == ACLNN_SUCCESS, retParam);
     aclnnStatus ret = InnerAlltoAllQuantMatmulGetWorkspaceSize(
         x1, transX2, biasOptional, x1ScaleOptional, x2Scale, commScaleOptional, x1OffsetOptional, x2OffsetOptional, group, alltoAllAxesOptional,

@@ -23,6 +23,25 @@ using namespace std;
 
 constexpr int64_t MX_GROUP_SIZE = 4295032864;
 
+static aclTensor* CreateAclTensor(const std::vector<int64_t> shape, aclDataType dataType, aclFormat format) {
+    void* storage_data = nullptr;
+    std::vector<int64_t> strides(shape.size(), 1);
+    for (int64_t i = shape.size() - 2; i >= 0; i--) {
+        strides[i] = shape[i + 1] * strides[i + 1];
+    }
+    aclTensor* tensor = aclCreateTensor(shape.data(), shape.size(), dataType,
+        strides.data(), 0, format, shape.data(), shape.size(), storage_data);
+    assert(tensor != nullptr);
+    return tensor;
+}
+
+static aclTensor* CreateAclTensorOrNull(const std::vector<int64_t> shape, aclDataType dataType, aclFormat format) {
+    if (shape.empty()) {
+        return nullptr;
+    }
+    return CreateAclTensor(shape, dataType, format);
+}
+
 class TestAclnnQuantMatmulAlltoAll : public testing::Test {
 protected:
     static void SetUpTestCase()
@@ -682,7 +701,109 @@ static QuantMatmulAlltoAllAclnnTestParam MXQuant_cases_params[] = {
     {"QMMAA_MX-error38", 2, 4, 9, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
         ACL_FLOAT8_E4M3FN, ACL_FLOAT8_E4M3FN, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
         ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
-        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID} // 异常场景：quantmode组合非法，不是（6,6）
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：quantmode组合非法，不是（6,6）
+    // MXFP4正常用例
+    {"QMMAA_MXFP4-succ1", 2, 6, 6, {256, 128}, {256, 128}, {}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为空 + y输出fp32 + x2转置
+    {"QMMAA_MXFP4-succ2", 2, 6, 6, {256, 128}, {256, 128}, {}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT16,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为空 + y输出fp16 + x2转置
+    {"QMMAA_MXFP4-succ3", 2, 6, 6, {256, 128}, {256, 128}, {}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_BF16,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为空 + y输出bf16 + x2转置
+    {"QMMAA_MXFP4-succ4", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为fp32 + y输出fp32 + x2转置
+    {"QMMAA_MXFP4-succ5", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT16,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为fp32 + y输出fp16 + x2转置
+    {"QMMAA_MXFP4-succ6", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_BF16,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_SUCCESS}, // 合法场景：float4_e2m1/float4_e2m1 + bia为fp32 + y输出bf16 + x2转置
+    // MXFP4异常用例
+    {"QMMAA_MXFP4-error1", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x1数据类型非法
+    {"QMMAA_MXFP4-error2", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x1数据格式非法
+    {"QMMAA_MXFP4-error3", 2, 6, 6, {}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_NULLPTR}, // 异常场景：：必选输入x1为空
+    {"QMMAA_MXFP4-error4", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x2数据类型非法
+    {"QMMAA_MXFP4-error5", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x2数据格式非法
+    {"QMMAA_MXFP4-error6", 2, 6, 6, {256, 128}, {}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_NULLPTR}, // 异常场景：必选输入x2为空
+    {"QMMAA_MXFP44-error7", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT16, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：bias数据类型非法
+    {"QMMAA_MXFP4-error8", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：bias数据格式非法
+    {"QMMAA_MXFP4-error9", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x1Scale数据类型非法
+    {"QMMAA_MXFP4-error10", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x1Scale数据格式非法
+    {"QMMAA_MXFP4-error11", 2, 6, 6, {256, 128}, {256, 128}, {256}, {}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_NULLPTR}, // 异常场景：x1Scale为空
+    {"QMMAA_MXFP4-error12", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x2Scale数据类型非法
+    {"QMMAA_MXFP4-error13", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_FRACTAL_Z, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：x2Scale数据格式非法
+    {"QMMAA_MXFP4-error14", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_NULLPTR}, // 异常场景：x2Scale为空
+    {"QMMAA_MXFP4-error15", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT8_E4M3FN,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：output数据类型非法
+    {"QMMAA_MXFP4-error16", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_FRACTAL_Z,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：output数据格式非法
+    {"QMMAA_MXFP4-error17", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_NULLPTR}, // 异常场景：必选输出output为空
+    {"QMMAA_MXFP4-error18", 2, 6, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "", false, true, ACLNN_ERR_PARAM_INVALID}, // 异常场景：必选属性group为空
+    {"QMMAA_MXFP4-error19", 2, 7, 6, {256, 128}, {256, 128}, {256}, {256, 2, 2}, {256, 2, 2}, {512, 128},
+        ACL_FLOAT4_E2M1, ACL_FLOAT4_E2M1, ACL_FLOAT, ACL_FLOAT8_E8M0, ACL_FLOAT8_E8M0, ACL_FLOAT,
+        ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND, ACL_FORMAT_ND,
+        MX_GROUP_SIZE, {-1, -2}, "ut_test_quant_matmul_allto_all", false, true, ACLNN_ERR_PARAM_INVALID} // 异常场景：quantmode组合非法，不是mx量化场景（6,6）
 };
 
 static void TestQuantOneParamCase(const QuantMatmulAlltoAllAclnnTestParam& param)
@@ -716,28 +837,20 @@ static void TestQuantOneParamCase(const QuantMatmulAlltoAllAclnnTestParam& param
     bool transposeX1 = param.transposeX1;
     bool transposeX2 = param.transposeX2;
     aclnnStatus retStatus = param.aclnnStatusUt;
-    TensorDesc x1 = TensorDesc(x1Shape, x1Dtype, x1Format);
-    TensorDesc x2 = TensorDesc(x2Shape, x2Dtype, x2Format);
-    TensorDesc x1scales = TensorDesc(x1scalesShape, x1scalesDtype, x1ScaleFormat);
-    TensorDesc x2scales = TensorDesc(x2scalesShape, x2scalesDtype, x2ScaleFormat);
-    TensorDesc output = TensorDesc(outputShape, outputDtype, outputFormat);
+    aclTensor* x1 = CreateAclTensorOrNull(x1Shape, x1Dtype, x1Format);
+    aclTensor* x2 = CreateAclTensorOrNull(x2Shape, x2Dtype, x2Format);
+    aclTensor* bias = CreateAclTensorOrNull(biasShape, biasDtype, biasFormat);
+    aclTensor* x1scales = CreateAclTensorOrNull(x1scalesShape, x1scalesDtype, x1ScaleFormat);
+    aclTensor* x2scales = CreateAclTensorOrNull(x2scalesShape, x2scalesDtype, x2ScaleFormat);
+    aclTensor* output = CreateAclTensorOrNull(outputShape, outputDtype, outputFormat);
     uint64_t workspaceSize = 0;
     aclOpExecutor* executor = nullptr;
     aclnnStatus aclRet;
-    if (biasShape.empty()) {
-        auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
-                            INPUT(x1, x2, nullptr, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, group,
-                                  x1quantmode, x2quantmode, 0, -1, groupSize, transposeX1, transposeX2),
-                            OUTPUT(output));
-        aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
-    } else {
-        TensorDesc bias = TensorDesc(biasShape, biasDtype, biasFormat);
-        auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
-                            INPUT(x1, x2, bias, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, group,
-                                  x1quantmode, x2quantmode, 0, -1, groupSize, transposeX1, transposeX2),
-                            OUTPUT(output));
-        aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
-    }
+    auto ut = OP_API_UT(aclnnQuantMatmulAlltoAll,
+                        INPUT(x1, x2, bias, x1scales, x2scales, nullptr, nullptr, nullptr, alltoAllAxesOptional, group,
+                               x1quantmode, x2quantmode, 0, -1, groupSize, transposeX1, transposeX2),
+                        OUTPUT(output));
+    aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
     if (retStatus == ACLNN_SUCCESS) {
         EXPECT_NE(aclRet, ACLNN_ERR_PARAM_INVALID);
     } else {

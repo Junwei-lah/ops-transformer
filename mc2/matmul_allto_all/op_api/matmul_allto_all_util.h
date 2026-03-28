@@ -66,14 +66,10 @@ bool CheckShapeAAMM(const aclTensor* x1, const aclTensor* x2, const aclTensor* b
 bool IsTransposeLastTwoDims(const aclTensor *tensor);
 
 // 检查x2是否合法，空指针、空tensor和维度
-bool CheckX2Valid(const aclTensor* x2);
+aclnnStatus CheckX2Valid(const aclTensor* x2);
 
 // 检查是否有alltoallout输出
 bool IsAll2AllOut(const aclTensor *alltoAllOut);
-
-// 检查预留参数是否为合法值，若为预设之外的值会提示Warning
-bool CheckReservedParams(const aclTensor *commScaleOptional, const aclTensor* x1OffsetOptional,
-                         const aclTensor* x2OffsetOptional, int64_t commQuantMode, int64_t commQuantDtype);
 
 // 处理支持转置的tensor物理排布不连续问题
 aclTensor *TransX2Tensor(const aclTensor *x2);
