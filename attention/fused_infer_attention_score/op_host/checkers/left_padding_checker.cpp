@@ -45,8 +45,34 @@ ge::graphStatus LeftPaddingChecker::CheckShapeSupport(const gert::Tensor *tensor
     return ge::GRAPH_SUCCESS;
 }
 
-// CheckSingle
-ge::graphStatus LeftPaddingChecker::CheckSingleDesc(const FiaTilingInfo &fiaInfo)
+// CheckSinglePara
+ge::graphStatus LeftPaddingChecker::CheckShapeAndDim(const FiaTilingInfo &fiaInfo)
+{
+    // When left-padding is enabled for Query and Key/Value,
+    // the Shape size and Dim number corresponding to the Padding size must both be 1.
+    if (fiaInfo.qPaddingSizeFlag) {
+        const std::vector<int64_t> querypaddingsizeShapeNumList = {SHAPE_NUM_ONE};
+        OP_CHECK_IF(ge::GRAPH_SUCCESS !=
+                        CheckShapeSupport(fiaInfo.opParamInfo.queryPaddingSize.tensor, querypaddingsizeShapeNumList),
+                    OP_LOGE(fiaInfo.opName, "The shape size of query paddingsize is not 1!"), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(fiaInfo.opParamInfo.queryPaddingSize.tensor->GetStorageShape().GetDimNum() != DIM_NUM_1,
+                    OP_LOGE(fiaInfo.opName, "The dim number of query paddingsize is not 1!"), return ge::GRAPH_FAILED);
+    }
+
+    if (fiaInfo.kvPaddingSizeFlag) {
+        const std::vector<int64_t> kvpaddingsizeShapeNumList = {SHAPE_NUM_ONE};
+        OP_CHECK_IF(
+            ge::GRAPH_SUCCESS != CheckShapeSupport(fiaInfo.opParamInfo.kvPaddingSize.tensor, kvpaddingsizeShapeNumList),
+            OP_LOGE(fiaInfo.opName, "The shape size of kv paddingsize is not 1!"), return ge::GRAPH_FAILED);
+        OP_CHECK_IF(fiaInfo.opParamInfo.kvPaddingSize.tensor->GetStorageShape().GetDimNum() != DIM_NUM_1,
+                    OP_LOGE(fiaInfo.opName, "The dim number of kv paddingsize is not 1!"), return ge::GRAPH_FAILED);
+    }
+
+    return ge::GRAPH_SUCCESS;
+}
+
+// CheckExistence
+ge::graphStatus LeftPaddingChecker::CheckExistenceDesc(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.qPaddingSizeFlag) {
         OP_CHECK_IF(fiaInfo.opParamInfo.queryPaddingSize.desc == nullptr,
@@ -136,42 +162,21 @@ ge::graphStatus LeftPaddingChecker::CheckFeaturePageAttention(const FiaTilingInf
     return ge::GRAPH_SUCCESS;
 }
 
-// CheckMuiltPara
-ge::graphStatus LeftPaddingChecker::CheckMultiParaShapeAndDim(const FiaTilingInfo &fiaInfo)
-{
-    // When left-padding is enabled for Query and Key/Value,
-    // the Shape size and Dim number corresponding to the Padding size must both be 1.
-    if (fiaInfo.qPaddingSizeFlag) {
-        const std::vector<int64_t> querypaddingsizeShapeNumList = {SHAPE_NUM_ONE};
-        OP_CHECK_IF(ge::GRAPH_SUCCESS !=
-                        CheckShapeSupport(fiaInfo.opParamInfo.queryPaddingSize.tensor, querypaddingsizeShapeNumList),
-                    OP_LOGE(fiaInfo.opName, "The shape size of query paddingsize is not 1!"), return ge::GRAPH_FAILED);
-        OP_CHECK_IF(fiaInfo.opParamInfo.queryPaddingSize.tensor->GetStorageShape().GetDimNum() != DIM_NUM_1,
-                    OP_LOGE(fiaInfo.opName, "The dim number of query paddingsize is not 1!"), return ge::GRAPH_FAILED);
-    }
-
-    if (fiaInfo.kvPaddingSizeFlag) {
-        const std::vector<int64_t> kvpaddingsizeShapeNumList = {SHAPE_NUM_ONE};
-        OP_CHECK_IF(
-            ge::GRAPH_SUCCESS != CheckShapeSupport(fiaInfo.opParamInfo.kvPaddingSize.tensor, kvpaddingsizeShapeNumList),
-            OP_LOGE(fiaInfo.opName, "The shape size of kv paddingsize is not 1!"), return ge::GRAPH_FAILED);
-        OP_CHECK_IF(fiaInfo.opParamInfo.kvPaddingSize.tensor->GetStorageShape().GetDimNum() != DIM_NUM_1,
-                    OP_LOGE(fiaInfo.opName, "The dim number of kv paddingsize is not 1!"), return ge::GRAPH_FAILED);
-    }
-
-    return ge::GRAPH_SUCCESS;
-}
-
 ge::graphStatus LeftPaddingChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
 {
-    if (ge::GRAPH_SUCCESS != CheckSingleDesc(fiaInfo)) {
-        return ge::GRAPH_FAILED;
+    if (enableNonQuant_) {
+        if (ge::GRAPH_SUCCESS != CheckShapeAndDim(fiaInfo)) {
+            return ge::GRAPH_FAILED;
+        }
     }
     return ge::GRAPH_SUCCESS;
 }
 
 ge::graphStatus LeftPaddingChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
 {
+    if (ge::GRAPH_SUCCESS != CheckExistenceDesc(fiaInfo)) {
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -186,11 +191,6 @@ ge::graphStatus LeftPaddingChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
 
 ge::graphStatus LeftPaddingChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
 {
-    if (enableNonQuant_) {
-        if (ge::GRAPH_SUCCESS != CheckMultiParaShapeAndDim(fiaInfo)) {
-            return ge::GRAPH_FAILED;
-        }
-    }
     return ge::GRAPH_SUCCESS;
 }
 

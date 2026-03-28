@@ -1150,9 +1150,9 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_qkvout_che
             {"out_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
         },
         &compileInfo, "Ascend950", 64, 262144, 16384);
-    int64_t expectTilingKey = 132382980;
+    int64_t expectTilingKey = 132382977;
     std::string expectTilingData = "";
-    // ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
 TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_qkvout_check2)
@@ -2228,9 +2228,9 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_qkvout_che
             {"out_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
         },
         &compileInfo, "Ascend950", 64, 262144, 16384);
-    int64_t expectTilingKey = 132382980;
+    int64_t expectTilingKey = 132382977;
     std::string expectTilingData = "";
-    // ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
 TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_tiling_19)
@@ -3031,9 +3031,9 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_qkvout_che
             {"out_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
         },
         &compileInfo, "Ascend950", 64, 262144, 16384);
-    int64_t expectTilingKey = 107133670105728;
+    int64_t expectTilingKey = 132382977;
     std::string expectTilingData = "";
-    // ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_SUCCESS, expectTilingKey, expectTilingData);
 }
 
 TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_qkvout_check31)
@@ -10240,12 +10240,12 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_PA_0)
         "FusedInferAttentionScore",
         {
             {{{1,5,1,8}, {1,5,1,8}}, ge::DT_FLOAT16, ge::FORMAT_ND},   // query-input0
-            {{{1,5,0,8}, {1,5,0,8}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // key-input1
-            {{{1,5,0,8}, {1,5,0,8}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // value-input2
+            {{{1,5,1,8}, {1,5,1,8}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // key-input1
+            {{{1,5,1,8}, {1,5,1,8}}, ge::DT_FLOAT16, ge::FORMAT_ND}, // value-input2
             {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},                             // pse_shift-input3
             {{{}, {}}, ge::DT_BOOL, ge::FORMAT_ND},         // atten_mask-input4
             {{{}, {}}, ge::DT_UINT64, ge::FORMAT_ND},                              // actual_seq_lengths-空
-            {{{0}, {0}}, ge::DT_FLOAT, ge::FORMAT_ND},                               // actual_seq_lengths_kv-空
+            {{{1}, {1}}, ge::DT_FLOAT, ge::FORMAT_ND},                               // actual_seq_lengths_kv-不空
             {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},                             // dequant_scale1-input5
             {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},                             // quant_scale1-input6
             {{{}, {}}, ge::DT_FLOAT16, ge::FORMAT_ND},                             // dequant_scale2-input7
@@ -10293,7 +10293,7 @@ TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_PA_0)
             {"out_dtype", Ops::Transformer::AnyValue::CreateFrom<int64_t>(0)},
         },
         &compileInfo, "Ascend950", 64, 262144, 16384);
-    // ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
+    ExecuteTestCase(tilingContextPara, ge::GRAPH_FAILED);
 }
 
 TEST_F(FusedInferAttentionScoreTiling, FusedInferAttentionScoreTiling_PA_NonQuant)

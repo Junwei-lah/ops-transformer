@@ -37,14 +37,14 @@ public:
 private:
     // 公共校验函数
     ge::graphStatus CheckShapeSupport(const gert::Tensor *tensor, const std::vector<int64_t> &expectShapeList) const;
-    ge::graphStatus CheckSingleDesc(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckExistenceDesc(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureActualLen(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureLayout(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureAlibiPse(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeaturePageAttention(const FiaTilingInfo &fiaInfo);
 
     // enableNonQuant 相关校验函数
-    ge::graphStatus CheckMultiParaShapeAndDim(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckShapeAndDim(const FiaTilingInfo &fiaInfo);
 
 private:
 };

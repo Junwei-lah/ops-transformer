@@ -45,6 +45,10 @@ if(NOT BUILD_OPS_RTY_KERNEL)
     add_modules_sources_with_soc(OPTYPE fused_infer_attention_score ACLNNTYPE aclnn_inner)
 endif()
 
+file(GLOB_RECURSE ARCH35_CHECKER_SRC_FILES
+    ../op_host/checkers/*checker*.cpp
+)
+
 if(NOT BUILD_OPS_RTY_KERNEL)
     add_tiling_modules()
     target_sources(${OPHOST_NAME}_tiling_obj PRIVATE
@@ -54,9 +58,11 @@ if(NOT BUILD_OPS_RTY_KERNEL)
     ../../common/op_host/arch32/fia_tiling_nonquant_mla.cpp
     ../../common/op_host/arch32/fia_tiling_nonquant.cpp
     ../../common/op_host/arch32/fia_tiling_empty_tensor.cpp
-    ../op_host/arch35/fused_infer_attention_score_tiling_v2.cpp
+    ../op_host/arch35/fused_infer_attention_score_tiling_v4.cpp
+    ../op_host/arch35/fused_infer_attention_score_tiling_impl.cpp
+    ../op_host/fused_infer_attention_score_tiling_info_parser.cpp
+    ${ARCH35_CHECKER_SRC_FILES}
     ../op_host/arch32/fused_infer_attention_score_tiling_v3.cpp
-    ../op_host/arch32/fused_infer_attention_score_tiling_info_parser.cpp
     ../op_host/arch32/fused_infer_attention_score_tiling_check.cpp
     ../op_host/arch32/fused_infer_attention_score_tiling_check_consistency.cpp
     ../op_host/arch32/fused_infer_attention_score_tiling_check_feature.cpp

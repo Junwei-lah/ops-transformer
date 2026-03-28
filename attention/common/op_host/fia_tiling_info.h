@@ -312,7 +312,7 @@ public:
 
     // PSE
     bool pseShiftFlag = false;
-    bool pseShiftByBatch = false;
+    uint32_t pseShiftByBatch = 0U;
     uint32_t pseShiftS1 = 0U;
     uint32_t pseShiftS2 = 0U;
     bool enableAlibiPse = false;

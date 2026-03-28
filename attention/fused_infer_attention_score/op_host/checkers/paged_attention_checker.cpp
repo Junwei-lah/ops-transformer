@@ -284,8 +284,8 @@ ge::graphStatus PagedAttentionChecker::CheckPACacheShape(const FiaTilingInfo &fi
 // check input query dtype
 ge::graphStatus PagedAttentionChecker::CheckQDtypeSupport(const FiaTilingInfo &fiaInfo)
 {
-    OP_CHECK_IF(fiaInfo.inputQType == ge::DT_INT8,
-        OP_LOGE(fiaInfo.opName, "When page attention enable, the datatype(%s) of query is not supported.",
+    OP_CHECK_IF(fiaInfo.inputQType == ge::DT_INT8 && fiaInfo.ropeMode != RopeMode::ROPE_SPLIT,
+        OP_LOGE(fiaInfo.opName, "When page attention enable, the datatype(%s) of query should not be INT8 except for MLA fullquant.",
                 DataTypeToSerialString(fiaInfo.inputQType).c_str()),
             return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
@@ -293,6 +293,9 @@ ge::graphStatus PagedAttentionChecker::CheckQDtypeSupport(const FiaTilingInfo &f
 
 ge::graphStatus PagedAttentionChecker::CheckBlockTableShape(const FiaTilingInfo &fiaInfo)
 {
+    if (fiaInfo.isMaxWorkspace) {
+        return ge::GRAPH_SUCCESS;
+    }
     const gert::Shape blockTableShape = fiaInfo.opParamInfo.blockTable.tensor->GetStorageShape();
 
     // check dim num

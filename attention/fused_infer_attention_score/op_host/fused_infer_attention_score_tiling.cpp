@@ -26,7 +26,7 @@
 #include "register/op_def_registry.h"
 #include "tiling_base/tiling_templates_registry.h"
 #include "../../incre_flash_attention/op_host/incre_flash_attention_tiling_impl.h"
-#include "arch35/fused_infer_attention_score_tiling_v2.h"
+#include "arch35/fused_infer_attention_score_tiling_v4.h"
 
 using namespace ge;
 using namespace AscendC;
@@ -2099,7 +2099,7 @@ FIA_EXTERN_C ge::graphStatus DoOpTilingFusedInferAttentionScore(gert::TilingCont
         return ge::GRAPH_FAILED);
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(platformInfoPtr);
     if (ascendcPlatform.GetCurNpuArch() == NpuArch::DAV_3510) {
-        return TilingFusedInferAttentionScoreV2(context);
+        return TilingFusedInferAttentionScoreV4(context);
     } else {
         return TilingFusedInferAttentionScore(context);
     }

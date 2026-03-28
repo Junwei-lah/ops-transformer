@@ -15,7 +15,8 @@
 
 #include "fused_infer_attention_score_tiling_v3.h"
 #include "fused_infer_attention_score_tiling_check.h"
-#include "fused_infer_attention_score_tiling_info_parser.h"
+#include "../checkers/fia_checker.h"
+#include "../fused_infer_attention_score_tiling_info_parser.h"
 #include "../../../common/op_host/arch32/fia_tiling_nonquant_mla.h"
 #include "../../../common/op_host/arch32/fia_tiling_nonquant.h"
 #include "../../../common/op_host/arch32/fia_tiling_empty_tensor.h"
@@ -732,8 +733,11 @@ FIA_EXTERN_C ge::graphStatus TilingFusedInferAttentionScoreV3(gert::TilingContex
         return ge::GRAPH_FAILED;
     }
 
+    FIAChecker fiaChecker;
+    fiaChecker.Init(fiaInfo);
+
     // Check函数只做校验，不能修改fiaInfo中的信息
-    if (TilingCheck::Check(fiaInfo) != ge::GRAPH_SUCCESS) {
+    if (fiaChecker.Process(fiaInfo) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
 
@@ -1026,8 +1030,9 @@ bool CheckSpecConditions(const gert::TilingContext *context)
         !((sparseMode == 0) && (tempAttnMaskShape != nullptr));
     bool nonMhaConditions = !isMha && (innerPrecise == 0);
     bool specConditionFlag = false;
+    bool quantScale2Flag = context->GetOptionalInputTensor(QUANT_SCALE2_INDEX) != nullptr ? true : false;
     if (isLayoutSupported && isLearnableSinkFlag && !isRopeSplitMla && sparseModeSupported &&
-        (nonMhaConditions || mhaConditions)) {
+        (nonMhaConditions || mhaConditions) && !quantScale2Flag) {
         int64_t tempQD = tempQ->GetStorageShape().GetDim(DIM_2);
         if (!isPageAttention) {
             int64_t tempKD = tempK->GetStorageShape().GetDim(DIM_2);

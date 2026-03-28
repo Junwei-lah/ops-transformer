@@ -873,8 +873,6 @@ ge::graphStatus ShapeChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaI
             const std::vector<std::string> noRopeLayoutSupportListB = {"BNSD_BSND"};
             const std::vector<std::string> noRopeLayoutSupportListC = {"NTD", "BSH_BNSD", "BSND_BNSD", "NTD_TND"};
             const std::vector<std::string> noRopeLayoutSupportListD = {"TND"};
-            const std::vector<std::string> combineRopeLayoutSupportList = {
-                "BSH", "BSND", "BNSD", "BNSD_BSND", "TND", "NTD", "BSH_BNSD", "BSND_BNSD", "NTD_TND"};
 
             if (!fiaInfo.isLegacyIfa &&
                 fiaInfo.vHeadDim % 16 != 0) { // 16: qkvD need 16 align when qs>1, in specific input layout

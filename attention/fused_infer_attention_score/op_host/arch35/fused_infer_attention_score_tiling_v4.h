@@ -9,29 +9,18 @@
  */
 
 /*!
- * \file fused_infer_attention_score_tiling.h
+ * \file fused_infer_attention_score_tiling_v4.h
  * \brief
  */
 
-#ifndef AIR_CXX_RUNTIME_V2_OP_IMPL_FUSEDINFERATTENTIONSCORE_V2_H_
-#define AIR_CXX_RUNTIME_V2_OP_IMPL_FUSEDINFERATTENTIONSCORE_V2_H_
+#ifndef AIR_CXX_RUNTIME_V4_OP_IMPL_FUSEDINFERATTENTIONSCORE_V4_H_
+#define AIR_CXX_RUNTIME_V4_OP_IMPL_FUSEDINFERATTENTIONSCORE_V4_H_
 #include "register/tilingdata_base.h"
 #include "../../../common/op_host/fia_tiling_base.h"
+#include "../../../common/op_host/fia_tiling_info.h"
 
 namespace optiling {
-ge::graphStatus TilingFusedInferAttentionScoreV2(gert::TilingContext *context);
-class FusedInferAttentionScoreTilingV2 : public FiaTilingBase{
-public:
-    explicit FusedInferAttentionScoreTilingV2(gert::TilingContext *context): FiaTilingBase(context) {}
-    ~FusedInferAttentionScoreTilingV2() override = default;
-
-protected:
-    void InitTilingInfo(TilingInfo *tilingInfo) override {}
-    bool IsCapable() override {return true;}
-    ge::graphStatus DoOpTiling() override;
-};
-
-ge::graphStatus TilingFusedInferAttentionScoreV2(gert::TilingContext *context);
+ge::graphStatus TilingFusedInferAttentionScoreV4(gert::TilingContext *context);
 
 } // namespace optiling
-#endif  // AIR_CXX_RUNTIME_V2_OP_IMPL_FUSEDINFERATTENTIONSCORE_V2_H_
+#endif  // AIR_CXX_RUNTIME_V4_OP_IMPL_FUSEDINFERATTENTIONSCORE_V4_H_

@@ -15,28 +15,34 @@
 
 #pragma once
 
-#include "../../../common/op_host/fia_tiling_info.h"
-#include "../../../common/op_host/fia_tiling_shape.h"
+#include "../../common/op_host/fia_tiling_info.h"
+#include "../../common/op_host/fia_tiling_shape.h"
 
 namespace optiling {
 constexpr int64_t SPARSE_MODE_INT_MAX = 2147483647;
 class FiaInfoParser {
 public:
-    explicit FiaInfoParser(const gert::TilingContext *context) : context_(context) {}
+    explicit FiaInfoParser(const gert::TilingContext *context) : context_(context)
+    {
+    }
     ~FiaInfoParser() = default;
 
     ge::graphStatus CheckRequiredInOutExistence() const;
     ge::graphStatus CheckRequiredAttrExistence() const;
     ge::graphStatus CheckRequiredParaExistence() const;
-
-    ge::graphStatus GetActualSeqLenSize(uint32_t &size, const gert::Tensor *tensor,
-        const FiaLayout &layout, const std::string &actualSeqLenName, const std::string &attrName);
     ge::graphStatus GetActualSeqLenQSize(uint32_t &size);
     ge::graphStatus GetOpName();
     ge::graphStatus GetNpuInfo();
+    void GetOptionalInputParaMaskInfo();
+    void GetOptionalInputParaActualSeqLengthInfo();
+    void GetOptionalInputParaPageAttentionInfo();
     void GetOptionalInputParaPostQuantInfo();
-    void GetOptionalInputParaPrefixInfo();
     void GetOptionalInputParaRopeInfo();
+    void GetOptionalInputParaPseInfo();
+    void GetOptionalInputParaLeftPaddingInfo();
+    void GetOptionalInputParaPrefixInfo();
+    void GetOptionalInputParaLearnableSinkInfo();
+    void GetOptionalInputParaQuantInfo();
     void GetOptionalInputParaInfo();
     void GetInputParaInfo();
     void GetOutputParaInfo();
@@ -49,42 +55,47 @@ public:
     ge::graphStatus GetMaxWorkspaceFlag();
     ge::graphStatus GetLegacyIfaFlag();
 
-    ge::graphStatus GetInOutDataType();
+    void GetInOutDataType();
     ge::graphStatus GetBatchSize();
-    ge::graphStatus GetQTSize();
-    ge::graphStatus GetKTSize();
+    void GetQueryTSize();
+    void GetKeyTSize();
     ge::graphStatus GetQkHeadDim();
     ge::graphStatus GetS1Size();
-    ge::graphStatus GetKvStorageMode();
+    void GetKvStorageMode();
+    void GetQuantMode();
     ge::graphStatus GetKvLayout();
     void SetFiaShape();
-    ge::graphStatus GetMaxActualSeq(const gert::Tensor *actualSeqLensTensor,
-        FiaLayout layout, int64_t &maxActualSeqLen);
+    ge::graphStatus GetMaxActualSeq(const gert::Tensor *actualSeqLensTensor, FiaLayout layout,
+                                    int64_t &maxActualSeqLen);
     ge::graphStatus GetS2SizeFromActualSeqLens();
     ge::graphStatus GetS2SizeForBatchContinuous();
     ge::graphStatus GetS2SizeForTensorList();
     ge::graphStatus GetMaxBlockNumPerBatch();
     ge::graphStatus GetBlockSize();
+    ge::graphStatus GetBlockTableDim2();
     ge::graphStatus GetS2SizeForPageAttention();
     ge::graphStatus GetS2Size();
     ge::graphStatus GetValueHeadDim();
     ge::graphStatus GetRopeMode();
+    ge::graphStatus GetMlaMode();
     ge::graphStatus GetRopeHeadDim();
     ge::graphStatus GetQueryAndOutLayout();
     ge::graphStatus GetN1Size();
     ge::graphStatus GetN2Size();
     ge::graphStatus GetGSize();
-    ge::graphStatus GetUpdateInfo();
-    ge::graphStatus GetMaskFlag();
+    void GetUpdateInfo();
+    void GetMaskFlag();
     ge::graphStatus GetAttenMaskSparse9Info();
     ge::graphStatus GetAttenMaskInfo();
-    ge::graphStatus GetPaddingSizeFlag();
+    void GetPaddingSizeFlag();
     ge::graphStatus GetActualSeqInfo();
-    ge::graphStatus GetPreNextToken();
+    void GetPreNextToken();
     ge::graphStatus GetSystemPrefix();
-     ge::graphStatus GetPseShiftFlag();
+    ge::graphStatus GetPseShiftFlag();
     ge::graphStatus GetPostQuantInfo();
+    ge::graphStatus GetFullQuantMode();
     ge::graphStatus GetOldIfaGqaFlag();
+    ge::graphStatus GetAntiQuantInfo();
     TilingKeyLayout MapStringToLayout(FiaLayout &layoutString) const;
     void GenerateAxisInfo(FiaTilingInfo &fiaInfo);
     void GenerateDtypeInfo(FiaTilingInfo &fiaInfo);
@@ -101,6 +112,11 @@ public:
     const char *opName_ = nullptr;
     fe::PlatFormInfos *platformInfo_ = nullptr;
     FIAParaInfo opParamInfo_;
+    enum class IfaPseType : int64_t {
+        PSE_OUTER_MUL_ADD_TYPE = 0,
+        PSE_INNER_MUL_ADD_TYPE = 2,
+        PSE_INNER_MUL_ADD_SQRT_TYPE = 3,
+    };
 
     // BaseParams
     uint32_t bSize_ = 0;
@@ -112,10 +128,13 @@ public:
     uint32_t qkHeadDim_ = 0;
     uint32_t vHeadDim_ = 0;
     uint32_t ropeHeadDim_ = 0;
-    uint32_t qTSize_ = 0; // 仅TND/NTD时生效
-    uint32_t kTSize_ = 0;
+    uint32_t queryTSize_ = 0; // 仅TND/NTD时生效
+    uint32_t keyTSize_ = 0;
     KvStorageMode kvStorageMode_ = KvStorageMode::BATCH_CONTINUOUS;
     RopeMode ropeMode_ = RopeMode::NO_ROPE;
+    MlaMode mlaMode_ = MlaMode::NO_MLA;
+    FiaQuantMode quantMode_ = FiaQuantMode::NO_QUANT;
+    FiaFullQuantMode fullQuantMode_ = FiaFullQuantMode::NO_FULL_QUANT;
 
     // Layout
     FiaLayout qLayout_ = FiaLayout::BSND;
@@ -125,9 +144,11 @@ public:
     // PageAttention
     uint32_t maxBlockNumPerBatch_ = 0;
     int32_t blockSize_ = 0;
+    uint32_t blockTableDim2_ = 0;
 
     // 局部参数, 暂存
     platform_ascendc::SocVersion socVersion_ = platform_ascendc::SocVersion::ASCEND910B;
+    NpuArch npuArch_ = NpuArch::DAV_3510;
 
     ge::DataType inputQType_ = ge::DT_FLOAT16;
     ge::DataType inputKvType_ = ge::DT_FLOAT16;
@@ -144,16 +165,21 @@ public:
     bool isSameActualseq_ = true;
     bool attenMaskFlag_ = false;
     bool needInit_ = false;
+    bool antiQuantFlag_ = false;
+    uint32_t antiquantParaSeqSize_ = 0;
     int64_t preToken_ = 0;
     int64_t nextToken_ = 0;
+    int32_t sparseMode_ = 0;
     uint32_t attenMaskBatchStride_ = 0;
     uint32_t attenMaskStride_ = 0;
     bool kvPaddingSizeFlag_ = false;
     bool qPaddingSizeFlag_ = false;
     bool pseShiftFlag_ = false;
-    bool pseShiftByBatch_ = false;
+    uint32_t pseShiftByBatch_ = 0;
     uint32_t pseShiftS1_ = 0;
     uint32_t pseShiftS2_ = 0;
+    int64_t pseType_ = 0;
+    bool enableAlibiPse_ = false;
     int64_t maxActualseq_ = 0;
     bool isMaxWorkspace_ = false;
     bool isLegacyIfa_ = false;
@@ -163,13 +189,13 @@ public:
 
     bool isOutQuantPerChnOut_ = false;
     bool isOutQuantTypeBf16_ = false;
-    bool isPostQuantEnable_ = false;        
+    bool isPostQuantEnable_ = false;
 
     bool isAccumQSeq_ = false;
     bool isAccumKVSeq_ = false;
     uint32_t actualLenQDims_ = 0;
     uint32_t actualLenDims_ = 0;
-    std::vector<int64_t> kvListSeqLens_ {};
+    std::vector<int64_t> kvListSeqLens_{};
 
     std::shared_ptr<FiaTilingShape> queryShape_ = nullptr;
     std::shared_ptr<FiaTilingShape> keyShape_ = nullptr;
@@ -178,4 +204,4 @@ public:
     std::shared_ptr<FiaTilingShape> keyRopeShape_ = nullptr;
     std::shared_ptr<FiaTilingShape> keyPrefixShape_ = nullptr;
 };
-} // optiling
+} // namespace optiling

@@ -94,8 +94,8 @@ protected:
     ge::graphStatus AdjustSinnerAndSouter(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
     void GetPreNextTokensLeftUp(const FiaTilingInfo &fiaInfo, int64_t actualSeqLength, int64_t actualSeqLengthKV,
                                 int64_t &preTokensLeftUp, int64_t &nextTokensLeftUp);
-    void FixParamWithRowInvalid(int64_t &actualSeqLength, int64_t actualSeqLengthKV, int64_t &preTokensLeftUp,
-                                int64_t &nextTokensLeftUp);
+    void FixParamWithRowInvalid(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLength, int64_t actualSeqLengthKV, 
+                                int64_t &preTokensLeftUp, int64_t &nextTokensLeftUp);
     int64_t GetCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength, int64_t sInner, int64_t sOuter,
                             int64_t token);
     int64_t GetCalcBlockNumsOneHead(const FiaTilingInfo &fiaInfo, int64_t actualSeqLength, int64_t actualSeqLengthKV,
@@ -113,9 +113,22 @@ protected:
     ge::graphStatus SplitS2(const FiaTilingInfo &fiaInfo);
     void SetDequantBaseSize(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CalcInnerSize(const FiaTilingInfo &fiaInfo, uint32_t seqSize);
+    void GetActualSeqLength(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLengths, int64_t &actualSeqLengthsKV, uint32_t bIdx);
+    int64_t SumOfArithmeticSeries(int64_t an, int64_t d);
+    int64_t GetAntiQuantCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength, int64_t sInner, int64_t sOuter,
+                                     int64_t token);
     void ComputeDequantSplitNBSeq(const FiaTilingInfo &fiaInfo, std::vector<int64_t> sOuterLoopTimes,
                                   std::vector<int64_t> sInnerLoopTimes, int64_t sInnerLoopTimesPrefix,
                                   double coreWeightTarget, uint32_t &curCore, const size_t tilingElementArrayLen);
+    int64_t GetAntiQuantCalcBlockNumsOneHead( const FiaTilingInfo &fiaInfo, int64_t outerBlockNums,
+                                              int64_t innerBlockNums, int64_t sInnerLoopTimesPrefix,
+                                              int64_t preTokensLeftUp, int64_t nextTokensLeftUp);
+    void GetAntiQuantPreNextTokensLeftUp(const FiaTilingInfo &fiaInfo, int64_t actualSeqLength,
+                                         int64_t actualSeqLengthKV, int64_t &preTokensLeftUp,
+                                         int64_t &nextTokensLeftUp);
+    void FixAntiQuantParamWithRowInvalid(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLength, 
+                                         int64_t actualSeqLengthKV, int64_t &preTokensLeftUp,
+                                         int64_t &nextTokensLeftUp);
     void DequantCubeSplitBNSeq(const FiaTilingInfo &fiaInfo);
     int64_t GetActualInnerBlockNums(int64_t sInnerIndexStart, int64_t sInnerIndexEnd, int64_t innerBlockNums);
     void SplitDequant(const FiaTilingInfo &fiaInfo);
@@ -126,7 +139,7 @@ protected:
     bool CheckTransposeLayout(const FiaTilingInfo &fiaInfo);
     void PrintAllTilingData(const FiaTilingInfo &fiaInfo);
 
-    PromptFlashAttentionTilingData pfaTilingData_;
+    PromptFlashAttentionTilingDataV2 pfaTilingData_;
     IncreFlashAttentionTilingData ifaTilingData_;
     FlashAttentionScoreSimplifiedTilingData faRunTilingAdapter_;
     FiaTilingKeyInfo tilingKeyInfo_;
@@ -151,6 +164,7 @@ protected:
     std::vector<int64_t> actualSeqLengthsKV_ = {};
     bool fromPFA_ = false;
     bool isPFAFlag_ = false;
+    bool needInit_ = false;
 };
 
 }  // namespace optiling
