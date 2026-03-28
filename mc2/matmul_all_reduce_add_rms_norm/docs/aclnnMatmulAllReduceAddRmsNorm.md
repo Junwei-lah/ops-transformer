@@ -234,7 +234,6 @@ aclnnStatus aclnnMatmulAllReduceAddRmsNorm(
       </tbody>
     </table>
 
-
 - **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。

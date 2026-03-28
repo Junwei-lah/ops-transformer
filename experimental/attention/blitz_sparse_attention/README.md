@@ -2,14 +2,18 @@
 
 This kernel is based on PromptFlashAttentionV3, extending it by a new argument "sabi" to enable block sparse attention computation during prefill. We provide a **torch interface** to quickly try out our kernel in your end-to-end python pipelines that may benefit from sparse computation (e.g. Hunyuan-video). Documentation of the sabi argument can be found in [docs/aclnnBlitzSparseAttention.md](docs/aclnnBlitzSparseAttention.md)
 
-## Quick test and benchmark in python:
+## Quick test and benchmark in python
+
 build the kernel as a custom experimental package, install it, then install our "torch_bsa" torch interface package
+
 ```shell
 bash build.sh --make_clean --experimental -j96 --pkg --soc=ascend910b --ops=blitz_sparse_attention
 ./build/cann-ops-transformer-custom_linux-"$(uname -i)".run
 (cd experimental/attention/blitz_sparse_attention/torch_interface && bash build.sh custom)
 ```
+
 test and benchmark run times:
+
 ```shell
 cd experimental/attention/blitz_sparse_attention/benchmark
 pytest test.py # correctness tests for sequence lengths 10k-30k 1-4 attention heads, compares our block-sparse BSA against npu_fusion_attention kernel and our own python implementation
@@ -17,6 +21,7 @@ python benchmark.py # performance benchmarking - check the constant inputs shape
 ```
 
 The test should be all green, and the benchmark result on Ascend910B2 should be:
+
 ```shell
 ==========================================================================================
   DTYPE=torch.bfloat16  INPUT_LAYOUT='BNSD'  ATTENTION_MATRIX='blocks_optimized_batched'
@@ -36,9 +41,11 @@ The test should be all green, and the benchmark result on Ascend910B2 should be:
   3   1 118806 118806  128      0.90             N/A                N/A           21708.31
 ==========================================================================================
 ```
+
 more explanation about benchmarking is [here](benchmark/README.md). 
 
 To invoke our block-sparse prompt flash attention kernel from python, use a call identicall to  is compatible with torch_npu, just use our provided torch_bsa python interface:
+
 ```python
 import torch
 import torch_bsa
@@ -58,12 +65,16 @@ out = torch_bsa.blitz_sparse_attention(
     )
 ```
 
-## Example run in C++:
+## Example run in C++
+
 A plain, pure C++, example is provided in examples subdirectory. Run it sing:
+
 ```shell
 bash build.sh --experimental --run_example blitz_sparse_attention eager cust --soc=ascend910b --vendor_name=custom
 ```
+
 the output should be:
+
 ``` shell
 [2026-03-16 15:14:17] Warning: The current environment is configured for ascend910b, Please use Atlas A2 series hardware for optimal performance.
 [2026-03-16 15:14:17] [2026-03-16 15:14:17] Start to run example,name:blitz_sparse_attention mode:eager
@@ -92,6 +103,7 @@ the output should be:
 ```
 
 ## Kernel integration plan
+
 If this block sparse kernel is of an interest, please consider merging it with the official attention/blitz_sparse_attention. Its source code is based on attention/blitz_sparse_attention taken from git commit a574b5d71faa7c360934a6c7d1b4aa85e1a49147
 
 ## 产品支持情况
@@ -100,7 +112,6 @@ If this block sparse kernel is of an interest, please consider merging it with t
 |:----------------------------|:-----------:|
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>|      √     |
 |<term>Atlas A2 训练系列产品/Atlas 800I A2 推理产品/A200I A2 Box 异构组件</term>|      √     |
-
 
 ## 功能说明
 

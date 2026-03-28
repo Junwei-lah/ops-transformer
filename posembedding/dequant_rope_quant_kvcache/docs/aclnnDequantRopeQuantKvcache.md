@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    ×     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
-
 ## 功能说明
 
 - 算子功能：对输入张量（x）进行dequant（可选）后，按`sizeSplits`（为切分的长度）对尾轴进行切分，划分为q、k、vOut，对q、k进行旋转位置编码，生成qOut和kOut，之后对kOut和vOut进行量化并按照`indices`更新到kCacheRef和vCacheRef上。
@@ -108,7 +107,8 @@ aclnnStatus aclnnDequantRopeQuantKvcache(
 ```
 
 ## aclnnDequantRopeQuantKvcacheGetWorkspaceSize
--   **参数说明：**
+
+- **参数说明：**
 
     <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
     <col style="width: 187px">
@@ -312,6 +312,7 @@ aclnnStatus aclnnDequantRopeQuantKvcache(
         <td>-</td>
         <td>-</td>
     </tr>
+    <tr>
       <td>workspaceSize</td>
       <td>输出</td>
       <td>返回需要在Device侧申请的workspace大小。</td>

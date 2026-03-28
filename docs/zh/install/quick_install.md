@@ -58,6 +58,7 @@
 ```bash
 docker run --name cann_container --device /dev/davinci0 --device /dev/davinci_manager --device /dev/devmm_svm --device /dev/hisi_hdc -v /usr/local/dcmi:/usr/local/dcmi -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info -v /etc/ascend_install.info:/etc/ascend_install.info -it swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.5.0-910b-ubuntu22.04-py3.10-ops bash
 ```
+
 | 参数 | 说明 | 注意事项 |
 | :--- | :--- | :--- |
 | `--name cann_container` | 为容器指定名称，便于管理。 | 可自定义。 |
@@ -147,13 +148,14 @@ pip3 install -r requirements.txt
 
 安装完CANN包后，需验证环境和驱动是否正常。
 
--   **检查NPU设备**
+- **检查NPU设备**
     
     ```bash
     # 运行npu-smi，若能正常显示设备信息，则驱动正常
     npu-smi info
     ```
--   **检查CANN安装**
+
+- **检查CANN安装**
     
     ```bash
     # 查看CANN toolkit包版本信息（默认路径安装），WebIDE场景下将/usr/local替换为/home/developer
@@ -165,6 +167,7 @@ pip3 install -r requirements.txt
 ## 环境变量配置
 
 按需选择合适的命令使环境变量生效。
+
 ```bash
 # 默认路径安装，以root用户为例（非root用户，将/usr/local替换为${HOME}）
 source /usr/local/Ascend/cann/set_env.sh

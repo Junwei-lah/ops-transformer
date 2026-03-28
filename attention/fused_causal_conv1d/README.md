@@ -237,3 +237,4 @@
   | 调用方式  | 样例代码                                                     | 说明                                                         |
   | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
   | aclnn接口 | [test_aclnn_fused_causal_conv1d](./examples/test_aclnn_fused_causal_conv1d.cpp) | 通过[aclnnFusedCausalConv1d](./docs/aclnnFusedCausalConv1d.md)调用FusedCausalConv1d算子 |
+  

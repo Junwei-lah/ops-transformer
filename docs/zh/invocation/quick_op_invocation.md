@@ -42,8 +42,8 @@
 
   表示整个项目编译为一个静态库文件，包含libcann_transformer_static.a和aclnn接口头文件。该包仅支持aclnn调用AI Core算子。
 
-
 ### 联网编译
+
 #### 自定义算子包
 
 1. **编译自定义算子包**
@@ -186,6 +186,7 @@
         ```bash
         python ${scripts_dir}/third_lib_download.py
         ```
+
     \$\{scripts\_dir\}表示脚本存放路径，下载的第三方软件包默认存放在当前脚本所在目录。
 
 3. **编译算子包**

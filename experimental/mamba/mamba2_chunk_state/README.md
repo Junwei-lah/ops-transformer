@@ -8,10 +8,10 @@ mamba2_chunk_state 用于在 MambaV2 Prefill 阶段进行 chunk 内的离散时�
 
 <img src="https://raw.gitcode.com/user-images/assets/7673863/88ab3b4c-4940-4b88-9aca-e6a44fd4fc04/image.png" height="300">
 
-
 ### Kernel输入输出（I/O）
 
 **输入**
+
 | Tensor | shape | dtype |
 |-----|-----|-----|
 | dtout   | BCLH   | FP32   |
@@ -20,11 +20,13 @@ mamba2_chunk_state 用于在 MambaV2 Prefill 阶段进行 chunk 内的离散时�
 | xt   | BCLHP   | FP16   |
 
 **输出**
+
 | Tensor | shape | dtype |
 |-----|-----|-----|
 | states   | BCHNP   | FP32   |
 
 **参数说明：**  
+
 B: batch size  
 C: number of chunks  
 L: chunk size  
@@ -35,6 +37,7 @@ P: head dim
 其中C*L为padding后的序列长度
 
 **调用方式**
+
 ```
 import npu_ops_transformer_ext
 
@@ -44,6 +47,7 @@ out = torch.ops.npu_ops_transformer_ext.mamba2_chunk_state(dtout, dacs, bt, xt)
 **测试方法**
 
 见当前目录 tests/
+
 ```
 python test_chunk_state.py
 ```

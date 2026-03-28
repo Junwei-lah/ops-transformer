@@ -28,6 +28,7 @@ $QK^T$矩阵在attenMask为True的位置会被遮蔽，效果如下：
 ## sparseMode=0
 
 sparseMode为0时，代表defaultMask模式。
+
 - 不传mask：如果attenMask未传入则不做mask操作，attenMask取值为None，忽略preTokens和nextTokens取值。Masked $QK^T$矩阵示意如下：
 
   ![原理图](../figures/sparsemode为0遮挡矩阵.png)
@@ -124,6 +125,7 @@ Masked $QK^T$矩阵示意如下，在第二个batch对query进行切分，key和
 ![原理图](../figures/sparsemode为7遮挡矩阵.png)
 
 **说明**：
+
 - sparseMode=7，band表示的是最后一个非空tensor的Batch的sparse类型；如果只有一个batch，用户需按照band模式的要求来配置参数；sparseMode=7时，用户需要输入2048x2048的下三角mask作为该融合算子的输入。
 - 基于sparseMode=3进行外切产生的band模式的sparse参数应符合以下条件：
   - preTokens >= last_Skv。
@@ -143,6 +145,7 @@ Masked $QK^T$矩阵示意如下，在第二个batch对query进行切分，key和
 ![原理图](../figures/sparsemode为8遮挡矩阵.png)
 
 **说明**：
+
 - sparseMode=8，band表示的是第一个非空tensor的Batch的sparse类型；如果只有一个batch，用户需按照band模式的要求来配置参数；sparseMode=8时，用户需要输入2048x2048的下三角mask作为该融合算子的输入。
 - 基于sparseMode=2进行外切产生的band模式的sparse的参数应符合以下条件：
   - preTokens >= first_Skv。
@@ -154,11 +157,13 @@ Masked $QK^T$矩阵示意如下，在第二个batch对query进行切分，key和
 sparseMode为9时，代表treeMask模式，用于推测解码（speculative decoding）场景下的树形注意力掩码。用户需传入自定义的树形mask，mask中值为1的位置会被遮蔽。
 
 树形mask矩阵特征如下：
+
 - 对角线位置（s1==s2）：值为0，表示token关注自身。
 - 上三角位置（s1<s2）：值为1，表示不关注未来token。
 - 下三角位置（s1>s2）：值为0或1，由树结构决定部分注意力关系。
 
 attenMask输入格式：
+
 - inputLayout为BSH、BSND或BNSD时：attenMask的shape为(B, S1, S1)，每个batch传入S1×S1大小的tree mask。
 
   ![原理图](../figures/sparsemode为9_BSND_BNSD示意图.png)
@@ -168,6 +173,7 @@ attenMask输入格式：
   ![原理图](../figures/sparsemode为9_TND示意图.png)
 
 约束说明：
+
 - 非量化场景支持GQA和MLA，全量化场景仅支持MLA。
 - 不支持左padding、pseShift、sharedPrefix。
 - 输出dtype不支持INT8。

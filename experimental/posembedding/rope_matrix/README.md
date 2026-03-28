@@ -13,12 +13,14 @@ python ./test_rope.py # full code can be find at the last of readme.
 ```
 
 Support limitation:
+
 ```bash
 dtype=bf16, x=BNSD, y(matrix)=DD, cos/sin=11SD, D=128.
 For example: x = [1, 24, 28800, 128], y = [128, 128], cos/sin = [1, 1, 28800, 128]
 ```
 
 ### Design
+
 As the fig shows, we design a Mathematical Equivalence algorithm "Rope-Matrix(ROME)" to accelerate rope.
 The key is to replace tensor rearrage operator by matrix.            
 ![image.png](https://raw.gitcode.com/user-images/assets/7673863/75dd5e40-a660-4956-b052-95079eae8f8d/image.png 'image.png')
@@ -30,6 +32,7 @@ By profiling, we find memory bound for both C and V on 910B. Thus, no need CV pi
 Using ```AscendC::CrossCoreSetFlag``` and ```AscendC::CrossCoreWaitFlag``` to control pipeline.
 
 1. folder design:
+
 ```bash
   ${op_class}                                          # class
   ├── ${op_name}                                       # name
@@ -48,12 +51,15 @@ Using ```AscendC::CrossCoreSetFlag``` and ```AscendC::CrossCoreWaitFlag``` to co
 ```
 
 2. design host and kernel: take 2 sub-project as reference:
+
 ```bash
 from example: https://gitee.com/ascend/samples/blob/master/operator/ascendc/0_introduction/22_baremix_kernellaunch/BareMixInvocation/baremix_custom.cpp
 from example: https://gitcode.com/cann/ops-transformer/blob/master/posembedding/rotary_position_embedding/rotate_half_bf16.h
 ```
+
 we simplify the code from origin rope-fused operator to fit our cases.
 Then use ```ASCEND_IS_AIC, ASCEND_IS_AIV``` to isolation cube/vector process and ```CrossCoreSetFlag, CrossCoreWaitFlag``` to control communication between cube and vector.
+
 ```bash
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);  // dry kernel type: KERNEL_TYPE_MIX_xxx
     TPipe tpipe;
@@ -68,7 +74,9 @@ Then use ```ASCEND_IS_AIC, ASCEND_IS_AIV``` to isolation cube/vector process and
         ...
     }
 ```
+
 host tiling can be summary as follows:
+
 ```bash
 split 'S' with vector core num, the last core may run less than other cores.
 For example S=28799, vector_core=40: split to 720*39 + 719:
@@ -76,6 +84,7 @@ Then cube process 720*2, vector process 720, last vector process 719, last cube 
 ```
 
 3. fit project to torch:
+
 ```bash
 A. design 'torch_interface.cpp':
 1) design interface: 
@@ -116,6 +125,7 @@ at::Tensor rope_matrix_kernel(at::Tensor &x, at::Tensor &y, at::Tensor &sin, at:
     };
 }
 ```
+
 may be you are confused by ```acl_call```, this is a standard user not need to care.
 
 ```bash
@@ -124,13 +134,16 @@ mix-core should be the same as our cmakefile
 ```
 
 4. How to call
+
 ```bash
 import torch
 import torch_npu
 import npu_ops_transformer_ext
 x = torch.ops.npu_ops_transformer_ext.rope_matrix(x, mat, sin, cos)
 ```
+
 or use default ```test_rope.py``` or full test code as follows:
+
 ```bash
 import os
 import numpy as np 

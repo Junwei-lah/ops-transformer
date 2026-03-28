@@ -14,8 +14,9 @@
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
 ## 功能说明
--  接口功能：执行单路旋转位置编码计算。
--  计算公式：
+
+- 接口功能：执行单路旋转位置编码计算。
+- 计算公式：
 
     - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
 
@@ -55,7 +56,6 @@
     y = x * cos + x\_rotate * sin
     $$
 
-    
     （3）quarter模式（mode等于2）：
 
     $$
@@ -118,6 +118,7 @@ aclnnStatus aclnnRotaryPositionEmbeddingGetWorkspaceSize(
     uint64_t        *workspaceSize,
     aclOpExecutor   **executor)
 ```
+
 ```c++
 aclnnStatus aclnnRotaryPositionEmbedding(
     void          *workspace,
@@ -125,6 +126,7 @@ aclnnStatus aclnnRotaryPositionEmbedding(
     aclOpExecutor *executor,
     aclrtStream    stream)
 ```
+
 ## aclnnRotaryPositionEmbeddingGetWorkspaceSize
 
 - **参数说明**
@@ -271,7 +273,6 @@ aclnnStatus aclnnRotaryPositionEmbedding(
     </tr>
   </tbody>
   </table>
-
 
 ## aclnnRotaryPositionEmbedding
 
@@ -538,6 +539,3 @@ int main() {
     return 0;
 }
 ```
-
-
-

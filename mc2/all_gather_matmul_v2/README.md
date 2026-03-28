@@ -203,6 +203,7 @@
   </tbody></table>
 
 ## 约束说明
+
 * 输入x1为2维，其维度为\(m, k\)。x2必须是2维，其维度为\(k, n\)，轴满足mm算子入参要求，k轴相等，且k轴取值范围为\[256, 65535\)。bias为1维，shape为\(n,\)。
 * 输出output为2维，其维度为\(m*rank\_size, n\)，rank\_size为卡数。
 * 输出gatherout为2维，其维度为\(m*rank\_size, k\)，rank\_size为卡数。
@@ -219,4 +220,3 @@
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_all_gather_matmul_v2](./examples/test_aclnn_all_gather_matmul_v2.cpp) | 通过[aclnnAllGatherMatmulV2](./docs/aclnnAllGatherMatmulV2.md)接口方式调用AllGatherMatmulV2算子。 |
-

@@ -7,6 +7,7 @@
 ## 论文对应关系
 
 mHC 层更新公式:
+
 ```
 x_{l+1} = H_res · x_l + H_post^T · F(H_pre · x_l, W_l)
 ```
@@ -38,6 +39,7 @@ x_{l+1} = H_res · x_l + H_post^T · F(H_pre · x_l, W_l)
 ## 实现范围
 
 权重张量（`h_pre`、`h_post`、`h_res`）为**逐层静态参数**:
+
 - 形状: `[num_streams]` 或 `[num_streams, num_streams]`
 - 在 batch 与序列维度上共享
 - 与 [tokenbender/mHC](https://github.com/tokenbender/mHC-manifold-constrained-hyper-connections) 开源实现保持一致
@@ -92,6 +94,7 @@ out = mhc_pre_ext.forward(x, h)             # [batch, seq, dim]
 | mhc_res | 24x ~ 50x |
 
 ## KernelCAT内测申请
+
 KernelCAT限时免费内测中，欢迎体验：https://kernelcat.autokernel.cn
 
 ## 参考文献

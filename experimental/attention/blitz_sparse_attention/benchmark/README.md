@@ -114,12 +114,12 @@ TORCH_REFERENCE = True  # If False, will instead run the torch_npu reference
  24   1   4096   4096  128      0.80             yes           26180.69            1025.53
  24   1   4096   4096  128      0.90             yes           26216.21             971.07
 ```
+
 Reference goes OOM for 10_000 sequence lenght and 24 heads (not shown).
 
 On the left you see the inputs, then the "yes" line checks correctness, after that you see the reference runtime and our runtime. After that you see the memory bandwidth usage, which is much better in our kernel.
 
 Note that for short sequence lengths, the speedups are negligible because overheads are higher than actual computation.
-
 
 # Benchmark performance (no correctness) for very long sequences
 
@@ -219,6 +219,7 @@ TORCH_REFERENCE = False  # If False, will instead run the torch_npu reference
 The baseline dense `"dense"` mode (standard `torch_npu.npu_fusion_attention`) appears at every sparsity=0.0 row.
 
 ## Test setup
+
 ```
 Host CPU: aarch64
 Device: Ascend 910B2

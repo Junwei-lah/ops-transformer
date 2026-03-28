@@ -46,7 +46,9 @@ ops-transformer是[CANN](https://hiascend.com/software/cann) （Compute Architec
 除了上述关键教程，还有其他文档介绍，例如算子调用方式、build参数说明、术语概念等，全量文档请访问[docs](docs/README.md)。
 
 ## 🔍目录结构
+
 关键目录如下，详细目录介绍参见[项目目录](./docs/zh/install/dir_structure.md)。
+
 ```
 ├── cmake                          # 项目工程编译目录
 ├── common                         # 项目公共头文件和公共源码
@@ -95,3 +97,4 @@ ops-transformer是[CANN](https://hiascend.com/software/cann) （Compute Architec
     |技术专题|样例|
     |----|----|
     |算子性能优化实践|[FA算子性能优化实践和效果分析](https://gitcode.com/cann/ops-transformer/wiki/FA%E7%AE%97%E5%AD%90%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5%E5%92%8C%E6%95%88%E6%9E%9C%E5%88%86%E6%9E%90.md)|
+    

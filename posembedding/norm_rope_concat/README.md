@@ -15,11 +15,11 @@
 
 - 算子功能:（多模态）transfomer注意力机制中，针对query、key和Value实现归一化（Norm）、旋转位置编码（Rope）、特征拼接（Concat）：
 
-    -   归一化（Norm）当前支持层归一化（LayerNorm）、带仿射变换参数层归一化（AFFINE LayerNorm）、均方根归一化（RmsNorm）和带仿射变换参数均方根归一化（AFFINE RmsNorm）类型。
-    -   旋转位置编码（Rope）支持Interleave和Half类型。
-    -   特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
+    - 归一化（Norm）当前支持层归一化（LayerNorm）、带仿射变换参数层归一化（AFFINE LayerNorm）、均方根归一化（RmsNorm）和带仿射变换参数均方根归一化（AFFINE RmsNorm）类型。
+    - 旋转位置编码（Rope）支持Interleave和Half类型。
+    - 特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
 
--   计算公式（以Query（视频）和EncoderQuery（文本）为例）：
+- 计算公式（以Query（视频）和EncoderQuery（文本）为例）：
 
 	  $$
     hiddenState_q = \text{Norm}(query, normQueryWeight, normQueryBias, eps) \\
@@ -30,6 +30,7 @@
     $$
 
 - 说明：
+
     1. 输入输出布局如下：输入`query`的shape为`(B, S, N, D)`，输出`hiddenState`的shape为`(B, N, S, D)`，其中
     B为batch，S为sequenceLen，N为headNum，D为headDim。
     2. Norm有五种模式(`normType`)：`NONE(0), LAYER_NORM(1), LAYER_NORM_AFFINE(2), RMS_NORM(3), RMS_NORM_AFFINE(4)`，其中：
@@ -68,6 +69,7 @@
 
     3. Concat指在sequence维度上进行拼接，拼接有顺序区别(`concatOrder`)，当`concatOrder=0`时，$hiddenState_q$在$hiddenState_{eq}$前，当`concatOrder=1`时，$hiddenState_q$在$hiddenState_{eq}$后。
     4. RoPE有三种模式(`ropeType`):`NONE(0), INTERLEAVE(1), HALF(2)`，其中当`ropeType=NONE`时直接输出不做变换，其余情况参考如下:
+
         ```python
           def image_rotary_emb(hidden_states, rope_sin, rope_cos, mode=1):
               out = torch.empty_like(hidden_states)
@@ -83,6 +85,7 @@
                   out = hidden_states.float() * rope_cos + rotated_x.float()*rope_sin
                   return out.type_as(hidden_states)
         ```
+
     5. RoPE的输入`ropeSin`的shape为`(seqRope, D)`，其中
 
     $$
@@ -343,6 +346,7 @@
   </tbody></table>
 
 ## 约束说明
+
 - 确定性计算：
   - aclnnNormRopeConcat默认确定性实现。
 - query、key、value、encoderQuery、encoderKey、encoderValue数据类型需一致。

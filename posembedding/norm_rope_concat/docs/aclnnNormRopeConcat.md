@@ -13,16 +13,15 @@
 |<term>Atlas 推理系列产品</term>|      ×     |
 |<term>Atlas 训练系列产品</term>|      ×     |
 
-
 ## 功能说明
 
 - 接口功能:（多模态）transfomer注意力机制中，针对query、key和Value实现归一化（Norm）、旋转位置编码（Rope）、特征拼接（Concat）：
 
-    -   归一化（Norm）当前支持层归一化（LayerNorm）、带仿射变换参数层归一化（AFFINE LayerNorm）、均方根归一化（RmsNorm）和带仿射变换参数均方根归一化（AFFINE RmsNorm）类型。
-    -   旋转位置编码（Rope）支持Interleave和Half类型。
-    -   特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
+    - 归一化（Norm）当前支持层归一化（LayerNorm）、带仿射变换参数层归一化（AFFINE LayerNorm）、均方根归一化（RmsNorm）和带仿射变换参数均方根归一化（AFFINE RmsNorm）类型。
+    - 旋转位置编码（Rope）支持Interleave和Half类型。
+    - 特征拼接（Concat）支持在sequence维度上进行拼接，拼接有顺序区别。
 
--   计算公式（以Query（视频）和EncoderQuery（文本）为例）：
+- 计算公式（以Query（视频）和EncoderQuery（文本）为例）：
 
 	  $$
     hiddenState_q = \text{Norm}(query, normQueryWeight, normQueryBias, eps) \\
@@ -73,6 +72,7 @@
 
     3. Concat指在sequence维度上进行拼接，拼接有顺序区别(`concatOrder`)，当`concatOrder=0`时，$hiddenState_q$在$hiddenState_{eq}$前，当`concatOrder=1`时，$hiddenState_q$在$hiddenState_{eq}$后。
     4. RoPE有三种模式(`ropeType`):`NONE(0), INTERLEAVE(1), HALF(2)`，其中当`ropeType=NONE`时直接输出不做变换，其余情况参考如下:
+
         ```python
           def image_rotary_emb(hidden_states, rope_sin, rope_cos, mode=1):
               out = torch.empty_like(hidden_states)
@@ -88,6 +88,7 @@
                   out = hidden_states.float() * rope_cos + rotated_x.float()*rope_sin
                   return out.type_as(hidden_states)
         ```
+
     5. RoPE的输入`ropeSin`的shape为`(seqRope, D)`，其中
     
     $$
@@ -95,7 +96,6 @@
     $$
 
     6. 当场景为训练时，会输出`queryMean, queryRstd，encoderQueryMean, encoderQueryRstd`供后续反向使用。
-
 
 ## 函数原型
 
@@ -139,6 +139,7 @@ aclnnStatus aclnnNormRopeConcatGetWorkspaceSize(
   uint64_t        *workspaceSize,
   aclOpExecutor   **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnNormRopeConcat(
   void            *workspace,
@@ -148,7 +149,9 @@ aclnnStatus aclnnNormRopeConcat(
 ```
 
 ## aclnnNormRopeConcatGetWorkspaceSize
+
 - **参数说明**
+
   <table style="undefined;table-layout: fixed; width: 1452px"><colgroup>
     <col style="width: 174px">
     <col style="width: 121px">
@@ -578,6 +581,7 @@ aclnnStatus aclnnNormRopeConcat(
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - 确定性计算：
   - aclnnNormRopeConcat默认确定性实现。
 - query、key、value、encoderQuery、encoderKey、encoderValue数据类型需一致。

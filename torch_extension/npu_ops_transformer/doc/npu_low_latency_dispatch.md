@@ -44,7 +44,6 @@
 
          $$\ dynamic\_scales=\ alltoall\_dynamic\_scales\_out$$
 
-
     - 特殊专家场景：
 
       零专家场景，即`zero_Expert_Num`不为0：

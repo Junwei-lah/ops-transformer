@@ -13,7 +13,6 @@
 |<term>Atlas 推理系列加速卡产品</term>|      √     |
 |<term>Atlas 训练系列产品</term>|      ×     |
 
-
 ## 功能说明
 
 - 接口功能：该FFN算子提供MoeFFN和FFN的计算功能。在没有专家分组（expertTokens为空）时是FFN，有专家分组时是MoeFFN，统称为FFN，属于Moe结构。MoE（Mixture-of-Experts，混合专家系统）是一种用于训练万亿参数量级模型的技术。MoE将预测建模任务分解为若干子任务，在每个子任务上训练一个专家模型（Expert Model），开发一个门控模型（Gating Model），该模型会根据输入数据分配一个或多个专家，最终综合多个专家计算结果作为预测结果。Mixture-of-Experts结构的模型是将输入数据分配给最相关的一个或者多个专家，综合涉及的所有专家的计算结果来确定最终结果。
@@ -157,8 +156,7 @@ N2表示第二个matmul的输出通道数，对应transform中的H。
   <td>weight2（aclTensor*）</td> 
   <td>输入</td> 
   <td>专家的权重数据，公式中的W2。</td> 
-  <td>-</ul>
-  </td> 
+  <td>-</td> 
   <td>
   <ul>
   <li><term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：FLOAT16、BFLOAT16、INT8、INT4</li>
@@ -178,8 +176,7 @@ N2表示第二个matmul的输出通道数，对应transform中的H。
   <td>expertTokens（aclIntArray*）</td> 
   <td>可选输入</td> 
   <td>各专家的token数。</td> 
-  <td>-</ul>
-  </td> 
+  <td>-</td> 
   <td>INT64</td> 
   <td>ND</td> 
   <td>
@@ -541,7 +538,6 @@ N2表示第二个matmul的输出通道数，对应transform中的H。
 - <term>Atlas 推理系列加速卡产品</term>：
   - 只支持无专家场景。
   - 需满足N1=K2。
-
 
 ## 调用示例
 

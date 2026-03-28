@@ -2,7 +2,6 @@
 
 [📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/posembedding/apply_rotary_pos_emb)
 
-
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -14,11 +13,10 @@
 | <term>Atlas 推理系列产品</term>                             |    √     |
 | <term>Atlas 训练系列产品</term>                              |    x     |
 
-
 ## 功能说明
 
--  接口功能：推理网络为了提升性能，将query和key两路算子融合成一路。执行旋转位置编码计算，计算结果执行原地更新。
--  计算公式：
+- 接口功能：推理网络为了提升性能，将query和key两路算子融合成一路。执行旋转位置编码计算，计算结果执行原地更新。
+- 计算公式：
 
   $$
   query\_q1 = query[..., : query.shape[-1] // 2]
@@ -293,7 +291,6 @@ aclnnStatus aclnnApplyRotaryPosEmb(
   - 对于任意layout，queryRef与keyRef除N维度外其他维度必须相同；queryRef、keyRef输入shape的最后一维（D）必须相等，cos、sin输入shape的最后一维（D）必须相等，且小于等于queryRef、keyRef输入shape的最后一维（D）。
   - 输入张量queryRef、keyRef、cos、sin的dtype必须相同。
   - rotaryMode为"half"和"interleave"时，输入shape最后一维必须被2整除；rotaryMode为"quarter"时，输入shape最后一维必须被4整除。
-
 
 ## 调用示例
 

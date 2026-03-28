@@ -277,4 +277,3 @@
 [WARNING] 12卡profiling数据不存在,跳过分析该卡数据
 [INFO] profiling数据分析完成
 <b>上述结果为对每张卡的profiling数据进行aiv_vec_time, aiv_scalar_time, aiv_mte2_time, aiv_mte3_time四项数据分析,且仅对指定的算子进行分析,该分析会检测是否有非法字符项、值是否大于0、是否超出平均值的±50%</b>
-

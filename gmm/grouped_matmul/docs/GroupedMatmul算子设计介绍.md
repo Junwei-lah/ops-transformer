@@ -8,6 +8,7 @@ y_i[m_i,n_i]=x_i[m_i,k_i] \times weight_i[k_i,n_i], i=1...g
 $$
 其中g为分组个数，$m_i、k_i、n_i$为对应shape。
 GroupedMatmul算子实现时还需要考虑如下两个方面：
+
 1. 支持不同的参数、数据类型，如有无bias、不同激活函数类型，非量化、量化、伪量化等不同场景；不同场景对应的计算流程不同，性能优化方法不同，因此实现上划分成了不同的模板，有各自的模板参数；
 2. 硬件上AiCore内存大小有限，一般完成一个算子的计算需要对数据进行切分，并对数据搬运和计算过程进行流水并行排布，该过程对算子的影响非常大，也是性能优化阶段主要调整对象，而host上的tiling函数即是为完成该切分和流水的参数计算。
 
@@ -33,6 +34,7 @@ matmul(int32) -> 反量化(fp32) -> mul(fp32) -> 激活函数(fp32)(可选) -> c
 ## 2.2 分组方式
 
 针对不同场景，GroupedMatmul可分为m轴分组和k轴分组，又称切M，切K。在正向训练过程对m轴进行分组，在反向计算梯度时就需要对k轴进行分组。
+
 - m轴分组：$k_i$各组相同，$weight_i/y_i$可以在$n_i$上拼接，此时group type = 0;
 m轴分组可用于非量化正向训练场景，量化场景和伪量化场景。
 
@@ -82,6 +84,7 @@ END_TILING_DATA_DEF;
 ```
 
 tilingData主要包含上述结构里的三个部分：
+
 1. GMMBaseParams: GroupedMatmul的分组数量、Aicore核数、ub tiling参数、matmul分核tiling参数等基础tiling参数，是否有激活函数、量化类型（per token或per tensor）、激活函数类型等功能参数;
 2. GMMArray: 当输入是多tensor时，通过三个数组记录每组Matmul的shape, kernel通过GlobalTensor::GetValue()的方式获取。当输入为全单tensor时，m/k/n中的一个值在group_list中，另外两个值在所有的group中都相同，此时kernel只需要访问数组中的第一个值。
 3. TCubeTiling: matmul高阶api对应的tilingData。

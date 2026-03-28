@@ -17,6 +17,7 @@ output[b, seq, d] = Σ_{s=0}^{N-1} input[b × N + s, seq, d] × h_pre[s]
 ```
 
 Where:
+
 - `input`: [batch × num_streams, seq_len, dim] — N streams per batch
 - `h_pre`: [num_streams] — stream weights (can be positive, negative, or non-normalized)
 - `output`: [batch, seq_len, dim] — aggregated result

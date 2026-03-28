@@ -116,7 +116,6 @@ $$
   </tr>
  </tbody></table>
 
-
 ## 约束说明
 
 因为集合通信及BatchMatMul计算所需，输入输出shape需满足以下数学关系：（其中ep=epWorldSize，tp=tpWorldSize）

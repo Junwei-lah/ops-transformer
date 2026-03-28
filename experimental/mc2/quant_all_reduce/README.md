@@ -1,6 +1,7 @@
 ## QuantAllReduce <<<>>>直调示例
 
 # 文件目录
+
 ```
 ├── kernel                                  # 算子核函数目录
 │    ├── quant_all_reduce_mte_one_shot.h    
@@ -23,6 +24,7 @@
 ```
 
 # 文件改动
+
 新增接口：
 quant_all_reduce_mte_one_shot.h 
 外部创建mc2Context与tilingData，传入GM地址mc2Context，tilingGM
@@ -31,12 +33,15 @@ mte_comm.h
 __aicore__ inline void InitHcclContextByAddr(GM_ADDR mc2Context);
 
 # 工程运行
+
 1. 设置环境变量
+
 ``` shell
 source /usr/local/Ascend/cann/set_env.sh
 ```
 
 2. run.sh运行指令
+
 ``` shell
 bash run.sh -v ascend950pr_9599 -b Release -c ON -r OFF -n 2
 ```
@@ -67,6 +72,7 @@ bash run.sh -v ascend950pr_9599 -b Release -c ON -r OFF -n 2
     ON-采集性能数据，OFF-不采集性能数据
 
 4. 指令常用组合
+
 ``` shell
 bash run.sh -v ascend950pr_9599 -b Release -c ON -r OFF --- 仅编译
 bash run.sh -v ascend950pr_9599 -b Release -c ON -r ON -n 2 --- 编译运行并指定行号

@@ -13,7 +13,6 @@
 | <term>Atlas 推理系列产品</term>                             |    ×     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
-
 ## 功能说明
 
 * 接口功能：推理网络为了提升性能，将sin和cos输入通过cache传入，执行旋转位置编码计算。**该接口相较于[aclnnRopeWithSinCosCache](./aclnnRopeWithSinCosCache.md)接口，新增cacheMode参数，指示拼接cos和sin的方式**：
@@ -270,7 +269,7 @@ aclnnStatus aclnnRopeWithSinCosCacheV2(
 
 ## aclnnRopeWithSinCosCacheV2GetWorkspaceSize
 
--   **参数说明**：
+- **参数说明**：
 
     <table style="undefined;table-layout: fixed; width: 1550px"><colgroup>
       <col style="width: 170px">
@@ -416,7 +415,7 @@ aclnnStatus aclnnRopeWithSinCosCacheV2(
       </tr>
     </tbody></table>
 
--   **返回值：**
+- **返回值：**
 
     aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -465,11 +464,12 @@ aclnnStatus aclnnRopeWithSinCosCacheV2(
 
 ## aclnnRopeWithSinCosCacheV2
 
--   **参数说明：**
+- **参数说明：**
     <table style="undefined;table-layout: fixed; width: 1030px"> <colgroup>
     <col style="width: 250px">
     <col style="width: 130px">
     <col style="width: 650px">
+    </colgroup>
     <thead>
     <tr>
         <th>参数名</th>
@@ -499,11 +499,12 @@ aclnnStatus aclnnRopeWithSinCosCacheV2(
     </tr>
     </tbody></table>
 
--   **返回值：**
+- **返回值：**
 
     aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明
+
 - 确定性计算：
   - aclnnRopeWithSinCosCacheV2默认确定性实现。
 - queryIn、keyIn、cosSinCache只支持2维shape输入。
@@ -515,7 +516,9 @@ aclnnStatus aclnnRopeWithSinCosCacheV2(
 - mrope模式下，cacheMode仅支持0和1, 当mropeSection为[16, 16, 16, 16]时，仅支持0。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <vector>

@@ -1,7 +1,8 @@
 # Select Attention Operators
+
 High performance Ascend-910B kernels for sparse attention pattern prediction for efficient LLM decoding. The kernels can be launched through python interface which we provide - see kernel usage examples in the [experiments](experiments) directory.
 
-## Repo structure:
+## Repo structure
 
 ```bash
 .
@@ -17,7 +18,9 @@ High performance Ascend-910B kernels for sparse attention pattern prediction for
 ```
 
 ## Requirements
+
 Tested to work with:
+
 - Ascend910B2, Ascend910B4
 - CANN versions 8.0.RC3.beta1, 8.2.RC2, 8.3.RC1
 - Python 3.11.10
@@ -25,7 +28,9 @@ Tested to work with:
 - see [requirements.txt](requirements.txt) for all other requiremetns
 
 ## Creating conda environment
+
 create conda environment
+
 ```bash
 conda create -n sa python=3.11.10 -y
 conda activate sa
@@ -33,27 +38,34 @@ pip install -r requirements.txt
 ```
 
 ## Running (in conda environment)
+
 activate conda and CANN environment, compile the operators and build their python api (as python packages):
+
 ```shell
 source scripts/init_cann.sh Ascend910B4 # change Ascend910B4 to your card model
 bash scripts/build_kernels.sh
 ```
 
 Run all tests that are found in the experiments subdirectory
+
 ```bash
 pytest -v experiments
 ```
 
 ## Usage 
+
 Current best practise (proved at vllm-ascend) is to use `quest_prefill_metadata()` kernel for the creation of the metadata (after prefill) and every 128 tokens to update the metadata, and to use `quest_block_select_paged_in_out_w()` to predict important KV block indices given the current query vector of the token being decoded. For detailed usage examples refer to [experiments](experiments) directory.
 
 The kernels are deployed with a very neat built in documentation:
+
 ```python
 import torch_npu
 from select_attn_decoding_ops import quest_block_select_paged_in_out_w
 help(quest_block_select_paged_in_out_w)
 ```
+
 <details>
+
 <summary>Prints:</summary>
 
 ```
@@ -110,10 +122,10 @@ quest_block_select_paged_in_out_w(...) method of builtins.PyCapsule instance
         k % 8 == 0
 ```
 
-
 </details>
 
 ## Development Workflow for a new kernel "OP"
+
 1. Add new kernel implementations in the `kernels/` directory in one of 2 ways:
    1) under an existing python package e.g. `kernels/select_attn_ops/`. Then add your kernel code as new OP.cpp, add a compilation line to compile.sh, add a torch interface inside troch_interface.cpp
    2) as a new python package: `kernels/OP/`, with a OP.cpp kernel implementation; torch_interface.cpp, compile.sh, build.sh in it.

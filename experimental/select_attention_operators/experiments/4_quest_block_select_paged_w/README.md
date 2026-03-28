@@ -1,14 +1,18 @@
 # The version of quest_block_select_paged with local window "w" 
+
 the kernel ads between 0, 1, or 2 last blocks to the slected blocks (as the last selected blocks out of the k) 
 
-
 ### Run benchmarking
+
 To see latency and memory bandwidth
+
 ```bash
 python ./benchmark_quest_block_select_paged_in_out.py
 
 ```
+
 Host x86, device: Ascend910B4, bfloat16:
+
 ```shell
 ============================================================================================================================
   DTYPE=torch.bfloat16  BLOCK_SIZE=128  HEAD_DIM=128  SAME_SEQ_LEN_ALL_REQS=True
@@ -81,7 +85,9 @@ Host x86, device: Ascend910B4, bfloat16:
  32   8  32      6        98304   32             yes           11599.17             285.35            0.009            0.354
 ============================================================================================================================
 ```
+
 Host x86, device: Ascend910B4, float16:
+
 ```shell
 ============================================================================================================================
   DTYPE=torch.float16  BLOCK_SIZE=128  HEAD_DIM=128  SAME_SEQ_LEN_ALL_REQS=True
@@ -156,6 +162,7 @@ Host x86, device: Ascend910B4, float16:
 ```
 
 Host aarch64, device: Ascend910B2, bfloat16:
+
 ```shell
 ============================================================================================================================
   DTYPE=torch.bfloat16  BLOCK_SIZE=128  D=128  SAME_SEQ_LEN_ALL_REQS=True
@@ -228,7 +235,9 @@ Host aarch64, device: Ascend910B2, bfloat16:
  32   8  32      6        98304   32             yes          119382.01             226.67            0.001            0.445
 ============================================================================================================================
 ```
+
 Host aarch64, device: Ascend910B2, float16:
+
 ```shell
 ============================================================================================================================
   DTYPE=torch.float16  BLOCK_SIZE=128  D=128  SAME_SEQ_LEN_ALL_REQS=True

@@ -13,7 +13,6 @@
 |  <term>Kirin X90 处理器系列产品</term> | √ |
 |  <term>Kirin 9030 处理器系列产品</term> | √ |
 
-
 ## 功能说明
 
 - 算子功能：对输入张量(kv)的尾轴，拆分出左半边用于rms_norm计算，右半边用于rope计算，再将计算结果分别scatter到两块cache中。
@@ -66,6 +65,7 @@
   $$
   y=(x/rms)*gamma
   $$
+
 ## 参数说明
 
 <table style="undefined;table-layout: fixed; width: 1576px"><colgroup>
@@ -198,7 +198,6 @@
     </tr>
     
   </tbody></table>
-
 
 - Kirin X90/Kirin 9030 处理器系列产品:
   - kv 数据类型不支持 BFLOAT16

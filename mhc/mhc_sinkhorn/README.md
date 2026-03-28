@@ -86,3 +86,4 @@
  	 | 调用方式      | 调用样例                 | 说明                                                         |
  	 |--------------|-------------------------|--------------------------------------------------------------|
  	 | aclnn调用 | [test_aclnn_mhc_sinkhorn](examples/test_aclnn_mhc_sinkhorn.cpp) | 通过接口方式调用[aclnnMhcSinkhorn](docs/aclnnMhcSinkhorn.md)算子，输出的h_res可直接传入MhcPost算子完成残差连接计算。 |
+	 

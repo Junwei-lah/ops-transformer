@@ -267,8 +267,6 @@
   - queryOut 数据类型不支持 BFLOAT16
   - keyOut 数据类型支持 FLOAT、FLOAT16；不支持INT32
 
-
-
 ## 约束说明
 
 - queryIn、keyIn、cosSinCache只支持2维shape输入。

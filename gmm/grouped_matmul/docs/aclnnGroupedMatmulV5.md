@@ -329,7 +329,6 @@ aclnnStatus aclnnGroupedMatmulV5(
   </tbody>
   </table>
 
-
   - <term>Ascend 950PR/Ascend 950DT</term>：
 
     - 上表数据类型列中的角标“1”代表该系列不支持的数据类型。
@@ -499,7 +498,9 @@ aclnnStatus aclnnGroupedMatmulV5(
 ## 约束说明
 
 - 确定性计算：
+
   - aclnnGroupedMatmulV5默认确定性实现。
+
 <details>
 <summary><term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term></summary>
 
@@ -622,6 +623,7 @@ aclnnStatus aclnnGroupedMatmulV5(
         | 伪量化perchannel | weight多 | $[N_i]$|
         | 伪量化pergroup | weight单 | $[E, G, N]$|
         | 伪量化pergroup | weight多 | $[G_i, N_i]$|
+
     </details>
 
     <a id="a16w8场景约束"></a>
@@ -952,6 +954,7 @@ aclnnStatus aclnnGroupedMatmulV5(
           | 2 | 单多多 |1）仅支持splitItem为0/1<br>2）x，weight中tensor需为2维，shape分别为（K, M）和（K, N）；y中tensor需为2维, shape为（M, N）<br>3）groupListOptional可以传空，如果传groupListOptional，当groupListType为0时，最后一个值不大于x中tensor的第一维，当groupListType为1时，数值的总和不大于x中tensor的第一维<br>4）groupListOptional第1维最大支持1024，即最多支持1024个group<br>5）x必须转置，weight不能转置<br>6）仅支持ND进ND出<br>7）不支持bias<br>8）仅支持非量化|
 
     </details>
+
 </details>
 
 ## 调用示例

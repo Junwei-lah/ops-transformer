@@ -6,7 +6,6 @@
 | ------------------------------------------------------------ | :------: |
 |<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>           |    √     |
 
-
 ## 功能说明<a name="zh-cn_topic_0000002168254826_section14441124184110"></a>
 
 -   API功能：
@@ -34,8 +33,6 @@
       常量专家场景，即`const_expert_num`不为0：
 
       $$Moe(ori\_x)=const\_expert\_alpha\_1*ori\_x+const\_expert\_alpha\_2*const\_expert\_v$$
-
-
 
 ## 函数原型<a name="zh-cn_topic_0000002168254826_section45077510411"></a>
 

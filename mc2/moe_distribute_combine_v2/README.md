@@ -326,6 +326,7 @@
     * 不支持动态缩容场景，不支持`elasticInfoOptional`。
     * 当`commAlg` = "hierarchy"，必须传入`expandScalesOptional`。
     * 不支持常量专家场景，不支持`constExpertNum`、`constExpertAlpha1Optional`、`constExpertAlpha2Optional`和`constExpertVOptional`，使用默认值即可。
+    
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     * 不支持`expandScalesOptional`。
     * 不支持`commAlg`。

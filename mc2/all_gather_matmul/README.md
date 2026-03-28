@@ -126,6 +126,7 @@
   </tbody></table>
 
 ## 约束说明
+
 * 当前版本中，输入x1为2维，其shape为(m, k)。x2必须是2维，其shape为(k, n)，轴满足MM算子入参要求，k轴相等，且k轴取值范围为[256, 65535)。
 * x1/x2支持的空tensor场景，m和n可以为空，k不可为空，且需要满足以下条件：
     * m为空，k不为空，n不为空；
@@ -148,4 +149,3 @@
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |
 | aclnn接口  | [test_aclnn_all_gather_matmul](./examples/test_aclnn_all_gather_matmul.cpp) | 通过[aclnnAllGatherMatmul](./docs/aclnnAllGatherMatmul.md)接口方式调用AllGatherMatmul算子。 |
-

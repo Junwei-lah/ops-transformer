@@ -13,11 +13,10 @@
 | <term>Atlas 推理系列产品</term>                             |    ×    |
 | <term>Atlas 训练系列产品</term>                              |    ×    |
 
-
 ## 功能说明
 
--  接口功能：执行单路旋转位置编码[aclnnRotaryPositionEmbedding](../../rotary_position_embedding/docs/aclnnRotaryPositionEmbedding.md)的反向计算。
--  计算公式：
+- 接口功能：执行单路旋转位置编码[aclnnRotaryPositionEmbedding](../../rotary_position_embedding/docs/aclnnRotaryPositionEmbedding.md)的反向计算。
+- 计算公式：
   
     取旋转位置编码的正向计算中，broadcast的轴列表为`dims`，则计算公式可表达如下：
 

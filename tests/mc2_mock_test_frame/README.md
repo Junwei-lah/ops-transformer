@@ -189,6 +189,7 @@ ctx_r1 = mctx.context_tensor(1)
 | TestFinalizeProtocol | regular msg + finalize commit → FINALIZE_FINISH_CNT 响应 |
 
 编译运行：
+
 ```bash
 ASCEND_HOME=~/Ascend/ascend-toolkit/latest
 g++ -std=c++17 -O2 -I${ASCEND_HOME}/include \

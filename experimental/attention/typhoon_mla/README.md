@@ -3,8 +3,8 @@
 
 TyphoonMLA is a mixed naive-absorb MLA kernel for shared prefix. For more technical details on TyphoonMLA, check out our preprint [paper](arxiv.org/abs/2509.21081).
 
-
 ### Folder structure
+
 ```
 typhoon_mla/
 ├── src/                    # Source code
@@ -26,6 +26,7 @@ typhoon_mla/
 ```
 
 ### Requirements
+
 * CATLASS v1.0.0
 * CANN toolkit 
 * CANN-NNAL (required for torch_npu absorb baseline)
@@ -34,6 +35,7 @@ typhoon_mla/
 ### Build & compile
 
 1. Clone CATLASS
+
 ```
 git clone https://gitee.com/ascend/catlass.git
 cd catlass 
@@ -43,6 +45,7 @@ cd ..
 ```
 
 2. Set CANN environment
+
 ```
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
 source /usr/local/Ascend/driver/bin/setenv.bash 
@@ -50,6 +53,7 @@ source /usr/local/Ascend/nnal/atb/set_env.sh # Required for the torch_npu absorb
 ```
 
 3. Compile kernel and python extension
+
 ```
 cd src
 bash install.sh
@@ -57,20 +61,25 @@ cd ..
 ```
 
 ### Run TyphoonMLA kernel
+
 ```
 python example.py 
 ```
 
 ### Verify functional correctness
+
 ```
 pytest tests
 ```
 
 ### Performance benchmark
+
 ```
 python bench.py
 ```
+
 Following benchmark results are obtained in an Ascend 910B2 NPU:
+
 ```
 batch: 128    shared_seqlen: 4096   nonshared_seqlen: 256    headnum: 64     |  TyphoonMLA:  88.92 ktoken/s  TorchNPU-Absorb:  79.65 ktoken/s  Speedup: 1.12x
 batch: 128    shared_seqlen: 4096   nonshared_seqlen: 1024   headnum: 64     |  TyphoonMLA:  89.68 ktoken/s  TorchNPU-Absorb:  72.04 ktoken/s  Speedup: 1.24x
@@ -128,10 +137,8 @@ batch: 512    shared_seqlen: 16384  nonshared_seqlen: 1024   headnum: 128    |  
 batch: 512    shared_seqlen: 16384  nonshared_seqlen: 4096   headnum: 128    |  TyphoonMLA:  42.74 ktoken/s  TorchNPU-Absorb:  18.78 ktoken/s  Speedup: 2.28x
 ```
 
-
-
-
 ### Tested on
+
 ```
 Ascend 910B2
 driver: 25.6.rc1.b010

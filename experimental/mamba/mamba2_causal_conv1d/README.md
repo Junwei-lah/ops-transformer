@@ -11,6 +11,7 @@
 ### 自定义Kernel输入输出（I/O）
 
 **输入**
+
 | Tensor | shape | dtype |
 |-----|-----|-----|
 | x   | BDS   | FP32   |
@@ -18,17 +19,20 @@
 | b   | D     | FP16   |
 
 **输出**
+
 | Tensor | shape | dtype |
 |-----|-----|-----|
 | out   | BDS   | FP32   |
 
 **参数说明：**  
+
 B: batch size  
 D: dimension  
 S: sequence len  
 该算子支持任意长度S
 
 **调用方式**
+
 ```
 import npu_ops_transformer_ext
 
@@ -38,6 +42,7 @@ out = torch.ops.npu_ops_transformer_ext.mamba2_causal_conv1d(x, w, b)
 **测试方法**
 
 见当前目录 tests/
+
 ```
 python test_causal_conv1d.py
 ```

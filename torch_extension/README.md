@@ -4,6 +4,7 @@
 ## Build & Installation
 
 ### Prerequisites
+
 - OS: Linux
 - Python: 3.8+
 - Compiler: GCC 9.4.0+
@@ -15,17 +16,20 @@
 ### Installation Steps
 
 1. Install Dependencies:
+
     ```sh
     python3 -m pip install -r requirements.txt
     ```
 
 2. Build the Wheel:
+
     ```sh
     # -n: non-isolated build (uses existing environment)
     python3 -m build --wheel -n
     ```
 
 3. Install Package:
+
     ```sh
     python3 -m pip install dist/*.whl --force-reinstall --no-deps
     ```

@@ -20,6 +20,7 @@
     1. 接收AttentionToFFN算子发送的数据。该数据以ScheduleContext结构体内存排布方式存储。其具体定义参见[调用示例](#调用示例)。该结构体包含CommonArea，ControlArea，AttentionArea，FfnArea域。本接口涉及CommonArea(用于存储配置信息，如session_num，micro_batch_num，micro_batch_size，selected_expert_num)，ControlArea(用于上层控制进程是否退出)，FfnArea域(负责管理本算子计算过程中所需的输入及输出缓冲区，其中token_info_buf字段用来存储该算子的输入信息)。
 
     2. 扫描token_info_buf存储的信息，当通信数据准备就绪时，本算子开始进行数据整理。整理如下图所示，将layer id， session id，micro batch id，expert ids分别写入layer_id_buf，session_id_buf，micro_batch_id_buf，expert_ids_buf的device内存上。
+    
     ```mermaid
     graph TB
         %% 输入缓冲区
@@ -79,6 +80,7 @@
         style Session1 fill:#fce4ec,stroke:#e91e63,stroke-width:2px
         style Output fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
     ```
+
     3. 完成数据整理后，后续可供FFNWorkerBatching算子使用。
 
 - 计算公式：

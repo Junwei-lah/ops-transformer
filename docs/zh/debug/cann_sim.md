@@ -5,6 +5,7 @@ CANN Simulator是一款面向算子开发场景的SoC级芯片仿真工具，用
 # 主要功能
 
 该工具与板上运行保持二进制兼容（同一 kernel可同时在仿真和AI处理器执行），主要用途如下：
+
 * 精度仿真：输出bit级精度结果，协助用户完成算子的精度验证。
 * 性能仿真：输出指令流水图，协助用户定位算子性能瓶颈问题。
 
@@ -34,6 +35,7 @@ CANN Simulator集成在CANN toolkit包里，参考[环境部署](../install/quic
 ## 算子编译
 
 * 参考[算子调用](../invocation/quick_op_invocation.md)完成add_example的算子编译和安装
+
 ```
 # 说明：进入项目根目录，执行如下编译命令，命令仅供参考，详细可以查看算子调用的说明。
 bash build.sh --pkg --soc=Ascend950 --vendor_name=custom --ops=add_example
@@ -212,8 +214,7 @@ cannsim record --help
 ```
   
 查询工具 report 子命令的帮助信息： 
- 
- 
+  
  ``` 
  cannsim report --help 
  ``` 

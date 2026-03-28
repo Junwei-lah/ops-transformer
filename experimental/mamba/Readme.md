@@ -31,6 +31,7 @@ experimental/
         └── utils/                      # 公共工具包括精度比对和性能profiling
 
 ```
+
 其中mamba2_chunk_xxx 四个算子为 Prefill 过程中 Chunk 计算的核心实现模块。。
 
 每个算子子目录包含：
@@ -42,20 +43,27 @@ experimental/
 编译与使用
 
 1. 编译目录
+
 ```
 path="path/to/experimental"
 cd $path$/npu_ops_transformer_ext
 ```
+
 2. 编译命令
+
 ```
 python3 -m build --wheel -n
 ```
+
 3. 安装
+
 ```
 cd dist
 pip3 install *.whl --force-reinstall -no-deps
 ```
+
 4. 测试，以mamba2_causal_conv1d为例
+
 ```
 export PYTHONPATH=$PYTHONPATH:/path/to/experimental/attention/mambav2
 cd $path$/attention/mambav2/mamba2_causal_conv1d/tests
@@ -63,6 +71,7 @@ python test_causal_conv1d.py
 ```
 
 特性说明：
+
 1. 当前版本算子已支持 FP32 / FP16 输入输出精度；
 2. 所有 mamba2_chunk_xxx 系列算子均支持 BSND 数据布局，其中 S 维度需在调用前 pad 至 chunk_size 的整数倍；
 3. 当前版本仅支持固定 chunk_size = 256；

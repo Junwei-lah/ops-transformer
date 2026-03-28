@@ -9,6 +9,7 @@ x_{l+1} = H_l^{res} · x_l + H_l^{post}^T · F(H_l^{pre} · x_l, W_l)
 ```
 
 其中：
+
 - `x_l`: 输入特征 [batch, n×C] (n个streams，每个C维)
 - `H_l^{pre}`: 输入映射 [1, n]，用于聚合n个streams到1个
 - `H_l^{post}`: 输出映射 [1, n]，用于分发1个到n个streams
@@ -20,20 +21,24 @@ x_{l+1} = H_l^{res} · x_l + H_l^{post}^T · F(H_l^{pre} · x_l, W_l)
 ## 2. 具体计算过程
 
 假设：
+
 - branch_output = F(...) 的输出，shape = [batch, seq_len, dim]
 - h_post = H_l^{post}，shape = [num_streams] (经softmax归一化)
 
 mhc_post 计算：
+
 ```
 output = H_post^T ⊗ branch_output
 ```
 
 展开为：
+
 ```
 output[b, s, seq, d] = branch_output[b, seq, d] × h_post[s]
 ```
 
 最终reshape为：
+
 ```
 output[(b × num_streams + s), seq, d] = branch_output[b, seq, d] × h_post[s]
 ```
@@ -60,17 +65,20 @@ def depth_connection(self, branch_output, residuals, *, beta):
 ## 4. 数学等价性验证
 
 einsum "b ... d, s -> b ... s d" 的含义：
+
 - 输入1: branch_output [b, seq, d]
 - 输入2: beta [s]
 - 输出: [b, seq, s, d]
 - 计算: output[b,seq,s,d] = branch_output[b,seq,d] × beta[s]
 
 rearrange "b ... s d -> (b s) ... d" 的含义：
+
 - 输入: [b, seq, s, d]
 - 输出: [b×s, seq, d]
 - 计算: output[b×s+i, seq, d] = input[b, seq, i, d]
 
 组合起来：
+
 ```
 final_output[b×num_streams + s, seq, d] = branch_output[b, seq, d] × h_post[s]
 ```

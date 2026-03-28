@@ -17,6 +17,7 @@ output[b × N + s, seq, d] = branch_output[b, seq, d] × h_post[s]
 ```
 
 Where:
+
 - `branch_output`: [batch, seq_len, dim] — output from branch module F(...)
 - `h_post`: [num_streams] — learned weights (normalization handled upstream)
 - `output`: [batch × num_streams, seq_len, dim] — distributed to N streams
@@ -107,12 +108,14 @@ __aicore__ inline void ProcessOne(int64_t batch_idx, int64_t stream_idx) {
 **Paper:** `output[b×N + s, seq, d] = branch_output[b, seq, d] × h_post[s]`
 
 **Linear index verification:**
+
 ```
 branch_output[b, seq, d]  →  b × E + seq × D + d          ✓
 output[b×N + s, seq, d]   →  (b×N + s) × E + seq × D + d  ✓
 ```
 
 **NPU kernel:**
+
 ```cpp
 in_off  = batch_idx * batch_elements
         = b × E                       // ✓ matches branch_output[b, ...]

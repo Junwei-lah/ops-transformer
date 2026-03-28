@@ -1,6 +1,6 @@
 # 算子接口（aclnn）
 
-##  使用说明
+## 使用说明
 
 为方便调用算子，提供一套基于C的API（以aclnn为前缀API），无需提供IR（Intermediate Representation）定义，方便高效构建模型与应用开发，该方式被称为“单算子API调用”，简称aclnn调用。
 

@@ -149,17 +149,20 @@ public:
 ## 5. 数学等价性证明
 
 **给定:**
+
 - `branch_output`: shape [B, S, D]
 - `h_post`: shape [N]
 - `output`: shape [B*N, S, D]
 
 **论文公式:**
+
 ```
 output[b*N + n, s, d] = branch_output[b, s, d] × h_post[n]
 其中 b ∈ [0,B), n ∈ [0,N), s ∈ [0,S), d ∈ [0,D)
 ```
 
 **CPU实现等价性:**
+
 ```cpp
 for b in [0, B):
   for n in [0, N):
@@ -173,6 +176,7 @@ for b in [0, B):
 ```
 
 **NPU实现等价性:**
+
 ```cpp
 // 并行化: 每个block处理一个(b, n)组合
 block_idx ∈ [0, B*N):
