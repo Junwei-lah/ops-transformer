@@ -171,7 +171,7 @@ aclnnStatus aclnnScatterPaKvCache(
       <td class="tg-0pky">keyCacheRef(aclTensor*)</td>
       <td class="tg-0pky">输入/输出</td>
       <td class="tg-0pky">需要更新的key cache，当前layer的key cache。</td>
-      <td class="tg-0pky">仅支持4维，当传空指针或"Norm"时，仅支持ND内存排布格式。当传"PA_NZ"时，仅支持FRACTAL_NZ内存排布。</td>
+      <td class="tg-0pky">支持4维或5维，当传空指针或"Norm"时，仅支持ND内存排布格式。当传"PA_NZ"时，仅支持FRACTAL_NZ内存排布。</td>
       <td class="tg-0pky">与key保持一致</td>
       <td class="tg-0pky">ND</td>
       <td class="tg-0pky">4-5</td>
@@ -201,10 +201,10 @@ aclnnStatus aclnnScatterPaKvCache(
       <td class="tg-0pky">valueCacheRef(aclTensor*)</td>
       <td class="tg-0pky">输入/输出</td>
       <td class="tg-0pky">需要更新的value cache，当前layer的value cache。</td>
-      <td class="tg-0pky">支持0维或4维，非0维下shape与keyCacheRef一致，当传空指针或"Norm"时，仅支持ND内存排布格式。当传"PA_NZ"时，仅支持FRACTAL_NZ内存排布。</td>
+      <td class="tg-0pky">支持0维、4维或5维，非0维下shape与keyCacheRef一致，当传空指针或"Norm"时，仅支持ND内存排布格式。当传"PA_NZ"时，仅支持FRACTAL_NZ内存排布。</td>
       <td class="tg-0pky">与key保持一致</td>
       <td class="tg-0pky">ND</td>
-      <td class="tg-0pky">4-5</td>
+      <td class="tg-0pky">0、4、5</td>
       <td class="tg-0pky">x</td>
     </tr>
     <tr>
