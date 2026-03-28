@@ -378,21 +378,9 @@ RegbaseFAG(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __
     const fagTiling *__restrict tilingData = &tiling_data_in;
     #if (ORIG_DTYPE_QUERY == DT_FLOAT16)
         if constexpr (splitAxis == BN2GS1S2) {
-            if constexpr (deterType != DETER_OLD) {
-                INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP16(
-                    half, float, half, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle, BN2GS1S2,
-                    S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType)); 
-            } else {
-                if constexpr (dTemplateType == 768){
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_FP16(
-                        half, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(512), half);
-                }
-                else
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_FP16(
-                        half, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(dTemplateType), half);
-            }
+            INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP16(
+                half, float, half, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle, BN2GS1S2,
+                S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType)); 
             return;
         } else if constexpr (splitAxis == BN2S2) {
             INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP16(
@@ -409,21 +397,9 @@ RegbaseFAG(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __
 
     #if (ORIG_DTYPE_QUERY == DT_BF16)
         if constexpr (splitAxis == BN2GS1S2) {
-            if constexpr (deterType != DETER_OLD) {
-                INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_BF16(
-                    bfloat16_t, float, bfloat16_t, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle,
-                    BN2GS1S2, S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType));
-            } else {
-                if constexpr (dTemplateType == 768){
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_BF16(
-                        bfloat16_t, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(512), bfloat16_t);
-                }
-                else
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_BF16(
-                        bfloat16_t, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(dTemplateType), bfloat16_t);
-            }
+            INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_BF16(
+                bfloat16_t, float, bfloat16_t, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle,
+                BN2GS1S2, S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType));
             return;
         } else if constexpr (splitAxis == BN2S2) {
             INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_BF16(
@@ -441,21 +417,9 @@ RegbaseFAG(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t *value, __
  
     #if (ORIG_DTYPE_QUERY == DT_FLOAT)
         if constexpr (splitAxis == BN2GS1S2) {
-            if constexpr (deterType != DETER_OLD) {
-                INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP32(
-                    float, float, float, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle, BN2GS1S2,
-                    S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType));
-            } else {
-                if constexpr (dTemplateType == 768){
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_FP32(
-                        float, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(512), float);
-                }
-                else
-                    INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_OLD_DETER_REGBASE_IMPL_FP32(
-                        float, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isDNoEqual, isRope, fp8OpenTscm, BN2GS1S2, S1TemplateType(s1TemplateType), 
-                        S2TemplateType(s2TemplateType), DTemplateType(dTemplateType), float);
-            }
+            INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP32(
+                float, float, float, isAttenMask, isPse, isDrop, isTnd, isBn2MultiBlk, deterType, isNEqual, isDNoEqual, isRope, fp8OpenTscm, isTndSwizzle, BN2GS1S2,
+                S1TemplateType(s1TemplateType), S2TemplateType(s2TemplateType), DTemplateType(dTemplateType)); 
             return;
         } else if constexpr (splitAxis == BN2S2) {
             INVOKE_FAG_GENERAL_S1S2_BN2GS1S2_REGBASE_IMPL_FP32(

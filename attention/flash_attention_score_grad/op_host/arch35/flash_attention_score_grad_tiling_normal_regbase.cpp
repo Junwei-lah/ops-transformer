@@ -610,7 +610,7 @@ uint32_t FlashAttentionScoreGradTilingNormalRegbase::GetDeterSparseTilingKey()
                fBaseParams.sparseMode == static_cast<uint32_t>(SparseMode::NO_MASK)) {
         return static_cast<uint32_t>(DeterSparseType::DETER_BAND);
     }
-    return fBaseParams.d <= static_cast<uint32_t>(ConstAxisTemplateNum::NUM512) ? static_cast<uint32_t>(DeterSparseType::DETER_OLD) : static_cast<uint32_t>(DeterSparseType::NO_DETER);
+    return static_cast<uint32_t>(DeterSparseType::DETER_OLD);
 }
 
 uint8_t FlashAttentionScoreGradTilingNormalRegbase::GetSparseType()
