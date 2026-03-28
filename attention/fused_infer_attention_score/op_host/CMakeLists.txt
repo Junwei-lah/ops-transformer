@@ -42,7 +42,12 @@ else()
 endif()
 
 if(NOT BUILD_OPS_RTY_KERNEL)
-    add_modules_sources_with_soc(OPTYPE fused_infer_attention_score ACLNNTYPE aclnn_inner)
+    add_modules_sources_with_soc(
+        # 该变量用于判断op_api目录是否从op_host移出
+        OP_API_INDEPENDENT ON
+        # op_api新的地址
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api
+        OPTYPE fused_infer_attention_score ACLNNTYPE aclnn_inner)
 endif()
 
 file(GLOB_RECURSE ARCH35_CHECKER_SRC_FILES
@@ -68,6 +73,6 @@ if(NOT BUILD_OPS_RTY_KERNEL)
     ../op_host/arch32/fused_infer_attention_score_tiling_check_feature.cpp
     ../op_host/arch32/fused_infer_attention_score_tiling_check_existence.cpp
     ../op_host/arch32/fused_infer_attention_score_tiling_check_single_para.cpp
-    fallback_fused_infer_attention_score.cpp
+    ../op_graph/fallback_fused_infer_attention_score.cpp
     )
 endif()
