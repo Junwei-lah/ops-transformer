@@ -13,8 +13,8 @@
 
 ## 功能说明
 
--   **算子功能**：MoE的routing计算，根据[aclnnMoeGatingTopKSoftmax](../moe_gating_top_k_softmax/docs/aclnnMoeGatingTopKSoftmax.md)的计算结果做routing处理，并对结果进行量化。
--   **计算公式**：
+- **算子功能**：MoE的routing计算，根据[aclnnMoeGatingTopKSoftmax](../moe_gating_top_k_softmax/docs/aclnnMoeGatingTopKSoftmax.md)的计算结果做routing处理，并对结果进行量化。
+- **计算公式**：
 
   $$
   expandedExpertIdx,sortedRowIdx=keyValueSort(expertIdx,rowIdx)

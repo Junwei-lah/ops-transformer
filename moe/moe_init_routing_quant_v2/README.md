@@ -62,7 +62,6 @@
             dynamicQuantScaleOutOptional = row\_max(abs(x)) / 127
             $$
 
-
             $$
             quantResult = round(x / dynamicQuantScaleOutOptional)
             $$
@@ -72,7 +71,6 @@
             $$
             dynamicQuantScaleOutOptional = row\_max(abs(x * scaleOptional)) / 127
             $$
-
 
             $$
             quantResult = round(x / dynamicQuantScaleOutOptional)

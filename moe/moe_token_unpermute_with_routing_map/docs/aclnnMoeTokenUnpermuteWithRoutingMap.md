@@ -2,7 +2,6 @@
 
 [📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/moe/moe_token_unpermute_with_routing_map)
 
-
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -74,7 +73,6 @@
   $$
   unpermutedTokens[i//topK\_num] += permutedTokens[sortedIndices[i]]
   $$
-
 
   （3）probs为None，paddedMode为true时：
 
@@ -307,9 +305,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMap(
     </tr>
   </tbody></table>
 
-
 ## aclnnMoeTokenUnpermuteWithRoutingMap
-
 
 - **参数说明**
   <table style="undefined;table-layout: fixed; width: 1244px"><colgroup>
@@ -346,7 +342,6 @@ aclnnStatus aclnnMoeTokenUnpermuteWithRoutingMap(
     </tr>
     </tbody>
   </table>
-
 
 - **返回值**
   

@@ -103,8 +103,6 @@
   </tr>
  </tbody></table>
 
-
-
 ## 约束说明
 
  - numTopk <= 512。
@@ -116,4 +114,3 @@
 | 调用方式  | 样例代码                                  | 说明                                                     |
 | :--------: | :----------------------------------------: | :-------------------------------------------------------: |
 | aclnn接口 | [test_aclnn_moe_token_permute_with_ep_grad.cpp](examples/test_aclnn_moe_token_permute_with_ep_grad.cpp) | 通过[aclnnMoeTokenPermuteWithEpGrad](docs/aclnnMoeTokenPermuteWithEpGrad.md)接口方式调用MoeTokenPermuteWithEpGrad算子。 |
-

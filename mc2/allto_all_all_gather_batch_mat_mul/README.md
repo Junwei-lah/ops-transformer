@@ -34,8 +34,6 @@ $$
 y1 = 激活函数(y3)
 $$
 
-
-
 ## 参数说明
 
 <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
@@ -140,12 +138,12 @@ $$
   </tr>
  </tbody></table>
 
-
 ## 约束说明
 
 因为集合通信及BatchMatMul计算所需，输入输出shape需满足以下数学关系：（其中ep=epWorldSize，tp=tpWorldSize）
 
 按H轴进行AllGather场景，即xShardType为0场景：
+
   - x: (E, C, H/tp)
   - weight：(E/ep, H, M/tp)
   - biasOptional：非空指针情况下，三维时为(E/ep, 1, M/tp)，两维时为(E/ep, M/tp)
@@ -162,6 +160,7 @@ $$
   - y3OutOptional：(E/ep, ep*tp\*C/tp, M/tp)
 
 数据关系说明：
+
   - 比如x.size(0)等于E，weight.size(0)等于E/ep，则表示，x.size(0) = ep*weight.size(0)，x.size(0)是ep的整数倍；其他关系类似。
   - E的取值范围为[2, 512]，且E是ep的整数倍。
   - H的取值范围为：[1, 65535]，当xShardType为0时，H是tp的整数倍。

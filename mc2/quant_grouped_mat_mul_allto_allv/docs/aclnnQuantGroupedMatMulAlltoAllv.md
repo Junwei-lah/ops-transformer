@@ -455,7 +455,6 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
     </tr>
     </tbody></table>
 
-
 ## aclnnQuantGroupedMatMulAlltoAllv
 
 - **参数说明**

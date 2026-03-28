@@ -15,8 +15,6 @@
 
 算子功能：完成通信域内的全卡同步，xRef仅用于构建Tensor依赖，接口内不对xRef做任何操作。
 
-
-
 ## 参数说明
 
 <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
@@ -57,7 +55,6 @@
    <td>ND（支持非连续Tensor）</td>
   </tr>
   <tr>
-  <tr>
    <td>group</td>
    <td>输入</td>
    <td>通信域名称，进行所有卡同步的通信域。</td>
@@ -72,9 +69,6 @@
    <td>ND</td>
   </tr>
  </tbody></table>
-
-
-
 
 ## 约束说明
 

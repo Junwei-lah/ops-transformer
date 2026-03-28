@@ -18,7 +18,6 @@
 - **接口功能**：MoE的permute计算，将token和expert的标签作为routingMap传入，根据routingMap将tokens和可选probsOptional广播后排序
 - **计算公式**：
 
-
   tokens\_num 为routingMap的第0维大小，expert\_num为routingMap的第1维大小
   dropAndPad为`false`时
 
@@ -329,7 +328,6 @@ aclnnStatus aclnnMoeTokenPermuteWithRoutingMap(
       </tr>
     </tbody>
   </table>
-
 
 - **返回值：**
 

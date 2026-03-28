@@ -2,7 +2,6 @@
 
 [📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/moe/moe_token_unpermute_with_ep)
 
-
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -13,7 +12,6 @@
 | <term>Atlas 200I/500 A2 推理产品</term>                      |    ×    |
 | <term>Atlas 推理系列产品</term>                             |    ×     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
-
 
 ## 功能说明
 
@@ -66,6 +64,7 @@ aclnnStatus aclnnMoeTokenUnpermuteWithEpGetWorkspaceSize(
     uint64_t          *workspaceSize,
     aclOpExecutor     **executor);
 ```
+
 ```c++
 aclnnStatus aclnnMoeTokenUnpermuteWithEp(
     void          *workspace,
@@ -281,7 +280,6 @@ aclnnStatus aclnnMoeTokenUnpermuteWithEp(
 - **返回值：**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-
 
 ## 约束说明
 
@@ -519,4 +517,3 @@ int main() {
   return 0;
 }
 ```
-

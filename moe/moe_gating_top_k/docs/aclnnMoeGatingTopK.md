@@ -72,7 +72,6 @@
   y, expertIdxOut = TopK(normValue[groupIdx, :],\ k=k)
   $$
 
-
   **Step 5: Renorm 与缩放**
 
   normType=1 时做归一化；normType=0 时，renorm 参数生效，renorm=1 时做renorm：
@@ -334,7 +333,7 @@ aclnnStatus aclnnMoeGatingTopK(
       <th>描述</th>
     </tr>
   </thead>
-  
+  <tbody>
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
@@ -596,4 +595,3 @@ int main() {
   return 0;
 }
 ```
-

@@ -18,14 +18,19 @@
 - **计算公式**：
 假设通信域中的总卡数为epWorldSize，每张卡上通信后路由专家个数为e，每张卡分组矩阵乘只负责本卡专家的计算。对于每张卡的计算公式如下：
   - 本卡共享专家分组矩阵乘计算
+
     ```
     mm_y=(mm_x × mm_x_scale) @ (mm_weight × mm_weight_scale)
     ```
+
   - Alltoallv通信和permute
+
     ```
     permute_out=Alltoallv(gmm_x)
     ```
+
   - 本卡路由专家按专家维度分组矩阵乘计算
+
     ```
     gmm_y=(permute_out × gmm_x_scale) @ (gmm_weight × gmm_weight_scale)
     ```
@@ -441,7 +446,6 @@ aclnnStatus aclnnAlltoAllvQuantGroupedMatMul(
   - 当前版本仅支持pertensor量化。
 
 ## 调用说明
-
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |

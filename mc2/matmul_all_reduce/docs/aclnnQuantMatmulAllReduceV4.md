@@ -155,6 +155,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV4GetWorkspaceSize(
     uint64_t        *workspaceSize,
     aclOpExecutor  **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnQuantMatmulAllReduceV4(
     void              *workspace,
@@ -242,7 +243,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV4(
           <td>x2ScaleOptional</td>
           <td>输入</td>
           <td>MatMul计算后的去量化系数，即计算公式中的x2Scale。</td>
-          <td><ul><li>shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。</li><li>输入为int8且输出为BFLOAT16时，直接将BFLOAT16类型的x2ScaleOptional传入本接口。</li><li>输出为FLOAT16且输入为INT8时，x1ScaleOptional不为空，可直接将FLOAT32类型的x2ScaleOptional传入本接口，如果x1ScaleOptional为空，则需提前调用TransQuantParamV2算子的aclnn接口来将x2ScaleOptional转成INT64/UINT64数据类型。<li>数据类型为FLOAT8_E8M0时，仅支持转置，shape为[n, ceilDiv(k, 64), 2]。</li> <li>x2为FLOAT4_E2M1时，必须保证ceilDiv(k, 32)为偶数.</li><li>perblock场景下，x2的shape为[ceilDiv(k, 128), ceilDiv(n, 128)]，x2转置时，x2ScaleOptional的shape为[ceilDiv(n, 128), ceilDiv(k, 128)]。</li></ul></td>
+          <td><ul><li>shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。</li><li>输入为int8且输出为BFLOAT16时，直接将BFLOAT16类型的x2ScaleOptional传入本接口。</li><li>输出为FLOAT16且输入为INT8时，x1ScaleOptional不为空，可直接将FLOAT32类型的x2ScaleOptional传入本接口，如果x1ScaleOptional为空，则需提前调用TransQuantParamV2算子的aclnn接口来将x2ScaleOptional转成INT64/UINT64数据类型。</li><li>数据类型为FLOAT8_E8M0时，仅支持转置，shape为[n, ceilDiv(k, 64), 2]。</li> <li>x2为FLOAT4_E2M1时，必须保证ceilDiv(k, 32)为偶数.</li><li>perblock场景下，x2的shape为[ceilDiv(k, 128), ceilDiv(n, 128)]，x2转置时，x2ScaleOptional的shape为[ceilDiv(n, 128), ceilDiv(k, 128)]。</li></ul></td>
           <td>INT64、UINT64、FLOAT32、BFLOAT16、FLOAT8_E8M0</td>
           <td>ND</td>
           <td>1-3</td>
@@ -406,6 +407,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV4(
   <col style="width: 168px">
   <col style="width: 128px">
   <col style="width: 854px">
+  </colgroup>
   <thead>
   <tr>
       <th>参数名</th>
@@ -465,6 +467,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV4(
     $$
 
 输入和输出支持以下数据类型组合
+
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     <table>
     <thead>

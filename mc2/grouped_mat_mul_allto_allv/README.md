@@ -30,7 +30,6 @@
     mmY = mmX \times mmWeight
     $$
 
-
 ## 参数说明
 
 <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
@@ -148,7 +147,6 @@
    <td>ND</td>
   </tr>
  </tbody></table>
-
 
 ## 约束说明
 

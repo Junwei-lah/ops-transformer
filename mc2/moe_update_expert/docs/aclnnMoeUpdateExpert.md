@@ -106,7 +106,7 @@ aclnnStatus aclnnMoeUpdateExpert(
     <tr>
     <td>eplbTable</td>
     <td>输入</td>
-    <td>逻辑专家到物理专家的映射表（外部需保证值正确）：<br><ul><li> 共world_size*place_per_rank个专家实例（world_size为卡数，place_per_rank为单卡部署路由专家实例数）。<br><li>每行第一列为对应逻辑专家的部署实例数（取值[1, world_size]），后[1, count]列为实例编号（取值[0, world_size*place_per_rank)，且不重复）。<br><li>要求为2D Tensor，shape为 (moeExperNum, F)；支持非连续的Tensor。</li></ul></td>
+    <td>逻辑专家到物理专家的映射表（外部需保证值正确）：<br><ul><li> 共world_size*place_per_rank个专家实例（world_size为卡数，place_per_rank为单卡部署路由专家实例数）。</li><li>每行第一列为对应逻辑专家的部署实例数（取值[1, world_size]），后[1, count]列为实例编号（取值[0, world_size*place_per_rank)，且不重复）。</li><li>要求为2D Tensor，shape为 (moeExperNum, F)；支持非连续的Tensor。</li></ul></td>
     <td>INT32</td>
     <td>ND</td>
     </tr>
@@ -127,7 +127,7 @@ aclnnStatus aclnnMoeUpdateExpert(
     <tr>
     <td>activeMaskOptional</td>
     <td>输入</td>
-    <td>表示token是否参与通信，可传有效数据或空指针：<br><ul><li> 传有效数据时，expertScalesOptional和pruningThresholdOptional必须同时传有效数据；true表示参与通信，且true需排在false前（例：{true, false, true}非法）。<br><li> 传空指针时，默认所有token参与通信。<br>要求为1D Tensor，shape为 (BS,)；支持非连续的Tensor。</li></ul></td>
+    <td>表示token是否参与通信，可传有效数据或空指针：<br><ul><li> 传有效数据时，expertScalesOptional和pruningThresholdOptional必须同时传有效数据；true表示参与通信，且true需排在false前（例：{true, false, true}非法）。</li><li> 传空指针时，默认所有token参与通信。<br>要求为1D Tensor，shape为 (BS,)；支持非连续的Tensor。</li></ul></td>
     <td>BOOL</td>
     <td>ND</td>
     </tr>
@@ -148,7 +148,7 @@ aclnnStatus aclnnMoeUpdateExpert(
     <tr>
     <td>balanceMode</td>
     <td>输入</td>
-    <td>均衡规则，默认值为0：<br><ul><li> 0：按rank分发；<br><li> 1：按token分发；<br>取值范围[0, 1]。</li></ul></td>
+    <td>均衡规则，默认值为0：<br><ul><li> 0：按rank分发；</li><li> 1：按token分发；<br>取值范围[0, 1]。</li></ul></td>
     <td>INT64</td>
     <td>ND</td>
     </tr>
@@ -295,6 +295,7 @@ aclnnStatus aclnnMoeUpdateExpert(
 以<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>以及<term>Ascend 950PR/Ascend 950DT</term>为例，调起MoeUpdateExpert，MoeDistributeDispatchV2和MoeDistributeCombineAddRmsNorm算子。
 
 - 示例代码如下，仅供参考
+
     ```Cpp
     #include <thread>
     #include <iostream>

@@ -228,6 +228,7 @@
  </tbody></table>
 
   gmmXQuantMode、gmmWeightQuantMode、mmXQuantMode、mmWeightQuantMode、commQuantMode的枚举值跟[量化模式](../../../docs/zh/context/量化介绍.md)关系如下:
+
   * 0: 非量化--当前不支持
   * 1: pertensor
   * 2: perchannel
@@ -250,7 +251,6 @@
   - K：表示选取TopK个专家，K的范围[2, 8]。
   - A：本卡发送的token数，是sendCounts参数累加之和。
   - ep通信域内所有卡的 A 参数的累加和等于所有卡上的 BSK 参数的累加和。
-
 
 ## 调用说明
 

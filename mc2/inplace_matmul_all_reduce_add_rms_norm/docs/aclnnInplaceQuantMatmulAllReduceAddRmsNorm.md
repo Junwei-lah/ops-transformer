@@ -58,6 +58,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNormGetWorkspaceSize(
     uint64_t        *workspaceSize,
     aclOpExecutor  **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
     void              *workspace,
@@ -95,7 +96,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
           <td>x1</td>
           <td>输入</td>
           <td>MatMul计算的左矩阵，即计算公式中的x1。</td>
-          <td><ul><li>支持空Tensor。</li><li>与x2的数据类型保持一致。</li><li>当前版本仅支持二维或者三维输入。</li></td>
+          <td><ul><li>支持空Tensor。</li><li>与x2的数据类型保持一致。</li><li>当前版本仅支持二维或者三维输入。</li></ul></td>
           <td>INT8</td>
           <td>ND</td>
           <td>2-3</td>
@@ -105,7 +106,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
           <td>x2</td>
           <td>输入</td>
           <td>MatMul计算的右矩阵，即计算公式中的x2。</td>
-          <td><ul><li>支持空Tensor。</li><li>与x1的数据类型保持一致。</li><li>当前版本仅支持二维输入，支持转置/不转置场景。</li><li>支持转置场景下的非连续的tensor</li></td>
+          <td><ul><li>支持空Tensor。</li><li>与x1的数据类型保持一致。</li><li>当前版本仅支持二维输入，支持转置/不转置场景。</li><li>支持转置场景下的非连续的tensor</li></ul></td>
           <td>INT8</td>
           <td>ND</td>
           <td>2</td>
@@ -277,6 +278,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
     <col style="width: 158px">
     <col style="width: 120px">
     <col style="width: 750px">
+    </colgroup>
     <thead>
     <tr>
         <th>参数名</th>
@@ -306,7 +308,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
     </tr>
     </tbody></table>
 
--   **返回值：**
+- **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -328,6 +330,7 @@ aclnnStatus aclnnInplaceQuantMatmulAllReduceAddRmsNorm(
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：一个模型中的通算融合MC2算子，仅支持相同通信域。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 ```Cpp

@@ -15,9 +15,9 @@
 
 ## 功能说明
 
--   **接口功能**：MoE的permute计算，根据索引indices将tokens广播并排序。
+- **接口功能**：MoE的permute计算，根据索引indices将tokens广播并排序。
 
--   **计算公式**：
+- **计算公式**：
     - paddedMode为`false`时，公式如下，其中topK指一个token选择的专家个数，Indices维度为2时topK等于Indices最后一维大小，Indices维度为1时topK等于1：
     
       $$

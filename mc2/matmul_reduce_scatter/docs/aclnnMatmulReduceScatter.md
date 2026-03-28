@@ -57,7 +57,7 @@ aclnnStatus aclnnMatmulReduceScatter(
 
 ## aclnnMatmulReduceScatterGetWorkspaceSize
 
--   **参数说明**
+- **参数说明**
 
     <table style="undefined;table-layout: fixed; width: 1567px"><colgroup>
     <col style="width: 170px">
@@ -249,11 +249,12 @@ aclnnStatus aclnnMatmulReduceScatter(
 
 ## aclnnMatmulReduceScatter
 
--   **参数说明**
+- **参数说明**
     <table style="undefined;table-layout: fixed; width: 1166px"> <colgroup>
     <col style="width: 173px">
     <col style="width: 133px">
     <col style="width: 860px">
+    </colgroup>
     <thead>
     <tr>
     <th>参数名</th>
@@ -283,10 +284,9 @@ aclnnStatus aclnnMatmulReduceScatter(
     </tr>
     </tbody></table>
 
--   **返回值：**
+- **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
-
 
 ## 约束说明
 

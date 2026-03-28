@@ -176,7 +176,6 @@ aclnnStatus aclnnDistributeBarrierV2(
     <tr><td align="left">传入的xRef，timeOut，elasticInfo，group，worldSize的shape不匹配。</td></tr>
     </tbody></table>
 
-
 ## aclnnDistributeBarrierV2
 
 - **参数说明**
@@ -215,7 +214,6 @@ aclnnStatus aclnnDistributeBarrierV2(
     </tr>
     </tbody></table>
 
-    
 - **返回值**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -234,6 +232,7 @@ aclnnStatus aclnnDistributeBarrierV2(
 
 - 参数一致性约束：
   - 使能`elasticInfoOptional`时，需确保`aclnnMoeDistributeDispatchV3`与`aclnnMoeDistributeCombineV3`或`aclnnMoeDistributeCombineAddRmsNormV2`也使能此参数，并且其取值与对应的`elasticInfoOptional`参数保持一致。
+
 ## 调用示例
 
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>、<term>Ascend 950PR/Ascend 950DT</term>：

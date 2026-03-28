@@ -151,6 +151,7 @@
 | dump_analysis.sh脚本直调 | bash dump_analysis.sh TARGET_DIR=xxx TOOL_PATH=xxx PROFILING_PATH=xxx SP_MOE_NUM=0 TP_WORLDSIZE=1 SOC_VERSION=950 SHARE_EXPERT_CARD_COUNT=1 SHARE_EXPERT_NUM=1| 通过对sh脚本进行入参对指定的TARGET_DIR路径下的dump数据进行dump数据解析,以及对PROFILING_PATH下的profiling数据进行分析。 |
 
 ## 样例代码结果说明
+
 [INFO] 开始分析卡1数据<br>
 [INFO] 解析文件:/xxx/xxx/xxx/data-dump/mc2_exception_info.xxx<br>
 <b>上述结果为当前正在分析的卡的数据信息，会输出当前分析卡的序列号以及对应的dump文件</b><br>

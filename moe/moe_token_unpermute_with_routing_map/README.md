@@ -74,7 +74,6 @@
   unpermutedTokens[i//topK\_num] += permutedTokens[sortedIndices[i]]
   $$
 
-
   (3)probs为None,padMode为true时:
 
   $$
@@ -176,14 +175,13 @@
     </tr>
   </tbody></table>
 
-
 - Kirin X90/Kirin 9030 处理器系列产品: 不支持BFLOAT16。
   - outIndex 仅支持INT32
   - permuteTokenId 仅支持INT32
 
 ## 约束说明
 
--   topkNum <= 512, paddedMode为false时routingMap中每行为1或true的个数固定且小于`512`。
+- topkNum <= 512, paddedMode为false时routingMap中每行为1或true的个数固定且小于`512`。
 
 ## 调用说明
 

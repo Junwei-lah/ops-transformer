@@ -15,7 +15,7 @@
 
 ## 功能说明
 
--   **接口功能**：该算子对应MoE（Mixture of Experts，混合专家模型）中的**Routing计算**，以[aclnnMoeGatingTopKSoftmax](../../moe_gating_top_k_softmax/docs/aclnnMoeGatingTopKSoftmax.md)算子的计算结果作为输入，并输出量化后的Routing矩阵expandedXOut等结果供后续计算使用。本接口针对[aclnnMoeInitRoutingQuant](../../moe_init_routing_quant/docs/aclnnMoeInitRoutingQuant.md)做了如下功能变更，请根据实际情况选择合适的接口：
+- **接口功能**：该算子对应MoE（Mixture of Experts，混合专家模型）中的**Routing计算**，以[aclnnMoeGatingTopKSoftmax](../../moe_gating_top_k_softmax/docs/aclnnMoeGatingTopKSoftmax.md)算子的计算结果作为输入，并输出量化后的Routing矩阵expandedXOut等结果供后续计算使用。本接口针对[aclnnMoeInitRoutingQuant](../../moe_init_routing_quant/docs/aclnnMoeInitRoutingQuant.md)做了如下功能变更，请根据实际情况选择合适的接口：
 
     - 新增Drop模式，在该模式下输出内容会将每个专家需要处理的Token个数对齐为expertCapacity个，超过expertCapacity个的Token会被Drop，不足的会用0填充。
     - 新增Dropless模式下expertTokensCountOrCumsumOut可选输出，输出每个专家需要处理的累积Token个数（Cumsum），或每个专家需要处理的Token数（Count）。
@@ -23,7 +23,7 @@
     - 删除rowIdx输入。
     - 增加动态quant计算模式。
 
--   **计算公式**：
+- **计算公式**：
 
     1.将输入shape为[NUM_ROWS, K]的expertIdx展平为一行做排序，其中NUM_ROWS为输入token个数，K为token选择的专家个数，得出排序后的结果sortedExpertIdx和对应的序号sortedRowIdx：
     
@@ -63,7 +63,6 @@
             dynamicQuantScaleOutOptional = row\_max(abs(x)) / 127
             $$
 
-
             $$
             quantResult = round(x / dynamicQuantScaleOutOptional)
             $$
@@ -73,7 +72,6 @@
             $$
             dynamicQuantScaleOutOptional = row\_max(abs(x * scaleOptional)) / 127
             $$
-
 
             $$
             quantResult = round(x * scaleOptional / dynamicQuantScaleOutOptional)

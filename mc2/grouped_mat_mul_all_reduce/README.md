@@ -19,6 +19,7 @@
 ## 功能说明
 
 算子功能：在grouped_matmul的基础上实现多卡并行AllReduce功能，实现分组矩阵乘计算，每组矩阵乘的维度大小可以不同。根据x、weight、y的Tensor数量支持如下4种场景：
+
 - x、weight、y的Tensor数量等于组数，即每组的数据对应的Tensor是独立的。
 - x的Tensor数量为1，weight/y的Tensor数量等于组数，此时需要通过可选参数group_list说明x在行上的分组情况，如group_list[0]=10说明x的前10行参与第一组矩阵乘计算。
 - x、weight的Tensor数量等于组数，y的Tensor数量为1，此时每组矩阵乘的结果放在同一个Tensor中连续存放。
@@ -30,8 +31,6 @@
 $$
 y_i=x_i\times weight_i + bias_i
 $$
-
-
 
 ## 参数说明
 
@@ -123,7 +122,6 @@ $$
   </tr>
  </tbody></table>
 
-
 ## 约束说明
 
 - 数据类型组合约束：x、weight、bias支持的数据类型组合为：
@@ -143,4 +141,3 @@ $$
 | 调用方式  | 样例代码                                  | 说明                                                     |
 | :--------: | :----------------------------------------: | :-------------------------------------------------------: |
 | aclnn接口 | [test_grouped_mat_mul_all_reduce.cpp](tests/ut/op_kernel/test_grouped_mat_mul_all_reduce.cpp) | 通过[aclnnGroupedMatMulAllReduce](./docs/aclnnGroupedMatMulAllReduce.md)接口方式调用grouped_mat_mul_all_reduce算子。 |
-

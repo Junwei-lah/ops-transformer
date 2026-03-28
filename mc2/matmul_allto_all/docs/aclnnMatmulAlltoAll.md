@@ -176,7 +176,6 @@ aclnnStatus aclnnMatmulAlltoAll(
     </tr>
     </tbody></table>
 
-
 - **返回值**
 
   aclnnStatus：返回状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -507,6 +506,7 @@ aclnnStatus aclnnMatmulAlltoAll(
         return 0;
     }
     ```
+
 - <term>Ascend 950PR/Ascend 950DT</term>：
 
     ```Cpp

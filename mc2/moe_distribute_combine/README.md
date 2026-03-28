@@ -11,8 +11,6 @@
 | <term>Atlas 推理系列产品</term>                             |    ×     |
 | <term>Atlas 训练系列产品</term>                              |    ×     |
 
-
-
 ## 功能说明
 
 算子功能：当存在TP域通信时，先进行ReduceScatterV通信，再进行AlltoAllV通信，最后将接收的数据整合（乘权重再相加）；当不存在TP域通信时，进行AlltoAllV通信，最后将接收的数据整合（乘权重再相加）。
@@ -33,8 +31,6 @@
     $$
 
 注意该算子必须与MoeDistributeDispatch配套使用，相当于按MoeDistributeDispatch算子收集数据的路径原路返还。
-
-
 
 ## 参数说明
 

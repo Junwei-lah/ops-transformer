@@ -149,12 +149,14 @@
     <td>预留参数，左矩阵的量化偏置。</td>
     <td>-</td>
     <td>-</td>
+    </tr>
     <tr>
     <td>x2_offset</td>
     <td>可选输入</td>
     <td>预留参数，右矩阵的量化偏置。</td>
     <td>-</td>
     <td>-</td>
+    </tr>
     <tr>
     <td>y</td>
     <td>输出</td>
@@ -256,6 +258,7 @@
     </tbody></table>
 
 x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../docs/zh/context/量化介绍.md)关系如下:
+
 * 0: 不量化
 * 1: pertensor
 * 2: perchannel

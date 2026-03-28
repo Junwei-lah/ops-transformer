@@ -52,7 +52,6 @@ $$
   tokensGradOut[permuteTokenId[i]] += permutedTokens[outIndex[i]]
   $$
 
-
 ## 参数说明
 
   <table style="table-layout: auto; width: 100%">
@@ -130,7 +129,6 @@ $$
    <td>ND</td>
   </tr>
  </tbody></table>
-
 
 ## 约束说明
 

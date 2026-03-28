@@ -54,7 +54,6 @@
   capacity = numOutTokens // expert\_num
   $$
 
-
   $$
   outToken = capacity * expert\_num
   $$
@@ -160,8 +159,6 @@
   </tr>
  </tbody></table>
 
-
-
 ## 约束说明
 
  - tokens_num和expert_num要求小于`16777215`。
@@ -172,4 +169,3 @@
 | 调用方式  | 样例代码                                  | 说明                                                     |
 | :--------: | :----------------------------------------: | :-------------------------------------------------------: |
 | aclnn接口 | [test_aclnn_moe_token_permute_with_routing_map](examples/test_aclnn_moe_token_permute_with_routing_map.cpp) | 通过[aclnnMoeTokenPermuteWithRoutingMap](docs/aclnnMoeTokenPermuteWithRoutingMap.md)接口方式调用MoeTokenPermuteWithRoutingMap算子。 |
-

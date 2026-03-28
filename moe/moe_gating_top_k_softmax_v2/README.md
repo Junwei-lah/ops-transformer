@@ -10,10 +10,13 @@
 |<term>Atlas 200I/500 A2 推理产品</term>|      ×     |
 |<term>Atlas 推理系列产品</term>|      ×     |
 |<term>Atlas 训练系列产品</term>|      ×     |
+
 ## 功能说明
 
 - 算子功能：MoE计算中，如果renorm=0，先对x的输出做Softmax计算，再取topk操作；如果renorm=1，先对x的输出做topk操作，再进行Softmax操作。其中yOut为softmax的topk结果；expertIdxOut为topk的indices结果即对应的专家序号；如果对应的行finished为True，则expert序号直接填num\_expert值（即x的最后一个轴大小）。
+
 - 计算公式：
+
 1. renorm = 0,
 
   $$

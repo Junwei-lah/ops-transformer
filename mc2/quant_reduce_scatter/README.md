@@ -13,11 +13,10 @@
 
 **说明：** 使用该接口时，请确保驱动固件包和CANN包都为配套的8.0.RC2版本或者配套的更高版本，否则将会引发报错，比如BUS ERROR等。
 
-
 ## 功能说明
 
--   **算子功能**：实现quant + reduceScatter融合计算。
--   **计算公式**：
+- **算子功能**：实现quant + reduceScatter融合计算。
+- **计算公式**：
 
     $$
     output=Reduce(AllToAllScales * AllToAllData)
@@ -34,7 +33,7 @@
     其中的Reduce计算是将来自不同rank的数据进行reduce计算。
     $$
 
--   **参数说明：**
+- **参数说明：**
     <table style="undefined;table-layout: fixed; width: 1567px"><colgroup>
     <col style="width: 170px">
     <col style="width: 120px">
@@ -62,7 +61,7 @@
         <td>x</td>
         <td>输入</td>
         <td>公式中的输入x</td>
-        <td><ul><li>不支持空Tensor。</li><li>支持的shape为：(BS, H)或者(B, S, H)。B为batch size，S为sequence length，H为hidden size。当前版本输入x的H支持1024~8192中任意128对齐泛化。</li></td>
+        <td><ul><li>不支持空Tensor。</li><li>支持的shape为：(BS, H)或者(B, S, H)。B为batch size，S为sequence length，H为hidden size。当前版本输入x的H支持1024~8192中任意128对齐泛化。</li></ul></td>
         <td>INT8, HIFLOAT8, FLOAT8_E4M3FN, FLOAT8_E5M2</td>
         <td>ND</td>
         <td>2-3</td>
@@ -72,7 +71,7 @@
         <td>scales</td>
         <td>输入</td>
         <td>公式中的输入scales</td>
-        <td><ul><li>不支持空Tensor。</li><li>当scales的数据类型为FLOAT8_E8M0时，x的数据类型必须为FLOAT8_E4M3FN、FLOAT8_E5M2，x的shape为(BS, H)或者(B, S, H)，scales的shape必须对应x的shape为(BS, H/64, 2)或者(B, S, H/64, 2)。</li><li>当scales的数据类型为FLOAT时，x的数据类型必须为INT8、HIFLOAT8、FLOAT8_E4M3FN、FLOAT8_E5M2，x的shape为(BS, H)或者(B, S, H)，scales的shape必须对应x的shape为(BS, H/128)或者(B, S, H/128)。</li></td>
+        <td><ul><li>不支持空Tensor。</li><li>当scales的数据类型为FLOAT8_E8M0时，x的数据类型必须为FLOAT8_E4M3FN、FLOAT8_E5M2，x的shape为(BS, H)或者(B, S, H)，scales的shape必须对应x的shape为(BS, H/64, 2)或者(B, S, H/64, 2)。</li><li>当scales的数据类型为FLOAT时，x的数据类型必须为INT8、HIFLOAT8、FLOAT8_E4M3FN、FLOAT8_E5M2，x的shape为(BS, H)或者(B, S, H)，scales的shape必须对应x的shape为(BS, H/128)或者(B, S, H/128)。</li></ul></td>
         <td>FLOAT, FLOAT8_E8M0</td>
         <td>ND</td>
         <td>2-4</td>
@@ -82,7 +81,7 @@
         <td>group</td>
         <td>输入</td>
         <td>通信域标识</td>
-        <td><ul><li>通信域标识</li></td>
+        <td>通信域标识</td>
         <td>String</td>
         <td>-</td>
         <td>-</td>
@@ -92,7 +91,7 @@
         <td>reduceOp</td>
         <td>输入</td>
         <td>公式中的reduce操作类型。</td>
-        <td><ul><li>当前仅支持"sum"</li></td>
+        <td>当前仅支持"sum"</td>
         <td>string</td>
         <td>-</td>
         <td>-</td>
@@ -102,7 +101,7 @@
         <td>output</td>
         <td>输出</td>
         <td>公式中的输出output。</td>
-        <td><ul><li>不支持空Tensor。</li><li>当x的shape是(BS,H)的时候，output的shape必须为(BS/rankNum,H); 当x的shape是(B,S,H)的时候，output的shape必须为(B*S/rankNum,H)。rankNum表示通信域大小。</li></td>
+        <td><ul><li>不支持空Tensor。</li><li>当x的shape是(BS,H)的时候，output的shape必须为(BS/rankNum,H); 当x的shape是(B,S,H)的时候，output的shape必须为(B*S/rankNum,H)。rankNum表示通信域大小。</li></ul></td>
         <td>FLOAT、FLOAT16、BFLOAT16</td>
         <td>ND</td>
         <td>2</td>

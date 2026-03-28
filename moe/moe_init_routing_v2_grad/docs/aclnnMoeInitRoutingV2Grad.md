@@ -13,11 +13,10 @@
 | <term>Atlas 推理系列产品</term>                             |    ×    |
 | <term>Atlas 训练系列产品</term>                              |    ×    |
 
-
 ## 功能说明
 
--   **接口功能**：[aclnnMoeInitRoutingV2](../../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)的反向传播，完成tokens的加权求和。
--   **计算公式**：
+- **接口功能**：[aclnnMoeInitRoutingV2](../../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)的反向传播，完成tokens的加权求和。
+- **计算公式**：
 
     $$
     gradX_i=\sum_{t=0}^{topK}gradExpandedX[expandedRowIdx[i * topK + t]]
@@ -77,7 +76,7 @@ aclnnStatus aclnnMoeInitRoutingV2Grad(
       <td>gradExpandedX</td>
       <td>输入</td>
       <td>表示Routing过后的目标张量。</td>
-      <td>要求为一个2D/3D的Tensor，2D shape为Dropless场景的[B*S*K, H]或者Active场景下的[A, H]，3D shape为Drop/Pad场景下的[E, C, H]。</li></ul></td>
+      <td>要求为一个2D/3D的Tensor，2D shape为Dropless场景的[B*S*K, H]或者Active场景下的[A, H]，3D shape为Drop/Pad场景下的[E, C, H]。</td>
       <td>FLOAT16、BFLOAT16、FLOAT32</td>
       <td>ND</td>
       <td>2或3</td>

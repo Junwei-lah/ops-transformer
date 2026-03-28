@@ -193,6 +193,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <td>-</td>
     <td>-</td>
     <td>-</td>
+    </tr>
     <tr>
     <td>x2OffsetOptional</td>
     <td>输入</td>
@@ -202,6 +203,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     <td>-</td>
     <td>-</td>
     <td>-</td>
+    </tr>
     <tr>
     <td>alltoAllAxesOptional</td>
     <td>输入</td>
@@ -468,6 +470,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32
     $$
   - 假设输入x和scale各方向满足整除关系，且自动推导的groupSizeM、groupSizeN、groupSizeK满足[1,1,32]，则mx量化场景下groupSize支持以下取值：
+
     | groupSize | 根据计算公式[gsM,gsN,gsK] | 根据自动推导[gsM,gsN,gsK] |
     | :------: | :------: | :------: |
     | 4295032864 | [1,1,32] | - |
@@ -478,6 +481,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     | 4294967296 | [1,0,0] | [1,1,32] |
     | 4294967328 | [1,0,32] | [1,1,32] |
     | 4295032832 | [1,1,0] | [1,1,32] |
+
 * 该算子输入输出的数据类型、数据维度和量化模式根据不同设备型号有不同的限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     * 量化模式：
@@ -487,26 +491,32 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
       * 若x1、x2、alltoallout输入int32类型，则视作8个int4打包，会被重新解释为int4。
       * A16W8和A16W4时，smoothQuant场景，x1ScaleOptional与x1的数据类型必须一致。
       * A16W8时，x1、x2、biasOptional和output支持的数据类型组合有：
+
         | x1 | x2 | biasOptional | output |
         | :------: | :------: | :------: | :------: |
         | FLOAT16 | INT8 | FLOAT16 | FLOAT16 |
         | FLOAT16 | INT8 | FLOAT32 | FLOAT16 |
         | BFLOAT16 | INT8 | BFLOAT16 | BFLOAT16 |
         | BFLOAT16 | INT8 | FLOAT32 | BFLOAT16 |
+
       * A16W4时，x1、x2、biasOptional和output支持的数据类型组合有：
+
         | x1 | x2 | biasOptional | output |
         | :------: | :------: | :------: | :------: |
         | FLOAT16 | INT4 | FLOAT16 | FLOAT16 |
         | FLOAT16 | INT4 | FLOAT32 | FLOAT16 |
         | BFLOAT16 | INT4 | BFLOAT16 | BFLOAT16 |
         | BFLOAT16 | INT4 | FLOAT32 | BFLOAT16 |
+
       * A4W4时，x1、x2、biasOptional和output支持的数据类型组合有：
+
         | x1 | x2 | biasOptional | output |
         | :------: | :------: | :------: | :------: |
         | INT4 | INT4 | FLOAT16 | FLOAT16 |
         | INT4 | INT4 | FLOAT32 | FLOAT16 |
         | INT4 | INT4 | BFLOAT16 | BFLOAT16 |
         | INT4 | INT4 | FLOAT32 | BFLOAT16 |
+
     * 维度约束：
       * A16W8时，rankSize * H必须整除16；rankSize * H取值范围：[1, 35000]。
       * A16W4时，rankSize * H必须整除16；N必须为偶数; rankSize * H取值范围：[1, 35000]。
@@ -520,6 +530,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
       * biasOptional可以为空。
       * 输入输出支持的数据类型组合有：
         * K-C动态量化： 
+
           | x1 | x2 | biasOptional | output | x1QuantDtype | x2QuantDtype | x1ScaleOptional | x2Scale |
           | :------: | :------: | :------: | :------: | :------: | :------: | :------: | :------: |
           | FLOAT16 | FLOAT8_E4M3FN | FLOAT32 | FLOAT16 | 7 | 2 | - | FLOAT32 |
@@ -534,7 +545,9 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
           | BFLOAT16 | FLOAT8_E5M2 | FLOAT32 | FLOAT16 | 7 | 2 | - | FLOAT32 |
           | BFLOAT16 | FLOAT8_E5M2 | FLOAT32 | BFLOAT16 | 7 | 2 | - | FLOAT32 |
           | BFLOAT16 | FLOAT8_E5M2 | FLOAT32 | FLOAT32 | 7 | 2 | - | FLOAT32 |
+
         * mx量化：
+
           | x1 | x2 | biasOptional | output | x1QuantDtype | x2QuantDtype | x1ScaleOptional | x2Scale |
           | :------: | :------: | :------: | :------: | :------: | :------: | :------: | :------: |
           | FLOAT8_E4M3FN | FLOAT8_E4M3FN | FLOAT32 | FLOAT16 | 6 | 6 | FLOAT8_E8M0 | FLOAT8_E8M0 |
@@ -552,6 +565,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
           | FLOAT4_E2M1 | FLOAT4_E2M1 | FLOAT32 | FLOAT16 | 6 | 6 | FLOAT8_E8M0 | FLOAT8_E8M0 |
           | FLOAT4_E2M1 | FLOAT4_E2M1 | FLOAT32 | BFLOAT16 | 6 | 6 | FLOAT8_E8M0 | FLOAT8_E8M0 |
           | FLOAT4_E2M1 | FLOAT4_E2M1 | FLOAT32 | FLOAT32 | 6 | 6 | FLOAT8_E8M0 | FLOAT8_E8M0 |
+
     * 维度约束：
       * rankSize * H范围仅支持[1, 65535]。
       * mx量化场景下，H必须整除64。
@@ -802,6 +816,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
         return 0;
     }
     ```
+
 - <term>Ascend 950PR/Ascend 950DT</term>：
 
     ```cpp

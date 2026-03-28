@@ -193,7 +193,6 @@ aclnnStatus aclnnGroupedMatMulAllReduce(
     </tr>
   </tbody></table>
 
-
 ## aclnnGroupedMatMulAllReduce
 
 - **参数说明**
@@ -888,4 +887,3 @@ int main(int argc, char *argv[])
     return ret;
 }
 ```
-

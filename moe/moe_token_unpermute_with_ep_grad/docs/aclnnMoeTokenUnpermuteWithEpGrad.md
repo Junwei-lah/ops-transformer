@@ -46,14 +46,15 @@
       probsGrad = \sum_{k=0}^{topkNum}(unpermutedTokens_{i,j,k})
       $$
     
-    -  最后，当rangeOptional[0] <= sortedIndices[i] < rangeOptional[1]时：
+    - 最后，当rangeOptional[0] <= sortedIndices[i] < rangeOptional[1]时：
       
       $$
       permutedTokensGradOut[sortedIndices[i]] = ((unpermutedTokensGrad.unsqueeze(1) * probs.unsqueeze(-1)).reshape(-1, hiddenSize))[i]
       $$
 
   - probs为None计算公式如下，其中$i \in {0, 1, 2, ..., num\_tokens - 1}$：
-    -  当rangeOptional[0] <= sortedIndices[i] < rangeOptional[1]时：
+
+    - 当rangeOptional[0] <= sortedIndices[i] < rangeOptional[1]时：
     
     $$
     permutedTokensGradOut[sortedIndices[i]-rangeOptional[0]] = unpermutedTokensGrad[i]

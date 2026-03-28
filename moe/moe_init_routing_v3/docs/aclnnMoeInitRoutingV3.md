@@ -16,7 +16,7 @@
 ## 功能说明
 
 - 接口功能：MoE的routing计算，根据[aclnnMoeGatingTopKSoftmaxV2](../../moe_gating_top_k_softmax_v2/docs/aclnnMoeGatingTopKSoftmaxV2.md)的计算结果做routing处理，支持不量化、静态量化和动态量化模式。本接口针对V2接口[aclnnMoeInitRoutingV2](../../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)做出如下功能变更，请根据实际情况选择合适的接口：<br>
-  <ol><li>增加动态与静态量化功能，支持输出expendX的 int8量化模式输出。<li>删除输出expertTokensBeforeCapacityOut，新增输出expertTokensCountOrCumsumOut。<li>兼容V2原有输出模式，并新增key_value输出格式支持：重新定义原有属性expertTokensBeforeCapacityFlag(bool)和expertTokensCountOrCumsumFlag(int)，分别为expertsTokensNumFlag(bool)和expertTokensNumType(int)。具体输出格式对应关系如下表：
+  <ol><li>增加动态与静态量化功能，支持输出expendX的 int8量化模式输出。</li><li>删除输出expertTokensBeforeCapacityOut，新增输出expertTokensCountOrCumsumOut。</li><li>兼容V2原有输出模式，并新增key_value输出格式支持：重新定义原有属性expertTokensBeforeCapacityFlag(bool)和expertTokensCountOrCumsumFlag(int)，分别为expertsTokensNumFlag(bool)和expertTokensNumType(int)。具体输出格式对应关系如下表：</li>
   <table align="center">
     <tr>
       <th>DropPadMode</th>
@@ -249,7 +249,7 @@ aclnnStatus aclnnMoeInitRoutingV3(
       <td>输入</td>
       <td>表示用于计算quant结果的偏移值</td>
       <td><ul>
-        <li>在非量化场景下不输入;<li>静态量化场景必须输入，输入要求为1D的Tensor，shape为[1, ]；</li>
+        <li>在非量化场景下不输入;</li><li>静态量化场景必须输入，输入要求为1D的Tensor，shape为[1, ]；</li>
         <li>动态量化、MXFP8量化、HIF8量化场景下不输入。</li>
       </ul></td>
       <td>FLOAT32</td>
@@ -466,7 +466,7 @@ aclnnStatus aclnnMoeInitRoutingV3(
       <th>描述</th>
     </tr>
   </thead>
-
+  <tbody>
     <tr>
       <td>ACLNN_ERR_PARAM_NULLPTR</td>
       <td>161001</td>
@@ -562,14 +562,13 @@ aclnnStatus aclnnMoeInitRoutingV3(
       </tr>
       <tr>
         <td align="center">大 batch 性能模板</td>
-        <td>需要同时满足以下条件：<ul><li>NUM_ROWS范围为[384, 8192]，K=8。</li><li>属性要求：expertNum=256，expertEnd-expertStart<=32，quantMode=-1，rowIdxType=1，expertTokensNumType=1</td>
+        <td>需要同时满足以下条件：<ul><li>NUM_ROWS范围为[384, 8192]，K=8。</li><li>属性要求：expertNum=256，expertEnd-expertStart<=32，quantMode=-1，rowIdxType=1，expertTokensNumType=1</li></ul></td>
       </tr>
       <tr>
         <td align="center"><br>全载性能模板</td>
-        <td>在算子输入shape较小的场景，操作间的多核同步时间占比较高，成为性能瓶颈。因此，针对这种特化场景，添加性能模板。该模板中，搬入、排序、计算都在同一个kernel内完成。需要满足如下条件：<ul style="list-style-type: circle;"><li>属性要求：dropPadMode=0<br></td>
+        <td>在算子输入shape较小的场景，操作间的多核同步时间占比较高，成为性能瓶颈。因此，针对这种特化场景，添加性能模板。该模板中，搬入、排序、计算都在同一个kernel内完成。需要满足如下条件：<ul style="list-style-type: circle;"><li>属性要求：dropPadMode=0</li></ul></td>
       </tr>
     </table>
-
 
 ## 调用示例
 

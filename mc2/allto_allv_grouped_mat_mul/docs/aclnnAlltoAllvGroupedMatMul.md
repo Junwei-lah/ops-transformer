@@ -244,7 +244,6 @@ aclnnStatus aclnnAlltoAllvGroupedMatMul(
     </tr>
     </tbody></table>
 
-
 ## aclnnAlltoAllvGroupedMatMul
 
 - **参数说明**
@@ -311,6 +310,7 @@ aclnnStatus aclnnAlltoAllvGroupedMatMul(
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 说明：
+
 - 本示例代码调用了部分HCCL集合通信库接口：HcclGetCommName、HcclCommInitAll、HcclCommDestroy, 请参考[ <<HCCL API (C)>>](https://hiascend.com/document/redirect/CannCommunityHcclCppApi)。
 - 本示例代码以8卡为例，请根据实际环境卡数修改 `EP_WORLD_SIZE`。
 

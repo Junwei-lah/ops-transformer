@@ -14,6 +14,7 @@
 | <term>Atlas 训练系列产品</term>                              |    ×    |
 
 **说明：** 使用该接口时，请确保驱动固件包和CANN包都为配套的8.0.RC2版本或者配套的更高版本，否则将会引发报错，比如Bus Error等。
+
 ## 功能说明
 
 - **算子功能**：完成mm + all_reduce + add + rms_norm计算。
@@ -58,6 +59,7 @@ aclnnStatus aclnnQuantMatmulAllReduceAddRmsNormGetWorkspaceSize(
     uint64_t        *workspaceSize,
     aclOpExecutor  **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnQuantMatmulAllReduceAddRmsNorm(
     void             *workspace,
@@ -287,6 +289,7 @@ aclnnStatus aclnnQuantMatmulAllReduceAddRmsNorm(
     <col style="width: 158px">
     <col style="width: 120px">
     <col style="width: 750px">
+    </colgroup>
     <thead>
     <tr>
         <th>参数名</th>

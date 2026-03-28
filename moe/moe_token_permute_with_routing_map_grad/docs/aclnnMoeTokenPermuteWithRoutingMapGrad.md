@@ -261,7 +261,6 @@ aclnnStatus aclnnMoeTokenPermuteWithRoutingMapGrad(
       </tbody>
   </table>
 
-
 ## aclnnMoeTokenPermuteWithRoutingMapGrad
 
 - **参数说明：**

@@ -2,7 +2,6 @@
 
 [📄 查看源码](https://gitcode.com/cann/ops-transformer/tree/master/moe/moe_token_unpermute_with_routing_map_grad)
 
-
 ## 产品支持情况
 
 | 产品                                                         | 是否支持 |
@@ -70,7 +69,6 @@
   1. hidden_size指unpermutedTokensGrad的第1维大小。
   2. dropAndPad等于true时，每个专家固定能够处理capacity个token。输入routingMapOptional的第1维是experts_num，即专家个数，输入outIndex的第0维是experts_num * capacity，根据这两个维度可以算出capacity。
   3. dropAndPad等于false时，每个token固定被topK_num个专家处理。输入unpermutedTokensGrad的第0维是tokens_num，即token的个数，输入outIndex的第0维是tokens_num * capacity，根据这两个维度可以算出topK_num。
-
 
 ## 函数原型
 

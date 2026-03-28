@@ -108,9 +108,6 @@
     </tbody>
 </table>
 
-
-
-
 ## 约束说明
 
 - 当x的数据类型为FLOAT8_E4M3FN、FLOAT8_E5M2并且scales的数据类型为FLOAT8_E8M0时，输入数据的量化方式为mx量化。

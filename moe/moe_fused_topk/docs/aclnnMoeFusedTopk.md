@@ -13,8 +13,8 @@
 
 ## 功能说明
 
--   接口功能：MoE计算中，对输入x做Sigmoid计算，对计算结果分组进行排序，最后根据分组排序的结果选取前k个专家。
--   计算公式：
+- 接口功能：MoE计算中，对输入x做Sigmoid计算，对计算结果分组进行排序，最后根据分组排序的结果选取前k个专家。
+- 计算公式：
 
     对输入做sigmoid：
 
@@ -53,7 +53,6 @@
     $$
     
     如果enableExpertMapping为true，再将indices中的物理专家按照输入的mappingNum和mappingTable映射到逻辑专家，得到输出的indices。
-
 
 ## 函数原型
 
@@ -376,7 +375,9 @@ aclnnStatus aclnnMoeFusedTopk(
 - groupNum小于等于256。
 
 ## 调用示例
+
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
+
 ```Cpp
 #include <iostream>
 #include <memory>

@@ -61,6 +61,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNormGetWorkspaceSize(
     uint64_t        *workspaceSize,
     aclOpExecutor  **executor)
 ```
+
 ```cpp
 aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
     void             *workspace,
@@ -308,6 +309,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduceAddRmsNorm(
     <col style="width: 158px">
     <col style="width: 120px">
     <col style="width: 750px">
+    </colgroup>
     <thead>
     <tr>
         <th>参数名</th>

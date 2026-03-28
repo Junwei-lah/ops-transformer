@@ -28,8 +28,6 @@
   inputGrad = inputGrad.sum(dim = 1)
   $$
 
-
-
 ## 参数说明
 
   <table style="table-layout: auto; width: 100%">
@@ -80,8 +78,6 @@
   </tr>
  </tbody></table>
 
-
-
 ## 约束说明
 
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：numTopk <= 512。
@@ -100,4 +96,3 @@
 | 调用方式  | 样例代码                                  | 说明                                                     |
 | :--------: | :----------------------------------------: | :-------------------------------------------------------: |
 | aclnn接口 | [test_aclnn_moe_token_permute_grad.cpp](examples/test_aclnn_moe_token_permute_grad.cpp) | 通过[aclnnMoeTokenPermuteGrad](docs/aclnnMoeTokenPermuteGrad.md)接口方式调用MoeTokenPermuteGrad算子。 |
-

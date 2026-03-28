@@ -79,7 +79,6 @@
 
 ## 参数说明
 
-
 <table style="undefined;table-layout: fixed; width: 1576px"><colgroup>
   <col style="width: 170px">
   <col style="width: 170px">
@@ -214,8 +213,8 @@
 * 当x1、x2数据类型为FLOAT16/BFLOAT16/HIFLOAT8/FLOAT8_E4M3FN/FLOAT_E5M2时，x2矩阵支持转置/不转置场景，x1矩阵只支持不转置场景。
 * 当groupSize取值为549764202624，bias必须为空。
 * <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16、32、64卡。
-## 调用说明
 
+## 调用说明
 
 | 调用方式   | 样例代码           | 说明                                         |
 | ---------------- | --------------------------- | --------------------------------------------------- |

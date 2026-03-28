@@ -16,9 +16,9 @@
 - 算子功能：当存在TP域通信时，先进行ReduceScatterV通信，再进行AllToAllV通信，最后将接收的数据整合（乘权重再相加）；当不存在TP域通信时，进行AllToAllV通信，最后将接收的数据整合（乘权重再相加）。
 
     相较于MoeDistributeCombineV2算子，该算子变更如下：
-    -   新增`context`入参，存入通信域相关信息；
-    -   新增`ccl_buffer_size`入参，指定当前通信域大小；
-    -   减少`group_ep`以及`group_tp`通信域名称入参;
+    - 新增`context`入参，存入通信域相关信息；
+    - 新增`ccl_buffer_size`入参，指定当前通信域大小；
+    - 减少`group_ep`以及`group_tp`通信域名称入参;
     详细说明请参考以下参数说明。
 - 计算公式：
 

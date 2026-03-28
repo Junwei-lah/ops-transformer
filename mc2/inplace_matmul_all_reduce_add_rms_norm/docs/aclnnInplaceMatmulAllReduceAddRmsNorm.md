@@ -224,7 +224,6 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
       </tbody>
     </table>
 
-
 - **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
@@ -265,6 +264,7 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
     <col style="width: 158px">
     <col style="width: 120px">
     <col style="width: 750px">
+    </colgroup>
     <thead>
     <tr>
         <th>参数名</th>
@@ -294,7 +294,7 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
     </tr>
     </tbody></table>
 
--   **返回值：**
+- **返回值：**
 
     返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
@@ -319,6 +319,7 @@ aclnnStatus aclnnInplaceMatmulAllReduceAddRmsNorm(
 示例代码如下，仅供参考，具体编译和执行过程请参考[编译与运行样例](../../../docs/zh/context/编译与运行样例.md)。
 
 - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
+
 ```Cpp
 #include <iostream>
 #include <vector>

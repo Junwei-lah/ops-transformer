@@ -13,8 +13,8 @@
 
 ## 功能说明
 
--   **算子功能**：[aclnnMoeInitRoutingV2](../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)的反向传播，完成tokens的加权求和。
--   **计算公式**：
+- **算子功能**：[aclnnMoeInitRoutingV2](../moe_init_routing_v2/docs/aclnnMoeInitRoutingV2.md)的反向传播，完成tokens的加权求和。
+- **计算公式**：
 
   $$
   gradX_i=\sum_{t=0}^{topK}gradExpandedX[expandedRowIdx[i * topK + t]]

@@ -1,6 +1,7 @@
 # MoeDistributeDispatchV3
 
 ## 产品支持情况
+
 | 产品                                                         |  是否支持   |
 | :----------------------------------------------------------- |:-------:|
 | <term>Ascend 950PR/Ascend 950DT</term>                             |    ×    |
@@ -51,9 +52,9 @@ $$
 
 相较于`MoeDistributeDispatchV3`算子，该算子变更如下：
 
--   新增`context`入参，存入通信域相关信息；
--   新增`ccl_buffer_size`入参，指定当前通信域大小；
--   减少`group_ep`以及`group_tp`通信域名称入参;
+- 新增`context`入参，存入通信域相关信息；
+- 新增`ccl_buffer_size`入参，指定当前通信域大小；
+- 减少`group_ep`以及`group_tp`通信域名称入参;
 
 详细说明请参考以下参数说明。
 
@@ -298,6 +299,7 @@ $$
 
 * <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
     * 不支持`expand_scales_out`。
+    
 ## 约束说明
 
 - `MoeDistributeDispatchV3`与`CombineV3`系列算子必须配套使用，具体参考调用示例。
