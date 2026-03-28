@@ -166,28 +166,37 @@ bool KvRmsNormRopeCacheTilingBase::CheckGammaValid(const gert::TilingContext* co
     return isValid;
 }
 
+bool KvRmsNormRopeCacheTilingBase::CheckCacheValid(
+    const gert::TilingContext* context, int64_t batchSize, int64_t numHead,
+    int64_t cacheLen, int64_t headSize, size_t cacheIndex, const char* cacheName)
+{
+    auto cacheShapeTuple = GetShapeTuple(context, cacheIndex);
+    int64_t cacheB = std::get<SHAPE_IDX_B>(cacheShapeTuple);
+    int64_t cacheN = std::get<SHAPE_IDX_N>(cacheShapeTuple);
+    if (cacheB != batchSize) {
+        OP_LOGW(context_->GetNodeName(),
+            "In CacheMode::Norm, the B dimension of %s should be %ld, but got %ld.", cacheName, batchSize, cacheB);
+    }
+    if (cacheN != numHead) {
+        OP_LOGW(context_->GetNodeName(),
+            "In CacheMode::Norm, the N dimension of %s should be %ld, but got %ld.", cacheName, numHead, cacheN);
+    }
+    bool isValid = true;
+    isValid = isValid && (std::get<SHAPE_IDX_S>(cacheShapeTuple) == cacheLen);
+    isValid = isValid && (std::get<SHAPE_IDX_D>(cacheShapeTuple) == headSize);
+    return isValid;
+}
+
 bool KvRmsNormRopeCacheTilingBase::CheckKCacheValid(
     const gert::TilingContext* context, int64_t batchSize, int64_t numHead, int64_t cacheLen, int64_t headSize)
 {
-    auto kCacheShapeTuple = GetShapeTuple(context, K_CACHE_INDEX);
-    bool isValid = true;
-    isValid = isValid && (std::get<SHAPE_IDX_B>(kCacheShapeTuple) == batchSize);
-    isValid = isValid && (std::get<SHAPE_IDX_N>(kCacheShapeTuple) == numHead);
-    isValid = isValid && (std::get<SHAPE_IDX_S>(kCacheShapeTuple) == cacheLen);
-    isValid = isValid && (std::get<SHAPE_IDX_D>(kCacheShapeTuple) == headSize);
-    return isValid;
+    return CheckCacheValid(context, batchSize, numHead, cacheLen, headSize, K_CACHE_INDEX, "k_cache");
 }
 
 bool KvRmsNormRopeCacheTilingBase::CheckVCacheValid(
     const gert::TilingContext* context, int64_t batchSize, int64_t numHead, int64_t cacheLen, int64_t headSize)
 {
-    auto vCacheShapeTuple = GetShapeTuple(context, V_CACHE_INDEX);
-    bool isValid = true;
-    isValid = isValid && (std::get<SHAPE_IDX_B>(vCacheShapeTuple) == batchSize);
-    isValid = isValid && (std::get<SHAPE_IDX_N>(vCacheShapeTuple) == numHead);
-    isValid = isValid && (std::get<SHAPE_IDX_S>(vCacheShapeTuple) == cacheLen);
-    isValid = isValid && (std::get<SHAPE_IDX_D>(vCacheShapeTuple) == headSize);
-    return isValid;
+    return CheckCacheValid(context, batchSize, numHead, cacheLen, headSize, V_CACHE_INDEX, "v_cache");
 }
 
 bool KvRmsNormRopeCacheTilingBase::CheckKCacheValidPA(
