@@ -39,6 +39,10 @@ namespace Kernel {
 using namespace Cgmct::Gemm::GroupedMatmul;
 
 namespace {
+constexpr uint64_t GROUP_LIST_TYPE_SPARSE = 2UL;
+constexpr uint64_t GROUP_TYPE_M = 0UL;
+constexpr uint64_t SPARSE_GROUP_LIST_ITEM_STRIDE = 2UL;
+constexpr uint64_t SPARSE_GROUP_LIST_SPLIT_VALUE_OFFSET = 1UL;
 constexpr uint64_t IDX_A_OFFSET = 0UL;
 constexpr uint64_t IDX_B_OFFSET = 1UL;
 constexpr uint64_t IDX_X1SCALE_OFFSET = 2UL;
@@ -124,7 +128,7 @@ public:
 private:
     __aicore__ inline void SetMNK(uint32_t groupIdx);
     __aicore__ inline void ProcessSingleGroup(const Params& params, BlockSchedulerOp& bs, uint32_t groupIdx);
-    __aicore__ inline void UpdateOffset(uint32_t groupIdx);
+    __aicore__ inline void UpdateOffset(uint32_t loopIdx, uint32_t groupIdx);
     __aicore__ inline int32_t GetSplitValueFromGroupList(uint32_t groupIdx);
     __aicore__ inline void UpdateMMGlobalAddr();
     __aicore__ inline void Iterate(int64_t singleCoreM, int64_t singleCoreN);
@@ -162,11 +166,18 @@ __aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>
     Init(params);
     bool isKZeroInit = false;
     BlockSchedulerOp bs(params.gmmParams.baseM, params.gmmParams.baseN, params.gmmParams.baseK);
-    for (uint32_t groupIdx = 0; groupIdx < groupNum_; ++groupIdx) {
-        UpdateOffset(groupIdx);
+    for (uint32_t loopIdx = 0; loopIdx < groupNum_; ++loopIdx) {
+        uint32_t groupIdx = loopIdx;
+        if (groupListType_ == GROUP_LIST_TYPE_SPARSE) {
+            groupIdx = static_cast<int32_t>(groupListGlobal_.GetValue(loopIdx * SPARSE_GROUP_LIST_ITEM_STRIDE));
+        }
+        UpdateOffset(loopIdx, groupIdx);
         // Update input parameters M, N, K within the group
-        SetMNK(groupIdx);
+        SetMNK(loopIdx);
         if (Get<MNK_M>(problemShape_) <= 0 || Get<MNK_N>(problemShape_) <= 0) {
+            if (groupListType_ == GROUP_LIST_TYPE_SPARSE && Get<MNK_M>(problemShape_) <= 0) {
+                break;
+            }
             continue;
         }
         if (Get<MNK_K>(problemShape_) <= 0) {
@@ -243,10 +254,21 @@ __aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>
 }
 
 QGMM_PERTILE_KERNEL_CLASS_TEM_PARAMS
-__aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>::UpdateOffset(uint32_t groupIdx)
+__aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>::UpdateOffset(uint32_t loopIdx,
+                                                                                                 uint32_t groupIdx)
 {
-    // baseOffset is 0 when groupIdx = 0
+    // sparse split-M 首轮可能出现 groupIdx != 0。首轮 token 侧(A/C)不前移，
+    // 但权重/scale 侧(B/X2Scale)需要直接按真实 groupIdx 跳转。
     if (groupIdx == 0) {
+        return;
+    }
+    if (loopIdx == 0 && groupListType_ == GROUP_LIST_TYPE_SPARSE && groupType_ == GROUP_TYPE_M) {
+        int64_t n = Get<MNK_N>(problemShape_);
+        int64_t k = Get<MNK_K>(problemShape_);
+        Get<IDX_B_OFFSET>(baseOffset_) = n * k * static_cast<int64_t>(groupIdx);
+        int64_t scaleK = CeilDiv(k, PER_BLOCK_SIZE);
+        Get<IDX_X2SCALE_OFFSET>(baseOffset_) =
+            static_cast<int64_t>(groupIdx) * CeilDiv(n, PER_BLOCK_SIZE) * scaleK;
         return;
     }
     int64_t m = Get<MNK_M>(problemShape_);
@@ -254,8 +276,12 @@ __aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>
     int64_t k = Get<MNK_K>(problemShape_);
     // aBaseOffset += m * k
     Get<IDX_A_OFFSET>(baseOffset_) += m * k;
-    // bBaseOffset += n * k
-    Get<IDX_B_OFFSET>(baseOffset_) += n * k;
+    if (groupType_ == GROUP_TYPE_M) {
+        Get<IDX_B_OFFSET>(baseOffset_) = n * k * groupIdx;
+    } else {
+        // bBaseOffset += n * k
+        Get<IDX_B_OFFSET>(baseOffset_) += n * k;
+    }
     // G-B
     if constexpr (transA) { // split k, x1Scale:(k/gs+g, m) x2Scale:(k/gs+g, ceil(n/gs))
         int64_t scaleK = (Get<IDX_B_OFFSET>(baseOffset_) / n / PER_BLOCK_SIZE + groupIdx);
@@ -264,7 +290,12 @@ __aicore__ inline void QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>
     } else { // split m, x1Scale:(m, ceil(k/gs)) x2Scale:(g, ceil(n/gs), ceil(k/gs)) or (g, ceil(k/gs), ceil(n/gs))
         int64_t scaleK = CeilDiv(k, PER_BLOCK_SIZE);
         Get<IDX_X1SCALE_OFFSET>(baseOffset_) += m * scaleK;
-        Get<IDX_X2SCALE_OFFSET>(baseOffset_) += CeilDiv(n, PER_BLOCK_SIZE) * scaleK;
+        // M轴分组时统一按groupIdx推导B的scale偏移，避免依赖grouplisttype分支
+        if (groupType_ == GROUP_TYPE_M) {
+            Get<IDX_X2SCALE_OFFSET>(baseOffset_) = static_cast<int64_t>(groupIdx) * CeilDiv(n, PER_BLOCK_SIZE) * scaleK;
+        } else {
+            Get<IDX_X2SCALE_OFFSET>(baseOffset_) += CeilDiv(n, PER_BLOCK_SIZE) * scaleK;
+        }
     }
     // yBaseOffset += m * n
     Get<IDX_C_OFFSET>(baseOffset_) += m * n;
@@ -354,8 +385,11 @@ QuantMmGroupedPerTile<QGMM_PERTILE_KERNEL_FUN_TEM_PARAMS>::GetSplitValueFromGrou
             int32_t offset = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx));
             splitValue = offset - preOffset_;
             preOffset_ = offset;
-        } else {
+        } else if (groupListType_ == 1) {
             splitValue = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx));
+        } else {
+            splitValue = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx * SPARSE_GROUP_LIST_ITEM_STRIDE +
+                                                                        SPARSE_GROUP_LIST_SPLIT_VALUE_OFFSET));
         }
     }
     return splitValue;

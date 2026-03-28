@@ -87,6 +87,7 @@ public:
 
 protected:
     bool Init(const gert::TilingContext* context);
+    bool CheckNoQuantGroupListType(const gert::TilingContext *context) const;
     bool CalBaseMMTiling(const gert::TilingContext* context, const GMMCompileInfo* compileInfoPtr);
     void FormulateBasicBlock(const GMMCompileInfo* compileInfoPtr, uint32_t remainCoreNum);
     void CalAswtL1Tiling(const GMMCompileInfo* compileInfoPtr);

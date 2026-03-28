@@ -35,6 +35,10 @@ using namespace Cgmct::Gemm;
 using namespace Cgmct::Gemm::GroupedMatmul;
 
 namespace {
+constexpr uint64_t GROUP_LIST_TYPE_SPARSE = 2UL;
+constexpr uint64_t GROUP_TYPE_M = 0UL;
+constexpr uint64_t SPARSE_GROUP_LIST_ITEM_STRIDE = 2UL;
+constexpr uint64_t SPARSE_GROUP_LIST_SPLIT_VALUE_OFFSET = 1UL;
 constexpr uint64_t IDX_A_OFFSET = 0UL;
 constexpr uint64_t IDX_B_OFFSET = 1UL;
 constexpr uint64_t IDX_X1SCALE_OFFSET = 2UL;
@@ -130,7 +134,7 @@ private:
     __aicore__ inline void SetMNK(uint32_t groupIdx);
     __aicore__ inline void BaseMBalance(BlockSchedulerOp &bs, int64_t m, int64_t baseM);
     __aicore__ inline void ProcessSingleGroup(const Params &params, BlockSchedulerOp &bs, uint32_t groupIdx);
-    __aicore__ inline void UpdateOffset(uint32_t groupIdx);
+    __aicore__ inline void UpdateOffset(uint32_t loopIdx, uint32_t groupIdx);
     __aicore__ inline int32_t GetSplitValueFromGroupList(uint32_t groupIdx);
     __aicore__ inline void UpdateMMGlobalAddr();
     __aicore__ inline void Iterate(int64_t singleCoreM, int64_t singleCoreN);
@@ -178,11 +182,18 @@ __aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::Run(const Pa
             bs.SetTailAlign(1, MATMUL_MNK_ALIGN_INT8);
         }
     }
-    for (uint32_t groupIdx = 0; groupIdx < groupNum_; ++groupIdx) {
-        UpdateOffset(groupIdx);
+    for (uint32_t loopIdx = 0; loopIdx < groupNum_; ++loopIdx) {
+        uint32_t groupIdx = loopIdx;
+        if (groupListType_ == GROUP_LIST_TYPE_SPARSE) {
+            groupIdx = static_cast<uint32_t>(groupListGlobal_.GetValue(loopIdx * SPARSE_GROUP_LIST_ITEM_STRIDE));
+        }
+        UpdateOffset(loopIdx, groupIdx);
         // Update the group-specific M/N/K values.
-        SetMNK(groupIdx);
+        SetMNK(loopIdx);
         if (Get<MNK_M>(problemShape_) <= 0 || Get<MNK_K>(problemShape_) <= 0) {
+            if (groupListType_ == GROUP_LIST_TYPE_SPARSE && Get<MNK_M>(problemShape_) <= 0) {
+                break;
+            }
             continue;
         }
         if ASCEND_IS_AIC {
@@ -194,7 +205,7 @@ __aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::Run(const Pa
         BaseMBalance(bs, Get<MNK_M>(problemShape_), params.gmmParams.baseM);
         bs.UpdateNextProblem(bsProblemShape);
         // Further split the tail tiles of the last group to use more cores when possible.
-        if (IsLastGroupAndNeedSplit(bs, groupIdx)) {
+        if (IsLastGroupAndNeedSplit(bs, loopIdx)) {
             bs.UpdateTailTile();
         }
         UpdateMMGlobalAddr();
@@ -252,10 +263,30 @@ __aicore__ inline bool KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::IsLastGroupA
 }
 
 QGMM_MX_KERNEL_CLASS_TEM_PARAMS
-__aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::UpdateOffset(uint32_t groupIdx)
+__aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::UpdateOffset(uint32_t loopIdx, uint32_t groupIdx)
 {
-    // baseOffset_ remains 0 for the first group.
+    // sparse split-M may start from non-zero real group index.
+    // The first loop should not advance token-side(A/C), but weight/scale-side(B/X2Scale)
+    // still needs to jump to the mapped sparse group directly.
     if (groupIdx == 0) {
+        return;
+    }
+    if (loopIdx == 0 && groupListType_ == GROUP_LIST_TYPE_SPARSE && groupType_ == GROUP_TYPE_M) {
+        int64_t n = Get<MNK_N>(problemShape_);
+        int64_t k = Get<MNK_K>(problemShape_);
+        if constexpr (formatB == CubeFormat::ND) {
+            Get<IDX_B_OFFSET>(baseOffset_) = n * k * static_cast<int64_t>(groupIdx);
+        } else {
+            int64_t nAlign = (n + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
+            int64_t kAlign = (k + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
+            if constexpr (transB) {
+                nAlign = (n + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
+                kAlign = (k + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
+            }
+            Get<IDX_B_OFFSET>(baseOffset_) = nAlign * kAlign * static_cast<int64_t>(groupIdx);
+        }
+        int64_t scaleK = CeilDiv(k, MXFP_DIVISOR_SIZE) * MXFP_MULTI_BASE_SIZE;
+        Get<IDX_X2SCALE_OFFSET>(baseOffset_) = static_cast<int64_t>(groupIdx) * n * scaleK;
         return;
     }
     int64_t m = Get<MNK_M>(problemShape_);
@@ -263,18 +294,32 @@ __aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::UpdateOffset
     int64_t k = Get<MNK_K>(problemShape_);
     // aBaseOffset += m * k
     Get<IDX_A_OFFSET>(baseOffset_) += m * k;
-    if constexpr (formatB == CubeFormat::ND) {
-        // bBaseOffset += n * k
-        Get<IDX_B_OFFSET>(baseOffset_) += n * k;
-    } else {
-        if constexpr (transB) {
-            int64_t nAlign = (n + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
-            int64_t kAlign = (k + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
-            Get<IDX_B_OFFSET>(baseOffset_) += nAlign * kAlign;
+    if (groupType_ == GROUP_TYPE_M) {
+        if constexpr (formatB == CubeFormat::ND) {
+            Get<IDX_B_OFFSET>(baseOffset_) = n * k * static_cast<int64_t>(groupIdx);
         } else {
             int64_t nAlign = (n + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
             int64_t kAlign = (k + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
-            Get<IDX_B_OFFSET>(baseOffset_) += nAlign * kAlign;
+            if constexpr (transB) {
+                nAlign = (n + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
+                kAlign = (k + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
+            }
+            Get<IDX_B_OFFSET>(baseOffset_) = nAlign * kAlign * static_cast<int64_t>(groupIdx);
+        }
+    } else {
+        if constexpr (formatB == CubeFormat::ND) {
+            // bBaseOffset += n * k
+            Get<IDX_B_OFFSET>(baseOffset_) += n * k;
+        } else {
+            if constexpr (transB) {
+                int64_t nAlign = (n + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
+                int64_t kAlign = (k + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
+                Get<IDX_B_OFFSET>(baseOffset_) += nAlign * kAlign;
+            } else {
+                int64_t nAlign = (n + MATMUL_MNK_ALIGN_INT8 - 1) & (~(MATMUL_MNK_ALIGN_INT8 - 1));
+                int64_t kAlign = (k + AscendC::BLOCK_CUBE - 1) & (~(AscendC::BLOCK_CUBE - 1));
+                Get<IDX_B_OFFSET>(baseOffset_) += nAlign * kAlign;
+            }
         }
     }
 
@@ -285,7 +330,11 @@ __aicore__ inline void KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::UpdateOffset
     } else { // split m, x1Scale:(m, ceil(k/64), 2) x2Scale:(g, n, ceil(k/64), 2) or (g, ceil(k/64), n, 2)
         int64_t scaleK = CeilDiv(k, MXFP_DIVISOR_SIZE) * MXFP_MULTI_BASE_SIZE;
         Get<IDX_X1SCALE_OFFSET>(baseOffset_) += m * scaleK;
-        Get<IDX_X2SCALE_OFFSET>(baseOffset_) += n * scaleK;
+        if (groupType_ == GROUP_TYPE_M) {
+            Get<IDX_X2SCALE_OFFSET>(baseOffset_) = static_cast<int64_t>(groupIdx) * n * scaleK;
+        } else {
+            Get<IDX_X2SCALE_OFFSET>(baseOffset_) += n * scaleK;
+        }
     }
     // yBaseOffset += m * n
     Get<IDX_C_OFFSET>(baseOffset_) += m * n;
@@ -365,8 +414,11 @@ __aicore__ inline int32_t KernelQGmmMx<QGMM_MX_KERNEL_FUN_TEM_PARAMS>::GetSplitV
         int32_t offset = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx));
         splitValue = offset - preOffset_;
         preOffset_ = offset;
-    } else {
+    } else if (groupListType_ == 1) {
         splitValue = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx));
+    } else {
+        splitValue = static_cast<int32_t>(groupListGlobal_.GetValue(groupIdx * SPARSE_GROUP_LIST_ITEM_STRIDE +
+                                                                    SPARSE_GROUP_LIST_SPLIT_VALUE_OFFSET));
     }
     return splitValue;
 }

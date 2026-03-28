@@ -286,6 +286,22 @@ bool GroupedNoQuantMatmulTiling::GetAttrs(const gert::TilingContext *context)
     weightDtype_ = w0Desc->GetDataType();
     auto wFormat0 = static_cast<ge::Format>(ge::GetPrimaryFormat(w0Desc->GetStorageFormat()));
     weightNzFlag_ = wFormat0 == ge::FORMAT_FRACTAL_NZ;
+    if (!CheckNoQuantGroupListType(context)) {
+        return false;
+    }
+    return true;
+}
+
+bool GroupedNoQuantMatmulTiling::CheckNoQuantGroupListType(const gert::TilingContext *context) const
+{
+    // Keep the sparse grouplist restriction in the no-quant 950 tiling path so the
+    // common API check does not need extra quant-state parameters just to distinguish
+    // no-quant from weight-quant cases.
+    OP_CHECK_IF(groupListType_ == GroupedMatmul::GROUPLIST_TYPE_SPARSE_M,
+                OP_LOGE(context->GetNodeName(),
+                        "In no quant case, groupListType does not support value %u(sparse), but actual is %u.",
+                        GroupedMatmul::GROUPLIST_TYPE_SPARSE_M, groupListType_),
+                return false);
     return true;
 }
 

@@ -32,6 +32,17 @@ using GMMQuantTilingData = GroupedMatmulTilingData::GMMQuantTilingData;
 using GMMQuantParams = GroupedMatmulTilingData::GMMQuantParams;
 namespace {
 static optiling::GroupedQuantMatmulInfoFactory g_groupedQuantMatmulInfoFactory;
+
+bool CheckGroupListType(const optiling::GQmmInputInfo &inputParams)
+{
+    OP_CHECK_IF(
+        inputParams.groupListType != GROUPLIST_TYPE_CUMSUM && inputParams.groupListType != GROUPLIST_TYPE_COUNT &&
+            inputParams.groupListType != GROUPLIST_TYPE_SPARSE_M,
+        OP_LOGE(inputParams.opName, "Only support groupListType is 0(cumsum), 1(count), 2(sparse), actual is %d.",
+                inputParams.groupListType),
+        return false);
+    return true;
+}
 }
 namespace optiling {
 GroupedQmmTiling::GroupedQmmTiling(gert::TilingContext *context)
@@ -107,6 +118,8 @@ bool GroupedQmmTiling::AnalyzeAttrs()
         inputParams_.actType = actTypePtr != nullptr ? *actTypePtr : inputParams_.actType;
         inputParams_.groupListType = groupListTypePtr != nullptr ? *groupListTypePtr : inputParams_.groupListType;
     }
+    OP_CHECK_IF(!CheckGroupListType(inputParams_), OP_LOGE(inputParams_.opName, "Check groupListType failed."),
+                return false);
     OP_CHECK_IF(inputParams_.groupType != SPLIT_M && inputParams_.groupType != SPLIT_K,
                 OP_LOGE(inputParams_.opName,
                         "Only support group type is 0 or 2 when the dtype of x is %s, actual is %d",
@@ -130,7 +143,6 @@ bool GroupedQmmTiling::AnalyzeAttrs()
             OP_LOGE(inputParams_.opName, "When group type is 2, FRACTAL_NZ format is not supportted for weight."),
             return false);
     }
-
     inputParams_.isSingleX = (context_->GetDynamicInputDesc(X_INDEX, 1) == nullptr);
     inputParams_.isSingleW = (context_->GetDynamicInputDesc(WEIGHT_INDEX, 1) == nullptr);
     // 2: when x is multi-tensor, y is single-tensor; 3: when x is single-tensor, y is single-tensor
@@ -796,11 +808,25 @@ bool GroupedQmmTiling::SetGroupNum(uint32_t groupListIndex)
     OP_CHECK_IF(groupListStorageShape == nullptr, OP_LOGE(context_->GetNodeName(), "groupListStorageShape is nullptr."),
                 return false);
     const gert::Shape &groupListShape = groupListStorageShape->GetStorageShape();
-    OP_CHECK_IF(groupListShape.GetDimNum() != 1,
-                OP_LOGE(inputParams_.opName, "The dimension of groupList should be 1, actual is %zu.",
-                        groupListShape.GetDimNum()),
-                return false);
-    inputParams_.groupNum = groupListShape.GetDim(0);
+    size_t groupListDimNum = groupListShape.GetDimNum();
+    // groupListType 0(cumsum)/1(count): grouplist is 1D; groupListType 2(sparse_m): grouplist is 2D [E, 2]
+    if (inputParams_.groupListType == GROUPLIST_TYPE_SPARSE_M) {
+        OP_CHECK_IF(groupListDimNum != 2,
+                    OP_LOGE(inputParams_.opName,
+                            "The dimension of groupList should be 2 when groupListType is 2(sparse_m), actual is %zu.",
+                            groupListDimNum),
+                    return false);
+        inputParams_.groupNum = groupListShape.GetDim(0);
+    } else {
+        OP_CHECK_IF(
+            groupListDimNum != 1,
+            OP_LOGE(
+                inputParams_.opName,
+                "The dimension of groupList should be 1 when groupListType is 0(cumsum) or 1(count), actual is %zu.",
+                groupListDimNum),
+            return false);
+        inputParams_.groupNum = groupListShape.GetDim(0);
+    }
     OP_CHECK_IF(inputParams_.groupNum > GMM_MAX_GROUP_LIST_SIZE,
                 OP_LOGE(inputParams_.opName, "The group number should not be greater than 1024, but actual is %lu.",
                         inputParams_.groupNum),

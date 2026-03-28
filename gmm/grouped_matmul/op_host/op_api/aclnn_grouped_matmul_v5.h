@@ -44,8 +44,9 @@ extern "C" {
  * @param [in] groupType:
  * 整数型参数，代表需要切分的轴，-1代表不需要切分；0代表需要切分M轴；1代表需要切分N轴；2代表需要切分K轴。默认值为-1，当前不支持N轴分组。
  * @param [in] groupListType:
- * 整数型参数，可取值0或1，0代表groupListOptional中数值为分组轴大小的cumsum结果（累积和），
- * 1代表groupListOptional中数值为分组轴上每组大小，默认值为0。
+ * 整数型参数，可取值0或1或2，0代表groupListOptional中数值为分组轴大小的cumsum结果（累积和），
+ * 1代表groupListOptional中数值为分组轴上每组大小，
+ * 2代表groupListOptional以稀疏键值对的形式处理，每个元素为[groupedIdx, groupedSize]，默认值为0。
  * @param [in] actType:整数型参数，代表激活函数类型，各激活函数枚举值参考枚举类GMMActType。
  * @param [in] tuningConfigOptional:
  * 调优参数。数组中第一个值表示各个专家处理的token数的预期值，算子tiling时会按照该预期值进行最优tiling。
