@@ -13,7 +13,7 @@
  * \brief
  */
 
-#include "./arch32/prompt_flash_attention_tilingkey.h"
+#include "prompt_flash_attention_tilingkey.h"
 #if (__CCE_AICORE__ > 200)
 #include "./arch32/prompt_flash_attention_base.h"
 #include "./arch32/prompt_flash_attention_bnstilling_n_s_no_tail.h"
@@ -37,10 +37,10 @@
 #else
 #include "kernel_operator.h"
 #endif
-#include "./arch32/unpad_flash_attention_common.h"
-#include "./arch32/prompt_attention_prefill.h"
-#include "./arch32/prompt_flash_attention_s1s2_bns1_x310_base.h"
-#include "./arch32/prompt_flash_attention_s1s2_bns1_x310.h"
+#include "unpad_flash_attention_common.h"
+#include "prompt_attention_prefill.h"
+#include "prompt_flash_attention_s1s2_bns1_x310_base.h"
+#include "prompt_flash_attention_s1s2_bns1_x310.h"
 #endif
 
 constexpr uint32_t FLOATBYTENUM = 8;

@@ -23,7 +23,7 @@
 #include "kernel_operator.h"
 #endif
 #include "lib/matmul_intf.h"
-#include "kernel_data_copy_transpose.h"
+#include "../kernel_data_copy_transpose.h"
 
 template<typename T>
 class PromptFlashAttentionEmptyTensor {
