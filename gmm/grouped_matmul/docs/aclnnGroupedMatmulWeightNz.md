@@ -191,7 +191,7 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
     <td>输入</td>
     <td>公式中的<code>weight</code>。</td>
     <td>tensorList长度支持[1, 128]或者[1, 1024]。支持昇腾亲和数据排布格式(nz)。</td>
-    <td>FLOAT16、BFLOAT16、INT8、INT4、INT32、FLOAT32、FLOAT4_E2M1<sup>2</sup></td>
+    <td>FLOAT16、BFLOAT16、INT8、INT4、INT32、FLOAT32、FLOAT4_E2M1、FLOAT8_E4M3FN<sup>2</sup></td>
     <td>FRACTAL_NZ</td>
     <td>-</td>
     <td>-</td>
@@ -211,7 +211,7 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
     <td>可选输入</td>
     <td>公式中的<code>scale</code>，代表量化参数中的缩放因子。</td>
     <td>一般情况下，长度与weight相同。综合约束请参见<a href="#约束说明">约束说明</a>。</td>
-    <td>UINT64<sup>1</sup>、BFLOAT16<sup>1</sup>、FLOAT32</td>
+    <td>UINT64<sup>1</sup>、BFLOAT16<sup>1</sup>、FLOAT32、FLOAT8_E8M0</td>
     <td>ND</td>
     <td>-</td>
     <td>-</td>
@@ -422,8 +422,8 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
     - <term>Ascend 950PR/Ascend 950DT</term>：
         - 上表数据类型列中的角标“2”代表该系列支持的数据类型。
         - `x`支持FLOAT16、BFLOAT16、FLOAT8_E4M3FN、INT8。
-        - `weight`支持FLOAT16、BFLOAT16、FLOAT4_E2M1、INT8、INT4。支持FRACTAL_NZ格式。当最后两根轴其中一根轴为1（即n=1或k=1）时，不支持私有格式，不能调用该接口。可使用aclnnNpuFormatCast接口完成输入Format从ND到AI处理器亲和数据排布格式（NZ）的转换。如原始weight为转置状态且想使用性能更高的非转置通路计算，可使用aclnnPermute接口转为非转置后再调用aclnnNpuFormatCast接口。当数据类型为FLOAT4_E2M1时，还需要在aclnnNpuFormatCast调用后，调用aclnnCast接口将FLOAT32表示的FLOAT4_E2M1转换为正确的类型。但当为INT4类型时，需要使用aclnnConvertWeightToInt4Pack接口完成数据格式从ND到NZ和数据类型从INT32到INT4的转换。当传入FLOAT32或者INT32时，接口内部每个FLOAT32/INT32识别成8个FLOAT4_E2M1/INT4。
-        - `scaleOptional`支持UINT64/INT64/BFLOAT16/FLOAT32。`offsetOptional`、`antiquantOffsetOptional`暂不支持。
+        - `weight`支持FLOAT16、BFLOAT16、FLOAT4_E2M1、INT8、INT4、FLOAT8_E4M3FN。支持FRACTAL_NZ格式。当最后两根轴其中一根轴为1（即n=1或k=1）时，不支持私有格式，不能调用该接口。可使用aclnnNpuFormatCast接口完成输入Format从ND到AI处理器亲和数据排布格式（NZ）的转换。如原始weight为转置状态且想使用性能更高的非转置通路计算，可使用aclnnPermute接口转为非转置后再调用aclnnNpuFormatCast接口。当数据类型为FLOAT4_E2M1时，还需要在aclnnNpuFormatCast调用后，调用aclnnCast接口将FLOAT32表示的FLOAT4_E2M1转换为正确的类型。但当为INT4类型时，需要使用aclnnConvertWeightToInt4Pack接口完成数据格式从ND到NZ和数据类型从INT32到INT4的转换。当传入FLOAT32或者INT32时，接口内部每个FLOAT32/INT32识别成8个FLOAT4_E2M1/INT4。
+        - `scaleOptional`支持UINT64/INT64/BFLOAT16/FLOAT32/FLOAT8_E8M0。`offsetOptional`、`antiquantOffsetOptional`暂不支持。
         - `groupType`支持m轴分组，仅非量化支持不分组。
         - `quantGroupSize`暂不支持。
         - `actType`支持0、1、2、4、5。综合约束请参见<a href="#约束说明">约束说明</a>。
@@ -621,7 +621,7 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
       - 当x和weight的类型分别为BFLOAT16/FLOAT16和FLOAT4_E2M1/FLOAT32时，或为INT8和INT4/INT32时，仅支持x、weight均不转置, 为FLOAT8_E4M3FN和FLOAT4_E2M1/FLOAT32时仅支持x不转置且weight转置。
       - antiquantScale的转置与否和weight保持一致。
 
-  - 静态量化场景支持的输入类型为：
+  - 静态量化场景支持的输入类型与shape为：
     - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、perTokenScaleOptional、activationInputOptional、activationQuantScaleOptional、activationQuantOffsetOptional、activationFeatureOutOptional
     - 不为空的参数支持的数据类型组合要满足下表：
 
@@ -637,7 +637,7 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
       |:---------:|:---------:| :------ |
       |0|weight单tensor|perchannel场景：每个tensor 2维， shape为（g, N）；pertensor场景：每个tensor 2维或1维，shape为（g, 1）或（g,）|
 
-  - 动态量化（K-T && K-C量化）场景支持的输入类型为：
+  - 动态量化（K-T && K-C量化）场景支持的输入类型与shape为：
     - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、activationInputOptional、activationQuantScaleOptional、activationQuantOffsetOptional、activationFeatureOutOptional
     - 不为空的参数支持的数据类型组合要满足下表：
 
@@ -657,6 +657,22 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
       | groupType | 使用场景 | shape限制 |
       |:---------:|:---------:| :------ |
       |0|x单tensor|pertoken场景：每个tensor 1维，shape为（M,）|
+  - 动态量化（mx量化）场景支持的输入类型与shape为：
+    - 以下入参为空：offsetOptional、biasOptional、antiquantScaleOptional、antiquantOffsetOptional、activationInputOptional、activationQuantScaleOptional、activationQuantOffsetOptional、activationFeatureOutOptional
+    - 不为空的参数支持的数据类型组合要满足下表：
+        |groupType| x       | weight  | scaleOptional |  perTokenScaleOptional |out     |
+        |:-------:|:-------:|:-------:|:-------:| :-------    | :------   | :------ |
+        |0|FLOAT8_E4M3FN  |FLOAT8_E4M3FN|   FLOAT8_E8M0    | FLOAT8_E8M0    | BFLOAT16/FLOAT16/FLOAT32 |
+
+    - scaleOptional要满足下表（其中g为matmul组数即分组数，g\_i为第i个分组（下标从0开始））：
+        |groupType| 使用场景 | shape限制 |
+        |:---------:|:---------:| :------ |
+        |0|weight单tensor|每个tensor 4维，当weight转置时，shape为(g, N, ceil(K / 64), 2)；当weight不转置时，shape为(g, ceil(K / 64), N, 2)|
+
+    - perTokenScaleOptional要满足下表：
+        |groupType| 使用场景 | shape限制 |
+        |:---------:|:---------:| :------ |
+        |0|x单tensor|每个tensor 3维，shape为（M, ceil(K / 64), 2）|
 
   - 不同groupType支持场景:
 
