@@ -16,15 +16,15 @@
 #ifndef CATLASS_GEMM_KERNEL_MATMUL_ALLTOALL_HPP
 #define CATLASS_GEMM_KERNEL_MATMUL_ALLTOALL_HPP
 
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/catlass.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/coord.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/gemm_coord.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/matrix_coord.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/arch/resource.hpp" 
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/arch/cross_core_sync.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/epilogue/tile/copy_gm_to_ub.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/epilogue/tile/copy_ub_to_gm.hpp"
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/gemm/kernel/padding_matmul.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/catlass.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/coord.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/gemm_coord.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/matrix_coord.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/arch/resource.hpp" 
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/arch/cross_core_sync.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/epilogue/tile/copy_gm_to_ub.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/epilogue/tile/copy_ub_to_gm.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/gemm/kernel/padding_matmul.hpp"
 
 namespace Catlass::Gemm::Kernel {
 template <

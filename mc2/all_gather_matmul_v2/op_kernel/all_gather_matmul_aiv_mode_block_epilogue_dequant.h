@@ -16,15 +16,15 @@
 #ifndef ALL_GATHER_MATMUL_AIV_MODE_BLOCK_EPILOGUE_DEQUANT_H
 #define ALL_GATHER_MATMUL_AIV_MODE_BLOCK_EPILOGUE_DEQUANT_H
 
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/catlass.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/arch/resource.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/epilogue/dispatch_policy.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/gemm_coord.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/gemm/gemm_type.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/matrix_coord.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/layout/layout.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/detail/callback.hpp"
-#include "../3rd/template_linear_algebra/include/template_linear_algebra/epilogue/tile/copy_gm_to_ub.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/catlass.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/arch/resource.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/epilogue/dispatch_policy.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/gemm_coord.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/gemm/gemm_type.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/matrix_coord.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/layout/layout.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/detail/callback.hpp"
+#include "../3rd/template_linear_algebra/op_kernel/template_linear_algebra/epilogue/tile/copy_gm_to_ub.hpp"
 
 namespace Catlass::Epilogue::Block {
 

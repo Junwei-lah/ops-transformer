@@ -11,7 +11,7 @@
 #ifndef CATLASS_EPILOGUE_TILE_TILE_BROADCAST_ADD_HPP
 #define CATLASS_EPILOGUE_TILE_TILE_BROADCAST_ADD_HPP
 
-#include "../../3rd/template_linear_algebra/include/template_linear_algebra/catlass.hpp"
+#include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/catlass.hpp"
 
 namespace Catlass::Epilogue::Tile {
 
