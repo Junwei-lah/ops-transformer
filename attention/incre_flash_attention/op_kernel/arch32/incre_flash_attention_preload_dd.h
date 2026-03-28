@@ -1199,7 +1199,6 @@ __aicore__ inline void IncreFlashAttentionAttenPreloadDD<IFAT>::AttenMaskCopyIn(
 template <typename IFAT>
 __aicore__ inline void IncreFlashAttentionAttenPreloadDD<IFAT>::AttenMaskCopyIn(const ExtraInfo& info)
 {
-    
     uint32_t offset;
     {
         int32_t delta =
