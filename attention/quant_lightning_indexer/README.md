@@ -33,7 +33,7 @@ torch_npu.npu_quant_lightning_indexer(query, key, weights, query_dequant_scale, 
 
 >- 使用S1和S2分别表示query和key的输入样本序列长度，N1和N2分别表示query和key对应的多头数，k表示最后选取的索引个数。参数query中的D和参数key中的D值相等为128。T1和T2分别表示query和key的输入样本序列长度的累加和。
 
-- **query**（`Tensor`）：必选参数，表示输入Index Query，对应公式中的$Q_{index}^{Quant}\in\R^{g\times d}$。不支持非连续，数据格式支持$ND$，Atlas A3 推理系列产品数据类型支持`int8`，Ascend 950PR/Ascend 950DT数据类型支持`float8_e4m3fn、hifloat8`。`layout_query`为BSND时shape为[B,S1,N1,D]，当`layout_query`为TND时shape为[T1,N1,D]，Atlas A3 推理系列产品N1仅支持64, Ascend 950PR/Ascend 950DT N1仅支持16、24、32、64。
+- **query**（`Tensor`）：必选参数，表示输入Index Query，对应公式中的$Q_{index}^{Quant}\in\R^{g\times d}$。不支持非连续，数据格式支持$ND$，Atlas A3 推理系列产品数据类型支持`int8`，Ascend 950PR/Ascend 950DT数据类型支持`float8_e4m3fn、hifloat8`。`layout_query`为BSND时shape为[B,S1,N1,D]，当`layout_query`为TND时shape为[T1,N1,D]，Atlas A3 推理系列产品N1支持[1, 64], Ascend 950PR/Ascend 950DT N1仅支持16、24、32、64。
     
 - **key**（`Tensor`）：必选参数，表示输入Index Key，对应公式中的$K_{index}^{Quant}\in\R^{S_{k}\times d}$。不支持非连续，数据格式支持$ND$，Atlas A3 推理系列产品数据类型支持`int8`，Ascend 950PR/Ascend 950DT数据类型支持`float8_e4m3fn、hifloat8`，layout\_key为PA_BSND时shape为[block\_count, block\_size, N2, D]，其中block\_count为PageAttention时block总数，block\_size为一个block的token数，block\_size取值为16的整数倍，最大支持到1024。`layout_kv`为BSND时shape为[B, S2, N2, D]，`layout_kv`为TND时shape为[T2, N2, D]，N2仅支持1。
     

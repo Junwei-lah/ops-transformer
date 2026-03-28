@@ -20,7 +20,7 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "lib/matmul_intf.h"
 #include "lib/matrix/matmul/tiling.h"
-#include "quant_lightning_indexer_common.h"
+#include "../quant_lightning_indexer_common.h"
 
 namespace QLIKernel {
 using namespace QLICommon;
