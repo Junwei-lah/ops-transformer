@@ -29,27 +29,21 @@
 #else
 #include "../../moe_distribute_dispatch_setup/op_kernel/common.h"
 #endif
-#if __has_include("../../common/inc/kernel/mc2_kernel_utils.h")
-#include "../../common/inc/kernel/mc2_kernel_utils.h"
+#if __has_include("../../common/op_kernel/mc2_kernel_utils.h")
+#include "../../common/op_kernel/mc2_kernel_utils.h"
 #else
-#include "../../../common/inc/kernel/mc2_kernel_utils.h"
+#include "../../../common/op_kernel/mc2_kernel_utils.h"
 #endif
 
-namespace MoeDistributeDispatchTeardownImpl {
+namespace Mc2Kernel {
 constexpr uint8_t BUFFER_NUM = 2;       // 多buf
 constexpr uint32_t STATE_OFFSET = 512U; // 状态空间偏移地址
+constexpr uint32_t STATE_SIZE = 1024U * 1024U;
 constexpr uint32_t UB_ALIGN = 32U;      // UB按32字节对齐
-constexpr uint64_t WIN_STATE_OFFSET = 350UL * 1024UL;
-constexpr uint64_t STATE_WIN_OFFSET = 950UL * 1024UL;
+constexpr uint64_t WIN_STATE_OFFSET = 384UL * 1024UL;
+constexpr uint64_t STATE_WIN_OFFSET = WIN_STATE_OFFSET * 2;
 constexpr uint32_t WORKSPACE_ELEMENT_OFFSET = 512U;
 constexpr uint64_t WIN_ADDR_ALIGN = 512UL;
-constexpr uint32_t NEED_THIRTY_FIRST = 31;
-constexpr uint32_t RIGHT_SHIFT_BIT_FIVE = 5;
-constexpr uint32_t NEED_ONE_HUNDRED_AND_TWENTY_SEVEN = 127;
-constexpr uint32_t RIGHT_SHIFT_BIT_SEVEN = 7;
-constexpr uint32_t ALIGN_UP_TO_2_MASK = 1;
-constexpr uint32_t ALIGN_UP_TO_128_MASK = 127;
-constexpr uint32_t ALIGN_UP_TO_256_MASK = 255;
 
 constexpr uint32_t UNQUANT = 0;
 constexpr uint32_t STATIC_QUANT = 1;
@@ -90,12 +84,12 @@ private:
         LocalTensor<float>& statusSumOutTensor);
     __aicore__ inline GM_ADDR GetWindAddrByRankId(const int32_t rankId)
     {
-        return (GM_ADDR)((winContext_->windowsIn[rankId]) + winDataSizeOffset_);
+        return (GM_ADDR)((winContext_->windowsIn[rankId]) + winDataSizeOffset_ + STATE_SIZE);
     }
 
     __aicore__ inline GM_ADDR GetWindStateAddrByRankId(const int32_t rankId)
     {
-        return (GM_ADDR)((winContext_->windowsOut[rankId]) + dataState_ * WIN_STATE_OFFSET);
+        return (GM_ADDR)((winContext_->windowsIn[rankId]) + dataState_ * WIN_STATE_OFFSET);
     }
 
     __aicore__ inline uint32_t MIN(uint32_t x, uint32_t y)
@@ -155,7 +149,6 @@ private:
     uint32_t moeExpertNum_{0};
     uint32_t moeExpertRankNum_{0}; // moe专家卡数，等于epWorldSize_ - sharedExpertRankNum_
     uint32_t moeExpertNumPerRank_{0};
-    uint32_t dealRankPerCore_{0};
     uint32_t hOutSize_{0};
     uint32_t hAlignWinSize_{0};
     uint32_t hAlignWinCnt_{0};
@@ -241,9 +234,8 @@ __aicore__ inline void MoeDistributeDispatchTeardown<TemplateMC2TypeFunc>::Init(
     }
     expertIdsCnt_ = axisBS_ * axisK_;
     recvWinBlockNum_ = epWorldSize_ * moeExpertNumPerRank_;
-    moeUsedAivNum_ = aivNum_ - sharedUsedAivNum_;
-    dealRankPerCore_ = (recvWinBlockNum_ + aivNum_ - 1) / aivNum_;
     stateOffset_ = ((recvWinBlockNum_ > 512) ? (STATE_OFFSET / 2) : STATE_OFFSET);
+    moeUsedAivNum_ = aivNum_ - sharedUsedAivNum_;
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(selfDataStatusTensor);
     dataState_ = selfDataStatusTensor(0);
     if (dataState_ == 0) {
@@ -252,28 +244,29 @@ __aicore__ inline void MoeDistributeDispatchTeardown<TemplateMC2TypeFunc>::Init(
         selfDataStatusTensor(0) = 0;
     }
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(selfDataStatusTensor);
-    if constexpr (IsShareExpertRank) {
+    if constexpr (IsShareExpertRank) { // 接收状态数
         rscvStatusNum_ = epWorldSize_;
     } else {
         rscvStatusNum_ = recvWinBlockNum_;
     }
     recStatusNumPerCore_ = rscvStatusNum_ / aivNum_; // 每个aiv需要处理的专家数
     remainderRankNum_ = rscvStatusNum_ % aivNum_;
-    startStatusIndex_ = recStatusNumPerCore_ * aivId_; // + sharedExpertRankNum_, 每个aiv发送的
-    if (aivId_ < remainderRankNum_) {                  // 前remainderRankNum个aiv需要多发1个卡的数据
+    startStatusIndex_ = recStatusNumPerCore_ * aivId_;
+    if (aivId_ < remainderRankNum_) { // 前remainderRankNum个aiv需要多发1个卡的数据
         recStatusNumPerCore_ += 1;
         startStatusIndex_ += aivId_;
     } else {
         startStatusIndex_ += remainderRankNum_;
     }
     uint32_t waitStatusBufSize = (((recStatusNumPerCore_ * UB_ALIGN) > 256) ? (recStatusNumPerCore_ * UB_ALIGN) : 256);
-    tpipe_->InitBuffer(waitStatusBuf_, waitStatusBufSize);      // 1024/24 * 32B = 43 * 32B
+    tpipe_->InitBuffer(waitStatusBuf_, waitStatusBufSize);
     uint32_t statusBufCntAlign = Ceil(recvWinBlockNum_, 8) * 8; // 8 = UB_ALIGN / sizeof(int32_t)
     tpipe_->InitBuffer(statusBuf_, statusBufCntAlign * UB_ALIGN);
-    statusTensor_ = statusBuf_.Get<int32_t>(); // 保存发送数据量及flag，同时用于计算windows中的偏移
+    statusTensor_ = statusBuf_.Get<int32_t>(); // 保存状态，用于计算windows中的偏移
     statusSpaceGm_ = GetWindStateAddrByRankId(epRankId_);
     sumTarget_ = static_cast<float>(1.0);
-    winDataSizeOffset_ = dataState_ * (tilingData->moeDistributeDispatchTeardownInfo.totalWinSize / 2);
+    uint64_t hSizeAlignCombine = Ceil(axisH_ * sizeof(XType), WIN_ADDR_ALIGN) * WIN_ADDR_ALIGN;
+    winDataSizeOffset_ = dataState_ * (tilingData->moeDistributeDispatchTeardownInfo.totalWinSize / 2) + axisMaxBS_ * (axisK_ + sharedExpertNum_) * hSizeAlignCombine;
     tempTotalWinSize_ = tilingData->moeDistributeDispatchTeardownInfo.totalWinSize;
     windowGM_ = GetWindAddrByRankId(epRankId_);
     windowInstatusFp32Tensor_.SetGlobalBuffer((__gm__ float*)(statusSpaceGm_));
@@ -609,5 +602,5 @@ __aicore__ inline void MoeDistributeDispatchTeardown<TemplateMC2TypeFunc>::Proce
 }
 
 
-} // namespace MoeDistributeDispatchTeardownImpl
+} // namespace Mc2Kernel
 #endif // MOE_DISTRIBUTE_DISPATCH_TEARDOWN_H

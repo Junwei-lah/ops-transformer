@@ -19,14 +19,14 @@ if (BUILD_OPEN_PROJECT)  # custom
         OPTYPE moe_distribute_dispatch_setup moe_distribute_dispatch_setup ACLNNTYPE aclnn aclnn_inner)
     set(SUB_MC2_COMPILE TRUE PARENT_SCOPE)
     set(MC2_OPT ON PARENT_SCOPE)
-    set(moe_distribute_dispatch_setup_depends mc2/common mc2/3rd mc2/moe_distribute_combine_setup PARENT_SCOPE)
+    set(moe_distribute_dispatch_setup_depends mc2/common mc2/3rd mc2/moe_distribute_combine_setup mc2/moe_distribute_dispatch_v2 PARENT_SCOPE)
     
     # --cce-auto-sync=off：指定CCE编译器是否自动执行线程间或模块间的同步操作 
     set(CONDITION_UNIT ${ASCEND_COMPUTE_UNIT}) 
     if("${CONDITION_UNIT}" STREQUAL "ascend950") 
         add_ops_compile_options( 
             OP_NAME MoeDistributeDispatchSetup
-            OPTIONS --cce-auto-sync=off 
+            OPTIONS --cce-auto-sync=off
         ) 
     endif()
 endif()

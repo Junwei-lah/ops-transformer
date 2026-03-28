@@ -36,6 +36,7 @@ struct MoeDistributeDispatchSetupInfo {
     bool reserved3;
     uint64_t totalUbSize;
     uint64_t totalWinSize;
+    uint64_t scalesCount;
 };
 
 struct MoeDistributeDispatchSetupTilingData {

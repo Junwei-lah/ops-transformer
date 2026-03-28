@@ -25,7 +25,7 @@
 #include "../moe_distribute_dispatch/moe_distribute_base.h"
 #include "../moe_distribute_dispatch_setup/moe_distribute_dispatch_setup_tiling.h"
 
-namespace MoeDistributeDispatchSetupImpl {
+namespace Mc2Kernel {
 constexpr uint8_t BUFFER_NUM = 2;       // 多buf
 constexpr uint32_t STATE_OFFSET = 512U; // 状态空间偏移地址
 constexpr uint32_t UB_ALIGN = 32U;      // UB按32字节对齐

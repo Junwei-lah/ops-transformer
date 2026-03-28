@@ -25,7 +25,7 @@
 #include "../moe_distribute_dispatch/moe_distribute_base.h"
 #include "../moe_distribute_dispatch_teardown_tiling.h"
 
-namespace MoeDistributeDispatchTeardownImpl {
+namespace Mc2Kernel {
 constexpr uint8_t BUFFER_NUM = 2;       // 多buf
 constexpr uint32_t STATE_OFFSET = 512U; // 状态空间偏移地址
 constexpr uint32_t UB_ALIGN = 32U;      // UB按32字节对齐
@@ -554,5 +554,5 @@ __aicore__ inline void MoeDistributeDispatchTeardown<TemplateMC2TypeFunc>::Proce
     }
 }
 
-} // namespace MoeDistributeDispatchTeardownImpl
+} // namespace Mc2Kernel
 #endif // MOE_DISTRIBUTE_DISPATCH_TEARDOWN_H
