@@ -300,8 +300,9 @@
         -I ${static_lib_path}/include -I ${ASCEND_HOME_PATH}/include -I ${ASCEND_HOME_PATH}/include/aclnnop \
         -L ${static_lib_path}/lib64 -L ${ASCEND_HOME_PATH}/lib64 -Wl,--allow-multiple-definition \
         -Wl,--start-group -lcann_transformer_static -lcann_math_static -lcann_legacy_static -Wl,--end-group \
-        -lgraph -lmetadef -lascendalog -lregister -lopp_registry -lops_base -lascendcl -ltiling_api -lplatform -ldl 
-        -lnnopbase -lgraph_base -lc_sec -lunified_dlog -lruntime -o test_aclnn_flash_attention_score   # 替换为实际算子可执行文件名
+        -lgraph -lmetadef -lascendalog -lregister -lopp_registry -lops_base -lascendcl -lascend_dump -ltiling_api \
+        -lplatform -ldl -lnnopbase -lgraph_base -lc_sec -lunified_dlog -lruntime \
+        -o test_aclnn_flash_attention_score   # 替换为实际算子可执行文件名
 
         # 编译MC2算子可执行文件时，在编译命令的末尾添加如下链接库
         # -lruntime -lpthread -Wl,--no-as-needed -lhccl -lhccl_fwk -o 
