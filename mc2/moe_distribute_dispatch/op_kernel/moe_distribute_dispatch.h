@@ -563,6 +563,8 @@ __aicore__ inline void MoeDistributeDispatch<TemplateDispatchTypeFunc>::AlltoAll
     AscendC::TQueSync<PIPE_MTE2, PIPE_S> expertCntLocalSync;
     expertCntLocalSync.SetFlag(0);
     expertCntLocalSync.WaitFlag(0);
+    // statusTensor_取值需要等待Init中的Duplicate
+    SyncFunc<AscendC::HardEvent::V_S>();
 
     if (!isShareExpertRank_) {
         for (uint32_t curStatusExpId = 0; curStatusExpId < sharedExpertRankNum_; ++curStatusExpId) {
