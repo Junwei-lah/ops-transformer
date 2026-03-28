@@ -5,16 +5,18 @@ from torch_npu.utils._error_code import ErrCode, ops_error
 
 X_CONTEXT_SIZE=4
 
+class IntWrapper:
+    def __init__(self, value=0):
+        self.value = value
+
 class MoeDistributeBuffer:
-    def __init__(self, group, ccl_buffer_size: int = 0, comm_alg: int = 0):
+    def __init__(self, group, comm_alg: int = 0):
         self.group = group
         self.rank_id = torch.distributed.get_rank(group)
         self.world_size = torch.distributed.get_world_size(group)
         self.group_name = group._get_backend(torch.device("npu")).get_hccl_comm_name(self.rank_id, init_comm=False)
-        mb_buffer_size = 200 if ccl_buffer_size == 0 else ccl_buffer_size
-        self.ccl_buffer_size = mb_buffer_size * 1024 * 1024 # convert from mb
         x_context = torch.zeros(X_CONTEXT_SIZE, dtype=torch.int32).npu()
-        self.context = torch.ops.ascend_ops.updateContext(x_context, self.group_name, self.ccl_buffer_size, self.world_size)
+        self.context, self.ccl_buffer_size = torch.ops.ascend_ops.updateContext(x_context, self.group_name, self.world_size)
 
     @staticmethod
     def get_ccl_buffer_size(world_size: int, num_max_dispatch_tokens_per_rank: int, hidden: int,
@@ -48,20 +50,20 @@ class MoeDistributeBuffer:
         minimum_buffer_size = 2 * (
             (num_max_dispatch_tokens_per_rank * token_need_size_dispatch * world_size * local_moe_expert_num) + \
             (num_max_dispatch_tokens_per_rank * token_need_size_combine * (topk + num_shared_expert))) + mb_conversion
-        return inline_align(minimum_buffer_size, mb_conversion) // mb_conversion
+        return inline_align(inline_align(minimum_buffer_size, mb_conversion) // mb_conversion, 2) // 2
 
     def update_ctx(self, new_group):
         self.group = new_group
         self.rank_id = torch.distributed.get_rank(new_group)
         self.group_name = new_group._get_backend(torch.device("npu")).get_hccl_comm_name(self.rank_id, init_comm=False)
         x_context = torch.zeros(X_CONTEXT_SIZE, dtype=torch.int32).npu()
-        self.context = torch.ops.ascend_ops.updateContext(x_context, self.group_name, self.ccl_buffer_size, self.world_size)
+        self.context, self.ccl_buffer_size = torch.ops.ascend_ops.updateContext(x_context, self.group_name, self.world_size)
         return
 
     def npu_moe_distribute_dispatch_v2(self, x, expert_ids,
             moe_expert_num, *, scales=None, x_active_mask=None,
             expert_scales=None, performance_info=None, expert_shard_type=0, shared_expert_num=0,
-            shared_expert_rank_num=0, quant_mode=0, global_bs=0, expert_token_nums_type=0,
+            shared_expert_rank_num=0, quant_mode=0, global_bs=0, expert_token_nums_type=1,
             comm_alg="", zero_expert_num=0, copy_expert_num=0, const_expert_num=0):
         (expand_x, dynamic_scales, expand_idx, expert_token_nums, ep_recv_counts, expand_scales) \
             = torch.ops.ascend_ops.MoeDistributeDispatchV2(
@@ -126,4 +128,3 @@ class MoeDistributeBuffer:
                                              zero_expert_num=zero_expert_num,
                                              copy_expert_num=copy_expert_num,
                                              const_expert_num=const_expert_num)
-  

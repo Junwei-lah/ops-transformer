@@ -26,13 +26,14 @@ const std::string EP_ALG_CONFIG = "AlltoAll=level0:fullmesh;level1:pairwise";
 static bool isInit = false;
 static std::string last_group_ep_str = "";
 static at::Tensor output;
+int64_t bufferSize = 0;
 
 TORCH_LIBRARY_FRAGMENT(EXTENSION_MODULE_NAME, m)
 {
-    m.def("updateContext(Tensor x, str group_ep, int cclBufferSize, int ep_world_size) -> Tensor");
+    m.def("updateContext(Tensor x, str group_ep, int ep_world_size) -> (Tensor, int)");
 }
 
-static int32_t CreatMc2Context(HcclComm &comm, int64_t worldSize, int64_t cclBufferSize, Mc2ContextStru *mc2Context)
+static int32_t CreatMc2Context(HcclComm &comm, int64_t worldSize, int64_t &cclBufferSize, Mc2ContextStru *mc2Context)
 {
     uint32_t ctxIndex =  0;
 
@@ -46,11 +47,11 @@ static int32_t CreatMc2Context(HcclComm &comm, int64_t worldSize, int64_t cclBuf
         HcclResult ret;
         if (rankId == remoteRankId) {
             ret = static_cast<HcclResult>(HcclGetHcclBuffer(comm, &remoteAddr, &commSize));
+            cclBufferSize = commSize;
         } else {
             ret = static_cast<HcclResult>(HcclGetRemoteIpcHcclBuf(comm, remoteRankId, &remoteAddr, &commSize));
         }
-        TORCH_CHECK(((commSize >= cclBufferSize) && (ret == HCCL_SUCCESS)), "HcclGetRemoteIpcHcclBuf failed, commSize=",
-            commSize, " ret=", ret);
+        TORCH_CHECK((ret == HCCL_SUCCESS), "Get HcclBufferSize failed, ret=", ret);
         mc2Context[ctxIndex].epHcclBuffer[remoteRankId] = (uint64_t)remoteAddr;
     }
 
@@ -87,7 +88,7 @@ static int32_t CreateHcclContext(HcclComm &commHandle, void *opArgs, int64_t wor
     return 0;
 }
 
-static int32_t GetMc2Context(Mc2ContextStru* mc2ContextHost, int64_t epWorldSize, int64_t cclBufferSize, const char* groupEpStr)
+static int32_t GetMc2Context(Mc2ContextStru* mc2ContextHost, int64_t epWorldSize, int64_t &cclBufferSize, const char* groupEpStr)
 {
     void* opArgs = nullptr;
     HcclResult ret = static_cast<HcclResult>(HcclKfcAllocOpArgs(&opArgs));
@@ -115,17 +116,18 @@ static int32_t GetMc2Context(Mc2ContextStru* mc2ContextHost, int64_t epWorldSize
 * @param x Input Tensor (on NPU)
 * @return Result Tensor
 */
-at::Tensor update_context(const at::Tensor &x, c10::string_view group_ep, int64_t cclBufferSize, int64_t ep_world_size)
+std::tuple<at::Tensor, int64_t> update_context(const at::Tensor &x, c10::string_view group_ep, int64_t ep_world_size)
 {
     bool isSameGroup = false;
     std::string new_group_ep_str = std::string(group_ep);
     isSameGroup = (new_group_ep_str == last_group_ep_str);
     if (isInit && isSameGroup) {
-        return output;
+        return std::make_tuple(output, bufferSize);
     }
 
+    
     Mc2ContextStru mc2ContextHost[2];
-    int32_t ret = GetMc2Context(mc2ContextHost, ep_world_size, cclBufferSize, new_group_ep_str.c_str());
+    int32_t ret = GetMc2Context(mc2ContextHost, ep_world_size, bufferSize, new_group_ep_str.c_str());
     TORCH_CHECK(ret == 0, "GetMc2Context failed, ret", ret);
     at::Tensor hostContext = at::from_blob(&mc2ContextHost, {sizeof(Mc2ContextStru) * 2 / sizeof(int32_t)}, at::kInt);
 
@@ -134,7 +136,7 @@ at::Tensor update_context(const at::Tensor &x, c10::string_view group_ep, int64_
     output.copy_(hostContext);
     last_group_ep_str = new_group_ep_str;
     isInit = true;
-    return output;
+    return std::make_tuple(output, bufferSize);
 }
 
 TORCH_LIBRARY_IMPL(EXTENSION_MODULE_NAME, PrivateUse1, m)

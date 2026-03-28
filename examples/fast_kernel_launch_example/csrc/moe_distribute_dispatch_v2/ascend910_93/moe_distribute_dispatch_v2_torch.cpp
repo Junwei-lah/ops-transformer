@@ -143,7 +143,7 @@ void calculate_tilingdata(MoeDistributeDispatchV2Info &tilingData, int64_t ep_wo
     tilingData.sharedExpertRankNum = shared_expert_rank_num;        // shared expert rank number
     tilingData.moeExpertNum = moe_expert_num;               // moe expert number
     tilingData.quantMode = quant_mode;                  // quant mode
-    tilingData.globalBs = global_bs;                   // globalBs = gBS * worldSize
+    tilingData.globalBs = (global_bs == 0) ? (bs * ep_world_size) : global_bs;                   // globalBs = gBS * worldSize
     tilingData.bs = bs;                         // bs
     tilingData.k = k;                          // k
     tilingData.h = h;                          // h
@@ -160,10 +160,20 @@ void calculate_tilingdata(MoeDistributeDispatchV2Info &tilingData, int64_t ep_wo
     tilingData.totalWinSizeEp = total_winsize_ep;
     tilingData.expertTokenNumsType = expert_token_nums_type;        // expert token nums type, support 0: cumsum mode, 1: count mode
     tilingData.zeroComputeExpertNum = zero_expert_num + copy_expert_num + const_expert_num;       // sum of zero, copy and const expert nums
-    tilingData.scalesRow = scales.has_value() ? scales.value()[0].item().toLong() : 0;
-    tilingData.scalesCol = scales.has_value() ? scales.value()[1].item().toLong() : 0;
-    tilingData.scalesTypeSize = scales.has_value() ? at::elementSize(scales.value().scalar_type()) : 0;
-    tilingData.scalesCount = scales.has_value() ? (scales.value()[0].item().toLong() * scales.value()[1].item().toLong()) : 0;
+    if (scales.has_value()) {
+        TORCH_CHECK(scales.value().dim() == 2,
+            "scales should be 2D, but got dim=", scales.value().dim());
+
+        tilingData.scalesRow = scales.value().size(0);
+        tilingData.scalesCol = scales.value().size(1);
+        tilingData.scalesTypeSize = at::elementSize(scales.value().scalar_type());
+        tilingData.scalesCount = tilingData.scalesRow * tilingData.scalesCol;
+    } else {
+        tilingData.scalesRow = 0;
+        tilingData.scalesCol = 0;
+        tilingData.scalesTypeSize = 0;
+        tilingData.scalesCount = 0;
+    }
 }
 
 std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor, at::Tensor> npu_moe_distribute_dispatch_v2(

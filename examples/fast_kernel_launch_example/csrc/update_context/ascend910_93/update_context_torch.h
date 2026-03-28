@@ -4,7 +4,7 @@
 #include "hccl/hccl.h"
 #include "hccl/hccl_res.h"
 #include "hccl/hccl_mc2.h"
-
+#include "hccl/hccl_res_expt.h"
 
 struct Mc2ContextStru {
     uint64_t epRankId;
@@ -13,7 +13,7 @@ struct Mc2ContextStru {
 };
 
 
-at::Tensor update_context(std::string group_ep, int64_t ep_world_size);
+std::tuple<at::Tensor, int64_t> update_context(const at::Tensor &x, c10::string_view group_ep, int64_t ep_world_size);
 
 
 #endif

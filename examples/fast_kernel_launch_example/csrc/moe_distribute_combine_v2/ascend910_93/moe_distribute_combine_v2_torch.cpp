@@ -225,7 +225,7 @@ void calculate_tilingdata(MoeDistributeCombineV2Info &tilingData, int64_t ep_wor
     tilingData.zeroExpertNum = zero_expert_num;
     tilingData.copyExpertNum = copy_expert_num;
     tilingData.constExpertNum = const_expert_num;
-    tilingData.globalBs = global_bs;
+    tilingData.globalBs = (global_bs == 0) ? (bs * ep_world_size) : global_bs;
     tilingData.bs = bs;
     tilingData.k = k;
     tilingData.h = h;
