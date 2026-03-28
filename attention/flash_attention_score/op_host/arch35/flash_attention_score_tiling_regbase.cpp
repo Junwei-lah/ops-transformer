@@ -864,13 +864,52 @@ bool FlashAttentionScoreTilingRegbase::AnalyzeFp8OptionalInput()
     return true;
 }
 
+bool FlashAttentionScoreTilingRegbase::AnalyzeSinkOptionalInput()
+{
+    auto sinkShapePtr = context_->GetOptionalInputShape(SINK_INPUT_INDEX);
+    auto sinkInputPtr = context_->GetOptionalInputDesc(SINK_INPUT_INDEX);
+    if (sinkShapePtr != nullptr && sinkInputPtr != nullptr && sinkShapePtr->GetStorageShape().GetDimNum() != 0) {
+        hasSink = true;
+        auto shape = sinkShapePtr->GetStorageShape();
+        int64_t dimNum = shape.GetDimNum();
+        auto sinkDtype = sinkInputPtr->GetDataType();
+        OP_CHECK_IF(sinkDtype != ge::DT_FLOAT,
+            OP_LOGE(opName, "invalid sink dtype[%s], only support float.",
+                ge::TypeUtils::DataTypeToSerialString(sinkDtype).c_str()),
+            return false);
+
+        std::string sinkShape = "";
+        for (int i = 0; i < dimNum; ++i) {
+            sinkShape += std::to_string(shape.GetDim(i));
+            if (i < dimNum - 1) {
+                sinkShape += ", ";
+            }
+        }
+        OP_CHECK_IF(dimNum != 1, OP_LOGE(opName, "invalid sink shape [%s], sink only support [n,].",
+            sinkShape.c_str()),
+            return false);
+
+        int64_t expectedSinkSize = n1Size;
+        auto actualSinkShapeSize = shape.GetShapeSize();
+        OP_CHECK_IF(actualSinkShapeSize != expectedSinkSize, OP_LOGE(context_,
+            "invalid sink shapeSize, expect [%ld], but got [%ld].",
+            expectedSinkSize, actualSinkShapeSize),
+            return false);
+
+        OP_CHECK_IF(!(inputDtype == ge::DT_FLOAT16 || inputDtype == ge::DT_BF16),
+            OP_LOGE(opName, "invalid input dtype, other tensor`s dtype only support float16 and bf16."),
+            return false);
+    }
+    return true;
+}
+
 bool FlashAttentionScoreTilingRegbase::AnalyzeOptionalInput()
 {
     OP_CHECK_IF(!AnalyzePseOptionalInput() || !AnalyzeAttenOptionalInput() || !AnalyzeDropOptionalInput() ||
-               !AnalyzeFp8OptionalInput(),
+               !AnalyzeFp8OptionalInput() || !AnalyzeSinkOptionalInput(),
                OPS_REPORT_VECTOR_INNER_ERR(opName, "Analyze Optional Input error."), return false);
-    OP_LOGD(context_, "hasPse: %d, hasAttenMask: %d, hasDropOut: %d, dropMaskouter %d.",
-              hasPse, hasAttenMask, hasDropOut, dropMaskOuter);
+    OP_LOGD(context_, "hasPse: %d, hasAttenMask: %d, hasDropOut: %d, dropMaskOuter %d, hasSink: %d.",
+            hasPse, hasAttenMask, hasDropOut, dropMaskOuter, hasSink);
     return true;
 }
 

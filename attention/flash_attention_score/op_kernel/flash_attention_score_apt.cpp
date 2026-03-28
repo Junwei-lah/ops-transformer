@@ -69,7 +69,7 @@ flash_attention_score(__gm__ uint8_t *query, __gm__ uint8_t *key, __gm__ uint8_t
         flash_attention_score_regbase<implMode, layout, s1TemplateType, s2TemplateType, dTemplateType, dvTemplateType,
             pseMode, hasAtten, hasDrop, hasRope, outDtype, regbase>(query, key, value, pse, dropMask,
             paddingMask, attenMask, prefix, actualSeqLengths, actualSeqLengthsKv, qStartIdx, kvStartIdx, deqScaleQ,
-            deqScaleK, deqScaleV, pScale, queryRope, keyRope, softmaxMax, softmaxSum, softmaxOut, attentionOut,
+            deqScaleK, deqScaleV, pScale, queryRope, keyRope, softmaxMax, softmaxSum, softmaxOut, attentionOut, sink,
             workspace, tiling);
     }
 }
