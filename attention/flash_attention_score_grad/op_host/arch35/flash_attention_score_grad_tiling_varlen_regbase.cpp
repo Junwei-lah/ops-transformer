@@ -85,11 +85,8 @@ protected:
             deterPrefixData.nNewList.push_back(actualS2Outer);
         }
         int64_t totalArea = deterPrefixData.prefix1.back() * fBaseParams.n1;
-        if (fBaseParams.g == 1) {
-            fBaseParams.deterMaxRound = std::max(CeilDivideBy(totalArea, static_cast<int64_t>(fBaseParams.aicNum)), s1Max);
-        } else {
-            fBaseParams.deterMaxRound = std::max({CeilDivideBy(totalArea, static_cast<int64_t>(fBaseParams.aicNum)), s1Max * fBaseParams.g, s2Max});
-        }
+        fBaseParams.deterMaxRound =
+            std::max({CeilDivideBy(totalArea, static_cast<int64_t>(fBaseParams.aicNum)), s1Max * fBaseParams.g, s2Max});
 
         deterPrefixData.prefix0 = SliceVector(deterPrefixData.prefix1, fBaseParams.deterPrefixStep);
         deterPrefixData.deterPrefix = SliceVector(deterPrefixData.deterPrefix, fBaseParams.deterPrefixStep);
@@ -211,7 +208,7 @@ protected:
             if (N12 > 0) {
                 deterPrefixData.prefix1.push_back(deterPrefixData.prefix1.back() +
                                         (actualS1Outer - (actualS2Outer + 1) / NUM_TWO + 1) * (actualS2Outer / NUM_TWO));
-                if (actualS2Outer >= NUM_TWO && fBaseParams.g != 1) {
+                if (fBaseParams.g == 1 || (actualS2Outer >= NUM_TWO && fBaseParams.g != 1)) {
                     m1Max = std::max(m1Max, fBaseParams.g * (actualS1Outer - (actualS2Outer + 1) / NUM_TWO + 1));
                 }
 
