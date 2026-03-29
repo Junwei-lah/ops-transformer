@@ -23,11 +23,17 @@
 void AlltoAllMM::EstimateKernelTime()
 {
     SetCommTimeFactor(); // 设置通信的时间因子
-
+    double totalMatmulTime = 0;
+    double totalTpTime = 0;
     // 预测计算、通信任务耗时
-    // EstimateTotalMatmulTime单独估算的是matmul的计算时间，这里乘一个参数考虑重排的时间
-    double totalMatmulTime = EstimateTotalMatmulTime() * COMPUTE_TIME_SCALE_FACTOR;
-    double totalTpTime = EstimateTotalCommTime(); // 通信时间
+    if (socVersion_ == SocVersion::SOC910_93) {
+        totalMatmulTime = EstimateTotalMatmulTime();
+        totalTpTime = EstimateTotalCommTime(); // 通信时间
+    } else {
+        // EstimateTotalMatmulTime单独估算的是matmul的计算时间，A5时，这里乘一个参数考虑重排的时间
+        totalMatmulTime = EstimateTotalMatmulTime() * COMPUTE_TIME_SCALE_FACTOR;
+        totalTpTime = EstimateTotalCommTime(); // 通信时间
+    }
     ratioCalcComm_ =
         (std::max(totalTpTime, totalMatmulTime) /
          std::min(totalTpTime, totalMatmulTime)); // ratio=1时，通算平衡，完美掩盖；越大，计算或者通信的瓶颈越严重
@@ -55,8 +61,23 @@ void AlltoAllMM::EstimateKernelTime()
  */
 void AlltoAllMM::SetCommTimeFactor()
 {
-    // A5上的时间因子AlltoAll暂时定义为2
-    commPerf_.ChangeCommTimeFactorByDivision(TWO); // 2x time of factor
+    if (socVersion_ == SocVersion::SOC910_93) {
+        OP_LOGD("AlltoAllMatmul, Current socVersion is SOC910_93.");
+        tilingM_.SetMaxTileCnt(MAX_TILE_CNT_A3);  // 最多切8轮
+        uint64_t rankDim = std::max(static_cast<uint64_t>(rankDim_), MIN_COMM_RANKDIM); // 并行维度最小为2
+        // 采用 8 die拟合，通信查表使用总数据量，实际时间 = 总数据量 * 2 * (rankDim - 1) / rankDim
+        double fittingRatio = (static_cast<double>(FITTING_RANK) - 1.0) /
+                               static_cast<double>(FITTING_RANK);
+        double currentRatio = (static_cast<double>(rankDim) - 1.0) /
+                               static_cast<double>(rankDim);
+        double CommTimeFactor = FULL_MESH_TIME_FACTOR * (fittingRatio / currentRatio) * COMM_TIME_SCALE_FACTOR;
+        OP_LOGD("AlltoAllMatmul", "Current commTimeFactor is %f", CommTimeFactor);
+        commPerf_.ChangeCommTimeFactorByDivision(CommTimeFactor);
+    } else {
+        OP_LOGD("AlltoAllMatmul, Current socVersion is SOC950.");
+        // A5上的时间因子AlltoAll暂时定义为2
+        commPerf_.ChangeCommTimeFactorByDivision(TWO); // 2x time of factor
+    }
 }
 
 /**

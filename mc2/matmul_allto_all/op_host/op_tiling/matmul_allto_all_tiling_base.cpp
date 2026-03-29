@@ -84,8 +84,14 @@ ge::graphStatus MatmulAllToAllTilingBase::GetWorkspaceSize()
 ge::graphStatus MatmulAllToAllTilingBase::TileCommAndCompute()
 {
     OP_LOGD(opName_, "Start to find proper tile by formulaic tiling.");
+    SocVersion nowSocVersion = SocVersion::SOC950;
+    std::string socVersionStr = mc2tiling::GetSocVersion(context_);
+    OP_LOGD(opName_, "Current SocVersion is : %s", socVersionStr.c_str());
+    if (socVersionStr == "Ascend910_93") {
+        nowSocVersion = SocVersion::SOC910_93;
+    }
     AlltoAllMM tileFormulate(contextInfo.args_, contextInfo.args_.rankDim, KernelType::ALL_TO_ALL,
-                             SocVersion::SOC950);
+                             nowSocVersion);
     tileFormulate.GetTiling();
     CutResult mCutMMAlltoAll = tileFormulate.tilingM_.cutRes;
     inferredInfo.tileCnt = mCutMMAlltoAll.numLongTile;

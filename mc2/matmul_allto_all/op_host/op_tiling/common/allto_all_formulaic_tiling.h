@@ -19,6 +19,8 @@
 
 constexpr uint64_t LARGE_K_BOUNDARY = 8192;
 constexpr double COMPUTE_TIME_SCALE_FACTOR = 1.5;
+static constexpr double COMM_TIME_SCALE_FACTOR = 1.35; // A3设置通信膨胀系数
+static constexpr uint64_t MAX_TILE_CNT_A3 = 8; // A3设置最大切分8轮
 constexpr double TIME_LOWER_RATIO = 2.0;
 constexpr double TIME_UPPER_RATIO = 3.0;
 constexpr uint64_t EXPANSION_RATIO = 2;
@@ -28,7 +30,7 @@ public:
     // Constructor
     explicit AlltoAllMM(const mc2tiling::TilingArgs &args, uint32_t inputRankDim, KernelType inputKernelType,
                         SocVersion inputSocVersion = SocVersion::SOC950, bool isCommunicationBefore = false)
-        : OneCalcOneCommBase(args, inputRankDim, inputKernelType, inputSocVersion)
+        : OneCalcOneCommBase(args, inputRankDim, inputKernelType, inputSocVersion), socVersion_(inputSocVersion)
     {
         if (isCommunicationBefore) {
             // 如果是AllToAllMatmul，设置CommShapeLen为k轴的长度
@@ -51,6 +53,7 @@ public:
     void SelectTilingMethod() override;
 
 private:
+    SocVersion socVersion_;
     void SetCommTimeFactor();
     void PrintEstimateKernelTimeResult(double totalMatmulTime, double totalTpTime);
 };
