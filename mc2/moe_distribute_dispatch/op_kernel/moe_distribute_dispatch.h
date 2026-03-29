@@ -38,6 +38,7 @@ constexpr uint8_t BUFFER_NUM = 2; // 多buf
 constexpr uint32_t STATE_OFFSET = 512; // 状态空间偏移地址
 constexpr uint32_t STATE_SIZE = 1024 * 1024; // 1M
 constexpr uint32_t UB_ALIGN = 32; // UB按32字节对齐
+constexpr uint32_t STATE_ALIGN = 64;
 constexpr uint32_t SELF_STATE_OFFSET = 256 * 1024;
 constexpr uint8_t COMM_NUM = 2; // 通信域大小
 constexpr uint8_t COMM_EP_IDX = 0;
@@ -246,15 +247,15 @@ __aicore__ inline void MoeDistributeDispatch<TemplateDispatchTypeFunc>::Init(
     GM_ADDR statusDataSpaceGm = Mc2Kernel::GetStatusDataSpaceGm(winContext_[COMM_EP_IDX]);
     selfDataStatusTensor.SetGlobalBuffer((__gm__ int32_t*)(statusDataSpaceGm + STATE_WIN_OFFSET));
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfDataStatusTensor[aivId_ * UB_ALIGN]);
-    dataState_ = selfDataStatusTensor(aivId_ * UB_ALIGN);
+        selfDataStatusTensor[aivId_ * STATE_ALIGN]);
+    dataState_ = selfDataStatusTensor(aivId_ * STATE_ALIGN);
     if (dataState_ == 0) {
-        selfDataStatusTensor(aivId_ * UB_ALIGN) = 1;
+        selfDataStatusTensor(aivId_ * STATE_ALIGN) = 1;
     } else {
-        selfDataStatusTensor(aivId_ * UB_ALIGN) = 0;
+        selfDataStatusTensor(aivId_ * STATE_ALIGN) = 0;
     }
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfDataStatusTensor[aivId_ * UB_ALIGN]);
+        selfDataStatusTensor[aivId_ * STATE_ALIGN]);
     PipeBarrier<PIPE_ALL>();
     axisBS_ = tilingData->moeDistributeDispatchInfo.bs;
     axisH_ = tilingData->moeDistributeDispatchInfo.h;
@@ -332,8 +333,8 @@ __aicore__ inline void MoeDistributeDispatch<TemplateDispatchTypeFunc>::Init(
     GlobalTensor<int32_t> selfStatusTensor;
     selfStatusTensor.SetGlobalBuffer((__gm__ int32_t*)(statusSpaceGm_ + SELF_STATE_OFFSET));
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfStatusTensor[aivId_ * UB_ALIGN]);
-    int32_t state = selfStatusTensor(aivId_ * UB_ALIGN);
+        selfStatusTensor[aivId_ * STATE_ALIGN]);
+    int32_t state = selfStatusTensor(aivId_ * STATE_ALIGN);
     stateOffset_ = (recvWinBlockNum_ > 512) ? (STATE_OFFSET / 2) : STATE_OFFSET;
     tpipe_->InitBuffer(statusBuf_, Ceil(recvWinBlockNum_, 8) * 8 * UB_ALIGN); // Ceil(expertNum, 8) * 8 * 32B
     statusTensor_ = statusBuf_.Get<int32_t>(); // 保存发送数据量及flag，同时用于计算windows中的偏移
@@ -341,15 +342,15 @@ __aicore__ inline void MoeDistributeDispatch<TemplateDispatchTypeFunc>::Init(
     if (state == 0) {
         sumTarget_ = (float)1.0;
         //sumTarget_ = epWorldSize_ - (float)0.0;
-        selfStatusTensor(aivId_ * UB_ALIGN) = 0x3F800000;
+        selfStatusTensor(aivId_ * STATE_ALIGN) = 0x3F800000;
         uint64_t mask[2] = { 0x101010101010101, 0 }; // 一次性操作256字节，也是64个int32_t，每8个数将首个设置为0x3F800000
         Duplicate<int32_t>(statusTensor_, 0x3F800000, mask, Ceil(recvWinBlockNum_, 8), 1, 8); // 0x3F800000是float的1
     } else {
         sumTarget_ = 0.0;
-        selfStatusTensor(aivId_ * UB_ALIGN) = 0;
+        selfStatusTensor(aivId_ * STATE_ALIGN) = 0;
     }
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfStatusTensor[aivId_ * UB_ALIGN]);
+        selfStatusTensor[aivId_ * STATE_ALIGN]);
     if (isQuant_) {
         QuantInit(scales);
     } else {

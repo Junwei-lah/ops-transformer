@@ -39,6 +39,7 @@ constexpr uint32_t RANK_SIZE_ON_WIN_512 = 512 * 1024;
 constexpr uint32_t RANK_SIZE_ON_WIN_256 = 256 * 1024;
 constexpr uint32_t TP_RANK_SIZE_ON_WIN = 0;
 constexpr uint32_t UB_ALIGN = 32; // UB按32字节对齐
+constexpr uint32_t STATE_ALIGN = 64;
 constexpr uint32_t SELF_STATE_OFFSET = 256 * 1024; // 本卡状态空间偏移地址
 constexpr uint8_t EP_DOMAIN = 0;
 constexpr uint8_t TP_DOMAIN = 1;
@@ -238,15 +239,15 @@ __aicore__ inline void MoeDistributeCombine<TemplateCombineTypeFunc>::Init(GM_AD
     GM_ADDR statusDataSpaceGm = Mc2Kernel::GetStatusDataSpaceGm(epWinContext_);
     selfDataStatusTensor.SetGlobalBuffer((__gm__ int32_t*)(statusDataSpaceGm + STATE_WIN_OFFSET));
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfDataStatusTensor[coreIdx_ * UB_ALIGN]);
-    dataState_ = selfDataStatusTensor(coreIdx_ * UB_ALIGN);
+        selfDataStatusTensor[coreIdx_ * STATE_ALIGN]);
+    dataState_ = selfDataStatusTensor(coreIdx_ * STATE_ALIGN);
     if (dataState_ == 0) {
-        selfDataStatusTensor(coreIdx_ * UB_ALIGN) = 1;
+        selfDataStatusTensor(coreIdx_ * STATE_ALIGN) = 1;
     } else {
-        selfDataStatusTensor(coreIdx_ * UB_ALIGN) = 0;
+        selfDataStatusTensor(coreIdx_ * STATE_ALIGN) = 0;
     }
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfDataStatusTensor[coreIdx_ * UB_ALIGN]);
+        selfDataStatusTensor[coreIdx_ * STATE_ALIGN]);
     PipeBarrier<PIPE_ALL>();
 
     workspaceGM_ = workspaceGM;
@@ -330,19 +331,19 @@ __aicore__ inline void MoeDistributeCombine<TemplateCombineTypeFunc>::InitStatus
     GlobalTensor<int32_t> selfStatusTensor;
     selfStatusTensor.SetGlobalBuffer((__gm__ int32_t *)(epStatusSpaceGm_ + SELF_STATE_OFFSET));
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfStatusTensor[coreIdx_ * UB_ALIGN]);
-    int32_t state = selfStatusTensor(coreIdx_ * UB_ALIGN);
+        selfStatusTensor[coreIdx_ * STATE_ALIGN]);
+    int32_t state = selfStatusTensor(coreIdx_ * STATE_ALIGN);
     if (state == 0) {
         sumTarget_ = static_cast<float>(1.0);
-        selfStatusTensor(coreIdx_ * UB_ALIGN) = 0x3F800000;
+        selfStatusTensor(coreIdx_ * STATE_ALIGN) = 0x3F800000;
         epStateValue_ = 0x3F800000;
     } else {
         sumTarget_ = static_cast<float>(0.0);
-        selfStatusTensor(coreIdx_ * UB_ALIGN) = 0;
+        selfStatusTensor(coreIdx_ * STATE_ALIGN) = 0;
         epStateValue_ = 0;
     }
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(
-        selfStatusTensor[coreIdx_ * UB_ALIGN]);
+        selfStatusTensor[coreIdx_ * STATE_ALIGN]);
 }
 
 template <TemplateCombineTypeClass>
@@ -667,6 +668,7 @@ __aicore__ inline void MoeDistributeCombine<TemplateCombineTypeFunc>::SetStatus(
 
     LocalTensor<int32_t> statusFlagUb = readStateBuf_.Get<int32_t>();
     statusFlagUb.SetValue(0, epStateValue_);
+    SyncFunc<AscendC::HardEvent::S_MTE3>();
     for (uint32_t epIdx = startRankId_; epIdx < endRankId_; epIdx++) {
         stateGM_ = GetWinStateAddrByRankId(epIdx, EP_DOMAIN) + epStateOffsetOnWin_;
 #if defined(ASCENDC_OOM) && ASCENDC_OOM == 1
