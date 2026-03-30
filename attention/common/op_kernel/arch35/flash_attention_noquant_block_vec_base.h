@@ -717,11 +717,21 @@ __aicore__ inline void FANoQuantBlockVecBase<TEMPLATE_BASE_ARGS>::MlaBoolCopyInR
         (constInfo.layoutType != static_cast<uint32_t>(LayOutTypeEnum::LAYOUT_BNSD))) {
         intriParams.blockCount = 1;
         if (isMlaNoQuant) {
-            for (int i = 0; i < s1Size; i++) {
-                DataCopyPad(dstTensor[i * s2BaseSize], srcTensor[srcOffset], intriParams, padParams);
-                // 下一行出现跨 G 时
-                if ((runInfo.sOuterOffset + i + 1) % constInfo.gSize == 0) {
-                    srcOffset += totalS2Size;
+            if (constInfo.gSize % vec1HalfS1BaseSize == 0) {
+                DataCopyPad(dstTensor, srcTensor[srcOffset], intriParams, padParams);
+                SetFlag<HardEvent::MTE2_V>(mte2ToV);
+                WaitFlag<HardEvent::MTE2_V>(mte2ToV);
+                for (int i = 1; i < s1Size; i++) { // ub拷ub 第一行不需要拷贝
+                    Copy(dstTensor[i * s2BaseSize], dstTensor, s2Size);
+                }
+                return;
+            } else {
+                for (int i = 0; i < s1Size; i++) {
+                    DataCopyPad(dstTensor[i * s2BaseSize], srcTensor[srcOffset], intriParams, padParams);
+                    // 下一行出现跨 G 时
+                    if ((runInfo.sOuterOffset + i + 1) % constInfo.gSize == 0) {
+                        srcOffset += totalS2Size;
+                    }
                 }
             }
         } else {
