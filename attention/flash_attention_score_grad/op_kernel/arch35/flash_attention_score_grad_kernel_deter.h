@@ -1010,6 +1010,10 @@ __aicore__ inline void FlashAttentionScoreGradKernelDeter<CubeBlockType, VecBloc
                         this->mm2ResBuf[prevRunInfo.commonRunInfo.taskIdMod2].template Get<CALC_TYPE>();
                     //ProcessReCompute
                     this->vecBlock.ProcessVec2(mm2ResTensor, this->constInfo, prevRunInfo); // v2: pse + attenMask + simpleSoftmax
+                    if (unlikely(this->constInfo.isSink && !IS_DROP)) {
+                        this->vecBlock.ProcessVecSink(mm1ResTensor,
+                            mm2ResTensor, this->constInfo, runInfos[(taskId + 1) & 1]);
+                    }
                     if ASCEND_IS_AIV {
                         if (needSyncDkMM) {
                             CrossCoreWaitFlag<SYNC_MODE, PIPE_MTE3>(SYNC_C4_TO_V3_FLAG);
@@ -1021,6 +1025,10 @@ __aicore__ inline void FlashAttentionScoreGradKernelDeter<CubeBlockType, VecBloc
                     GetIsNeedDeter(taskId - 1);
                     this->vecBlock.ProcessVec3(dSL1Buffer, mm1ResTensor, mm2ResTensor, this->constInfo,
                                             prevRunInfo, dqIsNeedDeter[deterPpFlag]); // v3: dropout + cast + nd2nz
+                    if (unlikely(this->constInfo.isSink && IS_DROP)) {
+                        this->vecBlock.ProcessVecSink(mm1ResTensor,
+                            mm2ResTensor, this->constInfo, runInfos[(taskId + 1) & 1]);
+                    }
                     if ASCEND_IS_AIV {
                         if (needSyncDkMM) {
                             CrossCoreWaitFlag<SYNC_MODE, PIPE_MTE3>(SYNC_C5_TO_V4_FLAG);
