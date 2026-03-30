@@ -65,8 +65,7 @@ struct RunParamStr {  // 分核与切块需要使用到参数
     int64_t softmaxLseOffset;       // souter层确定
 
     int64_t qSNumInOneBlock;
-    int64_t oriKvLoopEndIdx;
-    int64_t cmpKvLoopEndIdx;
+    int64_t kvLoopEndIdx;
 };
 
 #define COMMON_RUN_INFO \
@@ -113,8 +112,7 @@ struct RunInfo {
     int64_t softmaxLseOffset;
 
     int64_t qSNumInOneBlock;
-    int64_t oriKvLoopEndIdx;
-    int64_t cmpKvLoopEndIdx;
+    int64_t kvLoopEndIdx;
 };
 
 #define COMMON_CONST_INFO \
@@ -206,15 +204,10 @@ struct RunInfo {
     uint32_t actualSeqLenSize; /* 用户输入的actualseq的长度 */ \
     uint32_t actualSeqLenKVSize; /* 用户输入的actualseq_kv的长度 */ \
     /* service mm1 mm2 pageAttention */ \
-    uint32_t oriBlockSize; \
-    uint32_t cmpBlockSize; \
+    uint32_t blockSize; \
     uint32_t paLayoutType; \
-    uint32_t oriMaxBlockNumPerBatch; \
-    uint32_t cmpMaxBlockNumPerBatch; \
-    int32_t oriWinLeft; \
-    int32_t oriWinRight; \
+    uint32_t maxBlockNumPerBatch; \
     uint32_t sparseBlockSize; \
-    uint32_t cmpRatio; \
     float softmaxScale
 
 #define CV_SHARED_PARAMS \
@@ -234,18 +227,12 @@ struct RunInfo {
     uint32_t isActualSeqLengthsKVNull : 1; \
     uint32_t sparseBlockCount; \
     float softmaxScale; \
-    uint32_t cmpRatio : 9; \
     uint32_t dSizeRope : 11; \
-    uint32_t oriMaskMode : 6;\
-    uint32_t cmpMaskMode : 6; \
-    int32_t oriWinLeft; \
-    int32_t oriWinRight; \
+    uint32_t maskMode : 6;\
     uint32_t tileSize : 8; \
     /* pa params */  \
-    uint32_t oriBlockSize : 12; \
-    uint32_t cmpBlockSize : 12; \
-    uint32_t oriMaxBlockNumPerBatch; \
-    uint32_t cmpMaxBlockNumPerBatch; \
+    uint32_t blockSize : 12; \
+    uint32_t maxBlockNumPerBatch; \
     uint32_t usedCoreNum
 
 

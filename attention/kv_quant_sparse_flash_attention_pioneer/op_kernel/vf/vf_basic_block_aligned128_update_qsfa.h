@@ -107,7 +107,7 @@ __simd_vf__ void ProcessVec1UpdateImpl128VF(
             AscendC::MicroAPI::Cast<T2, T, castTraitZero>(vreg_exp_even_fp16, vreg_exp_even, preg_all);
             AscendC::MicroAPI::Cast<T2, T, castTraitOne>(vreg_exp_odd_fp16, vreg_exp_odd, preg_all);
             AscendC::MicroAPI::Or((RegTensor<uint16_t>&)vreg_exp_fp16, (RegTensor<uint16_t>&)vreg_exp_even_fp16,
-            (RegTensor<uint16_t>&)vreg_exp_odd_fp16, preg_all_b16);
+                (RegTensor<uint16_t>&)vreg_exp_odd_fp16, preg_all_b16);
             AscendC::MicroAPI::StoreAlign<T2, MicroAPI::DataCopyMode::DATA_BLOCK_COPY, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
                 ((__ubuf__ T2 *&)expUb), vreg_exp_fp16, blockStride, repeatStride, preg_all_b16);
         }

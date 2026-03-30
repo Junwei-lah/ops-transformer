@@ -46,9 +46,10 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
     AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_exp_even_bf16;
     AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_exp_odd_bf16;
     AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_exp_bf16;
-    AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_pse_bf16_src;
-    AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_pse_bf16;
-    AscendC::MicroAPI::RegTensor<bfloat16_t> vreg_pse_bf16_unroll;
+    // half
+    AscendC::MicroAPI::RegTensor<half> vreg_exp_even_fp16;
+    AscendC::MicroAPI::RegTensor<half> vreg_exp_odd_fp16;
+    AscendC::MicroAPI::RegTensor<half> vreg_exp_fp16;
 
     AscendC::MicroAPI::UnalignRegForStore ureg_max;
     AscendC::MicroAPI::UnalignRegForStore ureg_exp_sum;
@@ -110,6 +111,13 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
                 (RegTensor<uint16_t>&)vreg_exp_odd_bf16, preg_all_b16);
             AscendC::MicroAPI::StoreAlign<T2, MicroAPI::DataCopyMode::DATA_BLOCK_COPY, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
                 ((__ubuf__ T2 *&)expUb), vreg_exp_bf16, blockStride, repeatStride, preg_n_b16);
+        } else if constexpr (IsSameType<T2, half>::value) {
+            AscendC::MicroAPI::Cast<T2, T, castTraitZero>(vreg_exp_even_fp16, vreg_exp_even, preg_all);
+            AscendC::MicroAPI::Cast<T2, T, castTraitOne>(vreg_exp_odd_fp16, vreg_exp_odd, preg_all);
+            AscendC::MicroAPI::Or((RegTensor<uint16_t>&)vreg_exp_fp16, (RegTensor<uint16_t>&)vreg_exp_even_fp16,
+                (RegTensor<uint16_t>&)vreg_exp_odd_fp16, preg_all_b16);
+            AscendC::MicroAPI::StoreAlign<T2, MicroAPI::DataCopyMode::DATA_BLOCK_COPY, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
+                ((__ubuf__ T2 *&)expUb), vreg_exp_fp16, blockStride, repeatStride, preg_n_b16);
         }
     }
     AscendC::MicroAPI::StoreUnAlignPost<float, MicroAPI::PostLiteral::POST_MODE_UPDATE>(

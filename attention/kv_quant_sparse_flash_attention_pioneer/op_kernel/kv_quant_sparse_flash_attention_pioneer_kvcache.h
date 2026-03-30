@@ -12,8 +12,8 @@
  * \file kv_quant_sparse_flash_attention_pioneer_kvcache.h
  * \brief
  */
-#ifndef KV_QUANT_SPARSE_ATTN_SHAREDKV_KVCACHE_H
-#define KV_QUANT_SPARSE_ATTN_SHAREDKV_KVCACHE_H
+#ifndef KV_QUANT_SPARSE_FLASH_ATTENTION_PIONEER_KVCACHE_H
+#define KV_QUANT_SPARSE_FLASH_ATTENTION_PIONEER_KVCACHE_H
 
 #include "kernel_operator.h"
 #include "kernel_operator_list_tensor_intf.h"
@@ -266,4 +266,4 @@ __aicore__ inline void InitTaskParamByRun(const RunParamStr& runParam, RunInfo &
     runInfo.kvLoopEndIdx = runParam.kvLoopEndIdx;
 }
 
-#endif  // KV_QUANT_SPARSE_ATTN_SHAREDKV_KVCACHE_H
+#endif  // KV_QUANT_SPARSE_FLASH_ATTENTION_PIONEER_KVCACHE_H

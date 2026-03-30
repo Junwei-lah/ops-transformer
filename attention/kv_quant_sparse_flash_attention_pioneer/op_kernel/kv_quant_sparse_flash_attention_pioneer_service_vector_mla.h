@@ -54,9 +54,9 @@ public:
     // BUFFER的字节数
     static constexpr uint32_t BUFFER_SIZE_BYTE_32B = 32;
     /* =================编译期常量的基本块信息================= */
-    static constexpr uint32_t s1BaseSize = 64;  //lz : 先设置64，但目前方案中应该是32
-    static constexpr uint32_t s2BaseSize = 128; 
-    static constexpr uint32_t vec1Srcstride = (s1BaseSize >> 1) + 1; 
+    static constexpr uint32_t s1BaseSize = 64;
+    static constexpr uint32_t s2BaseSize = 128;
+    static constexpr uint32_t vec1Srcstride = (s1BaseSize >> 1) + 1;
     static constexpr uint32_t dVTemplateType = 512;
     static constexpr uint32_t dTemplateAlign64 = Align64Func(dVTemplateType);
     static constexpr uint32_t dVTemplateTypeInput = 672;
@@ -490,7 +490,7 @@ TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>
                 static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
         } else if(runInfo.s2RealSize <= 64) { // s2RealSize小于等于64分档, VF内常量化减少if判断
             ProcessVec1Vf<T, Q_T, false, s1BaseSize, s2BaseSize, QSFAPVectorApi::OriginNRange::GT_0_AND_LTE_64_QSFA>(
-                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize, //实际的计算有效元素，
+                stage1CastTensor, mmRes, sumUb, maxUb, maxUb, apiTmpBuffer, runInfo.halfMRealSize, runInfo.s2RealSize,
                 static_cast<T>(constInfo.softmaxScale), negativeFloatScalar);
         } else if(runInfo.s2RealSize < 128) { // s2RealSize小于128分档, VF内常量化减少if判断
             ProcessVec1Vf<T, Q_T, false, s1BaseSize, s2BaseSize, QSFAPVectorApi::OriginNRange::GT_64_AND_LTE_128_QSFA>(
@@ -695,15 +695,12 @@ TEMPLATES_DEF_NO_DEFAULT __aicore__ inline void QSFAVectorService<TEMPLATE_ARGS>
     sharedParams.sparseBlockCount = sparseAttnSharedkvBaseParams.sparseBlockCount;
     sharedParams.maskMode = sparseAttnSharedkvBaseParams.sparseMode;
     sharedParams.layoutType = sparseAttnSharedkvBaseParams.outputLayout; 
-    sharedParams.dSizeRope = 64; // 拷贝KV用
-    sharedParams.softmaxScale = 0.04419417; 
+    sharedParams.dSizeRope = 64;
+    sharedParams.softmaxScale = SOFTMAX_SCALE;
     sharedParams.dSize = 576;
-    sharedParams.dSizeVInput = sparseAttnSharedkvBaseParams.dSizeVInput; // 拷贝用
+    sharedParams.dSizeVInput = sparseAttnSharedkvBaseParams.dSizeVInput;
     sharedParams.keyBlockStride = sparseAttnSharedkvBaseParams.keyBlockStride;
-
     sharedParams.usedCoreNum = this->tilingData->singleCoreParams.usedCoreNum;
-
-    // pageAttention, rope在C侧搬运时使用
     if constexpr (isPa) {
         sharedParams.blockSize = sparseAttnSharedkvBaseParams.blockSize;
         sharedParams.maxBlockNumPerBatch = sparseAttnSharedkvBaseParams.maxBlockNumPerBatch;

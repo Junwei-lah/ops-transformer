@@ -19,6 +19,7 @@
 
 constexpr uint64_t BLOCK_BYTE = 32;
 constexpr uint32_t NEGATIVE_MIN_VALUE_FP32 = 0xFF7FFFFF;
+constexpr float SOFTMAX_SCALE = 0.0416666666666667;
 
 constexpr uint32_t L0AB_SHARED_SIZE_64K = 65536; // 65536表示64*1024
 constexpr uint32_t L0C_SHARED_SIZE_256K = 262144; // 262144表示256 * 1024
