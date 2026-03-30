@@ -23,17 +23,28 @@
 using namespace AscendC;
 
 namespace MC2KernelTemplate {
-template <typename hcclDataType, bool commBeforeComputeFlag> class HcclA2avOp {
+
+template <typename T1, typename T2>
+__aicore__ inline T1 CeilDiv(T1 a, T2 b)
+{
+    if (b == 0) {
+        return 0;
+    }
+    return (a + b - 1) / b;
+}
+
+template <typename hcclDataType, bool commBeforeComputeFlag>
+class HcclA2avOp {
 public:
-     __aicore__ inline void Init(const void *hcclInitTiling, uint64_t hcclCcTilingOffset,
-        const TaskTilingInfo *taskTilingInfo, GM_ADDR sendBuffer, GM_ADDR recvBuffer)
+    __aicore__ inline void Init(const void *hcclInitTiling, uint64_t hcclCcTilingOffset,
+                                const TaskTilingInfo *taskTilingInfo, GM_ADDR sendBuffer, GM_ADDR recvBuffer)
     {
         taskTilingInfo_ = taskTilingInfo;
         GM_ADDR hcclContextGm = GetHcclContext<HCCL_GROUP_ID_0>();
         hccl_.InitV2(hcclContextGm, hcclInitTiling);
-        hccl_.SetCcTilingV2(hcclCcTilingOffset); 
-        rankId_ = hccl_.GetRankId();	 
-        rankDim_ = hccl_.GetRankDim();	 
+        hccl_.SetCcTilingV2(hcclCcTilingOffset);
+        rankId_ = hccl_.GetRankId();
+        rankDim_ = hccl_.GetRankDim();
         e_ = taskTilingInfo_->e;
         H1_ = taskTilingInfo_->H1;
         N1_ = taskTilingInfo_->N1;
@@ -55,6 +66,10 @@ public:
             hcclDataType_ = HCCL_DATA_TYPE_BFP16;
         } else if constexpr (AscendC::IsSameType<hcclDataType, hifloat8_t>::value) {
             hcclDataType_ = HCCL_DATA_TYPE_HIF8;
+        } else if constexpr (AscendC::IsSameType<hcclDataType, fp8_e5m2_t>::value) {
+            hcclDataType_ = HCCL_DATA_TYPE_FP8E5M2;
+        } else if constexpr (AscendC::IsSameType<hcclDataType, fp8_e4m3fn_t>::value) {
+            hcclDataType_ = HCCL_DATA_TYPE_FP8E4M3;
         } else {
             hcclDataType_ = HCCL_DATA_TYPE_FP16;
         }
@@ -63,6 +78,77 @@ public:
         } else {
             LaunchCommAfterCompute(startExpertIdx, expertNum);
         }
+    }
+
+    __aicore__ inline void InitScaleBuffer(GM_ADDR sendBuffer, GM_ADDR recvBuffer)
+    {
+        sendScaleGlobalBuffer_.SetGlobalBuffer((__gm__ hcclDataType *)sendBuffer);
+        recvScaleGlobalBuffer_.SetGlobalBuffer((__gm__ hcclDataType *)recvBuffer);
+    }
+
+    __aicore__ inline void LaunchScaleBeforeCompute(uint32_t startExpertIdx, uint32_t expertNum)
+    {
+        if ASCEND_IS_AIC {
+            return;
+        }
+        if ASCEND_IS_AIV {
+            if (GetBlockIdx() != 0) {
+                return;
+            }
+        }
+
+        const auto *sendCnt = &taskTilingInfo_->sendCnt[0];
+        const auto *recvCnt = &taskTilingInfo_->recvCnt[0];
+        uint64_t axis = CeilDiv(H1_, SCALE_ALIGNMENT_BLOCK_SIZE) * SCALE_MULTIPLIER;
+
+        for (uint64_t i = 0UL; i < rankDim_; i++) {
+            alltoAllvScaleSendCnt[i] = 0UL;
+            alltoAllvScaleRecvCnt[i] = 0UL;
+            for (uint64_t expertIdx = startExpertIdx; expertIdx < startExpertIdx + expertNum; expertIdx++) {
+                alltoAllvScaleSendCnt[i] += static_cast<uint64_t>(sendCnt[expertIdx + i * e_]) * axis;
+                alltoAllvScaleRecvCnt[i] += static_cast<uint64_t>(recvCnt[expertIdx + i * e_]) * axis;
+            }
+        }
+
+        alltoAllvScaleSendOffset[0] = 0UL;
+        for (uint32_t j = 0U; j < startExpertIdx; j++) {
+            alltoAllvScaleSendOffset[0] += static_cast<uint64_t>(sendCnt[j]) * axis;
+        }
+        for (uint32_t i = 1U; i < rankDim_; i++) {
+            alltoAllvScaleSendOffset[i] = alltoAllvScaleSendOffset[i - 1U];
+            for (uint32_t j = 0U; j < e_; j++) {
+                alltoAllvScaleSendOffset[i] +=
+                    static_cast<uint64_t>(sendCnt[startExpertIdx + (i - 1U) * e_ + j]) * axis;
+            }
+        }
+
+        for (uint32_t i = 0U; i < rankDim_; i++) {
+            if ((startExpertIdx == 0U) && (i == 0U)) {
+                alltoAllvScaleRecvOffset[i] = 0UL;
+                alltoAllvScaleRecvOffsetLastSum += alltoAllvScaleRecvCnt[0];
+            } else {
+                alltoAllvScaleRecvOffset[i] = alltoAllvScaleRecvOffsetLastSum;
+                alltoAllvScaleRecvOffsetLastSum += alltoAllvScaleRecvCnt[i];
+            }
+        }
+
+        alltoAllvScaleHandleId_[startExpertIdx] = hccl_.AlltoAllV<true>(
+            (__gm__ uint8_t *)sendScaleGlobalBuffer_.GetPhyAddr(), alltoAllvScaleSendCnt, alltoAllvScaleSendOffset,
+            HCCL_DATA_TYPE_FP8E8M0, (__gm__ uint8_t *)recvScaleGlobalBuffer_.GetPhyAddr(), alltoAllvScaleRecvCnt,
+            alltoAllvScaleRecvOffset, HCCL_DATA_TYPE_FP8E8M0);
+    }
+
+    __aicore__ inline void WaitScale(uint32_t startExpertIdx)
+    {
+        if ASCEND_IS_AIC {
+            return;
+        }
+        if ASCEND_IS_AIV {
+            if (GetBlockIdx() != 0) {
+                return;
+            }
+        }
+        hccl_.Wait(alltoAllvScaleHandleId_[startExpertIdx]);
     }
 
     __aicore__ inline void Wait(uint32_t startExpertIdx)
@@ -135,8 +221,8 @@ private:
                 alltoAllvRecvOffsetLastSum += alltoAllvRecvCnt[i];
             }
         }
-        alltoAllvHandleId_[startExpertIdx] =
-        hccl_.AlltoAllV<true>((__gm__ uint8_t *)sendGlobalBuffer_.GetPhyAddr(), alltoAllvSendCnt, alltoAllvSendOffset, hcclDataType_,
+        alltoAllvHandleId_[startExpertIdx] = hccl_.AlltoAllV<true>(
+            (__gm__ uint8_t *)sendGlobalBuffer_.GetPhyAddr(), alltoAllvSendCnt, alltoAllvSendOffset, hcclDataType_,
             (__gm__ uint8_t *)recvGlobalBuffer_.GetPhyAddr(), alltoAllvRecvCnt, alltoAllvRecvOffset, hcclDataType_);
     }
 
@@ -176,8 +262,8 @@ private:
                 alltoAllvRecvOffset[i] += static_cast<uint64_t>(recvCnt[startExpertIdx + (i - 1) * e_ + j]) * N1_;
             }
         }
-        alltoAllvHandleId_[startExpertIdx] =
-        hccl_.AlltoAllV<true>((__gm__ uint8_t *)sendGlobalBuffer_.GetPhyAddr(), alltoAllvSendCnt, alltoAllvSendOffset, hcclDataType_,
+        alltoAllvHandleId_[startExpertIdx] = hccl_.AlltoAllV<true>(
+            (__gm__ uint8_t *)sendGlobalBuffer_.GetPhyAddr(), alltoAllvSendCnt, alltoAllvSendOffset, hcclDataType_,
             (__gm__ uint8_t *)recvGlobalBuffer_.GetPhyAddr(), alltoAllvRecvCnt, alltoAllvRecvOffset, hcclDataType_);
     }
 
@@ -188,6 +274,8 @@ private:
 #endif
 
     static constexpr uint64_t MAX_HANDLE_ID_NUM = 64U;
+    static constexpr uint64_t SCALE_ALIGNMENT_BLOCK_SIZE = 64U;
+    static constexpr uint64_t SCALE_MULTIPLIER = 2U;
 
     const TaskTilingInfo *taskTilingInfo_;
 
@@ -200,7 +288,11 @@ private:
     GlobalTensor<hcclDataType> sendGlobalBuffer_;
     GlobalTensor<hcclDataType> recvGlobalBuffer_;
 
+    GlobalTensor<hcclDataType> sendScaleGlobalBuffer_;
+    GlobalTensor<hcclDataType> recvScaleGlobalBuffer_;
+
     HcclHandle alltoAllvHandleId_[MAX_HANDLE_ID_NUM] = {INVALID_HANDLE_ID};
+    HcclHandle alltoAllvScaleHandleId_[MAX_HANDLE_ID_NUM] = {INVALID_HANDLE_ID};
     HcclDataType hcclDataType_ = HCCL_DATA_TYPE_FP16;
 
     uint64_t alltoAllvRecvOffsetLastSum = 0UL;
@@ -208,7 +300,14 @@ private:
     uint64_t alltoAllvSendOffset[MAX_EP_RANK_SIZE] = {0UL};
     uint64_t alltoAllvRecvCnt[MAX_EP_RANK_SIZE] = {0UL};
     uint64_t alltoAllvRecvOffset[MAX_EP_RANK_SIZE] = {0UL};
+
+    // scale相关的alltoall通信变量
+    uint64_t alltoAllvScaleSendCnt[MAX_EP_RANK_SIZE] = {0UL};
+    uint64_t alltoAllvScaleSendOffset[MAX_EP_RANK_SIZE] = {0UL};
+    uint64_t alltoAllvScaleRecvCnt[MAX_EP_RANK_SIZE] = {0UL};
+    uint64_t alltoAllvScaleRecvOffset[MAX_EP_RANK_SIZE] = {0UL};
+    uint64_t alltoAllvScaleRecvOffsetLastSum = 0UL;
 };
-};
+}; // namespace MC2KernelTemplate
 
 #endif

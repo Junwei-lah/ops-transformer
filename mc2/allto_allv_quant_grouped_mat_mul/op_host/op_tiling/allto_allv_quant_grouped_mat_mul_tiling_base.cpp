@@ -190,22 +190,24 @@ ge::graphStatus AlltoAllvQuantGmmTilingBase::CheckCommCountsRange()
     // check sendCounts/recvCounts size
     uint64_t sendCountsSize = sendCountsPtr_->GetSize();
     uint64_t recvCountsSize = recvCountsPtr_->GetSize();
-    OP_TILING_CHECK(sendCountsSize != recvCountsSize,
-        OP_LOGE(context_->GetNodeName(),
-        "The size of sendCounts(e * epWorldSize) %lu should be equal to recvCounts(e * epWorldSize) %lu !",
-        sendCountsSize, recvCountsSize),
-        return ge::GRAPH_FAILED);
-    OP_TILING_CHECK(e_ * epWorldSize_ != sendCountsSize,
-        OP_LOGE(context_->GetNodeName(),
-        "The first dim of gmmWeight(e, H1, N1) %lu  multi epWorldSize_ %lu shoubl be equal to the size of "
-        "sendCounts(e*ep) %lu!",
-        e_, epWorldSize_, sendCountsSize),
-        return ge::GRAPH_FAILED);
-    OP_TILING_CHECK((e_ * epWorldSize_ <= EXPERT_MIN_VALUE) || (e_ * epWorldSize_ > EXPERT_MAX_VALUE),
-        OP_LOGE(context_->GetNodeName(),
-        "The size of send_counts(e*ep) and recv_counts(e*ep) should be in (%lu, %lu], but got %lu!", EXPERT_MIN_VALUE,
-        EXPERT_MAX_VALUE, e_ * epWorldSize_),
-        return ge::GRAPH_FAILED);
+    if (e_ > E_MIN_VALUE && e_ <= E_MAX_VALUE) {
+        OP_TILING_CHECK(sendCountsSize != recvCountsSize,
+            OP_LOGE(context_->GetNodeName(),
+            "The size of sendCounts(e * epWorldSize) %lu should be equal to recvCounts(e * epWorldSize) %lu !",
+            sendCountsSize, recvCountsSize),
+            return ge::GRAPH_FAILED);
+        OP_TILING_CHECK(e_ * epWorldSize_ != sendCountsSize,
+            OP_LOGE(context_->GetNodeName(),
+            "The first dim of gmmWeight(e, H1, N1) %lu  multiplied by epWorldSize %lu should be equal to the size of "
+            "sendCounts(e * ep) %lu!",
+            e_, epWorldSize_, sendCountsSize),
+            return ge::GRAPH_FAILED);
+        OP_TILING_CHECK((e_ * epWorldSize_ <= EXPERT_MIN_VALUE) || (e_ * epWorldSize_ > EXPERT_MAX_VALUE),
+            OP_LOGE(context_->GetNodeName(),
+            "The size of send_counts(e * ep) and recv_counts(e * ep) should be in (%lu, %lu], but got %lu!",
+            EXPERT_MIN_VALUE, EXPERT_MAX_VALUE, e_ * epWorldSize_),
+            return ge::GRAPH_FAILED);
+    }
     return ge::GRAPH_SUCCESS;
 }
 
