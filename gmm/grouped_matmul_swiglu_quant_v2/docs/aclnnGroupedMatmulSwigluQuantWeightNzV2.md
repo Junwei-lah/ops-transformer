@@ -379,7 +379,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2(
         <td>表示量化计算类型，用于确定swiglu结果的量化模式。</td>
         <td><ul>
           <li>暂不支持，默认行为0。</li>
-          <li>0表示per-token。</li>
+          <li>0表示per-token。</li></ul>
         </td>
         <td>INT64</td>
         <td>-</td>
@@ -390,7 +390,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2(
         <td>groupListType</td>
         <td rowspan="1">输入</td>
         <td>表示分组的解释方式，用于确定groupList的语义。</td>
-        <td><ul><li>0表示cumsum模式，groupList中的每个元素代表当前分组的累计长度。</li><li>1表示count模式，groupList中的每个元素代表该分组包含多少元素。</li></td>
+        <td><ul><li>0表示cumsum模式，groupList中的每个元素代表当前分组的累计长度。</li><li>1表示count模式，groupList中的每个元素代表该分组包含多少元素。</li></ul></td>
         <td>INT64</td>
         <td>-</td>
         <td>-</td>
@@ -641,10 +641,10 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2(
               <td><ul>
               <li>ND格式shape形如{(E, K, N)}</li>
               <li>NZ格式且INT4时shape形如{(E, N / 64, K / 16, 16, 64)}</li>
-              <li>NZ格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li></td>
+              <li>NZ格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li></ul></td>
               <td><ul>
               <li>per-channel场景shape形如{(E, N)}</li>
-              <li>per-group场景shape形如{(E, K_group_num, N)}</li></td>
+              <li>per-group场景shape形如{(E, K_group_num, N)}</li></ul></td>
               <td>{(E, N)}</td>
               <td>(M,)</td>
               <td>nullptr</td>
@@ -661,11 +661,11 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantWeightNzV2(
               <li>NZ非转置格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li>
               <li>NZ转置格式且INT4时原始shape形如{(E, K / 64, N / 16, 16, 64)}，并调用transpose(-1,-2)后传入</li>
               <li>NZ转置格式且INT32时原始shape形如{(E, K / 64, N / 16, 16, 8)}，并调用transpose(-1,-2)后传入</li>
-             <li>NZ转置输入时，per-group的K/K_group_num请按照64对齐</li>
+             <li>NZ转置输入时，per-group的K/K_group_num请按照64对齐</li></ul>
               </td>
               <td><ul>
               <li>per-channel场景shape形如{(E, N)}</li>
-              <li>per-group场景shape形如{(E, K_group_num, N)}</li>
+              <li>per-group场景shape形如{(E, K_group_num, N)}</li></ul>
               </td>
               <td>nullptr</td>
               <td>(M,)</td>

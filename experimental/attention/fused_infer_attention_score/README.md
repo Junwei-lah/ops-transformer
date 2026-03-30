@@ -43,13 +43,10 @@
 - 算子规格：
   <table>
   <tr><td rowspan="1" align="center">算子类型(OpType)</td><td colspan="4" align="center">FusedInferAttentionScore</td></tr>
-  </tr>
   <tr><td rowspan="4" align="center">算子输入</td><td align="center">name</td><td align="center">layout</td><td align="center">data type</td><td align="center">format</td></tr>
   <tr><td align="center">query</td><td align="center">bnsd、bsnd</td><td align="center">float16、bfloat16</td><td align="center">ND</td></tr>
   <tr><td align="center">key</td><td align="center">bnsd、bsnd</td><td align="center">float16、bfloat16</td><td align="center">ND</td></tr>
   <tr><td align="center">value</td><td align="center">bnsd、bsnd</td><td align="center">float16、bfloat16</td><td align="center">ND</td></tr>
-  </tr>
-  </tr>
   <tr><td rowspan="1" align="center">算子输出</td><td align="center">atten_out</td><td align="center">bnsd、bsnd</td><td align="center">float16、bfloat16</td><td align="center">ND</td></tr>
   </table>
 

@@ -31,7 +31,7 @@
 
 ## 函数原型
 
-算子执行接口为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用“aclnnBlitzSparseAttentionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnBlitzSparseAttention”接口执行计算。
+算子执行接口为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnBlitzSparseAttentionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnBlitzSparseAttention”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnBlitzSparseAttentionGetWorkspaceSize(
@@ -164,7 +164,7 @@ aclnnStatus aclnnBlitzSparseAttention(
         <td>输入</td>
         <td>不同Batch中query的有效序列长度。</td>
         <td><ul><li>不指定序列长度可传入nullptr。</li>
-            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li><ul></td>
+            <li>综合约束请见<a href="#约束说明">约束说明</a>。</li></ul></td>
         <td>INT64</td>
         <td>TND</td>
         <td>1</td>
@@ -359,7 +359,7 @@ aclnnStatus aclnnBlitzSparseAttention(
   第一段接口完成入参校验，若出现以下错误码，则对应原因为：
   
     <div style="overflow-x: auto;">
-    <table style="undefined;table-layout: fixed; width: 1030px">			<colgroup>
+    <table style="undefined;table-layout: fixed; width: 1030px"><colgroup>
     <col style="width: 250px">
     <col style="width: 130px">
     <col style="width: 650px">

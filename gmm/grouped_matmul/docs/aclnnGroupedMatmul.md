@@ -262,7 +262,7 @@ aclnnStatus aclnnGroupedMatmul(
         <td>-</td>
         <td>-</td>
       </tr>
-    <tbody></table>
+    </tbody></table>
 
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
     - x、weight支持FLOAT16、BFLOAT16、INT8
@@ -369,15 +369,15 @@ aclnnStatus aclnnGroupedMatmul(
     <summary>非量化场景约束</summary>
       <a id="非量化场景约束"></a>
 
-  - 非量化场景支持的数据类型为：
-    - 如果传入groupListOptional，groupListOptional必须为非负递增数列，groupListOptional长度不能为1
-    - 以下入参为空：scaleOptional、offsetOptional、antiquantScaleOptional、antiquantOffsetOptional
-    - 不为空的参数支持的数据类型组合要满足下表：
+    - 非量化场景支持的数据类型为：
+      - 如果传入groupListOptional，groupListOptional必须为非负递增数列，groupListOptional长度不能为1
+      - 以下入参为空：scaleOptional、offsetOptional、antiquantScaleOptional、antiquantOffsetOptional
+      - 不为空的参数支持的数据类型组合要满足下表：
 
-      | x       | weight  | biasOptional | y     |
-      |:-------:|:-------:| :------      |:------ |
-      |BFLOAT16     |BFLOAT16     |BFLOAT16/FLOAT32/null    | BFLOAT16|
-      |FLOAT16     |FLOAT16     |FLOAT16/FLOAT32/null    | FLOAT16|
+        | x       | weight  | biasOptional | y     |
+        |:-------:|:-------:| :------      |:------ |
+        |BFLOAT16     |BFLOAT16     |BFLOAT16/FLOAT32/null    | BFLOAT16|
+        |FLOAT16     |FLOAT16     |FLOAT16/FLOAT32/null    | FLOAT16|
 
     </details>
 

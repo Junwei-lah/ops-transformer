@@ -30,7 +30,7 @@
     
 ## 函数原型
 
-每个算子分为[两段式接口](common/两段式接口.md)，必须先调用“aclnnFusedFloydAttentionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnFusedFloydAttention”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用“aclnnFusedFloydAttentionGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnFusedFloydAttention”接口执行计算。
 
 ```Cpp
 aclnnStatus aclnnFusedFloydAttentionGetWorkspaceSize(
@@ -207,7 +207,7 @@ aclnnStatus aclnnFusedFloydAttention(
 
 - **返回值**
 
-  返回aclnnStatus状态码，具体参见[aclnn返回码](common/aclnn返回码.md)。
+  返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
   第一段接口完成入参校验，若出现以下错误码，则对应原因为：
 
@@ -282,7 +282,7 @@ aclnnStatus aclnnFusedFloydAttention(
 
 - **返回值**
 
-    返回aclnnStatus状态码，具体参见[aclnn返回码](common/aclnn返回码.md)。
+    返回aclnnStatus状态码，具体参见[aclnn返回码](../../../docs/zh/context/aclnn返回码.md)。
 
 ## 约束说明<a name="1"></a>
 

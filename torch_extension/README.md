@@ -1,4 +1,5 @@
 # NPU Ops Transformer
+
 `npu_ops_transformer` is a high-performance operator extension library designed for Ascend NPU. It leverages Just-In-Time(JIT) compilation to bridge PyTorch functional interfaces with ACLNN library.
 
 ## Build & Installation
@@ -59,9 +60,11 @@ print("Verification successful!")
 ```
 
 ## Developer Guide: Adding a New Operator
+
 To implement a new operator (e.g. `abs`), you need to provide two components: a C++ kernel wrapper and a Python JIT builder.
 
 ### 1. C++ Backend(`ops/csrc/<OP_NAME>.cpp`)
+
 This file bridges PyTorch tensors to the ACLNN C-API.
 
 ```cpp
@@ -92,6 +95,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 ```
 
 ### 2. Python Frontend(`ops/<OP_NAME>.py`)
+
 This file manages the JIT compilation logic and registers the operator into the PyTorch Dispatcher.
 
 ```python

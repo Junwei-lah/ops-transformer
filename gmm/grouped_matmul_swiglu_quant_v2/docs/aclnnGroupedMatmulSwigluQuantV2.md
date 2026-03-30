@@ -470,7 +470,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
         <td><ul>
           <li>0表示per-token。</li>
           <li>1表示per-group。</li>
-          <li>2表示MX量化。</li>
+          <li>2表示MX量化。</li></ul>
         </td>
         <td>INT64</td>
         <td>-</td>
@@ -481,7 +481,7 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
         <td>groupListType</td>
         <td rowspan="1">输入</td>
         <td>表示分组的解释方式，用于确定groupList的语义。</td>
-        <td><ul><li>0表示cumsum模式，groupList中的每个元素代表当前分组的累计长度。</li><li>1表示count模式，groupList中的每个元素代表该分组包含多少元素。</li></td>
+        <td><ul><li>0表示cumsum模式，groupList中的每个元素代表当前分组的累计长度。</li><li>1表示count模式，groupList中的每个元素代表该分组包含多少元素。</li></ul></td>
         <td>INT64</td>
         <td>-</td>
         <td>-</td>
@@ -740,10 +740,10 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
               <td><ul>
               <li>ND格式shape形如{(E, K, N)}</li>
               <li>NZ格式且INT4时shape形如{(E, N / 64, K / 16, 16, 64)}</li>
-              <li>NZ格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li></td>
+              <li>NZ格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li></ul></td>
               <td><ul>
               <li>per-channel场景shape形如{(E, N)}</li>
-              <li>per-group场景shape形如{(E, K_group_num, N)}</li></td>
+              <li>per-group场景shape形如{(E, K_group_num, N)}</li></ul></td>
               <td>{(E, N)}</td>
               <td>(M,)</td>
               <td>nullptr</td>
@@ -760,11 +760,11 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
               <li>NZ非转置格式且INT32时shape形如{(E, N / 64, K / 16, 16, 8)}</li>
               <li>NZ转置格式且INT4时原始shape形如{(E, K / 64, N / 16, 16, 64)}，并调用transpose(-1,-2)后传入</li>
               <li>NZ转置格式且INT32时原始shape形如{(E, K / 64, N / 16, 16, 8)}，并调用transpose(-1,-2)后传入</li>
-              <li>NZ转置输入时，per-group的K/K_group_num请按照64对齐</li>
+              <li>NZ转置输入时，per-group的K/K_group_num请按照64对齐</li></ul>
               </td>
               <td><ul>
               <li>per-channel场景shape形如{(E, N)}</li>
-              <li>per-group场景shape形如{(E, K_group_num, N)}</li>
+              <li>per-group场景shape形如{(E, K_group_num, N)}</li></ul>
               </td>
               <td>nullptr</td>
               <td>(M,)</td>
@@ -852,10 +852,10 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
               <td>(M, K)</td>
               <td><ul>
               <li>非转置shape形如{(E, K, N)}</li>
-              <li>转置shape形如{(E, N, K)}</li></td>
+              <li>转置shape形如{(E, N, K)}</li></ul></td>
               <td><ul>
               <li>非转置shape形如{(E, ceil(K / 64), N, 2)}</li>
-              <li>转置shape形如{(E, N, ceil(K / 64), 2)}</li></td>
+              <li>转置shape形如{(E, N, ceil(K / 64), 2)}</li></ul></td>
               <td>(M, ceil(K / 64), 2)</td>
               <td>(M, N / 2)</td>
               <td>(M, ceil((N / 2) / 64), 2)</td>
@@ -938,10 +938,8 @@ aclnnStatus aclnnGroupedMatmulSwigluQuantV2(
               <td>(M, K)</td>
               <td><ul>
               <li>非转置shape形如{(E, K, N)}</li>
-              <li>转置shape形如{(E, N, K)}</li></td>
-              <td><ul>
-              <li>shape形如{(E, N)}</li>
-              </td>
+              <li>转置shape形如{(E, N, K)}</li></ul></td>
+              <td>shape形如{(E, N)}</td>
               <td>(M, )</td>
               <td>(M, N / 2)</td>
               <td>(M, )</td>

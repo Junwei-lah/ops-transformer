@@ -230,7 +230,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         <ul>
             <li>不指定序列长度可传入nullptr，表示和query的shape的S长度相同。</li>
             <li>综合约束请见<a href="#约束说明">约束说明</a>。</li>
-        <ul>
+        </ul>
         </td>
         <td>INT64</td>
         <td>-</td>
@@ -611,7 +611,7 @@ aclnnStatus aclnnFusedInferAttentionScoreV5(
         </td>
         <td>BFLOAT16</td>
         <td>ND</td>
-        <td>(Q_N)</a></td>
+        <td>(Q_N)</td>
         <td>×</td>
     </tr>
     <tr> 

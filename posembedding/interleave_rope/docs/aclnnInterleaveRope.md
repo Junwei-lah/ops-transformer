@@ -38,7 +38,7 @@
 
 ## 函数原型
 
-每个算子分为[两段式接口](../../../docs/context/两段式接口.md)，必须先调用"aclnnInterleaveRopeGetWorkspaceSize"接口获取入参并根据流程计算所需workspace大小，再调用"aclnnInterleaveRope"接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用"aclnnInterleaveRopeGetWorkspaceSize"接口获取入参并根据流程计算所需workspace大小，再调用"aclnnInterleaveRope"接口执行计算。
 
 ```c++
 aclnnStatus aclnnInterleaveRopeGetWorkspaceSize(

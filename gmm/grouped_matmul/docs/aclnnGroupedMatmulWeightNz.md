@@ -312,7 +312,7 @@ aclnnStatus aclnnGroupedMatmulWeightNz(
     <td>groupType</td>
     <td>输入</td>
     <td>代表需要分组的轴。</td>
-    <td>枚举值-1、0、2。如矩阵乘为C[m,n]=A[m,k]xB[k,n]，则groupType取值-1：不分组，0：m轴分组，2：k轴分组。</a></td>
+    <td>枚举值-1、0、2。如矩阵乘为C[m,n]=A[m,k]xB[k,n]，则groupType取值-1：不分组，0：m轴分组，2：k轴分组。</td>
     <td>INT64</td>
     <td>-</td>
     <td>-</td>
