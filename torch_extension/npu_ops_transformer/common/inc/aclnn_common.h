@@ -16,6 +16,9 @@
 #include <torch_npu/csrc/framework/utils/OpAdapter.h>
 #include <dlfcn.h>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <cstdlib>
 #include <functional>
 #include <type_traits>
 #include <ATen/Tensor.h>
@@ -136,11 +139,41 @@ inline void *GetOpApiLibHandler(const char *libName)
     return handler;
 }
 
+inline std::vector<void *> GetCustOpApiHandlers()
+{
+    std::vector<void *> handlers;
+    const char *env = std::getenv("ASCEND_CUSTOM_OPP_PATH");
+    if (env != nullptr) {
+        std::string envStr(env);
+        std::istringstream iss(envStr);
+        std::string path;
+        while (std::getline(iss, path, ':')) {
+            if (path.empty()) {
+                continue;
+            }
+            std::string soPath = path + "/op_api/lib/" + GetCustOpApiLibName();
+            auto handler = dlopen(soPath.c_str(), RTLD_LAZY);
+            if (handler != nullptr) {
+                handlers.push_back(handler);
+            } else {
+                ASCEND_LOGW("dlopen %s failed, error:%s.", soPath.c_str(), dlerror());
+            }
+        }
+    }
+    if (handlers.empty()) {
+        auto handler = GetOpApiLibHandler(GetCustOpApiLibName());
+        if (handler != nullptr) {
+            handlers.push_back(handler);
+        }
+    }
+    return handlers;
+}
+
 inline void *GetOpApiFuncAddr(const char *apiName)
 {
-    static auto custOpApiHandler = GetOpApiLibHandler(GetCustOpApiLibName());
-    if (custOpApiHandler != nullptr) {
-        auto funcAddr = GetOpApiFuncAddrInLib(custOpApiHandler, GetCustOpApiLibName(), apiName);
+    static auto custHandlers = GetCustOpApiHandlers();
+    for (auto handler : custHandlers) {
+        auto funcAddr = GetOpApiFuncAddrInLib(handler, GetCustOpApiLibName(), apiName);
         if (funcAddr != nullptr) {
             return funcAddr;
         }
@@ -620,10 +653,11 @@ auto DecodeDevice(Ts&... args) -> at::Device
         static auto getWorkspaceSizeFunc = ConvertToOpApiFunc(converted_params, getWorkspaceSizeFuncAddr);  \
         auto workspace_status = call(getWorkspaceSizeFunc, converted_params);                               \
         TORCH_CHECK(workspace_status == 0, "call " #aclnn_api " failed, detail:", aclGetRecentErrMsg());    \
+        at::Tensor workspace_tensor = nullptr;                                                              \
         void *workspace_addr = nullptr;                                                                     \
         if (workspace_size != 0) {                                                                          \
             at::TensorOptions options = at::TensorOptions(torch_npu::utils::get_npu_device_type());         \
-            auto workspace_tensor = at::empty({workspace_size}, options.dtype(at::kByte));                  \
+            workspace_tensor = at::empty({workspace_size}, options.dtype(at::kByte));                       \
             workspace_addr = const_cast<void *>(workspace_tensor.storage().data());                         \
         }                                                                                                   \
         auto acl_call = [converted_params, workspace_addr, workspace_size, acl_stream, executor]() -> int { \
