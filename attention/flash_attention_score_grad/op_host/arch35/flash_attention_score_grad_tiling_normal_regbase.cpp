@@ -683,16 +683,42 @@ void FlashAttentionScoreGradTilingNormalRegbase::CalcleDeterParam()
         fBaseParams.deterSparseType == static_cast<uint32_t>(DeterSparseType::DETER_OLD)) {
         return;
     }
+    int64_t cubebaseM = fBaseParams.s1Inner * fBaseParams.s1CvRatio;
+    int64_t cubebaseN = fBaseParams.s2Inner * fBaseParams.s2CvRatio;
+    uint8_t deterTilingSplitMode = (cubebaseM == cubebaseN ? 0 : (cubebaseM > cubebaseN ? 2 : 1));
+    int64_t s1Outer{fBaseParams.s1Outer};
+    int64_t s2Outer{fBaseParams.s2Outer};
+    int64_t s1Inner{fBaseParams.s1Inner};
+    int64_t s2Inner{fBaseParams.s2Inner};
+    bool needChangeSplitItemMode2 = (deterTilingSplitMode == 2) &&
+        (fBaseParams.deterSparseType != static_cast<uint32_t>(DeterSparseType::DETER_DENSE));
+    bool needChangeSplitItemMode1 = (deterTilingSplitMode == 1) &&
+        (fBaseParams.deterSparseType != static_cast<uint32_t>(DeterSparseType::DETER_DENSE));
+    // 若是256 * 128或64 * 128切分，则
+    if (needChangeSplitItemMode2) {
+        fBaseParams.s2Inner = fBaseParams.s2Inner * 2;
+        fBaseParams.s2Outer = CeilDivideBy(s2Outer, static_cast<int64_t>(2));
+    }
+    if (needChangeSplitItemMode1) {
+        fBaseParams.s1Inner = fBaseParams.s1Inner * 2;
+        fBaseParams.s1Outer = CeilDivideBy(s1Outer, static_cast<int64_t>(2));
+    }
     if (fBaseParams.layoutType == INPUT_FORMAT_TND) {
         CalcleTNDDeterParam();
-        return;
     }
-    if (fBaseParams.deterSparseType == static_cast<uint32_t>(DeterSparseType::DETER_CAUSAL)) {
+    if (fBaseParams.layoutType != INPUT_FORMAT_TND &&
+        fBaseParams.deterSparseType == static_cast<uint32_t>(DeterSparseType::DETER_CAUSAL)) {
         CalcleCausalDeterParam(fBaseParams);
-        return;
-    } else if (fBaseParams.deterSparseType == static_cast<uint32_t>(DeterSparseType::DETER_BAND)) {
+    } else if (fBaseParams.layoutType != INPUT_FORMAT_TND &&
+        fBaseParams.deterSparseType == static_cast<uint32_t>(DeterSparseType::DETER_BAND)) {
         CalcleBandDeterParam(fBaseParams);
-        return;
+    }
+    if (needChangeSplitItemMode1 || needChangeSplitItemMode2) {
+        fBaseParams.s1Outer = s1Outer;
+        fBaseParams.s2Outer = s2Outer;
+        fBaseParams.s1Inner = s1Inner;
+        fBaseParams.s2Inner = s2Inner;
+        fBaseParams.deterMaxRound *= 2;
     }
 }
 
@@ -1530,7 +1556,9 @@ ge::graphStatus FlashAttentionScoreGradTilingNormalRegbase::SaveToTilingData()
     s1s2BNGS1S2BaseParams_->set_s1SinkOuter(fBaseParams.s1SinkOuter);
     s1s2BNGS1S2BaseParams_->set_s2SinkOuter(fBaseParams.s2SinkOuter);
     
-    bool isSplitByBlockIdx = fBaseParams.enableSwizzle && (fBaseParams.layoutType != INPUT_FORMAT_TND) && fBaseParams.splitAxis == SplitAxisEnum::BN2GS1S2;
+    bool isSplitByBlockIdx = fBaseParams.enableSwizzle &&
+        (fBaseParams.layoutType != INPUT_FORMAT_TND) && fBaseParams.splitAxis == SplitAxisEnum::BN2GS1S2 &&
+        (fBaseParams.s1Inner * fBaseParams.s1CvRatio == fBaseParams.s2Inner * fBaseParams.s2CvRatio);
     OP_LOGI(context_, "Determine whether to swizzle (not tnd), get isSplitByBlockIdx=[%d]", static_cast<int>(isSplitByBlockIdx));
     s1s2BNGS1S2BaseParams_->set_isSplitByBlockIdx(isSplitByBlockIdx);
     if (isSplitByBlockIdx) {

@@ -74,8 +74,6 @@ __simd_vf__ inline void CalculateSinkVF(T sinkScale, uint64_t dstLocalInt, uint6
             ExpSub(vregSub, vregSink, vregMax, pregFullExe);
             Div(vregDiv, vregSub, vregSum, pregFullExe);
             Mul(vregMul, vregMul, vregDiv, pregFullExe);
-            // StoreAlign(
-            //     ((__ubuf__ float *&)tmpLocalInt + m * srcN + n * fullExeSize), vregMul, pregFullExe);
             Reduce<MicroAPI::ReduceType::SUM>(vregReduceSum, vregMul, pregFullExe);
             Add(vregRes, vregRes, vregReduceSum, pregAccu);
         }
@@ -86,8 +84,6 @@ __simd_vf__ inline void CalculateSinkVF(T sinkScale, uint64_t dstLocalInt, uint6
         ExpSub(vregSubTail, vregSink, vregMax, pregFullExe);
         Div(vregDivTail, vregSubTail, vregSum, pregFullExe);
         Mul(vregMulTail, vregMulTail, vregDivTail, pregTailExe);
-        // StoreAlign(
-        //     ((__ubuf__ float *&)tmpLocalIntTail + m * srcN), vregMulTail, pregTailExe);
         Reduce<MicroAPI::ReduceType::SUM>(vregReduceSumTail, vregMulTail, pregTailExe);
         Add(vregRes, vregRes, vregReduceSumTail, pregAccu);
     }

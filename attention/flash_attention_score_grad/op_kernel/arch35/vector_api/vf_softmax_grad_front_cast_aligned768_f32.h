@@ -226,7 +226,8 @@ __simd_vf__ inline void CastAligned768F32VF640(uint64_t srcLocalInt, uint64_t ds
         LoadAlign<T1, MicroAPI::PostLiteral::POST_MODE_UPDATE>(vregSrc8, ((__ubuf__ T1 *&)srcLocalInt8), HEAD_DIM_ALIGN);
         LoadAlign<T1, MicroAPI::PostLiteral::POST_MODE_UPDATE>(vregGrad8, ((__ubuf__ T1 *&)gradLocalInt8), HEAD_DIM_ALIGN);
         LoadAlign<T1, MicroAPI::PostLiteral::POST_MODE_UPDATE>(vregSrcTail, ((__ubuf__ T1 *&)srcLocalIntTail), HEAD_DIM_ALIGN);
-        LoadAlign<T1, MicroAPI::PostLiteral::POST_MODE_UPDATE>(vregGradTail, ((__ubuf__ T1 *&)gradLocalIntTail), srcN);
+        LoadAlign<T1, MicroAPI::PostLiteral::POST_MODE_UPDATE>(
+            vregGradTail, ((__ubuf__ T1 *&)gradLocalIntTail), HEAD_DIM_ALIGN);
         Mul(vregMul, vregGrad, vregSrc, pregFullExe);
         Mul(vregMul1, vregGrad1, vregSrc1, pregFullExe);
         Mul(vregMul2, vregGrad2, vregSrc2, pregFullExe);
