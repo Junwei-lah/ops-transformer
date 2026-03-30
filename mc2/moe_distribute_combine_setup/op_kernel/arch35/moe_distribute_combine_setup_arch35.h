@@ -84,13 +84,13 @@ private:
 
     __aicore__ GM_ADDR GetWinAddrByRankId(const uint32_t rankId, const uint8_t expertLocalId = 0U)
     {
-        return (GM_ADDR)(hcclContext_->windowsIn[rankId]) + STATE_SIZE + winDataSizeOffset_ +
+        return (GM_ADDR)(hcclContext_->windowsIn[rankId]) + winDataSizeOffset_ +
                expertPerSizeOnWin_ * static_cast<uint64_t>(expertLocalId);
     }
 
     __aicore__ GM_ADDR GetWinStateAddrByRankId(uint32_t rankId)
     {
-        return (GM_ADDR)(hcclContext_->windowsIn[rankId]) + COMBINE_STATE_OFFSET +
+        return (GM_ADDR)(hcclContext_->windowsOut[rankId]) + COMBINE_STATE_OFFSET +
                WIN_STATE_OFFSET * static_cast<uint64_t>(dataState_);
     }
 
@@ -148,7 +148,7 @@ __aicore__ inline void MoeDistributeCombineSetup<TemplateMC2TypeFunc>::Init(
     // 获取win状态区地址，并保证数据一致
     // 在1M中选择512K偏移后的1.5k空间记录本卡历史状态
     GlobalTensor<int32_t> selfDataStatusTensor;
-    GM_ADDR statusDataSpaceGm = (GM_ADDR)hcclContext_->windowsIn[moeDistributeCombineSetupInfo_->epRankId];
+    GM_ADDR statusDataSpaceGm = (GM_ADDR)hcclContext_->windowsOut[moeDistributeCombineSetupInfo_->epRankId];
     selfDataStatusTensor.SetGlobalBuffer((__gm__ int32_t *)(statusDataSpaceGm + STATE_WIN_OFFSET +
                                                             STATE_SIZE_PER_CORE * static_cast<uint64_t>(coreIdx_)));
     DataCacheCleanAndInvalid<int32_t, CacheLine::SINGLE_CACHE_LINE, DcciDst::CACHELINE_OUT>(selfDataStatusTensor);

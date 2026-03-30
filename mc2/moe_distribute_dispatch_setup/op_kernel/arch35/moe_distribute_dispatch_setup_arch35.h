@@ -42,8 +42,6 @@ constexpr uint8_t BUFFER_NUM = 2;       // 多buf
 constexpr uint32_t STATE_OFFSET = 512U; // 状态空间偏移地址
 constexpr uint32_t STATE_SIZE = 1024U * 1024U;
 constexpr uint32_t UB_ALIGN = 32U;      // UB按32字节对齐
-constexpr uint64_t WIN_STATE_OFFSET = 384UL << 10;
-constexpr uint64_t STATE_WIN_OFFSET = WIN_STATE_OFFSET * 2;
 constexpr uint64_t WIN_ADDR_ALIGN = 512UL;
 constexpr uint32_t SQE_START_OFFSET = 10U << 20;
 constexpr uint32_t WRITE_SQE_SIZE = 64U;
@@ -110,12 +108,12 @@ private:
     __aicore__ inline void CalTokenSendExpertCnt(uint32_t dstExpertId, int32_t calCnt, int32_t& curExpertCnt);
     __aicore__ inline GM_ADDR GetWindAddrByRankId(const int32_t rankId)
     {
-        return (GM_ADDR)((hcclContext_->windowsIn[rankId]) + winDataSizeOffset_ + STATE_SIZE);
+        return (GM_ADDR)((hcclContext_->windowsIn[rankId]) + winDataSizeOffset_);
     }
 
     __aicore__ inline GM_ADDR GetWindStateAddrByRankId(const int32_t rankId)
     {
-        return (GM_ADDR)((hcclContext_->windowsIn[rankId]) + dataState_ * WIN_STATE_OFFSET);
+        return (GM_ADDR)((hcclContext_->windowsOut[rankId]) + dataState_ * WIN_STATE_OFFSET);
     }
 
     __aicore__ inline uint32_t MIN(uint32_t x1, uint32_t x2)
@@ -359,8 +357,7 @@ __aicore__ inline void MoeDistributeDispatchSetup<TemplateMC2TypeFunc>::Init(
     Duplicate<int32_t>(statusTensor_, 0x40000000, mask, statusBufCntAlign / 8, 1, 8); // 0x3F800000是float的1
 
     // 当前win区划分为前后区，dispatch/combine不再划分区域
-    uint64_t hSizeAlignCombine = Ceil(axisH_ * sizeof(XType), WIN_ADDR_ALIGN) * WIN_ADDR_ALIGN;
-    winDataSizeOffset_ = dataState_ * (tilingData->moeDistributeDispatchSetupInfo.totalWinSize / 2) + axisMaxBS_ * (axisK_ + sharedExpertNum_) * hSizeAlignCombine;
+    winDataSizeOffset_ = dataState_ * (tilingData->moeDistributeDispatchSetupInfo.totalWinSize / 2);
     windowGM_ = GetWindAddrByRankId(epRankId_);
     windowInstatusFp32Tensor_.SetGlobalBuffer((__gm__ float*)(statusSpaceGm_));
     hOutAlignUbSize_ = Ceil(hOutSizeAlign_, UB_ALIGN) * UB_ALIGN;
@@ -864,6 +861,7 @@ __aicore__ inline void MoeDistributeDispatchSetup<TemplateMC2TypeFunc>::TokenSca
     Sort<float, true>(sortedLocal, concatLocal, indexU32LT, tempTensor, sortRepeat_);
     PipeBarrier<PIPE_V>();
     Extract(sortedOutF32LT_, sortedIndex1LT_, sortedLocal, sortRepeat_);
+    SyncFunc<HardEvent::V_MTE2>();
 }
 
 template <TemplateMC2TypeClass>

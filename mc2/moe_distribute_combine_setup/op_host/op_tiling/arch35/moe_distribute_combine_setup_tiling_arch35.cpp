@@ -31,10 +31,13 @@ constexpr int64_t GROUP_EP_SIZE_8 = 8;
 constexpr int64_t MOE_EXPERT_NUM_32 = 32;
 constexpr int64_t MOE_EXPERT_NUM_64 = 64;
 constexpr int64_t MOE_EXPERT_NUM_128 = 128;
-constexpr uint32_t MOE_EXPERT_NUM_PER_RANK_16 = 16U;
+constexpr int64_t BS_SIZE_8 = 8;
 constexpr int64_t BS_SIZE_16 = 16;
+constexpr int64_t BS_SIZE_256 = 256;
 constexpr int64_t H_SIZE_4096 = 4096;
+constexpr int64_t H_SIZE_7168 = 7168;
 constexpr int64_t K_SIZE_6 = 6;
+constexpr int64_t K_SIZE_8 = 8;
 constexpr uint32_t OP_TYPE_ALL_TO_ALL = 8U;
 
 struct Mc2CcTilingInner {
@@ -82,10 +85,8 @@ ge::graphStatus MoeDistributeCombineSetupTilingA5::CheckMoeExpertNum()
     auto attrs = context_->GetAttrs();
     auto moeExpertNumPtr = attrs->GetAttrPointer<int64_t>(ATTR_MOE_EXPERT_NUM_INDEX);
 
-    OP_TILING_CHECK(!((*moeExpertNumPtr == MOE_EXPERT_NUM_32) || (*moeExpertNumPtr == MOE_EXPERT_NUM_64) ||
-                      (*moeExpertNumPtr == MOE_EXPERT_NUM_128)),
-                    OP_LOGE(nodeName_, "moeExpertNum shoud be in {32, 64, 128}, get %lu", *moeExpertNumPtr),
-                    return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(!(*moeExpertNumPtr == MOE_EXPERT_NUM_32),
+                    OP_LOGE(nodeName_, "moeExpertNum shoud be 32, get %lu", *moeExpertNumPtr), return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -110,23 +111,16 @@ ge::graphStatus MoeDistributeCombineSetupTilingA5::CheckSharedExpertAttr()
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus MoeDistributeCombineSetupTilingA5::CheckMoeExpertNumPerRank()
-{
-    OP_TILING_CHECK((tilingData_->moeDistributeCombineSetupInfo.moeExpertPerRankNum != MOE_EXPERT_NUM_PER_RANK_16),
-                    OP_LOGE(nodeName_, "moeExpertNumPerRank only supports 16, get %ld",
-                            tilingData_->moeDistributeCombineSetupInfo.moeExpertPerRankNum),
-                    return ge::GRAPH_FAILED);
-
-    return ge::GRAPH_SUCCESS;
-}
-
 ge::graphStatus MoeDistributeCombineSetupTilingA5::CheckTensorShapeSize(int64_t h, int64_t bs, int64_t k)
 {
-    OP_TILING_CHECK((bs != BS_SIZE_16), OP_LOGE(nodeName_, "Bs should be 16, get %ld", bs), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(((bs != BS_SIZE_8) && (bs != BS_SIZE_16) && (bs != BS_SIZE_256)),
+                    OP_LOGE(nodeName_, "Bs should be 8/16/256, get %ld", bs), return ge::GRAPH_FAILED);
 
-    OP_TILING_CHECK((h != H_SIZE_4096), OP_LOGE(nodeName_, "H should be 4096, get %ld", h), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(((h != H_SIZE_4096) && (h != H_SIZE_7168)), OP_LOGE(nodeName_, "H should be 4096/7168, get %ld", h),
+                    return ge::GRAPH_FAILED);
 
-    OP_TILING_CHECK((k != K_SIZE_6), OP_LOGE(nodeName_, "K should be 6, get %ld", k), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(((k != K_SIZE_6) && (k != K_SIZE_8)), OP_LOGE(nodeName_, "K should be 6/8, get %ld", k),
+                    return ge::GRAPH_FAILED);
 
     return ge::GRAPH_SUCCESS;
 }

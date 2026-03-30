@@ -32,7 +32,6 @@ private:
     ge::graphStatus CheckEpWorldSize() override;
     ge::graphStatus CheckMoeExpertNum() override;
     ge::graphStatus CheckSharedExpertAttr() override;
-    ge::graphStatus CheckMoeExpertNumPerRank() override;
     ge::graphStatus CheckTensorShapeSize(int64_t h, int64_t bs, int64_t k) override;
     void SetHcommCfg() override;
 };

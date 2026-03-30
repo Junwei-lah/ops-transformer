@@ -587,7 +587,7 @@ void MoeDistributeCombineSetupTilingBase::SetTilingKey()
 
 ge::graphStatus MoeDistributeCombineSetupTilingBase::CheckHcclBuffSize()
 {
-    const uint64_t hcclBuffSize = mc2tiling::Mc2TilingUtils::GetMaxWindowSize();
+    const uint64_t hcclBuffSize = mc2tiling::Mc2TilingUtils::GetMaxWindowSize() / 2;
     OP_TILING_CHECK(
         hcclBuffSize < MIN_AVAILABLE_BUFF_SIZE,
         OP_LOGE(nodeName_, "HCCL_BUFFSIZE too short, [%ld] < [%ld].", hcclBuffSize, MIN_AVAILABLE_BUFF_SIZE),
