@@ -40,7 +40,7 @@ aclnnStatus aclnnMoeTokenPermuteGradGetWorkspaceSize(
     const aclTensor *sortedIndices,
     int64_t          numTopk,
     bool             paddedMode,
-    const aclTensor *out,
+    aclTensor       *out,
     uint64_t        *workspaceSize,
     aclOpExecutor  **executor)
 ```
