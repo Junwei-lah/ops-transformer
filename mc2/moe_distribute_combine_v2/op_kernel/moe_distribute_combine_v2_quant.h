@@ -165,13 +165,14 @@ public:
         if constexpr (QuantMode == MXFP8_E5M2_COMM_QUANT) {
             // 计算scales并填充
             quant::ComputeScale<fp8_e5m2_t>(maxExpAddr, mxScaleLocalAddr, halfScaleLocalAddr, mxScaleNum);
-            quant::ComputeData<ExpandXType, fp8_e5m2_t, AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
+            quant::ComputeFp8Data<ExpandXType, fp8_e5m2_t,
+                AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
                 srcAddr, halfScaleLocalAddr, outLocalAddr, axisH_); // 计算量化后的expandx并填充
         } else if constexpr (QuantMode == MXFP8_E4M3_COMM_QUANT) {
             // 计算scales并填充
             quant::ComputeScale<fp8_e4m3fn_t>(maxExpAddr, mxScaleLocalAddr, halfScaleLocalAddr, mxScaleNum);
-            quant::ComputeData<ExpandXType, fp8_e4m3fn_t,
-            AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
+            quant::ComputeFp8Data<ExpandXType, fp8_e4m3fn_t,
+                AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
                 srcAddr, halfScaleLocalAddr, outLocalAddr, axisH_); // 计算量化后的expandx并填充
         }
     }
