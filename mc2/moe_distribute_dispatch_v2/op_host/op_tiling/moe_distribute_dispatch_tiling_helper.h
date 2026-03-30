@@ -44,14 +44,10 @@ constexpr uint32_t OP_VERSION_1 = 1U;
 enum class RealModeA5 : uint32_t {
     NO_SCALES = 0,
     STATIC_SCALES = 1,
-    DYNAMIC_SCALES = 2,
-    MXFP8_E5M2_QUANT_SCALES = 3,
-    MXFP8_E4M3FN_QUANT_SCALES = 4,
-    FP8_E5M2_PERTOKEN_SCALES = 5,
-    FP8_E4M3FN_PERTOKEN_SCALES = 6,
-    FP8_E5M2_PERTILE_SCALES = 7,
-    FP8_E4M3FN_PERTILE_SCALES = 8,
-    HIF8_SCALES = 9,
+    PERTOKEN_SCALES = 2,
+    PERGROUP_SCALES = 3,
+    MX_SCALES = 4,
+    HIF8_SCALES = 5,
     INVALID_MODE
 };
 
@@ -75,20 +71,25 @@ const std::map<std::pair<QuantModeA5, ge::DataType>, RealModeA5> QUANT_MODE_MAP 
     {{QuantModeA5::NON_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::NO_SCALES},
     {{QuantModeA5::NON_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::NO_SCALES},
     {{QuantModeA5::NON_QUANT, ge::DT_HIFLOAT8}, RealModeA5::NO_SCALES},
+    {{QuantModeA5::NON_QUANT, ge::DT_FLOAT4_E2M1}, RealModeA5::NO_SCALES},
+    {{QuantModeA5::NON_QUANT, ge::DT_FLOAT4_E1M2}, RealModeA5::NO_SCALES},
     {{QuantModeA5::STATIC_QUANT, ge::DT_INT8}, RealModeA5::STATIC_SCALES},
     {{QuantModeA5::STATIC_QUANT, ge::DT_HIFLOAT8}, RealModeA5::HIF8_SCALES},
-    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_INT8}, RealModeA5::DYNAMIC_SCALES},
-    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::FP8_E5M2_PERTOKEN_SCALES},
-    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::FP8_E4M3FN_PERTOKEN_SCALES},
-    {{QuantModeA5::PERGROUP_DYNAMIC_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::FP8_E5M2_PERTILE_SCALES},
-    {{QuantModeA5::PERGROUP_DYNAMIC_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::FP8_E4M3FN_PERTILE_SCALES},
-    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::MXFP8_E5M2_QUANT_SCALES},
-    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::MXFP8_E4M3FN_QUANT_SCALES}
+    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_INT8}, RealModeA5::PERTOKEN_SCALES},
+    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::PERTOKEN_SCALES},
+    {{QuantModeA5::PERTOKEN_DYNAMIC_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::PERTOKEN_SCALES},
+    {{QuantModeA5::PERGROUP_DYNAMIC_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::PERGROUP_SCALES},
+    {{QuantModeA5::PERGROUP_DYNAMIC_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::PERGROUP_SCALES},
+    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT8_E5M2}, RealModeA5::MX_SCALES},
+    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT8_E4M3FN}, RealModeA5::MX_SCALES},
+    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT4_E2M1}, RealModeA5::MX_SCALES},
+    {{QuantModeA5::MX_QUANT, ge::DT_FLOAT4_E1M2}, RealModeA5::MX_SCALES}
 };
 
 // Supported x datatype in nonquant mode, the same as expandX
 const std::set<ge::DataType> NON_QUANT_DTYPE = {
-    ge::DT_FLOAT16, ge::DT_BF16, ge::DT_HIFLOAT8, ge::DT_FLOAT8_E4M3FN, ge::DT_FLOAT8_E5M2};
+    ge::DT_FLOAT16, ge::DT_BF16, ge::DT_HIFLOAT8, ge::DT_FLOAT8_E4M3FN, ge::DT_FLOAT8_E5M2,
+    ge::DT_FLOAT4_E2M1, ge::DT_FLOAT4_E1M2};
 
 class MoeDistributeDispatchTilingHelper {
 public:

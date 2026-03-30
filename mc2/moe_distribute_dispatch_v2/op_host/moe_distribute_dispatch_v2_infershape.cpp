@@ -328,9 +328,11 @@ static ge::graphStatus CheckQuantMode(const gert::InferDataTypeContext *context,
         return ge::GRAPH_FAILED);
     } else if ((*quantMode == QuantMode::QUANT_MODE_PERGROUP) || (*quantMode == QuantMode::QUANT_MODE_MX)) {
         OP_CHECK_IF((yDtype != static_cast<int64_t>(ge::DT_FLOAT8_E4M3FN)) &&
-                    (yDtype != static_cast<int64_t>(ge::DT_FLOAT8_E5M2)),
+                    (yDtype != static_cast<int64_t>(ge::DT_FLOAT8_E5M2)) &&
+                    (yDtype != static_cast<int64_t>(ge::DT_FLOAT4_E2M1)) &&
+                    (yDtype != static_cast<int64_t>(ge::DT_FLOAT4_E1M2)),
         OP_LOGE(context->GetNodeName(), "when quantmode is pergoup or mxfp8 quant, "
-                "ydtype must be float8_e4m3fn or float8_e5m2"),
+                "ydtype must be float8_e4m3fn, float8_e5m2, float4_e2m1 or float4_e1m2"),
         return ge::GRAPH_FAILED);
     }
 

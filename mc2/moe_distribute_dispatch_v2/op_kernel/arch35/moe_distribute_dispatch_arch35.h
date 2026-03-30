@@ -44,7 +44,7 @@ constexpr uint32_t STATUS_OFFSET = 512;
 constexpr uint32_t VEC_LEN = 256;
 constexpr uint32_t UB_ALIGN = 32;  // UB 按照 32 字节对齐
 constexpr uint32_t ONE_REPEAT_SORT_NUM = 32;
-constexpr float MAX_FP32 = 2147483647;
+constexpr float MAX_FP32 = 2147483647.0f;
 constexpr float FP8_E5M2_MAX_VALUE = 57344.0f;
 constexpr float FP8_E4M3_MAX_VALUE = 448.0f;
 constexpr float HIFP8_MAX_VALUE = 32768.0f;
@@ -530,7 +530,7 @@ __aicore__ inline void MoeDistributeDispatchA5<TemplateMoeDistributeDispatchA5Ty
 
         quant::ComputeMaxExp(srcAddr, maxExpAddr, axisH_);
         quant::ComputeScale<ExpandXOutType>(maxExpAddr, mxScaleLocalAddr, halfScaleLocalAddr, mxScaleNum);
-        quant::ComputeData<XType, ExpandXOutType, AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
+        quant::ComputeFp8Data<XType, ExpandXOutType, AscendC::RoundMode::CAST_TRUNC, AscendC::RoundMode::CAST_RINT>(
             srcAddr, halfScaleLocalAddr, outLocalAddr, axisH_);
     }
 }
