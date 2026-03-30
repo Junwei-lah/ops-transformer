@@ -68,6 +68,7 @@ struct MoeV3Arch35GatherOutComputeTilingData {
     int64_t perLoopCols{0};
     int64_t lastLoopCols{0};
     int64_t activeNum{0};
+    int64_t xCopyInQueueBufferNum{2};
 };
 
 // Arch35用的TilingData
