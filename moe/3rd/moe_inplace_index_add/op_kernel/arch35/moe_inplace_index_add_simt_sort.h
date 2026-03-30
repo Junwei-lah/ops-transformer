@@ -229,7 +229,11 @@ __simt_vf__ __aicore__ LAUNCH_BOUND(USED_THREAD_SORT) inline void SimtCompute(
                     result += (updatesLocalAddr[srcOffset] * alphaValue);
                 }
             } else {
-                result += (updatesLocalAddr[srcOffset]);
+                if constexpr (IsSameType<VAR_T, bfloat16_t>::value || IsSameType<VAR_T, half>::value) {
+                    reslut_f += (static_cast<float>(updatesLocalAddr[srcOffset]));
+                } else {
+                    result += (updatesLocalAddr[srcOffset]);
+                }
             }
         }
 
@@ -278,7 +282,11 @@ __simt_vf__ __aicore__ LAUNCH_BOUND(USED_THREAD_SORT) inline void MoeInplaceInde
                 result += (updatesAddr[srcOffset] * alphaValue);
             }
         } else {
-            result += (updatesAddr[srcOffset]);
+            if constexpr (IsSameType<VAR_T, bfloat16_t>::value || IsSameType<VAR_T, half>::value) {
+                reslut_f += (static_cast<float>(updatesAddr[srcOffset]));
+            } else {
+                result += (updatesAddr[srcOffset]);
+            }
         }
         
 
