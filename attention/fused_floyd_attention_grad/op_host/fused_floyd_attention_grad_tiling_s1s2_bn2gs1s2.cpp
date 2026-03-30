@@ -337,6 +337,14 @@ ge::graphStatus FusedFloydAttentionGradTilingS1s2Bn2gs1s2::DoSplit()
         fBaseParams.bmmS1base = 16;
     }
 
+    uint32_t tmpBufferSize =
+        (fBaseParams.ubSize - s1Inner * s2Inner * BASIC_BLOCK_MULTIPLE - s1Inner * SHAPE_INFO * fBaseParams.calTypeSize) /
+        BYTE_BLOCK * BYTE_BLOCK;
+    if (fBaseParams.mm1IsNZOut) {
+        tmpBufferSize = tmpBufferSize - TEMP_BUFFER_REMAIN_SIZE;
+    }
+    fBaseParams.tmpBufferSize = tmpBufferSize;
+
     uint32_t s1CvInner = s1Inner * fBaseParams.s1CvRatio;
     OP_CHECK_IF(s1CvInner == 0,
                OP_LOGE(context_, "divisor s1CvInner is 0."),
@@ -422,51 +430,6 @@ ge::graphStatus FusedFloydAttentionGradTilingS1s2Bn2gs1s2::DoSparse()
     std::copy(std::begin(blockEnds), std::end(blockEnds), std::begin(fBaseParams.blockEnds));
     
     return ge::GRAPH_SUCCESS;
-}
-
-bool FusedFloydAttentionGradTilingS1s2Bn2gs1s2::CheckFuzzyArgsLegal(uint32_t s1Inner, uint32_t s2Inner)
-{
-    OP_LOGD(context_, "Enter s1Inner = %d, s1Inner = %d", s1Inner, s2Inner);
-    uint32_t baseMNSize = s1Inner * s2Inner * fBaseParams.calTypeSize;
-    if (baseMNSize > fBaseParams.ubSize) {
-        return false;
-    }
-
-    // simplesoftmax and dropout
-    uint32_t cvS2Inner = s2Inner * fBaseParams.s2CvRatio;
-    uint32_t s2VSize = cvS2Inner > 256 ? 256 : cvS2Inner;
-    // ascend api attenmask and dropout last dim 32 align
-    if ((fBaseParams.attenMaskOptional == NORMAL_TENSOR) || (fBaseParams.keepProb < 1)) {
-        s2VSize = (s2VSize + API_BOOL_ALIGN - 1) / API_BOOL_ALIGN * API_BOOL_ALIGN;
-    }
-    uint32_t s1VecSize = std::min(((INITIAL_S1_SPLIT_NUM * INITIAL_S2_SPLIT_NUM + s2VSize - 1) / s2VSize), s1Inner);
-
-    auto softmaxShape = ge::Shape({s1VecSize, s2VSize});
-    auto dropoutShape = ge::Shape({s1VecSize, s2VSize});
-    auto selectWithBytesMaskShape1 = ge::Shape({s1VecSize, s2VSize});
-    auto selectWithBytesMaskShape2 =
-        ge::Shape({s1VecSize, (s2VSize + BOOL_BLOCK_NUMS - 1) / BOOL_BLOCK_NUMS * BOOL_BLOCK_NUMS});
-    uint32_t softmaxTmpSize = AscendC::GetSoftMaxMinTmpSize(softmaxShape, fBaseParams.calTypeSize, true);
-    uint32_t dropoutTmpSize = AscendC::GetDropOutMinTmpSize(dropoutShape, fBaseParams.calTypeSize, true);
-    uint32_t selectWithBytesMaskTmpSize = 0;
-    uint32_t minValue = 0;
-    uint32_t maxValue = 0;
-    AscendC::GetSelectWithBytesMaskMaxMinTmpSize(selectWithBytesMaskShape1, ge::Shape({1}), fBaseParams.calTypeSize,
-                                                 selectWithBytesMaskShape2, sizeof(uint8_t), true, maxValue, minValue);
-    selectWithBytesMaskTmpSize = minValue;
-    uint32_t maxTmpBufferSize = std::max(softmaxTmpSize, dropoutTmpSize);
-    maxTmpBufferSize = std::max(maxTmpBufferSize, selectWithBytesMaskTmpSize);
-    if (ASCENDC_API_TEMP_BUFFER < maxTmpBufferSize) {
-        return false;
-    }
-
-    // Loc buffer
-    uint32_t bufferSizeL0c = baseMNSize;
-
-    if (bufferSizeL0c <= fBaseParams.l0cSize) {
-        return true;
-    }
-    return false;
 }
 
 ge::graphStatus FusedFloydAttentionGradTilingS1s2Bn2gs1s2::DoLibApiTiling()
