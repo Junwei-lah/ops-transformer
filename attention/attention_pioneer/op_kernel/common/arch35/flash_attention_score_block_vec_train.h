@@ -15,11 +15,11 @@
 #ifndef FLASH_ATTENTION_NOQUANT_BLOCK_VEC_TRAIN_H_
 #define FLASH_ATTENTION_NOQUANT_BLOCK_VEC_TRAIN_H_
 #include "flash_attention_score_block_vec_base.h"
-#include "../../../../common/op_kernel/arch35/util_regbase.h"
+#include "util_regbase.h"
 #include "infer_flash_attention_comm.h"
 #include "flash_attention_score_common_regbase.h"
 #include "kernel_operator_list_tensor_intf.h"
-#include "../../../../common/op_kernel/arch35/dropmask.h"
+#include "dropmask.h"
 using namespace AscendC;
 using namespace AscendC::Impl::Detail;
 using namespace regbaseutil;

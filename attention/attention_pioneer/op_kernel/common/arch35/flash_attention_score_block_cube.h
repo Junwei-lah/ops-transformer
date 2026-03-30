@@ -14,7 +14,7 @@
  */
 #ifndef FLASH_ATTENTION_SCORE_BLOCK_CUBE_H_
 #define FLASH_ATTENTION_SCORE_BLOCK_CUBE_H_
-#include "../../../../common/op_kernel/arch35/util_regbase.h"
+#include "util_regbase.h"
 #include "../../../../common/op_kernel/offset_calculator.h"
 #include "../../../../common/op_kernel/matmul.h"
 #include "../../../../common/op_kernel/FixpipeOut.h"

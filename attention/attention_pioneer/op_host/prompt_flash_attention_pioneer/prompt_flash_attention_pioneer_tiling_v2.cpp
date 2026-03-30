@@ -3034,6 +3034,13 @@ bool PromptFlashAttentionPioneerTilingV2::CheckSinkLengthCrossover(ContextParams
     }
     OP_CHECK_IF(sinkLength != 128, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "sinkLength = %ld is invalid, only support 128", sinkLength), return false);
+    OP_CHECK_IF(*contextKeyParams.sparseMode != SPARSE_MODE_BAND, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "sparseMode = %ld is invalid, only support sparseMode4", *contextKeyParams.sparseMode), return false);
+    OP_CHECK_IF(enablePFAMLA && enablePA, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "PA in Prefill is not support"), return false);
+    OP_CHECK_IF((enablePFAMLA && contextKeyParams.valueSinkInputShape == nullptr) || (enableIFAMLA && contextKeyParams.keyRopeSinkInputShape == nullptr), 
+            OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "Prefill valueSinkInputShape or Decode keyRopeSinkInputShape should not be NULL"), return false);
     OP_CHECK_IF((contextKeyParams.inputDataType != ge::DT_FLOAT16 && contextKeyParams.inputDataType != ge::DT_BF16),
             OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "dtype only can be bf16 or fp16"), return false);
@@ -3044,6 +3051,17 @@ bool PromptFlashAttentionPioneerTilingV2::CheckSinkLengthCrossover(ContextParams
     bool validHeadDim = (enablePFAMLA && queryShapeInfo.d == 192) || (enableIFAMLA && queryShapeInfo.d == 512);
     OP_CHECK_IF(!validHeadDim, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "PFA rope should be combined (d=192), IFA rope should be separated (d=512)"), return false);
+    bool validSinkN2 = (enablePFAMLA && contextKeyParams.keyInputShape != nullptr && 
+            contextKeyParams.keySinkInputShape->GetStorageShape().GetDim(1) == contextKeyParams.keyInputShape->GetStorageShape().GetDim(1)) || 
+            (enableIFAMLA && contextKeyParams.keySinkInputShape->GetStorageShape().GetDim(1) == 1);
+    OP_CHECK_IF(!validSinkN2, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "Sink Tensor N2 should be the same with Key and Value in TND mode"), return false);
+    bool validSinkHeadDim = (enablePFAMLA && contextKeyParams.keySinkInputShape->GetStorageShape().GetDim(2) == 192 &&
+            contextKeyParams.valueSinkInputShape->GetStorageShape().GetDim(2) == 128) || 
+            (enableIFAMLA && contextKeyParams.keySinkInputShape->GetStorageShape().GetDim(2) == 512
+            && contextKeyParams.keyRopeSinkInputShape->GetStorageShape().GetDim(2) == 64);
+    OP_CHECK_IF(!validSinkHeadDim, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
+            "Headdim error, keySinkInputShape is 192 and valueSinkInputShape is 128 in prefill, keySinkInputShape is 512 and keyRopeSinkInputShape is 64 in Decode"), return false);
     OP_CHECK_IF((enablePseShift || enableAlibiPse), OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,
             "PSE is not supported in sink scenario"), return false);
     OP_CHECK_IF(enableLeftPadding, OPS_REPORT_VECTOR_INNER_ERR(contextKeyParams.opName,

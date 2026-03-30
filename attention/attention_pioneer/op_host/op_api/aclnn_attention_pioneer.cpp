@@ -10,8 +10,6 @@
 
 #include <cstring>
 #include "graph/types.h"
-#include "aclnn_attention_pioneer.h"
-
 #include "opdev/common_types.h"
 #include "opdev/data_type_utils.h"
 #include "opdev/make_op_executor.h"
@@ -183,6 +181,62 @@ static const aclTensor* ProcessTensorContiguous(const aclTensor* tensor, aclOpEx
     return tensor;
 }
 
+static aclnnStatus ProcessUselessParams(
+    const aclTensor *pseShiftOptional,
+    const aclTensor *deqScale1Optional,
+    const aclTensor *quantScale1Optional,
+    const aclTensor *deqScale2Optional,
+    const aclTensor *quantScale2Optional,
+    const aclTensor *quantOffset2Optional,
+    const aclTensor *antiquantScaleOptional,
+    const aclTensor *antiquantOffsetOptional,
+    const aclTensor *queryPaddingSizeOptional,
+    const aclTensor *kvPaddingSizeOptional,
+    const aclTensor *keyAntiquantScaleOptional,
+    const aclTensor *keyAntiquantOffsetOptional,
+    const aclTensor *valueAntiquantScaleOptional,
+    const aclTensor *valueAntiquantOffsetOptional,
+    const aclTensor *keySharedPrefixOptional,
+    const aclTensor *valueSharedPrefixOptional,
+    const aclTensor *keyRopeAntiquantScaleOptional,
+    const aclTensor *dequantScaleQueryOptional,
+    const aclTensor *learnableSinkOptional)
+{
+    // 将所有参数放入数组便于统一处理
+    struct ParamInfo {
+        const void* param;
+        const char* name;
+    };
+    ParamInfo params[] = {
+        {pseShiftOptional, "pseShiftOptional"},
+        {deqScale1Optional, "deqScale1Optional"},
+        {quantScale1Optional, "quantScale1Optional"},
+        {deqScale2Optional, "deqScale2Optional"},
+        {quantScale2Optional, "quantScale2Optional"},
+        {quantOffset2Optional, "quantOffset2Optional"},
+        {antiquantScaleOptional, "antiquantScaleOptional"},
+        {antiquantOffsetOptional, "antiquantOffsetOptional"},
+        {queryPaddingSizeOptional, "queryPaddingSizeOptional"},
+        {kvPaddingSizeOptional, "kvPaddingSizeOptional"},
+        {keyAntiquantScaleOptional, "keyAntiquantScaleOptional"},
+        {keyAntiquantOffsetOptional, "keyAntiquantOffsetOptional"},
+        {valueAntiquantScaleOptional, "valueAntiquantScaleOptional"},
+        {valueAntiquantOffsetOptional, "valueAntiquantOffsetOptional"},
+        {keySharedPrefixOptional, "keySharedPrefixOptional"},
+        {valueSharedPrefixOptional, "valueSharedPrefixOptional"},
+        {keyRopeAntiquantScaleOptional, "keyRopeAntiquantScaleOptional"},
+        {dequantScaleQueryOptional, "dequantScaleQueryOptional"},
+        {learnableSinkOptional, "learnableSinkOptional"}
+    };
+    for (size_t i = 0; i < sizeof(params) / sizeof(params[0]); ++i) {
+        if (params[i].param != nullptr) {
+            OP_LOGE(ACLNN_ERR_PARAM_INVALID, "%s should be null", params[i].name);
+            return ACLNN_ERR_PARAM_INVALID;
+        }
+    }
+    return ACLNN_SUCCESS;
+}
+
 static aclnnStatus ContiguousInput(const aclTensor *&query, const aclTensor *&attenMaskOptional, 
                                    const aclTensor *&blockTableOptional, const aclTensor *&queryRopeOptional,
                                    const aclTensor *&keySink, const aclTensor *&keyRopeSink, const aclTensor *&valueSink, aclOpExecutor *executor)
@@ -327,6 +381,15 @@ aclnnStatus aclnnAttentionPioneerGetWorkspaceSize(
         uniqueExecutor.ReleaseTo(executor);
         return ACLNN_SUCCESS;
     }
+    CHECK_RET(ProcessUselessParams(pseShiftOptional, deqScale1Optional, quantScale1Optional,
+        deqScale2Optional, quantScale2Optional, quantOffset2Optional, antiquantScaleOptional,
+        antiquantOffsetOptional, queryPaddingSizeOptional,
+        kvPaddingSizeOptional, keyAntiquantScaleOptional,
+        keyAntiquantOffsetOptional, valueAntiquantScaleOptional,
+        valueAntiquantOffsetOptional, keySharedPrefixOptional,
+        valueSharedPrefixOptional, keyRopeAntiquantScaleOptional,
+        dequantScaleQueryOptional, learnableSinkOptional) == ACLNN_SUCCESS,
+        ACLNN_ERR_PARAM_INVALID);
 
     aclOpExecutor *l0Executor = uniqueExecutor.get();
     CHECK_RET(ContiguousInput(query, attenMaskOptional, blockTableOptional, queryRopeOptional, keySink, keyRopeSink, valueSink, l0Executor) == ACLNN_SUCCESS, 

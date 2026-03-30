@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 #ifndef FLASH_ATTENTION_KERNEL_NOQUANT_MLA_H_
 #define FLASH_ATTENTION_KERNEL_NOQUANT_MLA_H_
 
-#include "../../../../common/op_kernel/arch35/attenmask.h"
-#include "../../../../common/op_kernel/arch35/pse.h"
+#include "attenmask.h"
+#include "pse.h"
 #include "flash_attention_block_cube_noquant_mla.h"
 #include "flash_attention_score_block_vec_infer.h"
 
