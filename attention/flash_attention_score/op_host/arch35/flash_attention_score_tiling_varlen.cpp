@@ -506,9 +506,10 @@ protected:
         return true;
     }
 
-    bool IsUseSpliteCoreMode(SparseMode inputSparseMode) override
+    bool IsUseSplitCoreMode(SparseMode inputSparseMode) override
     {
-        if (inputSparseMode == SparseMode::LEFT_UP_CAUSAL || inputSparseMode == SparseMode::RIGHT_DOWN_CAUSAL) {
+        if (inputSparseMode == SparseMode::LEFT_UP_CAUSAL || inputSparseMode == SparseMode::RIGHT_DOWN_CAUSAL ||
+            inputSparseMode == SparseMode::ALL_MASK) {
             for (auto i = 0; i < bSize; i++) {
                 // 当前采用保守判断条件，当同batch中S1、S2均超过阈值时开启分核优化
                 int compareValue = actualSeqLenKvData[i];
@@ -530,12 +531,24 @@ protected:
 
         // 索引从0开始，需要将基本块个数减1
         if ((sparseMode == static_cast<int64_t>(SparseMode::LEFT_UP_CAUSAL)) &&
-            IsUseSpliteCoreMode(SparseMode::LEFT_UP_CAUSAL)) {
+            IsUseSplitCoreMode(SparseMode::LEFT_UP_CAUSAL)) {
             splitCoreMode = SplitCoreMode::SQ_MULTI_CORE_FIRST;
         } else if ((sparseMode == static_cast<int64_t>(SparseMode::RIGHT_DOWN_CAUSAL)) &&
-            IsUseSpliteCoreMode(SparseMode::RIGHT_DOWN_CAUSAL)) {
+            IsUseSplitCoreMode(SparseMode::RIGHT_DOWN_CAUSAL)) {
             splitCoreMode = SplitCoreMode::SQ_MULTI_CORE_FIRST;
+        } else if (sparseMode == static_cast<int64_t>(SparseMode::ALL_MASK) &&
+            IsUseSplitCoreMode(SparseMode::ALL_MASK)) {
+            splitCoreMode = SplitCoreMode::SQ_MULTI_CORE_FIRST;
+        } else if (sparseMode == static_cast<int64_t>(SparseMode::NO_MASK)) {
+            if (!hasAttenMask && IsUseSplitCoreMode(SparseMode::ALL_MASK)) {
+                splitCoreMode = SplitCoreMode::SQ_MULTI_CORE_FIRST;
+            } else if (preTokens >= s1Size && nextTokens == 0 && IsUseSplitCoreMode(SparseMode::LEFT_UP_CAUSAL)) {
+                splitCoreMode = SplitCoreMode::SQ_MULTI_CORE_FIRST;
+            }
         }
+
+        multiCoreParamsRegbase_->set_splitCoreMode(static_cast<uint8_t>(splitCoreMode));
+        multiCoreParamsRegbase_->set_firstFullLoadS1OuterIdx(firstFullLoadS1OuterIdx);
 
         OP_LOGD(context_, "sparseMode: %ld, firstFullLoadS1OuterIdx: %ld, splitCoreMode: %d, s2SizeThreshold: %d.",
             sparseMode, firstFullLoadS1OuterIdx, splitCoreMode, thresholdS2Size);

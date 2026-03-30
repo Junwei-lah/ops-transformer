@@ -88,7 +88,7 @@ static const int64_t D_SCALE_DIM_NUM_3 = 3L;
 static const int64_t QUANT_BLOCK_SIZE = 128L;
 static const int64_t QUANT_K_BLOCK_SIZE = 256L;
 static const int64_t QUANT_V_BLOCK_SIZE = 512L;
-static const int64_t L2_CACHE_SIZE = 128L;
+static const int64_t COMPRESS_ATTEN_MASK_SIZE = 2048 * 2048;
 
 enum class LayoutType : uint8_t {
     NONE = 0,
@@ -398,7 +398,7 @@ protected:
     virtual void SetOutputDtype();
     virtual void SetSplitCoreModeParam();
     virtual void CalcThresholdForS2Size();
-    virtual bool IsUseSpliteCoreMode(SparseMode inputSparseMode);
+    virtual bool IsUseSplitCoreMode(SparseMode inputSparseMode);
     virtual void SetMultiCoreParamsRegbase(int64_t totalSize, int64_t coreNum);
     virtual void SetSparseParamsRegbase(int64_t maxCoreNum);
     virtual bool SetPseAlibiParamsRegbase();
@@ -475,9 +475,10 @@ protected:
     int64_t dVBasicBlock;
 
     int64_t maxValidS2Len;
-    int64_t thresholdS2Size = 0;        // S2最大长度，使得当前shape下，K和V能够占满L2Cache
+    int64_t thresholdS2Size = std::numeric_limits<int64_t>::max();
     int64_t firstFullLoadS1OuterIdx = -1;
     SplitCoreMode splitCoreMode = SplitCoreMode::SQ_SINGLE_CORE_FIRST;
+    uint64_t l2CacheSize = 134217728;    // 128M
 
     const char *templateName = "base";
     const char *opName;
