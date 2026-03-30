@@ -351,7 +351,7 @@ aclnnStatus aclnnMoeDistributeCombineV2(
     <td>commQuantMode</td>
     <td>输入</td>
     <td>通信量化类型。</td>
-    <td>取值范围0或2（0表示不量化，2表示int8量化）。</td>
+    <td>-</td>
     <td>INT64</td>
     <td>-</td>
     <td>-</td>
@@ -460,7 +460,7 @@ aclnnStatus aclnnMoeDistributeCombineV2(
         - `expertShardType`当前仅支持传0，表示共享专家卡排在MoE专家卡前面。
         - `sharedExpertNum`当前取值范围[0, 4]。
         - `sharedExpertRankNum`取值范围[0, epWorldSize)；为0时需满足sharedExpertNum为0或1，不为0时需满足sharedExpertRankNum % sharedExpertNum = 0。
-        - `commQuantMode`取值范围0或2（0表示不量化，2表示int8量化）。
+        - `commQuantMode`取值范围0、2、3或4（0表示不量化，2表示int8量化，3表示mxfp8量化e5m2，4表示mxfp8量化e4m3）。
 
 - **返回值**
 

@@ -142,7 +142,9 @@ namespace {
     enum class CommQuantMode : int32_t {
         NON_QUANT = 0,
         INT12_QUANT = 1,
-        INT8_QUANT = 2
+        INT8_QUANT = 2,
+        MXFP8_E5M2_QUANT = 3,
+        MXFP8_E4M3_QUANT = 4
     };
     using CommQuantModeType = std::underlying_type_t<CommQuantMode>;
 }
@@ -327,9 +329,20 @@ static ge::graphStatus GetAttrAndSetTilingData(const gert::TilingContext *contex
             OP_LOGE(nodeName, "commAlgPtr %s doesn't support comm with context.", commAlgPtr),
             return ge::GRAPH_FAILED);
     }
-    OP_TILING_CHECK((*commQuantModePtr != 0) && (*commQuantModePtr != INT8_COMM_QUANT),
-        OP_LOGE(nodeName, "commQuantMode only support 0(default) or 2(int8 comm quant), but got commQuantMode=%ld.",
-        *commQuantModePtr), return ge::GRAPH_FAILED);
+
+    if (mc2tiling::GetNpuArch(context) != NpuArch::DAV_3510) {
+        OP_TILING_CHECK((*commQuantModePtr != 0) && (*commQuantModePtr != INT8_COMM_QUANT),
+            OP_LOGE(nodeName, "commQuantMode only support 0(default) or 2(int8 comm quant), but got commQuantMode=%ld.",
+            *commQuantModePtr), return ge::GRAPH_FAILED);
+    } else {
+        OP_TILING_CHECK((*commQuantModePtr != 0) &&
+            (*commQuantModePtr != static_cast<CommQuantModeType>(CommQuantMode::INT8_QUANT)) &&
+            (*commQuantModePtr != static_cast<CommQuantModeType>(CommQuantMode::MXFP8_E5M2_QUANT)) &&
+            (*commQuantModePtr != static_cast<CommQuantModeType>(CommQuantMode::MXFP8_E4M3_QUANT)),
+            OP_LOGE(nodeName, "commQuantMode only support 0(default) or 2(int8 comm quant)"
+                "or 3(mxFp8_e5m2) or 4(mxFp8_e4m3), but got commQuantMode=%ld.",
+            *commQuantModePtr), return ge::GRAPH_FAILED);
+    }
 
     commQuantMode = static_cast<uint32_t>(*commQuantModePtr);
     OP_TILING_CHECK(GetExpertsAttrAndSetTilingData(context, tilingData, nodeName, config, isLayered) == ge::GRAPH_FAILED,
@@ -1318,8 +1331,8 @@ static uint64_t CalTilingKey(const uint32_t tpWorldSize, uint32_t commQuantMode,
     if (tpWorldSize == MAX_TP_WORLD_SIZE) {
         tp = true;
     }
-    if (commQuantMode == INT8_COMM_QUANT) {
-        quantMode = TILINGKEY_INT8_QUANT;
+    if (commQuantMode >= INT8_COMM_QUANT) {
+        quantMode = commQuantMode;
     }
     if (isLayered) {
         hierarchy = TILINGKEY_TPL_HIERARCHY;
@@ -1396,6 +1409,11 @@ static void UbUsedCal(const uint64_t ubSize, const gert::TilingContext* context,
     if (*commQuantModePtr == INT8_COMM_QUANT) {
         uint32_t scaleNum = (hExpandXAlign32Size / sizeof(expandXDesc->GetDataType())) / static_cast<uint32_t>(UB_ALIGN / sizeof(float));
         totalBufferSize += (scaleNum * sizeof(float) + UB_ALIGN - 1) / UB_ALIGN * UB_ALIGN;
+    } else if ((*commQuantModePtr == static_cast<CommQuantModeType>(CommQuantMode::MXFP8_E5M2_QUANT)) ||
+        (*commQuantModePtr == static_cast<CommQuantModeType>(CommQuantMode::MXFP8_E4M3_QUANT))) {
+        uint32_t scaleNum = (hExpandXAlign32Size / sizeof(expandXDesc->GetDataType()) + UB_ALIGN - 1) / UB_ALIGN;
+        totalBufferSize += (scaleNum * sizeof(expandXDesc->GetDataType()) + ALIGNED_LEN - 1) / ALIGNED_LEN *
+            ALIGNED_LEN * BUFFER_NUM;
     }
     if (isInputTokenMaskFlag) {
         uint32_t axisBsAlignSize = (axisBS * sizeof(bool) + UB_ALIGN - 1) / UB_ALIGN * UB_ALIGN;
