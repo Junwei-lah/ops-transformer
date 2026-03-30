@@ -74,7 +74,7 @@ ge::graphStatus FlashAttentionScoreTilingRegbase::GetPlatformInfo()
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, aicoreParams_.l0cSize);
         ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L2, l2CacheSize);
     }
-    OP_LOGE(context_, "get platform from compileInfo. aivNum(%u) aicNum(%u) ubSize(%lu) l1Size(%lu) l0cSize(%lu)"
+    OP_LOGI(context_, "get platform from compileInfo. aivNum(%u) aicNum(%u) ubSize(%lu) l1Size(%lu) l0cSize(%lu)"
             "l2CacheSize(%ld).",
             aivNum, aicNum, aicoreParams_.ubSize, aicoreParams_.l1Size, aicoreParams_.l0cSize, l2CacheSize);
 
@@ -1047,8 +1047,7 @@ void FlashAttentionScoreTilingRegbase::CalcThresholdForS2Size()
         thresholdS2Size = l2CacheSizeRemain / (n2Num * (dSize + dSizeV) * dataTypeSize);
     }
 
-    // 调试阶段
-    OP_LOGE(context_, "thresholdS2Size[%ld], l2CacheSizeRemain[%ld], n1Num[%ld], n2Num[%ld], dSize[%ld], dSizeV[%ld],"
+    OP_LOGD(context_, "thresholdS2Size[%ld], l2CacheSizeRemain[%ld], n1Num[%ld], n2Num[%ld], dSize[%ld], dSizeV[%ld],"
             "dataTypeSize[%ld]",
             thresholdS2Size, l2CacheSizeRemain, n1Num, n2Num, dSize, dSizeV, dataTypeSize);
 }
@@ -1123,8 +1122,7 @@ void FlashAttentionScoreTilingRegbase::SetSplitCoreModeParam()
     multiCoreParamsRegbase_->set_splitCoreMode(static_cast<uint8_t>(splitCoreMode));
     multiCoreParamsRegbase_->set_firstFullLoadS1OuterIdx(firstFullLoadS1OuterIdx);
 
-    // 调试阶段
-    OP_LOGE(context_, "sparseMode: %ld, firstFullLoadS1OuterIdx: %ld, splitCoreMode: %d, s2SizeThreshold: %d.",
+    OP_LOGD(context_, "sparseMode: %ld, firstFullLoadS1OuterIdx: %ld, splitCoreMode: %d, s2SizeThreshold: %d.",
         sparseMode, firstFullLoadS1OuterIdx, splitCoreMode, thresholdS2Size);
 }
 
