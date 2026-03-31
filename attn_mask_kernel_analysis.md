@@ -163,3 +163,40 @@
 - VF 的关键观测不是 `D=64`，而是每轮 `s2RealSize`。
 - 常见情况下 `s2RealSize` 更常是 128，因此 VF 热路径更偏向 `ProcessVec1UpdateImpl128VF`。
 - 若线上想定责 mask 异常，优先验证：predicate(copy-in) -> Select 后值 -> softmax 后概率，三者是否一致。
+
+## 按你要求仅聚焦两点
+
+### （1）kernel 侧 mask 矩阵搬入（GM -> UB）
+1. **偏移计算**
+   - 每个 tile 先通过 `ComputeAttenMaskOffset(...)` 计算当前块在 GM mask 的起始偏移（会考虑 prefix/fd/rope/推理模板差异）。
+2. **基础搬运函数**
+   - `AttenMaskCopyIn(...)` 内部调用 `BoolCopyInRegbase(...)` 把二维 mask 子块搬到 UB。
+   - 搬运维度是 `(s1Size=halfS1RealSize, s2Size=s2RealSize)`，但 UB 按 `s2BaseSize` 对齐存放。
+3. **对齐与尾块处理**
+   - 若 `s2Size`/`totalS2Size` 是 block 对齐，走 `DataCopy`；
+   - 否则走 `DataCopyPad`，自动处理尾块与 stride。
+4. **压缩模式额外逻辑**
+   - `BAND_MODE/RIGHT_DOWN_CAUSAL_BAND/BAND_LEFT_UP_CAUSAL` 在条件满足时会再搬一份 `attenMaskOffsetPre` 到 `attenMaskUbPre`，再 `MergeBandModeMask(...)`。
+   - `PREFIX_MODE` 会根据 `computeMode` 选择主 mask / pre mask / 二者 merge。
+
+> 结论：kernel 搬入阶段做的事是“按当前 tile 精确切 mask + 必要的 pre/next 合并 + UB 对齐铺排”，为 VF 直接消费 predicate 做准备。
+
+### （2）`ProcessVec1UpdateImpl128VF` 的 attenmask 逻辑
+1. **输入组织**
+   - 128 列按两路 64 处理：`vreg_input_x`（前 64）和 `vreg_input_x_unroll`（后 64）。
+   - mask 同样双路：`maskUb` 与 `maskUbUnroll`。
+2. **mask 应用点（softmax 前）**
+   - 先做 scale/pse；
+   - 再加载双路 predicate：`preg_compare` 与 `preg_compare_unroll`；
+   - 分别执行：
+     - `Select(vreg_sel, vreg_min, vreg_input_x, preg_compare)`
+     - `Select(vreg_sel_unroll, vreg_min, vreg_input_x_unroll, preg_compare_unroll)`
+3. **行统计与稳定更新**
+   - 两路 mask 后结果先 `Max` 合并，再 `ReduceMax` 得 `row_max_cur`；
+   - 与 `inMax` 融合出 `row_max_new`；
+   - 用 `exp(x - row_max_new)` 做行和，完成 update 形态 softmax 累计。
+4. **语义本质**
+   - 无效位在 softmax 前被替换为 `minValue`（负极大值近似）；
+   - 因此 softmax 后这些位概率约等于 0。
+
+> 结论：`Impl128VF` 的 mask 实现本质是“双 lane 的 Select(-inf, x, pred) + 稳定 softmax 累计”。
