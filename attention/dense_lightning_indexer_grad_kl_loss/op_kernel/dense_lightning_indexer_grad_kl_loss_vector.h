@@ -483,13 +483,16 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::PreloadWeight(DLIGradKLLoss
 {
     uint32_t weightSize = curS1InnerSize * constInfo.n1IndexSize;
     uint32_t weightGmOffset = runInfo.weightTensorOffset + s1InnerIdx * S1_VEC_SIZE_8 * constInfo.n1IndexSize;
+    event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>());
+    
     // weight 可以常驻, 所以直接搬运, 减少搬运切片
     if constexpr (IsSameType<W_T, float>::value) {
         // n1Index最小为8, 一定对齐搬运
         AscendC::DataCopy(weightUb_[pingpongFlag], weightGm[weightGmOffset], weightSize);
-    } else {
-        event_t eventIdMte2ToV = static_cast<event_t>(GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>());
 
+        AscendC::SetFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
+        AscendC::WaitFlag<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
+    } else {
         AscendC::WaitFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
         if (weightSize % C0_SIZE != 0) {
             uint32_t padNum = (weightSize + C0_SIZE - 1 ) / C0_SIZE * C0_SIZE - weightSize;
@@ -506,9 +509,9 @@ __aicore__ inline void DLIKLLossVectorService<DLIT>::PreloadWeight(DLIGradKLLoss
         AscendC::SetFlag<AscendC::HardEvent::V_MTE2>(eventIdVToMte2Weight[pingpongFlag]);
 
         PipeBarrier<PIPE_V>();
-        GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
     }
-    
+
+    GetTPipePtr()->ReleaseEventID<AscendC::HardEvent::MTE2_V>(eventIdMte2ToV);
 }
 
 template <typename DLIT> 
