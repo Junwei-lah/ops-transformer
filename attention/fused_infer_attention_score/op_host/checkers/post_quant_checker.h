@@ -44,7 +44,7 @@ private:
     ge::graphStatus CheckFeatureRowValid(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckMultiParaQuantOffset2(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckMultiParaShape(const FiaTilingInfo &fiaInfo);
-
+    ge::graphStatus CheckAntiquantNotSupport(const FiaTilingInfo &fiaInfo);
 private:
 };
 
