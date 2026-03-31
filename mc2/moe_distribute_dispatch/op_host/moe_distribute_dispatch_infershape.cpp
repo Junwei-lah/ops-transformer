@@ -131,7 +131,7 @@ static ge::graphStatus InferExpandXAndScalesShape(gert::InferShapeContext *conte
     bool isSharedExpert = (*expertShardType == 0)
         ? (*epRankId < *sharedExpertRankNum) : (*epRankId >= (epWorldSize - *sharedExpertRankNum));
     localExpertNum = isSharedExpert ? 1 : localMoeExpertNum;
-    int64_t a = globalBsReal * (isSharedExpert ? (1.0 / *sharedExpertRankNum) : std::min(localExpertNum, k));
+    int64_t a =  isSharedExpert ? (globalBsReal / *sharedExpertRankNum) : (globalBsReal * std::min(localExpertNum, k));
     auto realA = (tpWorldSize == 0) ? a : a * tpWorldSize;
     expandXShape->SetDimNum(DIM_TWO);
     expandXShape->SetDim(0U, realA);
