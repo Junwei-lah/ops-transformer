@@ -76,7 +76,7 @@ struct TailBlockResplitParam {
     uint16_t secondTailBlockCount = 0;
 };
 
-enum class GroupType : int8_t {
+enum class GroupType : int64_t {
     NO_SPLIT = -1,
     SPLIT_M = 0,
     SPLIT_N = 1,
@@ -293,10 +293,10 @@ private:
     uint64_t kSize_ = 0;
     uint64_t nSize_ = 0;
     uint64_t nSizeOri_ = 0;
-    GroupType groupType_ = GroupType::SPLIT_M;
+    int64_t groupType_ = static_cast<int64_t>(GroupType::SPLIT_M);
     int64_t splitItem_ = 0;
     uint32_t groupNum_ = 0;
-    uint32_t groupListType_ = 0;
+    int64_t groupListType_ = 0;
     uint32_t coreNum_ = 0;
     uint32_t aivNum_ = 0;
     uint32_t groupSize_ = 0;
