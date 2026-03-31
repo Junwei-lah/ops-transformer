@@ -521,7 +521,7 @@ __aicore__ inline void MatmulKM(const LocalTensor<A> &aL1Tensor,
                               const LocalTensor<C> &cL0Tensor,
                               struct MMParam &param)
 {
-    uint32_t mLoops = (param.singleM + baseM - 1) / baseN; // 尾块处理
+    uint32_t mLoops = (param.singleM + baseM - 1) / baseM; // 尾块处理
     uint32_t kLoops = (param.singleK + baseK - 1) / baseK; // 尾块处理
     uint32_t mSplitSize = (mLoops == 1) ? param.singleM : baseM;
     uint32_t mplitTailSize = (param.singleM % baseM) ? (param.singleM % baseM) : mSplitSize;
