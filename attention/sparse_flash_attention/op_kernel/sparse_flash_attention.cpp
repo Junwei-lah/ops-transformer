@@ -15,7 +15,7 @@
 
 #include "kernel_operator.h"
 #include "sparse_flash_attention_template_tiling_key.h"
-#include "sparse_flash_attention_kernel_mla.h"
+#include "arch32/sparse_flash_attention_kernel_mla.h"
 
 using namespace AscendC;
 
