@@ -60,7 +60,6 @@ private:
     static constexpr uint32_t dTemplateAlign64 = CubeBlockType::dTemplateAlign64;
     static constexpr uint32_t s1BaseSize = CubeBlockType::s1BaseSize;
     static constexpr uint32_t s2BaseSize = CubeBlockType::s2BaseSize;
-    static constexpr bool hasPse = CubeBlockType::hasPse;
     static constexpr bool splitD = CubeBlockType::splitD;
     static constexpr uint32_t PRELOAD_N = 1;
     static constexpr bool POST_QUANT = VecBlockType::POST_QUANT;
@@ -311,7 +310,7 @@ __aicore__ inline void FAKernelNoquantMla<CubeBlockType, VecBlockType>::ComputeC
         constInfo.mm2Kb /= inputParamsRegbase.headNumRatio;
         constInfo.attentionOutStride = 0;
     } else {
-        if (layout == LayOutTypeEnum::LAYOUT_BSH) {
+        if constexpr (layout == LayOutTypeEnum::LAYOUT_BSH) {
             // BSH/BSNGD
             constInfo.s1BaseN2GD = s1BaseSize * constInfo.n2GD;
             constInfo.s1BaseN2GDv = s1BaseSize * constInfo.n2GDv;
@@ -326,7 +325,7 @@ __aicore__ inline void FAKernelNoquantMla<CubeBlockType, VecBlockType>::ComputeC
             constInfo.mm1Kb /= inputParamsRegbase.headNumRatio;
             constInfo.mm2Kb /= inputParamsRegbase.headNumRatio;
             constInfo.attentionOutStride = 0;
-        } else if (layout == LayOutTypeEnum::LAYOUT_BNSD) {
+        } else if constexpr (layout == LayOutTypeEnum::LAYOUT_BNSD) {
             // BNSD
             constInfo.s1BaseD = s1BaseSize * constInfo.dSize;
             constInfo.s2BaseD = s2BaseSize * constInfo.dSize;
@@ -345,20 +344,6 @@ __aicore__ inline void FAKernelNoquantMla<CubeBlockType, VecBlockType>::ComputeC
         }
     }
 
-    if constexpr (hasPse) {
-        this->pseInfo.pseLayoutType = inputParamsRegbase.pseShapeType;
-        this->pseInfo.pseType = inputParamsRegbase.pseType;
-        this->pseInfo.pseBSize = inputParamsRegbase.pseBSize;
-        this->pseInfo.pseS1Size = inputParamsRegbase.pseS1Size;
-        this->pseInfo.pseS2Size = inputParamsRegbase.pseS2Size;
-        this->pseInfo.pseEncodeType = (uint32_t)inputParamsRegbase.pseEncodeType;
-        this->pseInfo.pseStride = (pseInfo.pseLayoutType == (uint32_t)PseLayoutTypeEnum::PSE_1S2) ? 0 : s2BaseSize;
-        this->pseInfo.qStartIdx = inputParamsRegbase.qStartIdx;
-        this->pseInfo.kvStartIdx = inputParamsRegbase.kvStartIdx;
-        if (inputParamsRegbase.pseShapeType == (uint32_t)PseLayoutTypeEnum::PSE_1S2) {
-            constInfo.gS2 = constInfo.gSize * constInfo.s2Size;
-        }
-    }
     if constexpr (hasAtten) {
         this->attenMaskInfo.preTokens = inputParamsRegbase.preTokens;
         this->attenMaskInfo.nextTokens = inputParamsRegbase.nextTokens;
