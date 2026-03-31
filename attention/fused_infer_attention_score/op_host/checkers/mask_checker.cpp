@@ -57,6 +57,16 @@ ge::graphStatus MaskChecker::CheckSparseMode(const FiaTilingInfo &fiaInfo)
 }
 
 // CheckFeature
+ge::graphStatus MaskChecker::CheckAntiquantSparseMode(const FiaTilingInfo &fiaInfo)
+{
+    OP_CHECK_IF(fiaInfo.s1Size == 1U && fiaInfo.sparseMode != SPARSE_MODE_NO_MASK,
+                OP_LOGE(fiaInfo.opName,
+                "When query's sequence length is 1, sparseMode only supports 0(defaultMask) but got %u",
+                fiaInfo.sparseMode),
+                return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus MaskChecker::CheckNoQuantIFAMLA(const FiaTilingInfo &fiaInfo)
 {
     // For IFA MLA, input sparse mode only supports 0/3/4.
@@ -333,6 +343,10 @@ ge::graphStatus MaskChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
         }
     } else if (enableFullQuant_) {
         if (ge::GRAPH_SUCCESS != CheckFullQuantIFAMLA(fiaInfo)) {
+            return ge::GRAPH_FAILED;
+        }
+    } else if (enableAntiQuant_) {
+        if (ge::GRAPH_SUCCESS != CheckAntiquantSparseMode(fiaInfo)) {
             return ge::GRAPH_FAILED;
         }
     }
