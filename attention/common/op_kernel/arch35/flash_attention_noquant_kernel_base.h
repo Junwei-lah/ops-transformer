@@ -378,9 +378,21 @@ __aicore__ inline void FlashAttentionNoQuantKernelBase<ChildClass, CubeBlockType
     constInfo.dBasicBlock = Align64Func((uint16_t)constInfo.dSizeV);
     if constexpr (hasRope) {
         constInfo.dSizeRope = sharedParams.dSizeRope;
+        constInfo.s1DR = constInfo.s1Size * constInfo.dSizeRope;
+        constInfo.s2DR = constInfo.s2Size * constInfo.dSizeRope;
+        constInfo.gDR = constInfo.gSize * constInfo.dSizeRope;
+        constInfo.n2DR = constInfo.n2Size * constInfo.dSizeRope;
+        constInfo.bN2DR = constInfo.bSize * constInfo.n2DR;
+        constInfo.gS1DR = constInfo.gSize * constInfo.s1DR;
+        constInfo.n2S2DR = constInfo.n2Size * constInfo.s2DR;
+        constInfo.n2GDR = constInfo.n2Size * constInfo.gDR;
+        constInfo.bN2GDR = constInfo.bSize * constInfo.n2GDR;
+        constInfo.n2GS1DR = constInfo.n2Size * constInfo.gS1DR;
+        constInfo.s2BaseN2DR = s2BaseSize * constInfo.n2DR;
     } else {
         constInfo.dSizeRope = 0;
     }
+
     constInfo.gSize = sharedParams.gSize;
     constInfo.s1OuterSize = sharedParams.s1OuterSize;
     constInfo.s1S2 = constInfo.s1Size * constInfo.s2Size;
@@ -545,13 +557,28 @@ template <typename ChildClass, typename CubeBlockType, typename VecBlockType>
 __aicore__ inline void FlashAttentionNoQuantKernelBase<ChildClass, CubeBlockType, VecBlockType>::GetSeqQlenKvlenByBoidx(int64_t boIdx,
     int64_t &actualSeqQlen, int64_t &actualSeqKvlen)
 {
-    if (unlikely(boIdx == 0)) {
-        actualSeqQlen = actualSeqQlenAddr[0];
-        actualSeqKvlen = actualSeqKvlenAddr[0];
+    if constexpr (layout == LayOutTypeEnum::LAYOUT_TND || layout == LayOutTypeEnum::LAYOUT_NTD) {
+        if (unlikely(boIdx == 0)) {
+            actualSeqQlen = actualSeqQlenAddr[0];
+            actualSeqKvlen = actualSeqKvlenAddr[0];
+            return;
+        }
+        actualSeqQlen = actualSeqQlenAddr[boIdx] - actualSeqQlenAddr[boIdx - 1];
+        actualSeqKvlen = actualSeqKvlenAddr[boIdx] - actualSeqKvlenAddr[boIdx - 1];
         return;
     }
-    actualSeqQlen = actualSeqQlenAddr[boIdx] - actualSeqQlenAddr[boIdx - 1];
-    actualSeqKvlen = actualSeqKvlenAddr[boIdx] - actualSeqKvlenAddr[boIdx - 1];
+    if constexpr (isInfer) {
+        if (!constInfo.isActualLenDimsNull) {
+            actualSeqQlen = (constInfo.actualSeqLenSize == 1) ? actualSeqQlenAddr[0] : actualSeqQlenAddr[boIdx];
+        } else {
+            actualSeqQlen = constInfo.s1Size;
+        }
+        if (!constInfo.isActualLenDimsKVNull) {
+            actualSeqKvlen = (constInfo.actualSeqLenKVSize == 1) ? actualSeqKvlenAddr[0] : actualSeqKvlenAddr[boIdx];
+        } else {
+            actualSeqKvlen = constInfo.s2Size;;
+        }
+    }
 }
 
 template <typename ChildClass, typename CubeBlockType, typename VecBlockType>
@@ -616,7 +643,7 @@ __aicore__ inline void FlashAttentionNoQuantKernelBase<ChildClass, CubeBlockType
     runInfo.s2StartIdx = runParam.s2LineStartIdx;
     runInfo.s2EndIdx = runParam.s2LineEndIdx;
     runInfo.s2LoopCount = s2LoopCount;
-    if (runInfo.multiCoreInnerIdx != multiCoreInnerIdx) {
+    if (runInfo.multiCoreInnerIdx != multiCoreInnerIdx || multiCoreInnerIdx == 0) {
         runInfo.s1oIdx = runParam.s1oIdx;
         runInfo.boIdx = runParam.boIdx;
         runInfo.n2oIdx = runParam.n2oIdx;

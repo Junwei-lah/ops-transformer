@@ -163,7 +163,7 @@ using namespace AscendC;
 #endif
 
 template<uint8_t inOutLayoutType, uint16_t config, uint8_t pseMode, uint8_t quantMode, bool hasAttenMask, bool hasRope, 
-  bool isPa, bool isFd, bool emptyTensor, uint8_t pFAMask, uint8_t pFAMatMulType, bool enableKVPrefix>
+  bool isPa, bool isFd, bool emptyTensor, uint8_t pFAMask, uint8_t pFAMatMulType, bool enableKVPrefix, bool enableS1OutSplit>
   inline __aicore__ void incre_flash_attention_FIAS_regbase(__gm__ uint8_t *query, __gm__ uint8_t *key,
                                                             __gm__ uint8_t *value, __gm__ uint8_t *pseShift,
                                                             __gm__ uint8_t *attenMask, __gm__ uint8_t *actualSeqLengthsQ,

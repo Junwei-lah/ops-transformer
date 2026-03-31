@@ -43,10 +43,12 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SetPlatMemoryInfo(gert::Tili
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_C, platformInfo_.l0cSize);
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_A, platformInfo_.l0aSize);
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L0_B, platformInfo_.l0bSize);
+    ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::L2, platformInfo_.l2Size);
+
     platformInfo_.defaultSysWorkspaceSize = ascendcPlatform.GetLibApiWorkSpaceSize();
-    OP_LOGI(fiaInfo.opName, "AIV:%u AIC:%u L0A:%lu L0B:%lu L0C:%lu UB:%lu L1:%lu", platformInfo_.aivNum,
+    OP_LOGI(fiaInfo.opName, "AIV:%u AIC:%u L0A:%lu L0B:%lu L0C:%lu UB:%lu L1:%lu L2:%lu", platformInfo_.aivNum,
             platformInfo_.aicNum, platformInfo_.l0aSize, platformInfo_.l0bSize, platformInfo_.l0cSize,
-            platformInfo_.ubSize, platformInfo_.l1Size);
+            platformInfo_.ubSize, platformInfo_.l1Size, platformInfo_.l2Size);
 
     return ge::GRAPH_SUCCESS;
 }
@@ -525,6 +527,60 @@ void FusedInferAttentionScoreTilingImpl::ComputeSplitNBSeq(const FiaTilingInfo &
     seqParams->set_coreSeqPosEnd(coreSposEnd.data());
     faRunTilingAdapter_.multiCoreParamsRegbase.set_bnStartIdx(bnStartIdx.data());
     faRunTilingAdapter_.multiCoreParamsRegbase.set_sparseStartIdx(gS1StartIdx.data());
+}
+
+bool FusedInferAttentionScoreTilingImpl::CheckS1OutSplit(const FiaTilingInfo &fiaInfo)
+{
+    if (fiaInfo.antiQuantFlag || fiaInfo.quantFlag || fiaInfo.isOutQuantEnable ||
+       fiaInfo.quantMode == FiaQuantMode::FULL_QUANT) {
+        return false;
+    }
+
+    if (fiaInfo.sysPrefixFlag || fiaInfo.kvPaddingSizeFlag || fiaInfo.qPaddingSizeFlag || dnFlag_ ||
+        fiaInfo.learnableSinkFlag || fiaInfo.enableAlibiPse || gsMergeFlag_ || pfaMergeFlag_) {
+        return false;
+    }
+
+    if (fiaInfo.sparseMode == SPARSE_MODE_BAND ||
+       (fiaInfo.sparseMode == SPARSE_MODE_NO_MASK && fiaInfo.attenMaskFlag)) {
+        return false;
+    }
+
+    // 仅支持非量化，占用2B
+    const int64_t dataTypeSize = 2U;
+    int64_t bnSize = std::min(fiaInfo.bSize * fiaInfo.n2Size, platformInfo_.aicNum);
+
+    // 当所需的L2cache资源的超过系统配置一半时，开启S1外切分核优化L2cache复用率，乘2是经验值，后续进行优化
+    return bnSize * fiaInfo.s2Size * (fiaInfo.qkHeadDim + fiaInfo.vHeadDim) * dataTypeSize * 2 >=  platformInfo_.l2Size;
+}
+
+void FusedInferAttentionScoreTilingImpl::SplitOutSeq(const FiaTilingInfo &fiaInfo)
+{
+    uint32_t curCoreNum = platformInfo_.aicNum;
+    uint32_t sOuterSize = sOuterFactor_ * CV_RATIO;
+    int64_t totalSize = 0;
+    for (uint32_t bIdx = 0; bIdx < fiaInfo.bSize; bIdx++) {
+        int64_t actualSeqLengthsTmp = actualSeqLengthsQ_[bIdx];  // 用于存放减去行无效后，真实的actseqlen
+        int64_t preTokensLeftUp = 0;
+        int64_t nextTokensLeftUp = 0;
+        GetPreNextTokensLeftUp(fiaInfo, actualSeqLengthsQ_[bIdx], actualSeqLengthsKV_[bIdx] + fiaInfo.systemPrefixLen,
+                               preTokensLeftUp, nextTokensLeftUp);
+        FixParamWithRowInvalid(fiaInfo, actualSeqLengthsTmp, actualSeqLengthsKV_[bIdx] + fiaInfo.systemPrefixLen,
+                               preTokensLeftUp, nextTokensLeftUp);
+
+        int64_t outerBlockNums = (actualSeqLengthsTmp + static_cast<int64_t>(sOuterSize) - 1) / static_cast<int64_t>(sOuterSize);
+        totalSize += outerBlockNums * fiaInfo.n1Size;
+    }
+
+    int64_t s1OuterSize = (fiaInfo.s1Size + sOuterSize - 1) / sOuterSize;
+    faRunTilingAdapter_.multiCoreParamsRegbase.set_s1OuterSize(s1OuterSize);
+
+    int64_t actualUsedCoreNum = std::min(totalSize, static_cast<int64_t>(curCoreNum));
+    faRunTilingAdapter_.multiCoreParamsRegbase.set_coreNum(static_cast<int32_t>(actualUsedCoreNum));
+    faRunTilingAdapter_.multiCoreParamsRegbase.set_totalSize(totalSize);
+    faRunTilingAdapter_.multiCoreParamsRegbase.set_splitFactorSize(CeilDivision(totalSize, actualUsedCoreNum));
+    faRunTilingAdapter_.multiCoreParamsRegbase.set_splitFactorTailSize(
+        CalcTailSize(totalSize, faRunTilingAdapter_.multiCoreParamsRegbase.get_splitFactorSize()));
 }
 
 void FusedInferAttentionScoreTilingImpl::SplitNBSeq(const FiaTilingInfo &fiaInfo)
@@ -1035,11 +1091,17 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::SplitPolicy(gert::TilingCont
         if (dnFlag_ && fiaInfo.fullQuantMode == FiaFullQuantMode::PER_BLOCK_FULL_QUANT  && fiaInfo.qkHeadDim == fiaInfo.vHeadDim && fiaInfo.qkHeadDim <= 128) {
             sInnerFactor_ = SINNER_256;
         }
-        SplitNBSeq(fiaInfo);
-        if (CheckFlashDecode(fiaInfo)) {
-            flashDecodeFlag_ = true;
-            OP_LOGI(fiaInfo.opName, "FlashDecode is enable.");
-            SplitS2(fiaInfo);
+
+        enableS1OutSplit = CheckS1OutSplit(fiaInfo);
+        if (enableS1OutSplit) {
+            SplitOutSeq(fiaInfo);
+        } else {
+            SplitNBSeq(fiaInfo);
+            if (CheckFlashDecode(fiaInfo)) {
+                flashDecodeFlag_ = true;
+                OP_LOGI(fiaInfo.opName, "FlashDecode is enable.");
+                SplitS2(fiaInfo);
+            }
         }
     }
     return ge::GRAPH_SUCCESS;
@@ -1294,6 +1356,7 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::UpdateTilingKeyInfo(const Fi
         UpdateTilingKeyMaskMode(fiaInfo);
         UpdateTilingKeyMatmulMode(fiaInfo);
         tilingKeyInfo_.enableKvPrefix = fiaInfo.sysPrefixFlag;
+        tilingKeyInfo_.enableS1OutSplit = enableS1OutSplit;
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -1305,17 +1368,18 @@ ge::graphStatus FusedInferAttentionScoreTilingImpl::GenTilingKey(gert::TilingCon
     uint64_t genTilingkey = GET_TPL_TILING_KEY(
         tilingKeyInfo_.inputLayout, tilingKeyInfo_.config, tilingKeyInfo_.pseMode, tilingKeyInfo_.quantMode,
         tilingKeyInfo_.hasAttenMask, tilingKeyInfo_.hasRope, tilingKeyInfo_.isPa, tilingKeyInfo_.isFd,
-        tilingKeyInfo_.emptyTensor, tilingKeyInfo_.maskMode, tilingKeyInfo_.matmulMode, tilingKeyInfo_.enableKvPrefix);
+        tilingKeyInfo_.emptyTensor, tilingKeyInfo_.maskMode, tilingKeyInfo_.matmulMode,
+        tilingKeyInfo_.enableKvPrefix, tilingKeyInfo_.enableS1OutSplit);
     context->SetTilingKey(genTilingkey);
     OP_LOGI(fiaInfo.opName, "The tilingkey is %llu.", genTilingkey);
     OP_LOGI(fiaInfo.opName,
             "The tilingkey param is inOutLayoutType: %llu, config: %llu, pseMode: %llu, quantMode: %llu, "
             "hasAttenMask: %llu, hasRope: %llu, isPa: %llu, isFd: %llu, emptyTensor: %llu, PFAMask: %llu, "
-            "pFAMatMulType: %llu, enableKvPrefix: %llu.",
+            "pFAMatMulType: %llu, enableKvPrefix: %llu, enableS1OutSplit: %llu.",
             tilingKeyInfo_.inputLayout, tilingKeyInfo_.config, tilingKeyInfo_.pseMode, tilingKeyInfo_.quantMode,
             tilingKeyInfo_.hasAttenMask, tilingKeyInfo_.hasRope, tilingKeyInfo_.isPa, tilingKeyInfo_.isFd,
             tilingKeyInfo_.emptyTensor, tilingKeyInfo_.maskMode, tilingKeyInfo_.matmulMode,
-            tilingKeyInfo_.enableKvPrefix);
+            tilingKeyInfo_.enableKvPrefix, tilingKeyInfo_.enableS1OutSplit);
     return ge::GRAPH_SUCCESS;
 }
 

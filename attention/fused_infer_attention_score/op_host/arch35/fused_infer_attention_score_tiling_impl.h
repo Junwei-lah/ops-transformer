@@ -38,10 +38,12 @@ struct FiaTilingKeyInfo {
     uint64_t maskMode = 0;
     uint64_t matmulMode = 0;
     bool enableKvPrefix = false;
+    bool enableS1OutSplit = false;
 };
 
 struct FiaPlatFormInfo {
     uint64_t ubSize = 0;
+    uint64_t l2Size = 0;
     uint64_t l1Size = 0;
     uint64_t l0cSize = 0;
     uint64_t l0bSize = 0;
@@ -65,6 +67,8 @@ protected:
     ge::graphStatus SetPlatMemoryInfo(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
     ge::graphStatus SetEmptyTensor(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
     ge::graphStatus SplitPolicy(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
+    bool CheckS1OutSplit(const FiaTilingInfo &fiaInfo);
+    void SplitOutSeq(const FiaTilingInfo &fiaInfo);
     ge::graphStatus ComputeTilingData(const FiaTilingInfo &fiaInfo);
     ge::graphStatus GenTilingKey(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
     ge::graphStatus SetBlockDim(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
@@ -165,6 +169,7 @@ protected:
     bool fromPFA_ = false;
     bool isPFAFlag_ = false;
     bool needInit_ = false;
+    bool enableS1OutSplit = false;
 };
 
 }  // namespace optiling

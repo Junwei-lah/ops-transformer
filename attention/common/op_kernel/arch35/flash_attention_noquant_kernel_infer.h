@@ -33,7 +33,13 @@ public:
     __aicore__ inline void InitUniqueRunInfo(const RunParamStr<isInfer> &runParam, 
         RunInfo<isInfer> &runInfo);
     __aicore__ inline void Process();
+    __aicore__ inline void ProcessS2Loop(RunParamStr<isInfer> &runParam, RunInfo<isInfer> *runInfo, int64_t s2LoopLimit,
+        int64_t multiCoreInnerIdx, int64_t &taskId, bool notLastThreeLoop, bool notLastTwoLoop, bool notLast);
     __aicore__ inline void ProcessMainLoop();
+    __aicore__ inline void ProcessS1OutSplitLoop();
+    __aicore__ inline int64_t CalcRealCoreIdxVarlen(int64_t calcLoops, int64_t calcLoopsRemain, int64_t cycleCoreNums);
+    __aicore__ inline void CalS1OuterSize(const int64_t &multiCoreInnerOffset, RunParamStr<isInfer> &runParam);
+    __aicore__ inline void ComputeAxisIdx(int64_t multiCoreInnerIdx, RunParamStr<isInfer> &runParam);
 
 private:
     __aicore__ inline void ComputeAxisIdxByBnAndGs1(int64_t bnIndex, int64_t gS1Index,
@@ -94,6 +100,53 @@ FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::InitUniqueRunInfo
 {
     InitTaskParamByRun<CHILD_SPEC_TEMPLATE_ARGS, BaseClass::useDn, BaseClass::enableKVPrefix>(runParam, runInfo);
     ComputeOffset<CHILD_SPEC_TEMPLATE_ARGS, BaseClass::useDn, BaseClass::enableKVPrefix>(runParam, this->constInfo, runInfo.s2LoopCount + runInfo.s2StartIdx / this->constInfo.s2BaseSize, runInfo);
+}
+
+
+template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::ProcessS2Loop(
+    RunParamStr<isInfer> &runParam, RunInfo<isInfer> *runInfo, int64_t s2LoopLimit, int64_t multiCoreInnerIdx,
+    int64_t &taskId, bool notLastThreeLoop, bool notLastTwoLoop, bool notLast)
+{
+    for (int64_t s2LoopCount = 0; s2LoopCount <= s2LoopLimit; ++s2LoopCount) {
+        if (notLastThreeLoop) {
+            RunInfo<isInfer> &runInfo1 = runInfo[taskId & 3];
+            this->SetRunInfo(runInfo1, runParam, taskId, s2LoopCount, s2LoopLimit, multiCoreInnerIdx);
+            if ASCEND_IS_AIC {
+                this->cubeBlock.IterateBmm1(this->bmm1Buffers.Get(), runInfo1, this->constInfo);
+            }
+        }
+        if (taskId > 0 && notLastTwoLoop) {
+            if ASCEND_IS_AIV {
+                auto &runInfo3 = runInfo[(taskId + 3) & 3];
+                this->vecBlock.ProcessVec1(this->l1PBuffers.Get(), this->bmm1Buffers.Get(), runInfo3,
+                    this->constInfo);
+            }
+        }
+        if (taskId > 1 && notLast) {
+            if ASCEND_IS_AIC {
+                RunInfo<isInfer> &runInfo2 = runInfo[(taskId + 2) & 3];
+                if constexpr (BaseClass::bmm2Write2Ub) {
+                    this->cubeBlock.IterateBmm2(this->bmm2Buffers.Get(), this->l1PBuffers, runInfo2,
+                        this->constInfo);
+                } else {
+                    this->cubeBlock.IterateBmm2(this->bmm2ResGmBuffers.Get(), this->l1PBuffers, runInfo2,
+                        this->constInfo);
+                }
+            }
+        }
+        if (taskId > 2) {
+            if ASCEND_IS_AIV {
+                RunInfo<isInfer> &runInfo3 = runInfo[(taskId + 1) & 3];
+                if constexpr (BaseClass::bmm2Write2Ub) {
+                    this->vecBlock.ProcessVec2(this->bmm2Buffers.Get(), runInfo3, this->constInfo);
+                } else {
+                    this->vecBlock.ProcessVec2(this->bmm2ResGmBuffers.Get(), runInfo3, this->constInfo);
+                }
+            }
+        }
+        ++taskId;
+    }
 }
 
 template <typename CubeBlockType, typename VecBlockType>
@@ -212,48 +265,198 @@ __aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockT
                 s2LoopLimit = 0;
             }
 
-            for (int64_t s2LoopCount = 0; s2LoopCount <= s2LoopLimit; ++s2LoopCount) {
-                if (notLastThreeLoop) {
-                    RunInfo<isInfer> &runInfo1 = runInfo[taskId & 3];
-                    this->SetRunInfo(runInfo1, runParam, taskId, s2LoopCount, s2LoopLimit, multiCoreInnerIdx);
-                    if ASCEND_IS_AIC {
-                        this->cubeBlock.IterateBmm1(this->bmm1Buffers.Get(), runInfo1, this->constInfo);
-                    }
-                }
-                if (taskId > 0 && notLastTwoLoop) {
-                    if ASCEND_IS_AIV {
-                        auto &runInfo3 = runInfo[(taskId + 3) & 3];
-                        this->vecBlock.ProcessVec1(this->l1PBuffers.Get(), this->bmm1Buffers.Get(), runInfo3,
-                            this->constInfo);
-                    }
-                }
-                if (taskId > 1 && notLast) {
-                    if ASCEND_IS_AIC {
-                        RunInfo<isInfer> &runInfo2 = runInfo[(taskId + 2) & 3];
-                        if constexpr (BaseClass::bmm2Write2Ub) {
-                            this->cubeBlock.IterateBmm2(this->bmm2Buffers.Get(), this->l1PBuffers, runInfo2,
-                                this->constInfo);
-                        } else {
-                            this->cubeBlock.IterateBmm2(this->bmm2ResGmBuffers.Get(), this->l1PBuffers, runInfo2,
-                                this->constInfo);
-                        }
-                    }
-                }
-                if (taskId > 2) {
-                    if ASCEND_IS_AIV {
-                        RunInfo<isInfer> &runInfo3 = runInfo[(taskId + 1) & 3];
-                        if constexpr (BaseClass::bmm2Write2Ub) {
-                            this->vecBlock.ProcessVec2(this->bmm2Buffers.Get(), runInfo3, this->constInfo);
-                        } else {
-                            this->vecBlock.ProcessVec2(this->bmm2ResGmBuffers.Get(), runInfo3, this->constInfo);
-                        }
-                    }
-                }
-                ++taskId;
-            }
+            ProcessS2Loop(runParam, runInfo, s2LoopLimit, multiCoreInnerIdx, taskId, notLastThreeLoop, notLastTwoLoop, notLast);
             ++multiCoreInnerIdx;
         }
         gS1StartIdx = 0;
+    }
+}
+
+template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline int64_t FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::CalcRealCoreIdxVarlen(
+    int64_t calcLoops, int64_t calcLoopsRemain, int64_t cycleCoreNums)
+{
+    int64_t realCoreIdx = 0;
+    if (calcLoopsRemain == 0) {
+        realCoreIdx = calcLoops * cycleCoreNums + this->aicIdx;
+    } else {
+        realCoreIdx = calcLoops * cycleCoreNums + (cycleCoreNums - this->aicIdx - 1);
+    }
+
+    return realCoreIdx;
+}
+
+
+ template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::CalS1OuterSize(
+    const int64_t &multiCoreInnerOffset, RunParamStr<isInfer> &runParam)
+{
+    int64_t actualS1Outersize = 0;
+    this->s1OuterSizeAcc = 0;
+    this->s1SizeAcc = 0;
+    this->s2SizeAcc = 0;
+    runParam.boIdx = 0;
+    runParam.b1SSOffset = 0;
+    runParam.b1SSOffsetAlign16 = 0;
+
+    int64_t actualS1Len;
+    int64_t actualS2Len;
+    for (int64_t i = 0; i < this->sharedParams.bSize; ++i) {
+        this->GetSeqQlenKvlenByBoidx(i, actualS1Len, actualS2Len);
+        int64_t tmpS1Outersize = 0;
+        if (this->sharedParams.sparseType == static_cast<uint8_t>(SparseModeEnum::BAND)) {
+            tmpS1Outersize = CeilDiv(Min(actualS1Len, actualS2Len), this->s1BaseSize);
+        } else {
+            tmpS1Outersize = CeilDiv(actualS1Len, this->s1BaseSize);
+        }
+        actualS1Outersize += (tmpS1Outersize * this->constInfo.n2G);
+        if (multiCoreInnerOffset >= actualS1Outersize) {
+            this->s1OuterSizeAcc = actualS1Outersize;
+            this->s1SizeAcc += actualS1Len;
+            this->s2SizeAcc += actualS2Len;
+            runParam.b1SSOffset += actualS1Len * actualS2Len;
+            runParam.b1SSOffsetAlign16 += actualS1Len * Align(actualS2Len);
+            runParam.boIdx++;
+            continue;
+        }
+        break;
+    }
+}
+
+template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::ComputeAxisIdx(
+    int64_t multiCoreInnerIdx, RunParamStr<isInfer> &runParam)
+{
+    this->GetSeqQlenKvlenByBoidx(runParam.boIdx, runParam.actualS1Size, runParam.actualS2Size);
+    int64_t actualS1Outersize  = 0;
+    int64_t tmpS1Outersize = 0;
+    if (this->sharedParams.sparseType == static_cast<uint8_t>(SparseModeEnum::BAND)) {
+        tmpS1Outersize = CeilDiv(Min(runParam.actualS1Size, runParam.actualS2Size), this->s1BaseSize);
+    } else {
+        tmpS1Outersize = CeilDiv(runParam.actualS1Size, this->s1BaseSize);
+    }
+    actualS1Outersize = this->s1OuterSizeAcc + tmpS1Outersize * this->constInfo.n2G;
+
+    while (multiCoreInnerIdx >= actualS1Outersize) {
+        this->s1OuterSizeAcc = actualS1Outersize;
+        this->s1SizeAcc += runParam.actualS1Size;
+        this->s2SizeAcc += runParam.actualS2Size;
+        runParam.b1SSOffset += runParam.actualS1Size * runParam.actualS2Size;
+        runParam.boIdx++;
+        if (runParam.boIdx >= this->sharedParams.bSize) {
+            break;
+        }
+        this->GetSeqQlenKvlenByBoidx(runParam.boIdx, runParam.actualS1Size, runParam.actualS2Size);
+        if (this->sharedParams.sparseType == static_cast<uint8_t>(SparseModeEnum::BAND)) {
+            tmpS1Outersize = CeilDiv(Min(runParam.actualS1Size, runParam.actualS2Size), this->s1BaseSize);
+        } else {
+            tmpS1Outersize = CeilDiv(runParam.actualS1Size, this->s1BaseSize);
+        }
+        actualS1Outersize = this->s1OuterSizeAcc + tmpS1Outersize * this->constInfo.n2G;
+    }
+
+    actualS1Outersize = multiCoreInnerIdx - this->s1OuterSizeAcc;
+    runParam.n2oIdx = (actualS1Outersize / tmpS1Outersize) / this->sharedParams.gSize;
+    runParam.goIdx = (actualS1Outersize / tmpS1Outersize) % this->sharedParams.gSize;
+    runParam.s1oIdx = actualS1Outersize % tmpS1Outersize;
+
+    if (this->sharedParams.sparseType == static_cast<uint8_t>(SparseModeEnum::BAND)) {
+        runParam.s1RealSize = Min(this->s1BaseSize, Min(runParam.actualS1Size, runParam.actualS2Size) - runParam.s1oIdx * this->s1BaseSize);
+    } else {
+        runParam.s1RealSize = Min(this->s1BaseSize, runParam.actualS1Size - runParam.s1oIdx * this->s1BaseSize);
+    }
+    runParam.halfS1RealSize = (runParam.s1RealSize + 1) >> 1;
+    runParam.firstHalfS1RealSize = runParam.halfS1RealSize;
+    if (this->constInfo.subBlockIdx == 1) {
+        runParam.halfS1RealSize = runParam.s1RealSize - runParam.halfS1RealSize;
+    }
+}
+
+template <typename CubeBlockType, typename VecBlockType>
+__aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockType>::ProcessS1OutSplitLoop()
+{
+    int32_t actualCoreNums = this->sharedParams.coreNum;
+    if (this->aicIdx >= actualCoreNums) {
+        return;
+    }
+
+    int64_t multiCoreInnerLimit = 0;
+    int64_t varlenCalcLoops = 0;                    // 需要进行计算的循环次数(正序+倒序为一次循环)
+    int64_t varlenCalcLoopsRemain = 0;
+    int64_t varlenCalcTimes = 0;                    // 需要计算的S1方向上基本块总数
+    int64_t varlenCycleCoreNums = this->sharedParams.coreNum * 2; // 一次循环正序+倒序为两倍核数
+ 
+    varlenCalcLoops = this->sharedParams.totalSize / varlenCycleCoreNums;
+    varlenCalcLoopsRemain = this->sharedParams.totalSize % varlenCycleCoreNums;
+    varlenCalcTimes = varlenCalcLoops * 2;
+    if (varlenCalcLoopsRemain >= this->aicIdx + 1) {
+        varlenCalcTimes++;
+        if (varlenCalcLoopsRemain > this->sharedParams.coreNum &&
+            (this->aicIdx + 1) > varlenCycleCoreNums - varlenCalcLoopsRemain) {
+            varlenCalcTimes++;
+        }
+    }
+    multiCoreInnerLimit = varlenCalcTimes;
+
+    // 初始化AxisIdx
+    RunParamStr<isInfer> runParam;
+    CalS1OuterSize(this->aicIdx, runParam);
+
+    RunInfo<isInfer> runInfo[4];
+    int64_t taskId = 0;
+    bool notThirdLast = true;
+    bool notSecondLast = true;
+    bool notLast = true;
+    int64_t thirdLast = multiCoreInnerLimit;
+    int64_t secondLast = multiCoreInnerLimit + 1;
+    int64_t last = multiCoreInnerLimit + 2;
+    multiCoreInnerLimit += 3;
+    int64_t realCoreInnerIdx = 0;
+    for (int64_t multiCoreInnerIdx = 0; multiCoreInnerIdx < multiCoreInnerLimit; multiCoreInnerIdx++) {
+        if (multiCoreInnerIdx == secondLast) {
+            notSecondLast = false;
+        } else if (multiCoreInnerIdx == last) {
+            notLast = false;
+        } else if (multiCoreInnerIdx == thirdLast) {
+            notThirdLast = false;
+        } else {
+            // 非最后三次伪循环，需要将当前核处理的次数转化为S1方向上基本块的索引值
+            int64_t curCalcLoops = multiCoreInnerIdx >> 1;
+            int64_t curCalcLoopsRemain = multiCoreInnerIdx & 1;
+            realCoreInnerIdx = CalcRealCoreIdxVarlen(curCalcLoops, curCalcLoopsRemain, varlenCycleCoreNums);
+        }
+
+        int64_t s2LoopLimit = 0;
+        bool notLastThreeLoop = notThirdLast && notSecondLast && notLast;
+        bool notLastTwoLoop = notSecondLast && notLast;
+        if (notLastThreeLoop) {
+            this->ComputeAxisIdx(realCoreInnerIdx, runParam);
+            ComputeParamBatch<CHILD_SPEC_TEMPLATE_ARGS, BaseClass::useDn, BaseClass::enableKVPrefix>(runParam, this->constInfo, this->attenMaskInfo,
+                this->keyGm, this->actualSeqQlenAddr, this->actualSeqKvlenAddr);
+            int64_t gS1Index = 0;
+            if (this->constInfo.isGqa) {
+                if constexpr (layout == LayOutTypeEnum::LAYOUT_TND ||
+                              layout == LayOutTypeEnum::LAYOUT_BSH ||
+                              layout == LayOutTypeEnum::LAYOUT_SBH) {
+                    gS1Index = runParam.s1oIdx * this->constInfo.gSize + runParam.goIdx;
+                } else {
+                    gS1Index = runParam.goIdx * runParam.actualS1Size + runParam.s1oIdx;
+                }
+                runParam.gS1Idx = gS1Index;
+            } else {
+                gS1Index = runParam.s1oIdx;
+            }
+            bool s1NoNeedCalc = ComputeParamS1<CHILD_SPEC_TEMPLATE_ARGS, BaseClass::useDn, BaseClass::enableKVPrefix>(
+                    runParam, this->constInfo, gS1Index, this->actualSeqQlenAddr, this->pseInfo);
+
+            bool s2NoNeedCalc = ComputeS2LoopInfo<CHILD_SPEC_TEMPLATE_ARGS, BaseClass::useDn, BaseClass::enableKVPrefix>(runParam, this->constInfo);
+            if (s1NoNeedCalc || s2NoNeedCalc) {
+                continue;
+            }
+
+            s2LoopLimit = CeilDiv(runParam.s2LineEndIdx - runParam.s2LineStartIdx, this->s2BaseSize) - 1;
+        }
+        ProcessS2Loop(runParam, runInfo, s2LoopLimit, multiCoreInnerIdx, taskId, notLastThreeLoop, notLastTwoLoop, notLast);
     }
 }
 
@@ -264,7 +467,11 @@ __aicore__ inline void FlashAttentionNoQuantKernelInfer<CubeBlockType, VecBlockT
     if (this->sharedParams.needInit) {
         SyncAll<false>();
     }
-    ProcessMainLoop();
+    if constexpr (enableS1OutSplit) {
+        ProcessS1OutSplitLoop();
+    } else {
+        ProcessMainLoop();
+    }
     if constexpr (isFd) {
         if ASCEND_IS_AIV {
             SyncAll();

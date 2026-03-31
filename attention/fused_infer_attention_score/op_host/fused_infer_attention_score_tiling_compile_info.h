@@ -23,6 +23,7 @@ namespace optiling {
 struct FusedInferAttentionScoreCompileInfo {
     uint32_t aivNum;
     uint32_t aicNum;
+    uint64_t l2Size;
     uint64_t ubSize;
     uint64_t l1Size;
     uint64_t l0CSize;

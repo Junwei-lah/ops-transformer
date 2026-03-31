@@ -269,6 +269,7 @@ protected:
     void UpdateTilingKeyPFAMask(PromptFlashAttentionTilingDataV2& tilingData, ge::DataType inputDataType);
     void UpdateTilingKeyPFAMatMulType(PromptFlashAttentionTilingDataV2& tilingData, ge::DataType inputDataType);
     void UpdateTilingKeyEnableKVPrefix();
+    void UpdateTilingKeySplitCoreMode();
 
 public:
     uint8_t inOutLayoutType = 0;
@@ -283,6 +284,7 @@ public:
     uint8_t PFAMask = 0;
     uint8_t pFAMatMulType = 0;
     bool enableKVPrefix = false;
+    bool enableS1OutSplit = false;
   
 protected:
     ContextParamsForPFATiling* contextKeyParamsPtr = nullptr;
