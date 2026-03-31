@@ -653,7 +653,7 @@ auto DecodeDevice(Ts&... args) -> at::Device
         static auto getWorkspaceSizeFunc = ConvertToOpApiFunc(converted_params, getWorkspaceSizeFuncAddr);  \
         auto workspace_status = call(getWorkspaceSizeFunc, converted_params);                               \
         TORCH_CHECK(workspace_status == 0, "call " #aclnn_api " failed, detail:", aclGetRecentErrMsg());    \
-        at::Tensor workspace_tensor = nullptr;                                                              \
+        at::Tensor workspace_tensor;                                                                        \
         void *workspace_addr = nullptr;                                                                     \
         if (workspace_size != 0) {                                                                          \
             at::TensorOptions options = at::TensorOptions(torch_npu::utils::get_npu_device_type());         \
