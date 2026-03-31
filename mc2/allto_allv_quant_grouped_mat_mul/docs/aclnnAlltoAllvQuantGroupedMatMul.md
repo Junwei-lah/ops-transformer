@@ -82,266 +82,297 @@ aclnnStatus aclnnAlltoAllvQuantGroupedMatMul(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
+    <table style="undefined;table-layout: fixed; width: 1567px"><colgroup>
+    <col style="width: 170px">
     <col style="width: 120px">
-    <col style="width: 120px">
-    <col style="width: 160px">
-    <col style="width: 150px">
-    <col style="width: 80px">
+    <col style="width: 300px">
+    <col style="width: 330px">
+    <col style="width: 212px">
+    <col style="width: 100px">
+    <col style="width: 190px">
+    <col style="width: 145px">
     </colgroup>
     <thead>
     <tr>
-    <th>参数名</th>
-    <th>输入/输出</th>
-    <th>描述</th>
-    <th>数据类型</th>
-    <th>数据格式</th>
-    <th>维度(shape)</th>
-    <th>非连续Tensor</th>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度(shape)</th>
+        <th>非连续Tensor</th>
     </tr></thead>
     <tbody>
     <tr>
-    <td>gmmX</td>
-    <td>输入</td>
-    <td>该输入进行AlltoAllv通信后结果作为GroupedMatMul计算的左矩阵。</td>
-    <td>HIFLOAT8</td>
-    <td>ND</td>
-    <td>支持2维，shape为(BSK, H1)。</td>
-    <td>x</td>
+        <td>gmmX</td>
+        <td>输入</td>
+        <td>该输入进行AlltoAllv通信后结果作为GroupedMatMul计算的左矩阵。</td>
+        <td>当前版本仅支持2维输入，shape为(BSK, H1)，且仅支持不转置场景。</td>
+        <td>HIFLOAT8</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>gmmWeight</td>
-    <td>输入</td>
-    <td>GroupedMatMul计算的右矩阵。</td>
-    <td>与gmmX保持一致</td>
-    <td>ND</td>
-    <td>支持3维，shape为(e, H1, N1)。</td>
-    <td>√（仅适用转置场景）</td>
+        <td>gmmWeight</td>
+        <td>输入</td>
+        <td>GroupedMatMul计算的右矩阵。</td>
+        <td>当前版本仅支持3维输入，shape为(e, H1, N1)，支持转置/不转置场景。</td>
+        <td>HIFLOAT8</td>
+        <td>ND</td>
+        <td>3</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>gmmXScale</td>
-    <td>输入</td>
-    <td>gmmX的量化系数。</td>
-    <td>FLOAT32</td>
-    <td>ND</td>
-    <td>pertensor量化场景支持1维，shape为(1)。</td>
-    <td>x</td>
+        <td>gmmXScale</td>
+        <td>输入</td>
+        <td>gmmX的量化系数。</td>
+        <td>pertensor量化场景支持一维，shape为(1)。</td>
+        <td>FLOAT32</td>
+        <td>ND</td>
+        <td>1</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>gmmWeightScale</td>
-    <td>输入</td>
-    <td>gmmWeight的量化系数。</td>
-    <td>FLOAT32</td>
-    <td>ND</td>
-    <td>pertensor量化场景支持1维，shape为(1)。</td>
-    <td>√（仅适用转置场景）</td>
+        <td>gmmWeightScale</td>
+        <td>输入</td>
+        <td>gmmWeight的量化系数。</td>
+        <td>pertensor量化场景支持一维，shape为(1)。</td>
+        <td>FLOAT32</td>
+        <td>ND</td>
+        <td>1</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>sendCountsTensorOptional</td>
-    <td>输入</td>
-    <td>预留参数，当前版本仅支持传nullptr。</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>sendCountsTensorOptional</td>
+        <td>输入</td>
+        <td>预留参数，当前版本仅支持传nullptr。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>recvCountsTensorOptional</td>
-    <td>输入</td>
-    <td>预留参数，当前版本仅支持传nullptr。</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>recvCountsTensorOptional</td>
+        <td>输入</td>
+        <td>预留参数，当前版本仅支持传nullptr。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>mmXOptional</td>
-    <td>输入</td>
-    <td>可选输入，共享专家MatMul计算中的左矩阵，需与mmWeightOptional同时传入或同为nullptr。</td>
-    <td>与gmmX保持一致</td>
-    <td>ND</td>
-    <td>支持2维，shape为(BS, H2)。</td>
-    <td>x</td>
+        <td>mmXOptional</td>
+        <td>输入</td>
+        <td>可选输入，共享专家MatMul计算中的左矩阵。</td>
+        <td><ul><li>支持2维，shape为(BS, H2)。</li><li>需与mmWeightOptional同时传入或同为nullptr。</li></ul></td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>mmWeightOptional</td>
-    <td>输入</td>
-    <td>可选输入，共享专家MatMul计算中的右矩阵，需与mmXOptional同时传入或同为nullptr。</td>
-    <td>与mmX保持一致</td>
-    <td>ND</td>
-    <td>支持2维，shape为(H2, N2)。</td>
-    <td>√（仅适用转置场景）</td>
+        <td>mmWeightOptional</td>
+        <td>输入</td>
+        <td>可选输入，共享专家MatMul计算中的右矩阵。</td>
+        <td><ul><li>支持2维，shape为(H2, N2)。</li><li>需与mmXOptional同时传入或同为nullptr。</li></ul></td>
+        <td>与gmmWeight保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>mmXScaleOptional</td>
-    <td>输入</td>
-    <td>mmX的量化系数。</td>
-    <td>FLOAT32</td>
-    <td>ND</td>
-    <td>pertensor量化场景支持1维，shape为(1)。</td>
-    <td>x</td>
+        <td>mmXScaleOptional</td>
+        <td>输入</td>
+        <td>可选输入，mmX的量化系数。</td>
+        <td><ul><li>pertensor量化场景支持1维，shape为(1)。</li><li>需与mmXOptional同时传入或同为nullptr。</li></ul></td>
+        <td>FLOAT32</td>
+        <td>ND</td>
+        <td>1</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>mmWeightScaleOptional</td>
-    <td>输入</td>
-    <td>mmWeight的量化系数。</td>
-    <td>FLOAT32</td>
-    <td>ND</td>
-    <td>pertensor量化场景支持1维，shape为(1)。</td>
-    <td>√（仅适用转置场景）</td>
+        <td>mmWeightScaleOptional</td>
+        <td>输入</td>
+        <td>可选输入，mmWeight的量化系数。</td>
+        <td><ul><li>pertensor量化场景支持1维，shape为(1)。</li><li>需与mmXOptional同时传入或同为nullptr。</li></ul></td>
+        <td>FLOAT32</td>
+        <td>ND</td>
+        <td>1</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>gmmXQuantMode</td>
-    <td>输入</td>
-    <td>gmmX的量化模式，当前版本仅支持1。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>gmmXQuantMode</td>
+        <td>输入</td>
+        <td>gmmX的量化模式。</td>
+        <td>当前版本仅支持1(pertensor场景)。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>gmmWeightQuantMode</td>
-    <td>输入</td>
-    <td>gmmWeight的量化模式，当前版本仅支持1。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>gmmWeightQuantMode</td>
+        <td>输入</td>
+        <td>gmmWeight的量化模式。</td>
+        <td>当前版本仅支持1(pertensor场景)。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>mmXQuantMode</td>
-    <td>输入</td>
-    <td>mmX的量化模式，当前版本仅支持1。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>mmXQuantMode</td>
+        <td>输入</td>
+        <td>mmX的量化模式。</td>
+        <td>当前版本仅支持1(pertensor场景)。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>mmWeightQuantMode</td>
-    <td>输入</td>
-    <td>mmWeight的量化模式，当前版本仅支持1。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>mmWeightQuantMode</td>
+        <td>输入</td>
+        <td>mmWeight的量化模式。</td>
+        <td>当前版本仅支持1(pertensor场景)。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>group</td>
-    <td>输入</td>
-    <td>专家并行的通信域名，字符串长度要求(0, 128)。</td>
-    <td>STRING</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>group</td>
+        <td>输入</td>
+        <td>专家并行的通信域名，字符串长度要求(0, 128)。</td>
+        <td>通过Hccl提供的接口“extern HcclResult HcclGetCommName(HcclComm comm, char* commName);”获取，其中commName即为group。</td>
+        <td>STRING</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>epWorldSize</td>
-    <td>输入</td>
-    <td>ep通信域大小：<term>Ascend 950PR/Ascend 950DT</term>支持2、4、8、16、32、64、128、256。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>epWorldSize</td>
+        <td>输入</td>
+        <td>ep通信域大小。</td>
+        <td><term>Ascend 950PR/Ascend 950DT</term>支持2、4、8、16、32、64、128、256。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>sendCounts</td>
-    <td>输入</td>
-    <td>表示发送给其他卡的token数，数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
-    <td>aclIntArray*（元素类型INT64）</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>sendCounts</td>
+        <td>输入</td>
+        <td>表示发送给其他卡的token数。</td>
+        <td>数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
+        <td>aclIntArray*（元素类型INT64）</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>recvCounts</td>
-    <td>输入</td>
-    <td>表示接收其他卡的token数，数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
-    <td>aclIntArray*（元素类型INT64）</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>recvCounts</td>
+        <td>输入</td>
+        <td>表示接收其他卡的token数。</td>
+        <td>数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
+        <td>aclIntArray*（元素类型INT64）</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>transGmmWeight</td>
-    <td>输入</td>
-    <td>GroupedMatMul的右矩阵是否需要转置，true表示需要转置，false表示不转置。</td>
-    <td>BOOL</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>transGmmWeight</td>
+        <td>输入</td>
+        <td>GroupedMatMul的右矩阵是否需要转置。</td>
+        <td>true表示需要转置，false表示不转置。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>transMmWeight</td>
-    <td>输入</td>
-    <td>共享专家MatMul的右矩阵是否需要转置，true表示需要转置，false表示不转置。</td>
-    <td>BOOL</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>transMmWeight</td>
+        <td>输入</td>
+        <td>共享专家MatMul的右矩阵是否需要转置。</td>
+        <td>true表示需要转置，false表示不转置。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>groupSize</td>
-    <td>输入</td>
-    <td>当前版本不支持，传nullptr。</td>
-    <td>INT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>groupSize</td>
+        <td>输入</td>
+        <td>用于表示量化中gmmXScale/gmmWeightScale/mmXScale/mmWeightScale输入的一个数在其所在的对应维度方向上可以用于该方向gmmX/gmmWeight/mmX/mmWeight输入的多少个数的量化。</td>
+        <td>groupSize输入由3个方向的groupSizeM、groupSizeN、groupSizeK三个值拼接组成，每个值占16位，计算公式为groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>permuteOutFlag</td>
-    <td>输入</td>
-    <td>permuteOutOptional是否需要输出，true表明需要输出，false表明不需要输出。</td>
-    <td>BOOL</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>permuteOutFlag</td>
+        <td>输入</td>
+        <td>permuteOutOptional是否需要输出。</td>
+        <td>true表明需要输出，false表明不需要输出。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>gmmY</td>
-    <td>输出</td>
-    <td>路由专家计算的输出。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
-    <td>支持2维，shape为(A, N1)。</td>
-    <td>x</td>
+        <td>gmmY</td>
+        <td>输出</td>
+        <td>路由专家计算的输出。</td>
+        <td>支持2维，shape为(A, N1)。</td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>mmYOptional</td>
-    <td>输出</td>
-    <td>共享专家计算的输出，数据类型与gmmY保持一致，仅当传入mmXOptional与mmWeightOptional才输出。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
-    <td>支持2维，shape为(BS, N2)。</td>
-    <td>x</td>
+        <td>mmYOptional</td>
+        <td>输出</td>
+        <td>共享专家计算的输出。</td>
+        <td>支持2维，shape为(BS, N2)，仅当传入mmXOptional与mmWeightOptional才输出。</td>
+        <td>与gmmY保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>permuteOutOptional</td>
-    <td>输出</td>
-    <td>permute之后的输出，数据类型与gmmX保持一致，仅当permuteOutFlag为true时输出。</td>
-    <td>HIFLOAT8</td>
-    <td>ND</td>
-    <td>支持2维，shape为(A, H1)。</td>
-    <td>x</td>
+        <td>permuteOutOptional</td>
+        <td>输出</td>
+        <td>permute之后的输出。</td>
+        <td>支持2维，shape为(A, H1)，仅当permuteOutFlag为true时输出。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
-    <td>输出</td>
-    <td>返回需要在Device侧申请的workspace大小。</td>
-    <td>UINT64</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>workspaceSize</td>
+        <td>输出</td>
+        <td>返回需要在Device侧申请的workspace大小。</td>
+        <td>-</td>
+        <td>UINT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>executor</td>
-    <td>输出</td>
-    <td>返回op执行器，包含了算子的计算流程。</td>
-    <td>aclOpExecutor*</td>
-    <td>-</td>
-    <td>-</td>
-    <td>-</td>
+        <td>executor</td>
+        <td>输出</td>
+        <td>返回op执行器，包含了算子的计算流程。</td>
+        <td>-</td>
+        <td>aclOpExecutor*</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     </tbody></table>
 
@@ -441,7 +472,13 @@ aclnnStatus aclnnAlltoAllvQuantGroupedMatMul(
   - K：表示选取TopK个专家，K的范围[2, 8]。
   - A：本卡收到的token数，是recvCounts参数累加之和。
   - ep通信域内所有卡的 A 参数的累加和等于所有卡上的 BSK 参数的累加和。
-
+  - groupSize: 
+    - 仅当gmmXScale/gmmWeightScale/mmXScale/mmWeightScale输入都是2维及以上数据时，groupSize取值有效，其他场景需传入0。
+    - groupSize值支持公式推导：传入的groupSize内部会按如下公式分解得到groupSizeM、groupSizeN、groupSizeK，当其中有1个或多个为0，会根据gmmX/gmmWeight/mmX/mmWeight/gmmXScale/gmmWeightScale/mmXScale/mmWeightScale输入shape重新设置groupSizeM、groupSizeN、groupSizeK用于计算。设置原理：如果groupSizeM=0，表示m方向量化分组值由接口推导，推导公式为groupSizeM = m / scaleM（需保证m能被scaleM整除），其中m与gmmX/mmX shape中的m一致，scaleM与gmmXScale/mmXScale shape中的m一致；如果groupSizeK=0，表示k方向量化分组值由接口推导，推导公式为groupSizeK = k / scaleK（需保证k能被scaleK整除），其中k与gmmX/mmX shape中的k一致，scaleK与gmmXScale/mmXScale shape中的k一致；如果groupSizeN=0，表示n方向量化分组值由接口推导，推导公式为groupSizeN = n / scaleN（需保证n能被scaleN整除），其中n与gmmWeight/mmWeight shape中的n一致，scaleN与gmmWeightScale/mmWeightScale shape中的n一致。
+    $$
+    groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32
+    $$
+    - 如果满足重新设置条件，当gmmXScale/gmmWeightScale/mmXScale/mmWeightScale输入都是3维，且数据类型都为FLOAT8_E8M0时，[groupSizeM，groupSizeN，groupSizeK]取值组合会推导为[1, 1, 32]，对应groupSize的值为4295032864。
 - 量化参数约束：
   - 当前版本仅支持pertensor量化。
 

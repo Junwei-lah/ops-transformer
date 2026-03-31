@@ -68,147 +68,207 @@ aclnnStatus aclnnAlltoAllvGroupedMatMul(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1010px"><colgroup>
-    <col style="width: 185px">
-    <col style="width: 111px">
-    <col style="width: 429px">
-    <col style="width: 160px">
-    <col style="width: 125px">
+    <table style="undefined;table-layout: fixed; width: 1567px"><colgroup>
+    <col style="width: 170px">
+    <col style="width: 120px">
+    <col style="width: 300px">
+    <col style="width: 330px">
+    <col style="width: 212px">
+    <col style="width: 100px">
+    <col style="width: 190px">
+    <col style="width: 145px">
     </colgroup>
     <thead>
     <tr>
-    <th>参数名</th>
-    <th>输入/输出</th>
-    <th>描述</th>
-    <th>数据类型</th>
-    <th>数据格式</th>
+        <th>参数名</th>
+        <th>输入/输出</th>
+        <th>描述</th>
+        <th>使用说明</th>
+        <th>数据类型</th>
+        <th>数据格式</th>
+        <th>维度(shape)</th>
+        <th>非连续Tensor</th>
     </tr></thead>
     <tbody>
     <tr>
-    <td>gmmX</td>
-    <td>输入</td>
-    <td>该输入进行AlltoAllv通信与Permute操作后结果作为GroupedMatMul计算的左矩阵，支持2维，shape为(BSK, H1)。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>gmmX</td>
+        <td>输入</td>
+        <td>该输入进行AlltoAllv通信与Permute操作后结果作为GroupedMatMul计算的左矩阵。</td>
+        <td>支持2维，shape为(BSK, H1)。</td>
+        <td>FLOAT16、BFLOAT16</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>gmmWeight</td>
-    <td>输入</td>
-    <td>GroupedMatMul计算的右矩阵，数据类型与gmmX保持一致，支持3维，shape为(e, H1, N1)。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>gmmWeight</td>
+        <td>输入</td>
+        <td>GroupedMatMul计算的右矩阵。</td>
+        <td>支持3维，shape为(e, H1, N1)。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>3</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>sendCountsTensorOptional</td>
-    <td>输入</td>
-    <td>可选输入，shape为(e * epWorldSize,)，当前版本暂不支持，传nullptr。</td>
-    <td>INT32、INT64</td>
-    <td>ND</td>
+        <td>sendCountsTensorOptional</td>
+        <td>输入</td>
+        <td>预留参数，当前版本仅支持传nullptr。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>recvCountsTensorOptional</td>
-    <td>输入</td>
-    <td>可选输入，shape为(e * epWorldSize,)，当前版本暂不支持，传nullptr。</td>
-    <td>INT32、INT64</td>
-    <td>ND</td>
+        <td>recvCountsTensorOptional</td>
+        <td>输入</td>
+        <td>预留参数，当前版本仅支持传nullptr。</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>mmXOptional</td>
-    <td>输入</td>
-    <td>可选输入，共享专家MatMul计算中的左矩阵，需与mmWeightOptional同时传入或同为nullptr，数据类型与gmmX保持一致，支持2维，shape为(BS, H2)。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>mmXOptional</td>
+        <td>输入</td>
+        <td>可选输入，共享专家MatMul计算中的左矩阵。</td>
+        <td>支持2维，shape为(BS, H2)，需与mmWeightOptional同时传入或同为nullptr。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>mmWeightOptional</td>
-    <td>输入</td>
-    <td>可选输入，共享专家MatMul计算中的右矩阵，需与mmXOptional同时传入或同为nullptr，数据类型与gmmX保持一致，支持2维，shape为(H2, N2)。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>mmWeightOptional</td>
+        <td>输入</td>
+        <td>可选输入，共享专家MatMul计算中的右矩阵。</td>
+        <td>支持2维，shape为(H2, N2)，需与mmXOptional同时传入或同为nullptr。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>√（仅适用转置场景）</td>
     </tr>
     <tr>
-    <td>group</td>
-    <td>输入</td>
-    <td>专家并行的通信域名，字符串长度要求(0, 128)。</td>
-    <td>STRING</td>
-    <td>ND</td>
+        <td>group</td>
+        <td>输入</td>
+        <td>专家并行的通信域名，字符串长度要求(0, 128)。</td>
+        <td>通过Hccl提供的接口“extern HcclResult HcclGetCommName(HcclComm comm, char* commName);”获取，其中commName即为group。</td>
+        <td>STRING</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>epWorldSize</td>
-    <td>输入</td>
-    <td>ep通信域size：<br><term>Atlas A3系列产品</term>支持8、16、32、64、128；<br><term>Ascend 950PR/Ascend 950DT</term>支持2、4、8、16、32、64。</td>
-    <td>INT64</td>
-    <td>ND</td>
+        <td>epWorldSize</td>
+        <td>输入</td>
+        <td>ep通信域的大小。</td>
+        <td><br><term>Atlas A3系列产品</term>支持8、16、32、64、128；<br><term>Ascend 950PR/Ascend 950DT</term>支持2、4、8、16、32、64。</td>
+        <td>INT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>sendCounts</td>
-    <td>输入</td>
-    <td>表示发送给其他卡的token数，数据类型支持INT64，list大小为e * epWorldSize，最大为256。输入类型需为list。</td>
-    <td>aclIntArray*（元素类型INT64）</td>
-    <td>ND</td>
+        <td>sendCounts</td>
+        <td>输入</td>
+        <td>表示发送给其他卡的token数。</td>
+        <td>数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
+        <td>aclIntArray*（元素类型INT64）</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>recvCounts</td>
-    <td>输入</td>
-    <td>表示接收其他卡的token数，数据类型支持INT64，list大小为e * epWorldSize，最大为256。输入类型需为list。</td>
-    <td>aclIntArray*（元素类型INT64）</td>
-    <td>ND</td>
+        <td>recvCounts</td>
+        <td>输入</td>
+        <td>表示接收其他卡的token数。</td>
+        <td>数据类型支持INT64，长度为e * epWorldSize，最大为256。输入类型需为list。</td>
+        <td>aclIntArray*（元素类型INT64）</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>transGmmWeight</td>
-    <td>输入</td>
-    <td>GroupedMatMul的右矩阵是否需要转置，true表示需要转置，false表示不转置。</td>
-    <td>BOOL</td>
-    <td>ND</td>
+        <td>transGmmWeight</td>
+        <td>输入</td>
+        <td>GroupedMatMul的右矩阵是否需要转置。</td>
+        <td>true表示需要转置，false表示不转置。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>transMmWeight</td>
-    <td>输入</td>
-    <td>共享专家MatMul的右矩阵是否需要转置，true表示需要转置，false表示不转置。</td>
-    <td>BOOL</td>
-    <td>ND</td>
+        <td>transMmWeight</td>
+        <td>输入</td>
+        <td>共享专家MatMul的右矩阵是否需要转置。</td>
+        <td>true表示需要转置，false表示不转置。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>permuteOutFlag</td>
-    <td>输入</td>
-    <td>permuteOutOptional是否需要输出，true表明需要输出，false表明不需要输出。</td>
-    <td>BOOL</td>
-    <td>ND</td>
+        <td>permuteOutFlag</td>
+        <td>输入</td>
+        <td>permuteOutOptional是否需要输出。</td>
+        <td>true表明需要输出，false表明不需要输出。</td>
+        <td>BOOL</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>gmmY</td>
-    <td>输出</td>
-    <td>最终的计算结果，数据类型与输入gmmX保持一致，支持2维，shape为(A, N1)。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>gmmY</td>
+        <td>输出</td>
+        <td>路由专家计算的输出。</td>
+        <td>支持2维，shape为(A, N1)。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>mmYOptional</td>
-    <td>输出</td>
-    <td>共享专家MatMul的输出，数据类型与mmXOptional保持一致，支持2维，shape为(BS, N2)，仅当传入mmXOptional与mmWeightOptional才输出。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>mmYOptional</td>
+        <td>输出</td>
+        <td>共享专家计算的输出。</td>
+        <td>支持2维，shape为(BS, N2)，仅当传入mmXOptional与mmWeightOptional才输出。</td>
+        <td>与mmXOptional保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>permuteOutOptional</td>
-    <td>输出</td>
-    <td>permute之后的输出，数据类型与gmmX保持一致，仅当permuteOutFlag为true时输出。</td>
-    <td>FLOAT16、BFLOAT16</td>
-    <td>ND</td>
+        <td>permuteOutOptional</td>
+        <td>输出</td>
+        <td>permute之后的输出。</td>
+        <td>支持2维，shape为(A, H1)，仅当permuteOutFlag为true时输出。</td>
+        <td>与gmmX保持一致</td>
+        <td>ND</td>
+        <td>2</td>
+        <td>x</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
-    <td>输出</td>
-    <td>返回需要在Device侧申请的workspace大小。</td>
-    <td>UINT64</td>
-    <td>ND</td>
+        <td>workspaceSize</td>
+        <td>输出</td>
+        <td>返回需要在Device侧申请的workspace大小。</td>
+        <td>-</td>
+        <td>UINT64</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
-    <td>executor</td>
-    <td>输出</td>
-    <td>返回op执行器，包含了算子的计算流程。</td>
-    <td>aclOpExecutor*</td>
-    <td>ND</td>
+        <td>executor</td>
+        <td>输出</td>
+        <td>返回op执行器，包含了算子的计算流程。</td>
+        <td>-</td>
+        <td>aclOpExecutor*</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     </tbody></table>
 

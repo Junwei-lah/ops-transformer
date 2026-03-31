@@ -185,6 +185,14 @@ ge::graphStatus AlltoAllvTTQuantGmmTiling::CheckQuantMode() const
                 mmWeightQuantMode), return ge::GRAPH_FAILED);
         return ge::GRAPH_SUCCESS;
     }
+    // check group size
+    auto groupSizePtr = context_->GetAttrs()->GetAttrPointer<int64_t>(ATTR_GROUP_SIZE_INDEX);
+    OP_TILING_CHECK(groupSizePtr == nullptr, OP_LOGE(context_->GetNodeName(), "The groupSize can not be null."),
+        return ge::GRAPH_FAILED);
+    uint64_t groupSize = *groupSizePtr;
+    OP_TILING_CHECK(groupSize != 0,
+        OP_LOGE(context_->GetNodeName(), "When pertensor quant mode, the groupSize should be 0, "
+        "but actual is %lu.", groupSize), return ge::GRAPH_FAILED);
     OP_LOGD(context_->GetNodeName(), "end CheckQuantMode.");
     return ge::GRAPH_SUCCESS;
 }
