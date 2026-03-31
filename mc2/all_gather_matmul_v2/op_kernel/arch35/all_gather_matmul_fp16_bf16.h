@@ -121,8 +121,6 @@ __aicore__ inline void AllGatherMatmulFP16BF16<AType, BType, BiasType, CType>::S
         uint32_t tailM = tilingData_->mc2MmV3TailTilingData.tCubeTiling.M / (cfg.rankDim - 1);
         // 当x2为空tensor时只做通信
         if (cfg.rankN == 0) {
-            tileCnt = 1;
-            tailCnt = 0;
             tilingka = cfg.rankK;
         }
         uint64_t tileSendCount = static_cast<uint64_t>(tilingM) * static_cast<uint64_t>(tilingka);
