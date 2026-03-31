@@ -1975,7 +1975,13 @@ ge::graphStatus GMMTiling::A8W4Tiling(gert::TilingContext* context, const GMMCom
         matmul_tiling::MultiCoreMatmulTiling mm(platformInfo);
 
         const bool isPerchannel = quantGroupNum == 1U;
-        const bool isMSD = tuningConfig == 0L || avg_m == 0U || n / avg_m > 4U || withOffset == true;
+        auto biasPtr = context->GetDynamicInputTensor(BIAS_INDEX, 0);
+        const bool isMSD = (tuningConfig == 0L || avg_m == 0U || n / avg_m > 4U || withOffset == true) &&
+                    !(biasPtr == nullptr || biasPtr->GetStorageShape().GetShapeSize() == 0);
+        if (withOffset && !isMSD) {
+            OP_LOGW(context->GetNodeName(), "GMM W4A8: with-offset mode requires "
+                "non-empty bias, but got an empty tensor.");
+        }
         if (!isMSD) {
             constexpr uint32_t A8W4_BASE_M = 128;
             constexpr uint32_t A8W4_BASE_K = 64;
