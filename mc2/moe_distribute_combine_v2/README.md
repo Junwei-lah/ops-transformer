@@ -328,8 +328,7 @@
     * 不支持常量专家场景，不支持`constExpertNum`、`constExpertAlpha1Optional`、`constExpertAlpha2Optional`和`constExpertVOptional`，使用默认值即可。
     
 - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-    * 不支持`expandScalesOptional`。
-    * 不支持`commAlg`。
+    * 当`commAlg` = "hierarchy"，必须传入`expandScalesOptional`。
 
 ## 约束说明
 
@@ -398,6 +397,9 @@
         - `sharedExpertNum`：当前取值范围[0, 4]。
         - `commQuantMode`：int8量化当且仅当`tpWorldSize` < 2时可使能。
         - `performanceInfoOptional`：预留参数，当前版本不支持，传空指针即可。
+        - `commAlg`：当前支持""，"hierarchy"两种输入方式。
+            - ""：默认值，使能通信域不跨超模板。
+            - "hierarchy": 使能通信域跨超模板。
     - `HCCL_BUFFSIZE`：调用本算子前需检查`HCCL_BUFFSIZE`环境变量取值是否合理，该环境变量表示单个通信域占用内存大小，单位MB，不配置时默认为200MB。要求 >= 2且满足>= 2 * (`localExpertNum` * `maxBs` * `epWorldSize` * Align512(Align32(2 * `H`) + 64) + (`K` + `sharedExpertNum`) * `maxBs` * Align512(2 * `H`))，`localExpertNum`需使用MoE专家卡的本卡专家数，其中Align512(x) = ((x + 512 - 1) / 512) * 512，Align32(x) = ((x + 32 - 1) / 32) * 32。
 
 - <term>Ascend 950PR/Ascend 950DT</term>：
