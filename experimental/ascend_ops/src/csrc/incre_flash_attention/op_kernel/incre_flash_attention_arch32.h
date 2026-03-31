@@ -171,6 +171,7 @@ __sk__ void incre_flash_attention_sk(const SKArgsStruct *args, const sk::SkSyste
 
     INVOKE_IFA_NO_KFC_DD_OP_IMPL_SK(IncreFlashAttentionAttenPreloadDD, bfloat16_t, int8_t, bfloat16_t,
                                     bfloat16_t, true, FLASH_DECODE, static_cast<LAYOUT>(LAYOUT_T), ANTIQUANT_MODE, false, LAYOUT::NZ, AMLAMODE::NORMAL);
+    tPipe.DestroyWithoutPipeAll();
 }
 
 #define FA_SK_BIND(FLASH_DECODE, LAYOUT_T, ANTIQUANT_MODE)                            \

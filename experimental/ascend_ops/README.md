@@ -226,16 +226,11 @@ metadata = torch.ops.custom.npu_fused_infer_attention_score_metadata(
     query_seq_size=query_seq_size,
     query_head_num=query_head_num,
     head_dim=head_dim,
-    key_seq_size=key_seq_size,
     key_head_num=key_head_num,
     block_size=block_size,
     max_block_num_per_batch=max_block_num_per_batch,
-    is_accum_seq_query=False,
-    is_accum_seq_kv=False,
-    actual_seq_lengths_query=torch.tensor([query_seq_size] * batch_size, dtype=torch.int32).npu(),
     actual_seq_lengths_kv=torch.tensor([key_seq_size] * batch_size, dtype=torch.int64).npu(),
     layout_query="BSND",
-    layout_key="BSND"
 )
 
 print(f"✅ 元数据计算完成！Shape: {metadata.shape}")
@@ -289,6 +284,7 @@ python test_aclgraph_sk.py
 | `key_quant_mode` | int | ❌ | Key 量化模式，默认 0 |
 | `value_quant_mode` | int | ❌ | Value 量化模式，默认 0 |
 | `atten_mask` | Tensor | ❌ | 注意力掩码 |
+| `metadata` | Tensor | ❌ | 分核信息，由npu_fused_infer_attention_score_metadata输出 |
 
 **返回值**:
 
@@ -310,6 +306,7 @@ python test_aclgraph_sk.py
 | `key_head_num` | int | ✅ | Key 头数 |
 | `block_size` | int | ✅ | 块大小 |
 | `max_block_num_per_batch` | int | ✅ | 每批次最大块数 |
+| `actaul_seq_lengths_kv` | Tensor | ✅ | Key/Value实际序列长度 |
 | `layout_query` | str | ❌ | Query 布局，默认 "BSND" |
 
 **返回值**:
