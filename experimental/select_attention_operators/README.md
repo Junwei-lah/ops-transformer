@@ -25,7 +25,7 @@ Tested to work with:
 - CANN versions 8.0.RC3.beta1, 8.2.RC2, 8.3.RC1
 - Python 3.11.10
 - torch-npu version 2.4.0, 2.5.1.post1
-- see [requirements.txt](requirements.txt) for all other requiremetns
+- see [requirements.txt](requirements.txt) for all other requirements
 
 ## Creating conda environment
 
@@ -54,7 +54,7 @@ pytest -v experiments
 
 ## Usage 
 
-Current best practise (proved at vllm-ascend) is to use `quest_prefill_metadata()` kernel for the creation of the metadata (after prefill) and every 128 tokens to update the metadata, and to use `quest_block_select_paged_in_out_w()` to predict important KV block indices given the current query vector of the token being decoded. For detailed usage examples refer to [experiments](experiments) directory.
+Current best practise (proven at vllm-ascend) is to use `quest_prefill_metadata()` kernel for the creation of the metadata (after prefill) and every 128 tokens to update the metadata, and to use `quest_block_select_paged_in_out_w()` to predict important KV block indices given the current query vector of the token being decoded. For detailed usage examples refer to [experiments](experiments) directory.
 
 The kernels are deployed with a very neat built in documentation:
 
@@ -85,7 +85,7 @@ quest_block_select_paged_in_out_w(...) method of builtins.PyCapsule instance
     
     FEATURE 2) "w" 2 stands for "window" i.e. the kernel decides whether to add local 
     window blocks ids to the selected indices based on the number of tokens 
-    since the last update and based on th esequence length
+    since the last update and based on the sequence length
     
     Args:
         query (torch.Tensor): Query vector of shape [B, H, D] (fp16 or bf16)
@@ -101,9 +101,9 @@ quest_block_select_paged_in_out_w(...) method of builtins.PyCapsule instance
                                             shape [B, MMBPR] (int32)
         seq_lens (torch.Tensor): Sequence length of each request in the batch
                             of shape [B] (int32)
-        tokens_since_metadata_update (int) - number of tokens that were decoeded 
+        tokens_since_metadata_update (int) - number of tokens that were decoded 
                             since the last metadata update (note metadata update is 
-                            done only on the multiple of BLOCK_SIZE tokens whcih is 
+                            done only on the multiple of BLOCK_SIZE tokens which is 
                             lower or equal to the sequence length at the moment of update)
                             set to -1 to disable selection of KV blocks for which the 
                             metadata doesn't exist.
@@ -127,7 +127,7 @@ quest_block_select_paged_in_out_w(...) method of builtins.PyCapsule instance
 ## Development Workflow for a new kernel "OP"
 
 1. Add new kernel implementations in the `kernels/` directory in one of 2 ways:
-   1) under an existing python package e.g. `kernels/select_attn_ops/`. Then add your kernel code as new OP.cpp, add a compilation line to compile.sh, add a torch interface inside troch_interface.cpp
+   1) under an existing python package e.g. `kernels/select_attn_ops/`. Then add your kernel code as new OP.cpp, add a compilation line to compile.sh, add a torch interface inside torch_interface.cpp
    2) as a new python package: `kernels/OP/`, with a OP.cpp kernel implementation; torch_interface.cpp, compile.sh, build.sh in it.
 2. Create a dedicated experiment directory `experiments/5_OP` and implement in it the following programs:
     - *ref_OP.py* - start off by implementing a reference python model for correctness.

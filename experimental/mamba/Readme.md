@@ -32,7 +32,7 @@ experimental/
 
 ```
 
-其中mamba2_chunk_xxx 四个算子为 Prefill 过程中 Chunk 计算的核心实现模块。。
+其中mamba2_chunk_xxx 四个算子为 Prefill 过程中 Chunk 计算的核心实现模块。
 
 每个算子子目录包含：
     - 算子实现 (op/op_kernel/)
