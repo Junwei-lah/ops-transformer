@@ -67,3 +67,27 @@
 - `oriNRange` 是否走 64 分支，取决于 **每个 s2 tile 的 `runInfo.s2RealSize`**。
 - 在常见 tiling（`s2BaseSize=128/256`）下，`S2=2432` 往往对应 `s2RealSize` 为 128 或 256（尾块可能 128），通常不会进入 `Impl64VF`。
 - 若你观测到确实进入 `Impl64VF`，一般意味着该轮 tile 的 `s2RealSize<=64`（比如特殊切分/尾块/稀疏裁剪后）。
+
+## 你要的“128 分支”分析（`oriNRange == EQ_128`）
+
+### 1) 分支选择条件
+- `ProcessVec1Nd` 中，当 `runInfo.s2RealSize == 128` 时，调用 `ProcessVec1Vf<..., EQ_128, ...>`。
+- 在 `ProcessVec1Update` 里，`EQ_128` 会落到 `ProcessVec1UpdateImpl128`（不是 Impl64）。
+
+### 2) `ProcessVec1UpdateImpl128VF` 的数据组织
+- 128 列被拆成两个 64 向量块：
+  - 前 64：`srcUb + i * s2BaseSize`
+  - 后 64：`srcUb + floatRepSize + i * s2BaseSize`
+- mask 也对应双路：`maskUb` + `maskUbUnroll`。
+
+### 3) mask 在 128 分支里的关键执行点
+- 每行 i：先完成 scale/pse，再加载两路 mask predicate（`preg_compare` 和 `preg_compare_unroll`）。
+- 两路分别执行：
+  - `Select(vreg_sel, vreg_min, vreg_input_x, preg_compare)`
+  - `Select(vreg_sel_unroll, vreg_min, vreg_input_x_unroll, preg_compare_unroll)`
+- 再回写两路 `srcUb`，并以 `Max + ReduceMax` 计算该行新 max。
+- 语义与 64 分支一致：被 mask 的元素替换为 `minValue`，后续 softmax 贡献趋近 0。
+
+### 4) 为什么你这个 case 更像走 128 分支
+- 对 `S2=2432`，常见切分下每轮 `s2RealSize` 常出现 128（尤其 `s2BaseSize=128` 时全是 128；`s2BaseSize=256` 时尾块常为 128）。
+- 所以相较 Impl64，`EQ_128 -> ProcessVec1UpdateImpl128VF` 更可能是主路径。
