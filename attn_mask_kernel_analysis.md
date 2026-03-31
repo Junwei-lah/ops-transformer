@@ -37,3 +37,33 @@
   1) host 下发的 `sparseMode` 与 `sparseType` 是否为 causal；
   2) `attenMaskInfo.compressMode` 与 mask shape 是否匹配；
   3) `AttenMaskCopyIn` 后 UB 内容与 `Select(minValue, x, preg_compare)` 对应关系。
+
+
+## 更正：oriNRange 不是 D（hidden dim）
+- 你给的输入是 `BNSD=[8,8,2432,64]`，其中 `D=64` 是 head_dim。
+- 但在这条实现里，`oriNRange`/`originN` 对应的是 softmax 最后一维的 **N 方向列数**（即本轮 `s2RealSize`），不是 `D`。
+- 代码证据：`ProcessVec1Nd` 调 `ProcessVec1Vf` 时把 `runInfo.s2RealSize` 作为 `originN` 传入。随后 `ProcessVec1Update` 依据 `oriNRange` 选择 `Impl64/Impl128/...` 分支。
+- 因此 `D=64` 并不直接等价于 `oriNRange==GT_0_AND_LTE_64`。
+
+## 继续细化：ProcessVec1UpdateImpl64VF 的 mask 行为（按执行顺序）
+1. **入口参数语义**
+   - `pltOriginalN = originN`：真实有效列数（本 tile 的 N）。
+   - `pltSrcN = s2BaseSize`：向量加载/存储按 tile 宽度进行。
+   - `maskUb` 来自 `AttenMaskCopyIn`，每行按 32B 对齐，padding 值为 1（valid）。
+2. **每行 i 的主流程**
+   - 先 `LoadAlign(srcUb + i * s2BaseSize)` 取 bmm1 结果；
+   - 做 `scale/dScaleQK` 与 `pse` 累加；
+   - `hasAtten==1` 时加载 `preg_compare`，执行 `Select(vreg_sel, vreg_min, vreg_input_x, preg_compare)`；
+   - 将 `vreg_sel` 回写到 `srcUb`，再对 `vreg_sel` 做 `ReduceMax`。
+3. **mask 数学效果**
+   - 被 mask 的元素替换为 `minValue`（负极小值），
+   - 后续 `exp(x-max)` 时这部分趋近 0，达到下三角屏蔽效果。
+4. **update 场景的累计逻辑**
+   - 与 `inMaxUb` 比较得到 `vreg_max_new`；
+   - 再基于新 max 计算 `exp` 与 `sum`，用于与历史块做稳定 softmax 累计。
+
+## 对你这个 case（S2=2432, D=64）的直接结论
+- `D=64` 只影响 Q/K matmul 的 K 维，不决定 `oriNRange`。
+- `oriNRange` 是否走 64 分支，取决于 **每个 s2 tile 的 `runInfo.s2RealSize`**。
+- 在常见 tiling（`s2BaseSize=128/256`）下，`S2=2432` 往往对应 `s2RealSize` 为 128 或 256（尾块可能 128），通常不会进入 `Impl64VF`。
+- 若你观测到确实进入 `Impl64VF`，一般意味着该轮 tile 的 `s2RealSize<=64`（比如特殊切分/尾块/稀疏裁剪后）。
