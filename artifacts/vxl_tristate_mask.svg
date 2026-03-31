@@ -1,0 +1,47 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='980' height='520'>
+  <rect width='100%' height='100%' fill='white'/>
+  <text x='490' y='34' text-anchor='middle' font-size='28' font-family='Arial'>V / X / L 三态图（Attention Mask）</text>
+  <text x='490' y='62' text-anchor='middle' font-size='15' font-family='Arial' fill='#444'>V=Valid  X=Causal masked  L=Left padding</text>
+
+  <g transform='translate(180,100)'>
+    <rect x='0' y='0' width='600' height='300' fill='none' stroke='#222' stroke-width='2'/>
+
+    <!-- grid -->
+    <g font-family='Consolas, monospace' font-size='20' text-anchor='middle' dominant-baseline='middle'>
+      <!-- row 0 -->
+      <text x='30'  y='30'>V</text><text x='90'  y='30'>V</text><text x='150' y='30'>V</text><text x='210' y='30'>V</text><text x='270' y='30'>X</text><text x='330' y='30'>X</text><text x='390' y='30'>X</text><text x='450' y='30'>X</text><text x='510' y='30'>X</text><text x='570' y='30'>X</text>
+      <!-- row 1 -->
+      <text x='30'  y='80'>V</text><text x='90'  y='80'>V</text><text x='150' y='80'>V</text><text x='210' y='80'>V</text><text x='270' y='80'>V</text><text x='330' y='80'>X</text><text x='390' y='80'>X</text><text x='450' y='80'>X</text><text x='510' y='80'>X</text><text x='570' y='80'>X</text>
+      <!-- row 2 -->
+      <text x='30'  y='130'>L</text><text x='90'  y='130'>V</text><text x='150' y='130'>V</text><text x='210' y='130'>V</text><text x='270' y='130'>V</text><text x='330' y='130'>V</text><text x='390' y='130'>X</text><text x='450' y='130'>X</text><text x='510' y='130'>X</text><text x='570' y='130'>X</text>
+      <!-- row 3 -->
+      <text x='30'  y='180'>L</text><text x='90'  y='180'>L</text><text x='150' y='180'>V</text><text x='210' y='180'>V</text><text x='270' y='180'>V</text><text x='330' y='180'>V</text><text x='390' y='180'>V</text><text x='450' y='180'>X</text><text x='510' y='180'>X</text><text x='570' y='180'>X</text>
+      <!-- row 4 -->
+      <text x='30'  y='230'>L</text><text x='90'  y='230'>L</text><text x='150' y='230'>L</text><text x='210' y='230'>V</text><text x='270' y='230'>V</text><text x='330' y='230'>V</text><text x='390' y='230'>V</text><text x='450' y='230'>V</text><text x='510' y='230'>X</text><text x='570' y='230'>X</text>
+      <!-- row 5 -->
+      <text x='30'  y='280'>L</text><text x='90'  y='280'>L</text><text x='150' y='280'>L</text><text x='210' y='280'>L</text><text x='270' y='280'>V</text><text x='330' y='280'>V</text><text x='390' y='280'>V</text><text x='450' y='280'>V</text><text x='510' y='280'>V</text><text x='570' y='280'>X</text>
+    </g>
+
+    <!-- row separators -->
+    <g stroke='#ddd'>
+      <line x1='0' y1='50' x2='600' y2='50'/><line x1='0' y1='100' x2='600' y2='100'/>
+      <line x1='0' y1='150' x2='600' y2='150'/><line x1='0' y1='200' x2='600' y2='200'/>
+      <line x1='0' y1='250' x2='600' y2='250'/>
+      <line x1='60' y1='0' x2='60' y2='300'/><line x1='120' y1='0' x2='120' y2='300'/>
+      <line x1='180' y1='0' x2='180' y2='300'/><line x1='240' y1='0' x2='240' y2='300'/>
+      <line x1='300' y1='0' x2='300' y2='300'/><line x1='360' y1='0' x2='360' y2='300'/>
+      <line x1='420' y1='0' x2='420' y2='300'/><line x1='480' y1='0' x2='480' y2='300'/>
+      <line x1='540' y1='0' x2='540' y2='300'/>
+    </g>
+
+    <text x='300' y='340' text-anchor='middle' font-size='16' font-family='Arial'>sInner (KV blocks) →</text>
+    <text x='-70' y='150' text-anchor='middle' font-size='16' font-family='Arial' transform='rotate(-90 -70 150)'>sOuter (Q rows) ↓</text>
+  </g>
+
+  <!-- legend -->
+  <g transform='translate(90,440)' font-family='Arial' font-size='16'>
+    <rect x='0' y='-16' width='18' height='18' fill='#5b8ff9'/><text x='26' y='-2'>V: Valid（参与计算）</text>
+    <rect x='260' y='-16' width='18' height='18' fill='#f5222d'/><text x='286' y='-2'>X: Causal Masked（被裁剪/跳过）</text>
+    <rect x='610' y='-16' width='18' height='18' fill='#bfbfbf'/><text x='636' y='-2'>L: Left Padding（左侧padding）</text>
+  </g>
+</svg>
