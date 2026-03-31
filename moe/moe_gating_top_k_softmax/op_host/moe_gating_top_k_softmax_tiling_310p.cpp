@@ -104,13 +104,6 @@ private:
 
 bool MoeGatingTopKSoftmax310PTiling::IsCapable()
 {
-    const uint32_t perBlockEleNum = 32 / 2;
-    bool flagAlignExperts = (col % perBlockEleNum == 0);
-    if (!flagAlignExperts) {
-        OP_LOGE(context_->GetNodeName(),
-            "expert count (=%u) must be 32 bytes align, please check.", col);
-        return false;
-    }
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context_->GetPlatformInfo());
     auto is310P = (ascendcPlatform.GetSocVersion() == platform_ascendc::SocVersion::ASCEND310P);
     return is310P;
@@ -119,6 +112,13 @@ bool MoeGatingTopKSoftmax310PTiling::IsCapable()
 
 ge::graphStatus MoeGatingTopKSoftmax310PTiling::DoOpTiling()
 {
+    const uint32_t perBlockEleNum = 32 / 2;
+    bool flagAlignExperts = (col % perBlockEleNum == 0);
+    if (!flagAlignExperts) {
+        OP_LOGE(context_->GetNodeName(),
+            "expert count (=%u) must be 32 bytes align, please check.", col);
+        return false;
+    }
     const size_t x_dim_num = 2;
     const size_t expertIdx_dim_num = 2;
     auto x_shape = ge::Shape({row, col});
