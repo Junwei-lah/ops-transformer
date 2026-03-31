@@ -1193,6 +1193,7 @@ __aicore__ inline void MoeDistributeCombineV2<CombineMC2TypeFunc>::Process()
         SetWaitTpStatusAndDisPatch();
         AlltoAllBuffInitAndMaskCal();
         LocalWindowCopy();
+        PipeBarrier<PIPE_ALL>();
     }
 }
 

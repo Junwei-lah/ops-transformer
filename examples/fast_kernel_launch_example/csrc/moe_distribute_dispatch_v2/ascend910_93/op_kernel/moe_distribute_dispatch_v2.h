@@ -1210,6 +1210,7 @@ __aicore__ inline void MoeDistributeDispatchV2<TemplateDispatchV2TypeFunc>::Proc
         WaitDispatch();	 
         LocalWindowCopy();	 
         SetExpertTokenNums(); 
+        PipeBarrier<PIPE_ALL>();
     }
 }
 } // MoeDistributeDispatchV2Impl
