@@ -124,3 +124,42 @@
   1) 打点 `runInfo.s2RealSize` / `oriNRange`，确认分支命中；
   2) 抽样检查 `AttenMaskCopyIn` 后 UB mask 与理论下三角是否一致；
   3) 抽样检查 `Select` 后被屏蔽位是否为 `minValue`，以及 softmax 后接近 0。
+
+## 重点补充：VF 逻辑（核心计算视角）
+
+### 1) VF 在整条流水中的职责
+- 输入：bmm1 的 score tile（`srcUb`），以及 mask/pse/drop 等辅助张量。
+- 输出：
+  - `dstTensor`：写给后续 mm2 的 `P = softmax(mask(score + bias))`（或其量化形态）；
+  - `max/sum`：每行 softmax 统计量，用于跨 s2 分块增量融合。
+- 因而 VF 的本质是“**逐行 masked-softmax + 稳定累计**”。
+
+### 2) VF 的统一计算框架（update 分支）
+对每一行 i（`m = halfS1RealSize`）可概括为：
+1. 读取 score：`x <- srcUb[i, :]`
+2. 缩放与偏置：`x <- scale(x) + pse`
+3. 掩码：`x <- select(minValue, x, mask_pred)`
+4. 行最大值：`row_max_cur <- max(x)`
+5. 与历史块融合最大值：`row_max_new <- max(row_max_cur, inMax[i])`
+6. 指数：`e <- exp(x - row_max_new)`
+7. 行和：`row_sum_cur <- sum(e)`
+8. 写回 `e`（或 cast 后格式）到 `dstTensor`，并把 `row_max_cur/row_sum_cur` 写临时缓冲，供后续累计。
+
+### 3) 64 分支 VF（`ProcessVec1UpdateImpl64VF`）要点
+- 单路向量处理一整行（<=64 有效列，按 `s2BaseSize` 对齐加载）。
+- mask 核心就是一次 `Select(vreg_min, vreg_input_x, preg_compare)`。
+- `preg_ori_src_n` 控制有效列掩码，避免 tail 无效列污染 max/sum。
+
+### 4) 128 分支 VF（`ProcessVec1UpdateImpl128VF`）要点
+- 双路 64 向量并行：前 64 与后 64 分开算，再合并。
+- mask 也双路：`preg_compare` + `preg_compare_unroll`，分别做 `Select`。
+- 行统计先 `Max(lane0, lane1)` 再 `ReduceMax/ReduceSum`，保证与 64 分支语义一致。
+
+### 5) 为什么 VF 能保证 mask 正确性
+- 无效位在 softmax 前被强制为 `minValue`，数学上等价于对这些位置施加 `-inf`。
+- 只要 copy-in 的 predicate 正确（下三角有效域正确），VF 输出的 `P` 就天然满足下三角约束。
+
+### 6) 对该 case 的结论（BNSD=8,8,2432,64）
+- VF 的关键观测不是 `D=64`，而是每轮 `s2RealSize`。
+- 常见情况下 `s2RealSize` 更常是 128，因此 VF 热路径更偏向 `ProcessVec1UpdateImpl128VF`。
+- 若线上想定责 mask 异常，优先验证：predicate(copy-in) -> Select 后值 -> softmax 后概率，三者是否一致。
