@@ -618,8 +618,8 @@ namespace SplitFuse {
                 LayoutQ layoutQTemp(rowNum, embed);
                 LayoutK layoutKTemp(strideK, stackSeqTile);
                 LayoutV layoutVTemp(stackSeqTile, strideV);
-                blockMmadQK.resetBlockStart();
-                blockMmadPV.resetBlockStart();
+                blockMmadQK.resetBlockStart(kvStart, pagedBlockSize);
+                blockMmadPV.resetBlockStart(kvStart, pagedBlockSize);
                 blockMmadQK.loadQGM(gQ[gmOffsetQ], layoutQTemp, rowNum, qNBlockSize, qHeads);
 #endif
                 for (uint32_t kvSIdx = kvStart; kvSIdx < kvEnd + preKVNum; kvSIdx++) {
@@ -801,8 +801,10 @@ namespace SplitFuse {
                                         isLastStackTile);
                                 } else {
                                     bool isLastNoMaskStackTile = (nextTokenStartLen >= kvSeqlen) || (nextTokenStartLen < 0);
-                                    uint32_t alignedKvSeqlenLimit = isLastNoMaskStackTile ? kvSeqlen : nextTokenStartLen;
-                                    alignedKvSeqlenLimit = NpuArch::Detail::Alignment::RoundDown(alignedKvSeqlenLimit, MAX_KV_STACK_LEN);
+                                    uint32_t kvSeqlenLimit = isLastNoMaskStackTile ? kvSeqlen : nextTokenStartLen;
+                                    uint32_t alignedKvSeqlenLimit = isLastNoMaskStackTile ?
+                                        NpuArch::Detail::Alignment::RoundUp(kvSeqlenLimit, MAX_KV_STACK_LEN) :
+                                        NpuArch::Detail::Alignment::RoundDown(kvSeqlenLimit, MAX_KV_STACK_LEN);
                                     uint32_t noMaskStackSeqNum = (alignedKvSeqlenLimit - kvStart * MAX_KV_STACK_LEN) / MAX_KV_STACK_LEN;
                                     Arch::CrossCoreWaitFlag(qkReady);
                                     epilogueOnlineSoftmax(
@@ -813,7 +815,7 @@ namespace SplitFuse {
                                         layOutS,
                                         actualBlockShapeQK,
                                         (stackSeqCount == 0),
-                                        ((isLastNoMaskStackTile && (kvSLoopNumTotal - kvStart != 2 || kvSIdx - kvStart == 1)) ? (stackSeqCount == noMaskStackSeqNum) : (stackSeqCount == noMaskStackSeqNum - 1)),
+                                        (stackSeqCount == noMaskStackSeqNum - 1),
                                         qSBlockSize,
                                         qNBlockSize,
                                         curStackTileMod,
