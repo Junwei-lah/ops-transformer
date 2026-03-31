@@ -555,6 +555,7 @@ ge::graphStatus FiaInfoParser::GetS1Size()
                 return ge::GRAPH_FAILED;
             }
             s1Size_ = static_cast<uint32_t>(queryShape_->GetShapeT());
+            qSize_.push_back(s1Size_);
             return ge::GRAPH_SUCCESS;
         }
 
@@ -565,6 +566,7 @@ ge::graphStatus FiaInfoParser::GetS1Size()
         int64_t qActualSeqMax = 0;
         for (uint32_t i = 0; i < b; i++) {
             int64_t tmpS1 = (i == 0U) ? actualSeqQ[0] : (actualSeqQ[i] - actualSeqQ[i - 1U]);
+            qSize_.push_back(tmpS1);
             if (tmpS1 > qActualSeqMax) {
                 qActualSeqMax = tmpS1;
             }
@@ -575,6 +577,7 @@ ge::graphStatus FiaInfoParser::GetS1Size()
             return ge::GRAPH_FAILED;
         }
         s1Size_ = static_cast<uint32_t>(queryShape_->GetShapeS());
+        qSize_.push_back(s1Size_);
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -641,6 +644,7 @@ ge::graphStatus FiaInfoParser::GetMaxActualSeq(const gert::Tensor *actualSeqLens
             } else {
                 tmpS = actualLenData[i];
             }
+            kvSize_.push_back(tmpS);
             maxActualSeqLen = std::max(maxActualSeqLen, tmpS);
         }
     }
@@ -653,6 +657,7 @@ ge::graphStatus FiaInfoParser::GetMaxActualSeq(const gert::Tensor *actualSeqLens
 ge::graphStatus FiaInfoParser::GetS2SizeFromActualSeqLens()
 {
     if (opParamInfo_.actualSeqLengths.tensor == nullptr) {
+        kvSize_.push_back(s2Size_);
         return ge::GRAPH_SUCCESS;
     }
     return GetMaxActualSeq(opParamInfo_.actualSeqLengths.tensor, kvLayout_, s2Size_);
@@ -668,6 +673,7 @@ ge::graphStatus FiaInfoParser::GetS2SizeForBatchContinuous()
         }
         s2Size_ = keyShape_->GetShapeS();
         kvListSeqLens_.push_back(s2Size_);
+        kvSize_.push_back(s2Size_);
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -1013,6 +1019,10 @@ ge::graphStatus FiaInfoParser::GetAttenMaskInfo()
 {
     // only bss & b1ss & bs need to calc attenMaskSize_ , attenMaskSize_ is uesed to calc batch offset
     if (attenMaskFlag_) {
+        if (*opParamInfo_.sparseMode == 9U && npuArch_ == NpuArch::DAV_3510) {
+            OP_LOGE(opName_, "NpuArch[%d] currently does not support sparse9.", static_cast<int32_t>(npuArch_));
+            return ge::GRAPH_FAILED;
+        }
         if (*opParamInfo_.sparseMode == 9U) {
             return GetAttenMaskSparse9Info();
         }
@@ -1322,6 +1332,7 @@ void FiaInfoParser::GenerateInfo(FiaTilingInfo &fiaInfo)
     fiaInfo.platformInfo = platformInfo_;
     fiaInfo.opParamInfo = opParamInfo_;
     fiaInfo.socVersion = socVersion_;
+    fiaInfo.npuArch = npuArch_;
     GenerateAxisInfo(fiaInfo);
     GenerateDtypeInfo(fiaInfo);
     fiaInfo.kvStorageMode = kvStorageMode_;
@@ -1334,6 +1345,8 @@ void FiaInfoParser::GenerateInfo(FiaTilingInfo &fiaInfo)
 
     fiaInfo.kCache = kCache_;
     fiaInfo.vCache = vCache_;
+    fiaInfo.qSize = qSize_;
+    fiaInfo.kvSize = kvSize_;
 
     fiaInfo.totalOutputSize = opParamInfo_.attenOut.shape->GetStorageShape().GetShapeSize();
 

@@ -253,6 +253,7 @@ public:
 
     // Base Param
     platform_ascendc::SocVersion socVersion = platform_ascendc::SocVersion::ASCEND910B;
+    NpuArch npuArch = NpuArch::DAV_2201;
     uint32_t bSize = 0;
     uint32_t n1Size = 0;
     uint32_t n2Size = 0;
@@ -270,6 +271,8 @@ public:
     uint64_t l2CacheSize = 0;
     std::vector<gert::StorageShape *> kCache = {};
     std::vector<gert::StorageShape *> vCache = {};
+    std::vector<int32_t> qSize = {};
+    std::vector<int32_t> kvSize = {};
 
     // empty Tensor
     bool emptyTensorFlag = false;

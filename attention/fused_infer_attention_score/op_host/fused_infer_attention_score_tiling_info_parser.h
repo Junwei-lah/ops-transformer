@@ -159,6 +159,8 @@ public:
     uint64_t l2CacheSize_ = 0;
     std::vector<gert::StorageShape *> kCache_ = {};
     std::vector<gert::StorageShape *> vCache_ = {};
+    std::vector<int32_t> qSize_ = {};
+    std::vector<int32_t> kvSize_ = {};
 
     bool emptyTensorFlag_ = false;
     bool isSameSeqAllKVTensor_ = true;

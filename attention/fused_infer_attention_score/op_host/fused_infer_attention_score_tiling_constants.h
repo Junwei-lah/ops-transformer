@@ -57,6 +57,7 @@ constexpr uint32_t BLOCK_SIZE_ALIGN_SIZE_128 = 128;
 constexpr uint32_t SPARSE_OPTIMIZE_ATTENTION_SIZE = 2048;
 
 // mask
+constexpr uint32_t MASK_DIM_S = 1;
 constexpr uint32_t MASK_DIM_SS = 2;
 constexpr uint32_t MASK_DIM_BSS = 3;
 constexpr uint32_t MASK_DIM_B1SS = 4;

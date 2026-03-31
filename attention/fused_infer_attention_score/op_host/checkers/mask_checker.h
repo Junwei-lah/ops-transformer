@@ -47,6 +47,7 @@ private:
     ge::graphStatus CheckNoQuantIFAMLA(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFullQuantIFAMLA(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckQKVDDifferent(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureSparseMode(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckPretokenAndNexttoken(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckIFADimAndShape(const FiaTilingInfo &fiaInfo);
     ge::graphStatus GetMaskInfo(const FiaTilingInfo &fiaInfo, MaskInfo &maskInfo);
