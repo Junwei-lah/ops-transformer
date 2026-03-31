@@ -189,7 +189,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
         <td>reduceOp</td>
         <td>输入</td>
         <td>reduce操作类型。</td>
-        <td>通过Hccl提供的接口“extern HcclResult HcclGetCommName(HcclComm comm, char* commName);”获取，其中commName即为group。</td>
+        <td>当前版本仅支持“sum”。</td>
         <td>-</td>
         <td>-</td>
         <td>-</td>
@@ -278,10 +278,10 @@ aclnnStatus aclnnMatmulReduceScatterV2(
     </tbody></table>
 
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>、<term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
-        - x1、x2：在commMode为aicpu时，数据类型支持FLOAT16、BFLOAT16；commMode为aiv时，数据类型支持FLOAT16、BFLOAT16、INT8，x1数据格式仅支持ND，x2数据格式支持ND、FRACTAL_NZ。
-        - bias：在commMode为aicpu时，数据类型支持FLOAT16、BFLOAT16，仅支持为0的输入。在commMode为aiv时，当前版本仅支持输入nullptr。
-        - x1Scale：在commMode为aicpu时，仅支持输入nullptr。在commMode为aiv时，数据类型支持FLOAT。当x1和x2数据类型为FLOAT16/BFLOAT16时，仅支持输入为nullptr。在pertoken场景，shape为(m, 1)。
-        - x2Scale：在commMode为aicpu时，仅支持输入nullptr。在commMode为aiv时，数据类型支持FLOAT、INT64，数据格式支持ND。INT64数据类型仅在output数据类型为FLOAT16场景支持。当x1和x2数据类型为FLOAT16、BFLOAT16时，仅支持输入为nullptr。在perchannel场景，shape为(1, n)。
+        - x1、x2：commMode为aiv时，数据类型支持FLOAT16、BFLOAT16、INT8，x1数据格式仅支持ND，x2数据格式支持ND、FRACTAL_NZ。
+        - bias：在commMode为aiv时，当前版本仅支持输入nullptr。
+        - x1Scale：在commMode为aiv时，数据类型支持FLOAT。当x1和x2数据类型为FLOAT16/BFLOAT16时，仅支持输入为nullptr。在pertoken场景，shape为(m, 1)。
+        - x2Scale：在commMode为aiv时，数据类型支持FLOAT、INT64，数据格式支持ND。INT64数据类型仅在output数据类型为FLOAT16场景支持。当x1和x2数据类型为FLOAT16、BFLOAT16时，仅支持输入为nullptr。在perchannel场景，shape为(1, n)。
         - groupSize：当前版本仅支持输入为0。
         - commMode：当前仅支持aiv模式。aiv模式下使用AI VECTOR核完成通信任务。当前版本仅支持输入“aiv”。
         - output：数据类型支持FLOAT16、BFLOAT16。 如果x1类型为FLOAT16、BFLOAT16，则output类型与x1保持一致。
@@ -420,6 +420,7 @@ aclnnStatus aclnnMatmulReduceScatterV2(
     #include <vector>
     #include <thread>
     #include "hccl/hccl.h"
+    
     #include "aclnnop/aclnn_matmul_reduce_scatter_v2.h"
 
     #define CHECK_RET(cond, return_expr) \
@@ -519,9 +520,9 @@ aclnnStatus aclnnMatmulReduceScatterV2(
         std::vector<int8_t> x1HostData(x1ShapeSize, 0);
         std::vector<int8_t> x2HostData(x2ShapeSize, 0);
         std::vector<int32_t> biasHostData(biasShapeSize, 0);
-        std::vector<int32_t> x1ScaleHostData(x1ScaleShapeSize, 0);
-        std::vector<int32_t> x2ScaleHostData(x2ScaleShapeSize, 0);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
+        std::vector<float> x1ScaleHostData(x1ScaleShapeSize, 0);
+        std::vector<float> x2ScaleHostData(x2ScaleShapeSize, 0);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
         // 创建tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_INT8, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

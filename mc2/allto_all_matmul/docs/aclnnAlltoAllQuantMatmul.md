@@ -508,7 +508,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
         | BFLOAT16 | INT4 | BFLOAT16 | BFLOAT16 |
         | BFLOAT16 | INT4 | FLOAT32 | BFLOAT16 |
 
-      * A4W4时，x1、x2、biasOptional和output支持的数据类型组合有：
+      * A4W4时，x1ScaleOptional仅支持FLOAT32。x1、x2、biasOptional和output支持的数据类型组合有：
 
         | x1 | x2 | biasOptional | output |
         | :------: | :------: | :------: | :------: |
@@ -589,6 +589,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
     #include <vector>
     #include <acl/acl.h>
     #include <hccl/hccl.h>
+    #include "aclnn/opdev/fp16_t.h"
     #include "aclnnop/aclnn_allto_all_quant_matmul.h"
     
     int ndev = 2;
@@ -653,7 +654,7 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
                 args.context);
     
         std::vector<int64_t> x1Shape = {32, 64};
-        std::vector<int64_t> x2Shape = {64 * ndev, 128};
+        std::vector<int64_t> x2Shape = {64 * ndev, 128}; // ndev = 2，x2Shape转置前后形状不变
         std::vector<int64_t> biasShape = {128};
         std::vector<int64_t> x2ScaleShape = {128};
         std::vector<int64_t> outShape = {32 / ndev, 128};
@@ -693,12 +694,13 @@ aclnnStatus aclnnAlltoAllQuantMatmul(
         long long x2ScaleShapeSize = GetShapeSize(x2ScaleShape);
         long long outShapeSize = GetShapeSize(outShape);
         long long allToAllOutShapeSize = GetShapeSize(allToAllOutShape);
-        std::vector<int16_t> x1HostData(x1ShapeSize, 1);
-        std::vector<int16_t> x2HostData(x2ShapeSize, 1);
-        std::vector<int16_t> biasHostData(biasShapeSize, 1);
-        std::vector<int16_t> x2ScaleHostData(x2ScaleShapeSize, 1);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
-        std::vector<int16_t> allToAllOutHostData(allToAllOutShapeSize, 0);
+        std::vector<op::fp16_t> x1HostData(x1ShapeSize, 1);
+        std::vector<int8_t> x2HostData(x2ShapeSize, 1);
+        std::vector<op::fp16_t> biasHostData(biasShapeSize, 1);
+        std::vector<float> x2ScaleHostData(x2ScaleShapeSize, 1);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
+        std::vector<op::fp16_t> allToAllOutHostData(allToAllOutShapeSize, 0);
+
         // 创建 tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_FLOAT16, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

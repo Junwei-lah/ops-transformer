@@ -102,7 +102,7 @@
       output = AllReduce((x1@x2 + biasOptional) * x2Scale * x1ScaleOptional + x3Optional)
       $$
 
-    - x1，x2为FLOAT8_E4M3FN/FLOAT8_E5M2/HIFLOAT8，x1ScaleOptional为FLOAT32，x2Scale为FLOAT32，无biasOptional。当x1为(a0, a1)，x2为(b0, b1)时x1ScaleOptional为(ceildiv(a0，128), ceildiv(a1，128))x2Scale为(ceildiv(b0，128), ceildiv(b1，128)), out为FLOAT16/BFLOAT16/FLOAT32:
+    - x1，x2为FLOAT8_E4M3FN/FLOAT8_E5M2/HIFLOAT8，x1ScaleOptional为FLOAT32，x2Scale为FLOAT32，无biasOptional。当x1为(a0, a1)，x2为(b0, b1)时x1ScaleOptional为(ceildiv(a0，128), ceildiv(a1，128))，x2Scale为(ceildiv(b0，128), ceildiv(b1，128))，out为FLOAT16/BFLOAT16/FLOAT32:
 
       $$
       output_{pq} = AllReduce(\sum_{0}^{\left \lfloor \frac{k}{128} \right \rfloor} (x1_{pr}@x2_{rq}*(x1ScaleOptional_{pr}*x2Scale_{rq})) + x3)
@@ -184,7 +184,7 @@
     <tr>
       <td>pertoken_scale</td>
       <td>可选输入</td>
-      <td>MatMul计算后的pertoken去量化系数，即公式中的输入pertoken_scale。</td>
+      <td>MatMul计算后的pertoken去量化系数，即公式中的输入pertokenScaleOptional。</td>
       <td>FLOAT、BFLOAT16、FLOAT8_E8M0</td>
       <td>ND</td>
     </tr>
@@ -279,10 +279,10 @@
 * 传入的x1、x2、antiquantScale或者output不为空指针。
 * 当输入x1的shape为(b, s, k)时，x3（非空场景）与输出output的shape为(b, s, n)，pertoken_scale的shape为(b*s)；当输入x1的shape为(m, k)时，x3（非空场景）与输出output的shape为(m, n)，pertoken_scale的shape为(m)。
 * 输入comm_quant_scale_1和comm_quant_scale_2可选，可为空，当x2为(k, n)时, shape可为(n)或者(1,n)。
-* 输入dequantScale可选，可为空，shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。输出为BFLOAT16时，直接将BFLOAT16类型的dequantScale传入本接口。输出为FLOAT16时，如果pertokenScale不为空，可直接将FLOAT32类型的dequantScale传入本接口，如果pertokenScale为空，则需提前调用TransQuantParamV2算子的aclnn接口来将dequantScale转成INT64/UINT64数据类型。
+* 输入dequantScale可选，可为空，shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。输出为BFLOAT16时，直接将BFLOAT16类型的dequantScale传入本接口。输出为FLOAT16时，如果pertokenScaleOptional不为空，可直接将FLOAT32类型的dequantScale传入本接口，如果pertokenScaleOptional为空，则需提前调用TransQuantParamV2算子的aclnn接口来将dequantScale转成INT64/UINT64数据类型。
 * bias若非空，当前版本仅支持一维，shape大小与output最后一维大小相等。antiquantScale在pertensor场景下shape为(1)，在perchannel场景下shape为(1,n)/(n)，在pergroup场景shape为(ceil(k,antiquantGroupSize), n)。antiquantOffset若非空，其shape与antiquantScale一致。
 * x1和x2，x3（非空场景）、antiquantScale、antiquantOffset（非空场景）、output、bias（非空场景）的数据类型和数据格式需要在支持的范围之内。
-* x1，antiquantScale，antiquantOffset（非空场景），x3（非空场景）、bias（非空场景）output的数据类型相同。antiquantGroupSize在不支持per_group场景时，传入0，在支持pergroup场景时，传入值的范围为[32, min(k-1,INT_MAX)]，且为32的倍数。k取值范围与mm接口保持一致。
+* x1、antiquantScale、antiquantOffset（非空场景）、x3（非空场景）、bias（非空场景）和output的数据类型相同。antiquantGroupSize在不支持pergroup场景时，传入0，在支持pergroup场景时，传入值的范围为[32, min(k-1,INT_MAX)]，且为32的倍数。k取值范围与mm接口保持一致。
 * group_size在perblock场景下，只支持549764202624。其他场景，只支持0。
 * 只支持x2矩阵转置/不转置，x1矩阵不支持转置场景。
 * 属性reduceOp当前版本仅支持输入"sum"。

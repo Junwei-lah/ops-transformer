@@ -132,11 +132,14 @@
     <td>预留参数，左矩阵的量化偏置。</td>
     <td>-</td>
     <td>-</td>
+    </tr>
+    <tr>
     <td>x2_offset</td>
     <td>可选输入</td>
     <td>预留参数，右矩阵的量化偏置。</td>
     <td>-</td>
     <td>-</td>
+    </tr>
     <tr>
     <td>y</td>
     <td>输出</td>
@@ -249,11 +252,11 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
     - <term>Ascend 950PR/Ascend 950DT</term>：支持K-C量化模式，x1QuantMode=3，x2QuantMode=2；mx量化模式，x1QuantMode=6，x2QuantMode=6。
 * 非量化场景x1、x2计算输入的数据类型要和output计算输出的数据类型一致，传入的x1、x2与output均不为空指针。
 * 量化场景传入的x1、x2、x1Scale、x2Scale与output均不为空指针，且
-    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：biasOptional不支持传入空指针。
+    - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：bias不支持传入空指针。
 * x1、x2和bias计算输入的数据类型根据不同设备型号有不同的限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：
         - 非量化场景下，x1/x2计算输入的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16；x1/x2计算输入的数据类型为BFLOAT16时，bias计算输入的数据类型支持FLOAT32。
-        - 量化场景下，支持K-C量化模式后加bias，x1、x2计算输入的数据类型必须为INT8；output计算输出的数据类型为BFLOAT16时，bias的数据类型为FLOAT或BFLOAT16；output的数据类型为FLOAT16时，biasOptional的数据类型为FLOAT16。
+        - 量化场景下，支持K-C量化模式后加bias，x1、x2计算输入的数据类型必须为INT8；output计算输出的数据类型为BFLOAT16时，bias的数据类型为FLOAT或BFLOAT16；output的数据类型为FLOAT16时，bias的数据类型为FLOAT16。
     - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：
         - 非量化场景下，output计算输出的数据类型为FLOAT16时，bias计算输入的数据类型支持FLOAT16；output计算输出的数据类型为BFLOAT16时，bias计算输入的数据类型支持FLOAT32。
         - A3目前不支持量化场景。

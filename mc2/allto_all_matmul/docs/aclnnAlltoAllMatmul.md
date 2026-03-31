@@ -321,6 +321,7 @@ aclnnStatus aclnnAlltoAllMatmul(
     #include <vector>
     #include <acl/acl.h>
     #include <hccl/hccl.h>
+    #include "aclnn/opdev/fp16_t.h"
     #include "aclnnop/aclnn_allto_all_matmul.h"
     
     int ndev = 2;
@@ -411,11 +412,11 @@ aclnnStatus aclnnAlltoAllMatmul(
         long long biasShapeSize = GetShapeSize(biasShape);
         long long outShapeSize = GetShapeSize(outShape);
         long long alltoalloutShapeSize = GetShapeSize(alltoalloutShape);
-        std::vector<int16_t> x1HostData(x1ShapeSize, 1);
-        std::vector<int16_t> x2HostData(x2ShapeSize, 1);
-        std::vector<int16_t> biasHostData(biasShapeSize, 1);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
-        std::vector<int16_t> alltoalloutHostData(alltoalloutShapeSize, 0);
+        std::vector<op::fp16_t> x1HostData(x1ShapeSize, 1);
+        std::vector<op::fp16_t> x2HostData(x2ShapeSize, 1);
+        std::vector<op::fp16_t> biasHostData(biasShapeSize, 1);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
+        std::vector<op::fp16_t> alltoalloutHostData(alltoalloutShapeSize, 0);
         // 创建 tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_FLOAT16, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

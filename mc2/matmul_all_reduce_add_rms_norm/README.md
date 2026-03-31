@@ -28,7 +28,7 @@
  - 情景二：
 
     $$
-    mm_out = allReduce(dequantScale * (x1_{int8}@x2_{int8} + bias_{int32}))
+    mm_out = allReduce(dequant_scale * (x1_{int8}@x2_{int8} + bias_{int32}))
     $$
 
     $$
@@ -42,7 +42,7 @@
   - 情景三：
 
     $$
-    mm\_out = allReduce(x1 @ (x2*antiquantScale + antiquantOffset) + bias)
+    mm\_out = allReduce(x1 @ (x2*antiquant_scale + antiquant_offset) + bias)
     $$
 
     $$
@@ -116,7 +116,7 @@
     <tr>
       <td>antiquant_offset</td>
       <td>可选输入</td>
-      <td>对x2进行伪量化计算的offset参数，公式中的输入antiquantOffset。</td>
+      <td>对x2进行伪量化计算的offset参数，公式中的输入antiquant_offset。</td>
       <td>FLOAT16、BFLOAT16</td>
       <td>ND</td>
     </tr>
@@ -194,14 +194,14 @@
 
 ## 约束说明
 
-* 使用场景同融合算子aclnnWeightQuantMatmulAllReduce一致：增量场景不使能MC2，全量场景使能MC2
-* 输入x1可为二维或者三维，其shape为(b, s, k)或者(s, k)。x2必须是二维，其shape为(k, n)，轴满足mm算子入参要求，k轴相等，m的范围为[1, 2147483647]，k、n的范围为[1, 65535]。bias若非空，bias为一维，其shape为(n)。bias可选，可为空，非空时当前版本仅支持一维输入。
+* 增量场景不使能MC2，全量场景使能MC2
+* 输入x1可为二维或者三维，其shape为(b, s, k)或者(s, k)。x2必须是二维，其shape为(k, n)，轴满足mm算子入参要求，k轴相等，m的范围为[1, 2147483647]，k的范围为[1, 65535]，n的范围为[0, 65535]。bias若非空，bias为一维，其shape为(n)。bias可选，可为空，非空时当前版本仅支持一维输入。
 * 输入residual必须是三维，其shape为(b, s, n)，当x1为二维时，residual的(b*s)等于x1的s，不支持非连续的tensor。输入gamma必须是一维，其shape为(n)，不支持非连续的tensor。
-* antiquantScale满足pertensor场景shape为(1)，perchannel场景shape为(1,n)/(n)，pergroup场景shape为(ceil(k,antiquantGroupSize),n)。antiquantOffset可选，可为空，非空时shape与antiquantScale一致。
-* dequantScale的shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。
+* antiquant_scale满足pertensor场景shape为(1)，perchannel场景shape为(1,n)/(n)，pergroup场景shape为(ceil(k,antiquant_group_size),n)。antiquant_offset可选，可为空，非空时shape与antiquant_scale一致。
+* dequant_scale的shape在pertensor场景为(1)，perchannel场景为(n)/(1, n)。
 * 输出y和normOut的维度和数据类型同residual。bias若非空，shape大小与normOut最后一维相等。
-* x2的数据类型需为int8或者int4，x1、bias、residual、gamma、y、normOut计算输入的数据类型要一致。
-* antiquantGroupSize在不支持pergroup场景时，传入0，在支持pergroup场景时，传入值的范围为[32, min(k-1,INT_MAX)]，且为32的倍数。k取值范围与mm接口保持一致。
+* bias、residual、gamma、y、normOut计算输入的数据类型要一致。
+* antiquant_group_size在不支持pergroup场景时，传入0，在支持pergroup场景时，传入值的范围为[32, min(k-1,INT_MAX)]，且为32的倍数。k取值范围与mm接口保持一致。
 * 支持(b*s)、n为0的空tensor，不支持k为0的空tensor。
 * 只支持x2矩阵转置/不转置，x1矩阵支持不转置场景。
 * 属性reduceOp当前版本仅支持输入"sum"。

@@ -283,7 +283,7 @@ x1QuantMode、x2QuantMode、commQuantMode的枚举值跟[量化模式](../../doc
   和[非量化aclnn约束说明](./docs/aclnnAlltoAllMatmul.md#约束说明)。当处于mx量化场景时，x2必须转置，其shape为(N, H\*rankSize)，transpose_x2配置为True。
 * bias若非空，其维度必须为1维，shape为(N)。
 * x1_scale若非空，在mx量化场景时，其维度为3维，shape为(BS, ceil(H/64), 2)；在K-C量化场景时，其维度为1维，shape为(BS)；在K-C动态量化场景时，其维度为1维，shape为(H*rankSize)。
-* x2_scale若非空，在mx量化场景时，其维度为3维，shape为(N, ceil(H/*rankSize/64), 2)；其它场景中其维度为1维，shape为(N)。
+* x2_scale若非空，在mx量化场景时，其维度为3维，shape为(N, ceil(H\*rankSize/64), 2)；其它场景中其维度为1维，shape为(N)。
 * all2all_axes为1维数组，shape必须为(2)。
 * 目前支持的量化模式，根据设备型号有不同限制：
     - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持K-C量化和K-C动态量化模式，x1QuantMode=3或7，x2QuantMode=2。

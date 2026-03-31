@@ -206,12 +206,12 @@
 
 * 输入x1为2维，其维度为\(m, k\)。x2必须是2维，其维度为\(k, n\)，轴满足mm算子入参要求，k轴相等，且k轴取值范围为\[256, 65535\)。bias为1维，shape为\(n,\)。
 * 输出output为2维，其维度为\(m*rank\_size, n\)，rank\_size为卡数。
-* 输出gatherout为2维，其维度为\(m*rank\_size, k\)，rank\_size为卡数。
+* 输出gatherOut为2维，其维度为\(m*rank\_size, k\)，rank\_size为卡数。
 * 当x1、x2的数据类型为FLOAT16/BFLOAT16时，output计算输出数据类型和x1、x2保持一致，bias暂不支持输入为非0的场景，且不支持amaxOut的输入。
-* 当x1、x2的数据类型为FLOAT8_E4M3FN/FLOAT_E5M2/HIFLOAT8时，output输出数据类型支持FLOAT16、BFLOAT16、FLOAT。支持bias输入为FLOAT。
+* 当x1、x2的数据类型为FLOAT8_E4M3FN/FLOAT8_E5M2/HIFLOAT8时，output输出数据类型支持FLOAT16、BFLOAT16、FLOAT。支持bias输入为FLOAT。
 * 当x1、x2的数据类型为FLOAT16/BFLOAT16/HIFLOAT8时，x1和x2数据类型需要保持一致。
-* 当x1、x2数据类型为FLOAT8_E4M3FN/FLOAT_E5M2时，x1和x2数据类型可以为其中一种。
-* 当x1、x2数据类型为FLOAT16/BFLOAT16/HIFLOAT8/FLOAT8_E4M3FN/FLOAT_E5M2时，x2矩阵支持转置/不转置场景，x1矩阵只支持不转置场景。
+* 当x1、x2数据类型为FLOAT8_E4M3FN/FLOAT8_E5M2时，x1和x2数据类型可以为其中一种。
+* 当x1、x2数据类型为FLOAT16/BFLOAT16/HIFLOAT8/FLOAT8_E4M3FN/FLOAT8_E5M2时，x2矩阵支持转置/不转置场景，x1矩阵只支持不转置场景。
 * 当groupSize取值为549764202624，bias必须为空。
 * <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16、32、64卡。
 

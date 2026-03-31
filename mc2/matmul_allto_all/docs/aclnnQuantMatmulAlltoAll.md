@@ -278,7 +278,7 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
     </tr>
     <tr>
     <td>output</td>
-    <td>输入</td>
+    <td>输出</td>
     <td>最终的计算结果。</td>
     <td></td>
     <td>FLOAT16、BFLOAT16、FLOAT32</td>
@@ -527,6 +527,7 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
     #include <vector>
     #include <acl/acl.h>
     #include <hccl/hccl.h>
+    #include "aclnn/opdev/fp16_t.h"
     #include "aclnnop/aclnn_quant_matmul_allto_all.h"
 
     int ndev = 2;
@@ -626,12 +627,12 @@ aclnnStatus aclnnQuantMatmulAlltoAll(
         long long x1ScaleShapeSize = GetShapeSize(x1ScaleShape);
         long long x2ScaleShapeSize = GetShapeSize(x2ScaleShape);
         long long outShapeSize = GetShapeSize(outShape);
-        std::vector<int16_t> x1HostData(x1ShapeSize, 1);
-        std::vector<int16_t> x2HostData(x2ShapeSize, 1);
-        std::vector<int16_t> biasHostData(biasShapeSize, 1);
-        std::vector<int16_t> x1ScaleHostData(x1ShapeSize, 1);
-        std::vector<int16_t> x2ScaleHostData(x2ShapeSize, 1);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
+        std::vector<int8_t> x1HostData(x1ShapeSize, 1);
+        std::vector<int8_t> x2HostData(x2ShapeSize, 1);
+        std::vector<op::fp16_t> biasHostData(biasShapeSize, 1);
+        std::vector<float> x1ScaleHostData(x1ScaleShapeSize, 1);
+        std::vector<float> x2ScaleHostData(x2ScaleShapeSize, 1);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
         // 创建 tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_INT8, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

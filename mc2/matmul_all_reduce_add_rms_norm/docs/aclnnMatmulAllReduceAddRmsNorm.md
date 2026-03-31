@@ -338,6 +338,7 @@ aclnnStatus aclnnMatmulAllReduceAddRmsNorm(
 #include <vector>
 #include <thread>
 #include "hccl/hccl.h"
+#include "aclnn/opdev/fp16_t.h"
 #include "aclnnop/aclnn_matmul_all_reduce_add_rms_norm.h"
 
 int ndev = 8;
@@ -436,13 +437,13 @@ int launchOneThreadMatmulAllReduceAddRmsNorm(Args &args) {
     long long gammaShapeSize = GetShapeSize(gammaShape);
     long long yShapeSize = GetShapeSize(yShape);
     long long normOutShapeSize = GetShapeSize(normOutShape);
-    std::vector<int16_t> x1HostData(x1ShapeSize, 1);
-    std::vector<int16_t> x2HostData(x2ShapeSize, 1);
-    std::vector<int16_t> biasHostData(biasShapeSize, 1);
-    std::vector<int16_t> residualHostData(residualShapeSize, 1);
-    std::vector<int16_t> gammaHostData(gammaShapeSize, 1);
-    std::vector<int16_t> yHostData(yShapeSize, 0);
-    std::vector<int16_t> normOutHostData(normOutShapeSize, 0);
+    std::vector<op::fp16_t> x1HostData(x1ShapeSize, 1);
+    std::vector<op::fp16_t> x2HostData(x2ShapeSize, 1);
+    std::vector<op::fp16_t> biasHostData(biasShapeSize, 1);
+    std::vector<op::fp16_t> residualHostData(residualShapeSize, 1);
+    std::vector<op::fp16_t> gammaHostData(gammaShapeSize, 1);
+    std::vector<op::fp16_t> yHostData(yShapeSize, 0);
+    std::vector<op::fp16_t> normOutHostData(normOutShapeSize, 0);
     // 创建 tensor
     ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_FLOAT16, &x1);
     CHECK_RET(ret == ACL_SUCCESS, return ret);

@@ -98,7 +98,7 @@
     <tr>
       <td>gather_index</td>
       <td>可选属性</td>
-      <td><li>标识gather目标，0表示目标为x1，1表示目标为x2</li><li>默认值为0。</li></td>
+      <td><li>标识gather目标，当前版本仅支持输入0，表示目标为x1。</li><li>默认值为0。</li></td>
       <td>INT64</td>
       <td>-</td>
     </tr>

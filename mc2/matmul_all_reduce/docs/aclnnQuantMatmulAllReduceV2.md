@@ -345,6 +345,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV2(
     #include <vector>
     #include <thread>
     #include "hccl/hccl.h"
+    #include "aclnn/opdev/fp16_t.h"
     #include "aclnnop/aclnn_trans_matmul_weight.h"
     #include "aclnnop/aclnn_quant_matmul_all_reduce_v2.h"
 
@@ -394,10 +395,9 @@ aclnnStatus aclnnQuantMatmulAllReduceV2(
         const aclIntArray *mat2Size = aclCreateIntArray(shape.data(), shape.size());
         auto ret = aclnnCalculateMatmulWeightSizeV2(mat2Size, ACL_INT8, &size);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnCalculateMatmulWeightSizeV2 failed. ERROR: %d\n", ret); return    ret);
-        auto tensorSize = size * sizeof(T);
 
         // 调用aclrtMalloc申请device内存
-        ret = aclrtMalloc(deviceAddr, tensorSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
 
         // 调用aclrtMemcpy将host侧数据拷贝到device侧内存上
@@ -499,8 +499,8 @@ aclnnStatus aclnnQuantMatmulAllReduceV2(
         std::vector<int32_t> biasHostData(biasShapeSize, 1);
         std::vector<float> dequantScaleHostData(dequantScaleShapeSize, 1);
         std::vector<float> pertokenScaleHostData(pertokenScaleShapeSize, 1);
-        std::vector<int16_t> x3HostData(x3ShapeSize, 1);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
+        std::vector<op::fp16_t> x3HostData(x3ShapeSize, 1);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
         // 创建 tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_INT8, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

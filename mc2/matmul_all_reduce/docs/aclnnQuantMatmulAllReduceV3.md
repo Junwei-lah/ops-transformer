@@ -123,7 +123,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV3(
           <td>x2</td>
           <td>输入</td>
           <td>MatMul计算的右矩阵，即计算公式中的x2。</td>
-          <td><ul><li>当前版本仅支持二维输入。</li><li>支持转置/不转置场景。</li><li>ND格式下支持最后两轴转置情况下的非连续的tensor，其他非连续tensor不支持</li></ul></td>
+          <td><ul><li>支持转置/不转置场景。</li><li>ND格式下支持最后两轴转置情况下的非连续的tensor，其他非连续tensor不支持</li></ul></td>
           <td>INT8</td>
           <td>ND、FRACTAL_NZ</td>
           <td>2</td>
@@ -385,6 +385,7 @@ aclnnStatus aclnnQuantMatmulAllReduceV3(
     #include <vector>
     #include <thread>
     #include "hccl/hccl.h"
+    #include "aclnn/opdev/fp16_t.h"
     #include "aclnnop/aclnn_trans_matmul_weight.h"
     #include "aclnnop/aclnn_quant_matmul_all_reduce_v3.h"
 
@@ -434,10 +435,9 @@ aclnnStatus aclnnQuantMatmulAllReduceV3(
         const aclIntArray *mat2Size = aclCreateIntArray(shape.data(), shape.size());
         auto ret = aclnnCalculateMatmulWeightSizeV2(mat2Size, ACL_INT8, &size);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclnnCalculateMatmulWeightSizeV2 failed. ERROR: %d\n", ret); return    ret);
-        auto tensorSize = size * sizeof(T);
 
         // 调用aclrtMalloc申请device内存
-        ret = aclrtMalloc(deviceAddr, tensorSize, ACL_MEM_MALLOC_HUGE_FIRST);
+        ret = aclrtMalloc(deviceAddr, size, ACL_MEM_MALLOC_HUGE_FIRST);
         CHECK_RET(ret == ACL_SUCCESS, LOG_PRINT("aclrtMalloc failed. ERROR: %d\n", ret); return ret);
 
         // 调用aclrtMemcpy将host侧数据拷贝到device侧内存上
@@ -545,12 +545,12 @@ aclnnStatus aclnnQuantMatmulAllReduceV3(
         std::vector<int8_t> x1HostData(x1ShapeSize, 1);
         std::vector<int8_t> x2HostData(x2ShapeSize, 1);
         std::vector<int32_t> biasHostData(biasShapeSize, 1);
-        std::vector<int32_t> dequantScaleHostData(dequantScaleShapeSize, 1);
-        std::vector<int32_t> pertokenScaleHostData(pertokenScaleShapeSize, 1);
-        std::vector<int16_t> commQuantScale1HostData(commQuantScale1ShapeSize, 1);
-        std::vector<int16_t> commQuantScale2HostData(commQuantScale2ShapeSize, 1);
-        std::vector<int16_t> x3HostData(x3ShapeSize, 1);
-        std::vector<int16_t> outHostData(outShapeSize, 0);
+        std::vector<float> dequantScaleHostData(dequantScaleShapeSize, 1);
+        std::vector<float> pertokenScaleHostData(pertokenScaleShapeSize, 1);
+        std::vector<op::fp16_t> commQuantScale1HostData(commQuantScale1ShapeSize, 1);
+        std::vector<op::fp16_t> commQuantScale2HostData(commQuantScale2ShapeSize, 1);
+        std::vector<op::fp16_t> x3HostData(x3ShapeSize, 1);
+        std::vector<op::fp16_t> outHostData(outShapeSize, 0);
         // 创建 tensor
         ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_INT8, &x1);
         CHECK_RET(ret == ACL_SUCCESS, return ret);

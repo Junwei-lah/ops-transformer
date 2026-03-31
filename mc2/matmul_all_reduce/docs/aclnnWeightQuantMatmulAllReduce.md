@@ -457,6 +457,7 @@ aclnnStatus aclnnWeightQuantMatmulAllReduce(
   #include <thread>
   #include <string.h>
   #include "hccl/hccl.h"
+  #include "aclnn/opdev/fp16_t.h"
   #include "aclnnop/aclnn_weight_quant_matmul_all_reduce.h"
 
   int ndev = 2;
@@ -555,13 +556,13 @@ aclnnStatus aclnnWeightQuantMatmulAllReduce(
       long long antiquantOffsetShapeSize = GetShapeSize(antiquantOffsetShape);
       long long x3ShapeSize = GetShapeSize(x3Shape);
       long long outShapeSize = GetShapeSize(outShape);
-      std::vector<int16_t> x1HostData(x1ShapeSize, 1);
+      std::vector<op::fp16_t> x1HostData(x1ShapeSize, 1);
       std::vector<int8_t> x2HostData(x2ShapeSize, 1);
-      std::vector<int16_t> biasHostData(biasShapeSize, 1);
-      std::vector<int16_t> antiquantScaleHostData(antiquantScaleShapeSize, 1);
-      std::vector<int16_t> antiquantOffsetHostData(antiquantOffsetShapeSize, 1);
-      std::vector<int16_t> x3HostData(x3ShapeSize, 1);
-      std::vector<int16_t> outHostData(outShapeSize, 0);
+      std::vector<op::fp16_t> biasHostData(biasShapeSize, 1);
+      std::vector<op::fp16_t> antiquantScaleHostData(antiquantScaleShapeSize, 1);
+      std::vector<op::fp16_t> antiquantOffsetHostData(antiquantOffsetShapeSize, 1);
+      std::vector<op::fp16_t> x3HostData(x3ShapeSize, 1);
+      std::vector<op::fp16_t> outHostData(outShapeSize, 0);
       // 创建 tensor
       ret = CreateAclTensor(x1HostData, x1Shape, &x1DeviceAddr, aclDataType::ACL_FLOAT16, &x1);
       CHECK_RET(ret == ACL_SUCCESS, return ret);
