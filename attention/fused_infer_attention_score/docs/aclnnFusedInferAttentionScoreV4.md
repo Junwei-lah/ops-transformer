@@ -1820,7 +1820,7 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
     </tr>
     <tr>
         <td>inputLayout</td>
-        <td>BSH、BSND、BNSD</td>
+        <td>BSH、BSND、BNSD、TND</td>
         <td>-</td>
     </tr>
     <tr>
@@ -1834,7 +1834,7 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
     </tr>
     <tr>
         <td rowspan="9">伪量化</td>
-        <td colspan="4">仅支持KV分离；仅支持高性能模式；仅支持q为BF16，kv为INT8的伪量化；不支持配置queryRope和keyRope；不支持非对称量化(antiquantOffset、keyAntiquantOffset、valueAntiquantOffset)</td>
+        <td colspan="4">仅支持KV分离；仅支持高性能模式；仅支持q为BF16，kv为INT8的伪量化；不支持配置queryRope和keyRope；不支持非对称量化(antiquantOffset、keyAntiquantOffset、valueAntiquantOffset)；inputLayout为TND时，仅支持per-channel量化模式</td>
     </tr>
     <tr>
         <td rowspan="4">per-channel</td>
@@ -1849,7 +1849,7 @@ BFLOAT16和INT8不区分高精度和高性能，行无效修正对FLOAT16、BFLO
     </tr>
     <tr>
         <td>keyAntiquantScale</td>
-        <td>inputLayout为BSH时：[H]<br>inputLayout为BNSD时：[N,1,D]<br>inputLayout为BSND时：[N,D]</td>
+        <td>inputLayout为BSH时：[H]<br>inputLayout为BNSD时：[N,1,D]<br>inputLayout为BSND或TND时：[N,D]</td>
         <td>-</td>
     </tr>
     <tr>
