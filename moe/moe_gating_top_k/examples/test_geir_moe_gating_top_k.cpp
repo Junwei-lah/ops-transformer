@@ -27,6 +27,7 @@
 #include "ge_ir_build.h"
 
 #include "experiment_ops.h"
+#include "fusion_ops.h"
 #include "nn_other.h"
 
 #define FAILED -1
@@ -187,7 +188,7 @@ int CreateOppInGraph(DataType inDtype, std::vector<ge::Tensor> &input, std::vect
 {
     Status ret = SUCCESS;
     // 自定义代码：添加单算子定义到图中
-    auto moe_gating_top_k_op = op::MoeGatingTopK("test_geir_kv_rms_norm_rope_cache");
+    auto moe_gating_top_k_op = op::MoeGatingTopK("test_geir_moe_gating_top_k");
     
     // shape定义
     std::vector<int64_t> inputShape = {3, 256};
