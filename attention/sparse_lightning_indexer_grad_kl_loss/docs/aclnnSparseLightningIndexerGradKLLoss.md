@@ -88,7 +88,7 @@ aclnnStatus aclnnSparseLightningIndexerGradKLLossGetWorkspaceSize(
     bool                 deterministic,
     const aclTensor     *dQueryIndex,
     const aclTensor     *dKeyKndex,
-    const aclTensor     *dWeights
+    const aclTensor     *dWeights,
     const aclTensor     *loss,
     uint64_t            *workspaceSize,
     aclOpExecutor       **executor)
