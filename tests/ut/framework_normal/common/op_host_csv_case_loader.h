@@ -144,6 +144,10 @@ inline gert::StorageShape GetStorageShape(const std::string& shapeArrStr)
             shape = gert::StorageShape({shapeArr[0], shapeArr[1], shapeArr[2], shapeArr[3]},
                 {shapeArr[0], shapeArr[1], shapeArr[2], shapeArr[3]});
             break;
+        case 5:
+            shape = gert::StorageShape({shapeArr[0], shapeArr[1], shapeArr[2], shapeArr[3], shapeArr[4]},
+                {shapeArr[0], shapeArr[1], shapeArr[2], shapeArr[3], shapeArr[4]});
+            break;
         default:
             std::cout << "[ERROR] Shape " << shapeArr.size() << " not support!" << std::endl;
             break;
@@ -176,6 +180,24 @@ inline int GetDataTypeGE(const csv_map& csvMap, const std::string& dtypeKey, ge:
 
     out = Str2DTypeGE(dtypeStr);
     return 1;
+}
+
+struct HostUtParamBase {
+    std::string case_name;
+    ge::graphStatus expectResult;
+    std::vector<uint32_t> inputInstance;
+    std::vector<uint32_t> outputInstance;
+
+    HostUtParamBase(const csv_map& csvMap)
+    {
+        this->case_name = ReadMap(csvMap, "case_name");
+        this->expectResult = Str2StatusGE(ReadMap(csvMap, "expectResult"));
+    }
+};
+
+inline std::ostream& operator<<(std::ostream& os, const HostUtParamBase& param)
+{
+    return os << param.case_name;
 }
 
 #endif // OP_HOST_CSV_CASE_LOADER_H
