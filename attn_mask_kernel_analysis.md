@@ -91,3 +91,36 @@
 ### 4) 为什么你这个 case 更像走 128 分支
 - 对 `S2=2432`，常见切分下每轮 `s2RealSize` 常出现 128（尤其 `s2BaseSize=128` 时全是 128；`s2BaseSize=256` 时尾块常为 128）。
 - 所以相较 Impl64，`EQ_128 -> ProcessVec1UpdateImpl128VF` 更可能是主路径。
+
+## 针对该 kernel 的结论：attenmask 实现原理总结
+
+### A. 总体机制（不是“乘 0/1”，而是“替换为极小值”）
+- 在 `ProcessVec1` 阶段（softmax 前），kernel 先把 bmm1 分数做 scale/pse。
+- 然后用 mask predicate 执行 `Select(minValue, score, predicate)`：
+  - 有效位置保留原始 score；
+  - 无效位置改写为 `minValue`（负极大值近似）。
+- 后续 softmax 计算 `exp(score - row_max)` 时，无效位置近似 0，实现“屏蔽”。
+
+### B. 数据流分层
+1. **Host 决策层**
+   - 通过 `enableMask/hasAttenMask`、`sparseMode`、mask dtype/shape 等决定模板与压缩模式。
+2. **Kernel copy-in 层**
+   - `AttenMaskCopyIn` 将 GM mask 拷到 UB；band 压缩场景会取 preMask 并 merge。
+3. **Kernel vector 计算层**
+   - `ProcessVec1Update*` 在每行上应用 mask select，再做 max/sum 更新。
+4. **稳定 softmax 累计层**
+   - 用 `inMax/inExpSum` 与当前块结果做增量融合，保证多 s2 分块数值稳定。
+
+### C. 对下三角 mask 的语义映射
+- 下三角 mask 本质是一个逐元素有效位图（或压缩表达）。
+- kernel 不关心“下三角”字面概念，而只消费 copy-in 后的 predicate：
+  - predicate=true -> 保留 score；
+  - predicate=false -> 写 `minValue`。
+- 因此“下三角是否正确”最终等价于：copy-in 到 UB 的 predicate 是否与期望的下三角有效域一致。
+
+### D. 你这个 case（BNSD=8,8,2432,64, BF16）的关键观察点
+- 主路径大概率是 `s2RealSize==128` 对应的 `EQ_128` 分支，而不是 `Impl64`。
+- 验证建议（按优先级）：
+  1) 打点 `runInfo.s2RealSize` / `oriNRange`，确认分支命中；
+  2) 抽样检查 `AttenMaskCopyIn` 后 UB mask 与理论下三角是否一致；
+  3) 抽样检查 `Select` 后被屏蔽位是否为 `minValue`，以及 softmax 后接近 0。
