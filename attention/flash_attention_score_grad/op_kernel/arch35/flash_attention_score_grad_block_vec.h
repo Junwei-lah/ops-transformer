@@ -129,6 +129,8 @@ public:
     constexpr static uint32_t BASE_DKV_SIZE = CUBE_BASEN * HEAD_DIM_ALIGN;
     constexpr static int64_t OUTINDEX = -1;
     constexpr static uint32_t DETER_DKV_UB_SIZE = VECTOR_BASEM * VECTOR_BASEN * sizeof(CALC_TYPE);
+    constexpr static uint32_t OFFSET_NUM = 3;
+    constexpr static uint32_t INT64_BYTES = 4;
                         
     // vector gm addr
     GlobalTensor<INPUT_TYPE> valueGm;
@@ -1114,8 +1116,8 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDq(FagConstInfo &
     if (!isFirstDeter) {
         WaitFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
-    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * 3],
-             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * 3), 0, 0});
+    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * OFFSET_NUM],
+             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * OFFSET_NUM), 0, 0});
     SetFlag<HardEvent::MTE2_S>(constInfo.deterConstInfo.eventIDMte2ToScalar);
     int16_t bufId = 0;
     // 非last基本块处理的都是上一轮mm的结果， 最后一次循环需要补充处理本轮的mm结果
@@ -1124,7 +1126,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDq(FagConstInfo &
     } else {
         bufId = 1 - *deterPpFlag;
     }
-    uint32_t dqSrcOfs = bufId * (BASE_DQ_SIZE + BASE_DKV_SIZE * 2) * constInfo.deterConstInfo.usedCubeCoreNum;
+    uint32_t dqSrcOfs = bufId * (BASE_DQ_SIZE + BASE_DKV_SIZE * NUM_TWO) * constInfo.deterConstInfo.usedCubeCoreNum;
     dqSrcOfs += vBlockIdx * constInfo.deterConstInfo.dqEachVectorSize;
 
     // dq deter
@@ -1163,7 +1165,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDq(FagConstInfo &
             eachLoopEnd = Min((loopIdx + 1) * eachLoopBlockCount, constInfo.deterConstInfo.usedCubeCoreNum);
         }
         for (uint16_t cIx = eachLoopStart; cIx < eachLoopEnd; cIx++) {
-            dqOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3);
+            dqOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM);
         }
         // dq 每个V核需要处理所有C核的dq结果
         for (uint16_t cIx = eachLoopStart; cIx < eachLoopEnd; cIx++) {
@@ -1186,7 +1188,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDq(FagConstInfo &
         SetFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
 
-    if (remainLoopNum > 2) { // 最后两轮不需要卡
+    if (remainLoopNum > NUM_TWO) { // 最后两轮不需要卡
         SyncAll<true, syncAllConfigMte3ToMte3>();
     }
 }
@@ -1201,13 +1203,13 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDkv(LocalTensor<C
     if (!isFirstDeter) {
         WaitFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
-    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * 3],
-             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * 3), 0, 0});
+    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * OFFSET_NUM],
+             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * OFFSET_NUM), 0, 0});
     SetFlag<HardEvent::MTE2_S>(constInfo.deterConstInfo.eventIDMte2ToScalar);
     WaitFlag<HardEvent::MTE2_S>(constInfo.deterConstInfo.eventIDMte2ToScalar);
     for (uint16_t cIx = 0; cIx < constInfo.deterConstInfo.usedCubeCoreNum; cIx++) {
-        dkOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3 + INT64_BLOCK_NUM);
-        dvOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3 + INT64_BLOCK_NUM * 2);
+        dkOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM + INT64_BLOCK_NUM);
+        dvOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM + INT64_BLOCK_NUM * NUM_TWO);
     }
     int16_t bufId = 0;
     // 非last基本块处理的都是上一轮mm的结果， 最后一次循环需要补充处理本轮的mm结果
@@ -1216,7 +1218,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDkv(LocalTensor<C
     } else {
         bufId = 1 - *deterPpFlag;
     }
-    uint32_t dqSrcOfs = bufId * (BASE_DQ_SIZE + BASE_DKV_SIZE * 2) * constInfo.deterConstInfo.usedCubeCoreNum;
+    uint32_t dqSrcOfs = bufId * (BASE_DQ_SIZE + BASE_DKV_SIZE * NUM_TWO) * constInfo.deterConstInfo.usedCubeCoreNum;
     uint32_t dkSrcOfs = dqSrcOfs + BASE_DQ_SIZE * constInfo.deterConstInfo.usedCubeCoreNum;
     uint32_t dvSrcOfs = dkSrcOfs + BASE_DKV_SIZE * constInfo.deterConstInfo.usedCubeCoreNum;
     dqSrcOfs += vBlockIdx * constInfo.deterConstInfo.dqEachVectorSize;
@@ -1232,7 +1234,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDkv(LocalTensor<C
     if (remainLoopNum > 0) {
         SetFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
-    if (remainLoopNum > 2) { // 最后两轮不需要卡
+    if (remainLoopNum > NUM_TWO) { // 最后两轮不需要卡
         SyncAll(); // 由于复用了mm1mm2的在ub中的buf，所以为了防止确定性计算还没有做完，后面的mm已经做完的情况，踩数据，所以只能卡scalar
     }
 }
@@ -1247,14 +1249,14 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDqkv(LocalTensor<
     if (!isFirstDeter) {
         WaitFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
-    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * 3],
-             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * 3), 0, 0});
+    DataCopy(deterOffsetTensor, deterOffsetGm[computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum * INT64_BLOCK_NUM * OFFSET_NUM],
+             {1, static_cast<uint16_t>(constInfo.deterConstInfo.usedCubeCoreNum * OFFSET_NUM), 0, 0});
     SetFlag<HardEvent::MTE2_S>(constInfo.deterConstInfo.eventIDMte2ToScalar);
     WaitFlag<HardEvent::MTE2_S>(constInfo.deterConstInfo.eventIDMte2ToScalar);
     for (uint16_t cIx = 0; cIx < constInfo.deterConstInfo.usedCubeCoreNum; cIx++) {
-        dqOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3);
-        dkOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3 + INT64_BLOCK_NUM);
-        dvOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * 3 + INT64_BLOCK_NUM * 2);
+        dqOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM);
+        dkOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM + INT64_BLOCK_NUM);
+        dvOffset[cIx] = deterOffsetTensor.GetValue(cIx * INT64_BLOCK_NUM * OFFSET_NUM + INT64_BLOCK_NUM * NUM_TWO);
     }
     int16_t bufId = 0;
     // 非last基本块处理的都是上一轮mm的结果， 最后一次循环需要补充处理本轮的mm结果
@@ -1327,7 +1329,7 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::DeterComputeDqkv(LocalTensor<
     if (remainLoopNum > 0) {
         SetFlag<HardEvent::S_MTE2>(constInfo.deterConstInfo.eventIDScalarToMte2);
     }
-    if (remainLoopNum > 2) { // 最后两轮不需要卡
+    if (remainLoopNum > NUM_TWO) { // 最后两轮不需要卡
         SyncAll(); // 由于复用了mm1mm2的在ub中的buf，所以为了防止确定性计算还没有做完，后面的mm已经做完的情况，踩数据，所以只能卡scalar
     }
 }
@@ -1420,13 +1422,13 @@ __aicore__ inline void FAGBlockVec<TEMPLATE_ARGS>::WriteOffsetToGM(FagConstInfo 
         WaitFlag<HardEvent::MTE3_S>(constInfo.deterConstInfo.eventIDMte3ToScalar);
     }
     deterOffsetTensor.SetValue(0, queryGmOffset);
-    deterOffsetTensor.SetValue(4, keyGmOffset);
-    deterOffsetTensor.SetValue(8, valueGmOffset);
+    deterOffsetTensor.SetValue(INT64_BYTES, keyGmOffset);
+    deterOffsetTensor.SetValue(INT64_BYTES * NUM_TWO, valueGmOffset);
 
     SetFlag<HardEvent::S_MTE3>(constInfo.deterConstInfo.eventIDScalarToMte3);
     WaitFlag<HardEvent::S_MTE3>(constInfo.deterConstInfo.eventIDScalarToMte3);
-    DataCopy(deterOffsetGm[(computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum + cBlockIdx) * 4 * 3],
-                deterOffsetTensor, {1, 3, 0, 0});
+    DataCopy(deterOffsetGm[(computeBlockIdx * constInfo.deterConstInfo.usedCubeCoreNum + cBlockIdx) * INT64_BYTES * OFFSET_NUM],
+                deterOffsetTensor, {1, OFFSET_NUM, 0, 0});
     if (remainLoopNum > 1) {
         SetFlag<HardEvent::MTE3_S>(constInfo.deterConstInfo.eventIDMte3ToScalar);
     }
