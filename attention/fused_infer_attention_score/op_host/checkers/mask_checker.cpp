@@ -59,11 +59,11 @@ ge::graphStatus MaskChecker::CheckSparseMode(const FiaTilingInfo &fiaInfo)
 // CheckFeature
 ge::graphStatus MaskChecker::CheckAntiquantSparseMode(const FiaTilingInfo &fiaInfo)
 {
-    OP_CHECK_IF(fiaInfo.s1Size == 1U && fiaInfo.sparseMode != SPARSE_MODE_NO_MASK,
-                OP_LOGE(fiaInfo.opName,
-                "When query's sequence length is 1, sparseMode only supports 0(defaultMask) but got %u",
+    OP_CHECK_IF(
+        fiaInfo.s1Size == 1U && fiaInfo.sparseMode != SPARSE_MODE_NO_MASK,
+        OP_LOGE(fiaInfo.opName, "When S of query equal to 1, sparseMode only supports 0(defaultMask but got %u)",
                 fiaInfo.sparseMode),
-                return ge::GRAPH_FAILED);
+        return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -109,7 +109,7 @@ ge::graphStatus MaskChecker::CheckFullQuantIFAMLA(const FiaTilingInfo &fiaInfo)
                         !((fiaInfo.sparseMode == SPARSE_MODE_RIGHT_DOWN) && (fiaInfo.attenMaskFlag)),
                         OP_LOGE(fiaInfo.opName,
                                 "Only support sparse 3 with mask and "
-                                "query's sequence length is > 1,and input datatype is INT8, "
+                                "query's sequence length is > 1, and input datatype is INT8, "
                                 "input sparse mode is %d and there has%smask",
                                 fiaInfo.sparseMode, fiaInfo.attenMaskFlag ? " " : " no "),
                         return ge::GRAPH_FAILED);
@@ -222,7 +222,7 @@ ge::graphStatus MaskChecker::CheckIFADimAndShape(const FiaTilingInfo &fiaInfo)
     size_t attenMaskDim = maskShape->GetStorageShape().GetDimNum();
     uint32_t attenMaskBatch = maskShape->GetStorageShape().GetDim(DIM_NUM_0);
     uint32_t attenMaskSize = maskShape->GetStorageShape().GetDim(maskShape->GetStorageShape().GetDimNum() - 1);
-    if (fiaInfo.pageAttentionFlag) {
+    if (fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION) {
         minAttenMaskSize = fiaInfo.s2Size;
     } else {
         minAttenMaskSize = fiaInfo.maxActualseq;
@@ -425,7 +425,7 @@ ge::graphStatus MaskChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus MaskChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus MaskChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
     if (enableNonQuant_) {
         if (ge::GRAPH_SUCCESS != CheckNoQuantIFAMLA(fiaInfo) || ge::GRAPH_SUCCESS != CheckQKVDDifferent(fiaInfo)) {
@@ -435,6 +435,10 @@ ge::graphStatus MaskChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
             if (ge::GRAPH_SUCCESS != CheckFeatureSparseMode(fiaInfo)) {
                 return ge::GRAPH_FAILED;
             }
+        }
+    } else if (enableAntiQuant_) {
+        if (ge::GRAPH_SUCCESS != CheckAntiquantSparseMode(fiaInfo)) {
+            return ge::GRAPH_FAILED;
         }
     } else if (enableFullQuant_) {
         if (ge::GRAPH_SUCCESS != CheckFullQuantIFAMLA(fiaInfo)) {
@@ -448,7 +452,7 @@ ge::graphStatus MaskChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus MaskChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus MaskChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     if (ge::GRAPH_SUCCESS != CheckPretokenAndNexttoken(fiaInfo) || ge::GRAPH_SUCCESS != CheckDimAndShape(fiaInfo)) {
         return ge::GRAPH_FAILED;

@@ -348,15 +348,16 @@ ge::graphStatus RopeChecker::CheckFeatureAntiQuant(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-// MLA D=512时 N:1/2/4/8/16/32/64/128 全量化 S1：1-16
-ge::graphStatus RopeChecker::CheckAxisSupport(const FiaTilingInfo &fiaInfo)
+// check QS size
+ge::graphStatus RopeChecker::CheckQSSize(const FiaTilingInfo &fiaInfo)
 {
-    if (fiaInfo.mlaMode != MlaMode::ROPE_SPLIT_D512) {
+    if (fiaInfo.mlaMode != MlaMode::ROPE_SPLIT_D512 || fiaInfo.isMaxWorkspace) {
         return ge::GRAPH_SUCCESS;
     }
 
+    // 全量化场景下 QS仅支持1-16
     constexpr uint32_t maxQuerySeqLenForMLAFullquant = 16U;
-    static const std::set<uint32_t> supportNumHeadForMLA = {1U, 2U, 4U, 8U, 16U, 32U, 64U, 128U};
+    
 
     OP_CHECK_IF((fiaInfo.s1Size < NUM1),
         OP_LOGE(fiaInfo.opName,
@@ -369,7 +370,16 @@ ge::graphStatus RopeChecker::CheckAxisSupport(const FiaTilingInfo &fiaInfo)
             "In the Decode MLA fullquant scenario, sequence length(%u) of query should be in range of [1, %u].",
             fiaInfo.s1Size, maxQuerySeqLenForMLAFullquant),
         return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
 
+// Decode MLA N1:1/2/4/8/16/32/64/128 N2:1
+ge::graphStatus RopeChecker::CheckNSize(const FiaTilingInfo &fiaInfo)
+{
+    if (fiaInfo.mlaMode != MlaMode::ROPE_SPLIT_D512) {
+        return ge::GRAPH_SUCCESS;
+    }
+    static const std::set<uint32_t> supportNumHeadForMLA = {1U, 2U, 4U, 8U, 16U, 32U, 64U, 128U};
     OP_CHECK_IF((supportNumHeadForMLA.find(fiaInfo.n1Size) == supportNumHeadForMLA.end()),
         OP_LOGE(fiaInfo.opName,
             "In the Decode MLA scenario, "
@@ -381,6 +391,15 @@ ge::graphStatus RopeChecker::CheckAxisSupport(const FiaTilingInfo &fiaInfo)
             "In the Decode MLA scenario, the heads num(%d) of key should be 1.",
             *fiaInfo.opParamInfo.kvHeadNums),
         return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
+ge::graphStatus RopeChecker::CheckAxisSupport(const FiaTilingInfo &fiaInfo)
+{
+    if (ge::GRAPH_SUCCESS != CheckQSSize(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckNSize(fiaInfo)) {
+        return ge::GRAPH_FAILED;
+    }
     return ge::GRAPH_SUCCESS;
 }
 
@@ -401,7 +420,7 @@ ge::graphStatus RopeChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus RopeChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus RopeChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.ropeMode != RopeMode::ROPE_SPLIT) {
         return ge::GRAPH_SUCCESS;
@@ -426,7 +445,7 @@ ge::graphStatus RopeChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus RopeChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus RopeChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.ropeMode != RopeMode::ROPE_SPLIT) {
         return ge::GRAPH_SUCCESS;

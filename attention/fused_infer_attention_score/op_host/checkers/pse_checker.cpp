@@ -194,7 +194,7 @@ ge::graphStatus PSEChecker::CheckFeaturePA(const FiaTilingInfo &fiaInfo)
         return ge::GRAPH_SUCCESS;
     }
     // Page attention使能场景下，传入的PseShift的最后一维需要大于等于maxBlockNumPerSeq * blockSize
-    if (*fiaInfo.opParamInfo.pseType != 0 && fiaInfo.pageAttentionFlag) {
+    if (*fiaInfo.opParamInfo.pseType != 0 && fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION) {
         uint32_t pseShiftS2 = fiaInfo.pseShiftS2;
         int32_t blockSize = fiaInfo.blockSize;
         uint32_t maxBlockNumPerBatch = fiaInfo.maxBlockNumPerBatch;
@@ -303,15 +303,16 @@ ge::graphStatus PSEChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PSEChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PSEChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
-    if (ge::GRAPH_SUCCESS != CheckFeaturePA(fiaInfo) || ge::GRAPH_SUCCESS != CheckerFeatureCrossover(fiaInfo)) {
+    if (ge::GRAPH_SUCCESS != CheckFeaturePA(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckerFeatureCrossover(fiaInfo)) {
         return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PSEChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PSEChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     if (ge::GRAPH_SUCCESS != CheckAlibiStartIdx(fiaInfo)) {
         return ge::GRAPH_FAILED;

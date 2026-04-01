@@ -43,17 +43,19 @@ ge::graphStatus LearnableSinkChecker::CheckSinkDtypeSupport(const FiaTilingInfo 
                 OP_LOGE(fiaInfo.opName, "When learnable sink enable, the datatype(%s) of sink only support FP16.",
                     DataTypeToSerialString(learnableSinkDesc->GetDataType()).c_str()),
             return ge::GRAPH_FAILED);
+
+            OP_CHECK_IF(learnableSinkDesc->GetDataType() != fiaInfo.inputQType,
+                OP_LOGE(fiaInfo.opName, "When learnable sink enable, the datatype(%s) of sink should be equal to query(%s).",
+                    DataTypeToSerialString(learnableSinkDesc->GetDataType()).c_str(), 
+                    DataTypeToSerialString(fiaInfo.inputQType).c_str()),
+            return ge::GRAPH_FAILED);
         }
         OP_CHECK_IF(learnableSinkDesc->GetDataType() != ge::DT_BF16,
             OP_LOGE(fiaInfo.opName, "When learnable sink enable, the datatype(%s) of sink only support BF16.",
                 DataTypeToSerialString(learnableSinkDesc->GetDataType()).c_str()),
         return ge::GRAPH_FAILED);
         
-        OP_CHECK_IF(learnableSinkDesc->GetDataType() != fiaInfo.inputQType,
-            OP_LOGE(fiaInfo.opName, "When learnable sink enable, the datatype(%s) of sink should be equal to query(%s).",
-                DataTypeToSerialString(learnableSinkDesc->GetDataType()).c_str(), 
-                DataTypeToSerialString(fiaInfo.inputQType).c_str()),
-        return ge::GRAPH_FAILED);
+        
     }
     return ge::GRAPH_SUCCESS;
 }
@@ -147,7 +149,7 @@ ge::graphStatus LearnableSinkChecker::CheckParaExistence(const FiaTilingInfo &fi
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus LearnableSinkChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus LearnableSinkChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
     if ((ge::GRAPH_SUCCESS != CheckFeatureSupport(fiaInfo) ||
         ge::GRAPH_SUCCESS != CheckAxisSupport(fiaInfo)) && fiaInfo.npuArch == NpuArch::DAV_3510) {
@@ -157,7 +159,7 @@ ge::graphStatus LearnableSinkChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus LearnableSinkChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus LearnableSinkChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     return ge::GRAPH_SUCCESS;
 }

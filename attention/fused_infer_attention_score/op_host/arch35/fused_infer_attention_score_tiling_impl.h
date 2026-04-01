@@ -98,7 +98,7 @@ protected:
     ge::graphStatus AdjustSinnerAndSouter(gert::TilingContext *context, const FiaTilingInfo &fiaInfo);
     void GetPreNextTokensLeftUp(const FiaTilingInfo &fiaInfo, int64_t actualSeqLength, int64_t actualSeqLengthKV,
                                 int64_t &preTokensLeftUp, int64_t &nextTokensLeftUp);
-    void FixParamWithRowInvalid(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLength, int64_t actualSeqLengthKV, 
+    void FixParamWithRowInvalid(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLength, int64_t actualSeqLengthKV,
                                 int64_t &preTokensLeftUp, int64_t &nextTokensLeftUp);
     int64_t GetCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength, int64_t sInner, int64_t sOuter,
                             int64_t token);
@@ -110,6 +110,7 @@ protected:
                            uint32_t sInnerSize, double coreWeightTarget, uint32_t &curCore);
     void SplitNBSeq(const FiaTilingInfo &fiaInfo);
     void InitImplParam(const FiaTilingInfo &fiaInfo);
+    void SetIsIFA(const FiaTilingInfo &fiaInfo);
     void SetGSMerge(const FiaTilingInfo &fiaInfo);
     bool CheckEnableDN(const FiaTilingInfo &fiaInfo);
     bool CheckQKVActualSeqLengthsRight(const FiaTilingInfo &fiaInfo);
@@ -119,8 +120,6 @@ protected:
     ge::graphStatus CalcInnerSize(const FiaTilingInfo &fiaInfo, uint32_t seqSize);
     void GetActualSeqLength(const FiaTilingInfo &fiaInfo, int64_t &actualSeqLengths, int64_t &actualSeqLengthsKV, uint32_t bIdx);
     int64_t SumOfArithmeticSeries(int64_t an, int64_t d);
-    int64_t GetAntiQuantCutBlockNums(int64_t blockSeqLengthKV, int64_t blockSeqLength, int64_t sInner, int64_t sOuter,
-                                     int64_t token);
     void ComputeDequantSplitNBSeq(const FiaTilingInfo &fiaInfo, std::vector<int64_t> sOuterLoopTimes,
                                   std::vector<int64_t> sInnerLoopTimes, int64_t sInnerLoopTimesPrefix,
                                   double coreWeightTarget, uint32_t &curCore, const size_t tilingElementArrayLen);
@@ -168,6 +167,7 @@ protected:
     std::vector<int64_t> actualSeqLengthsKV_ = {};
     bool fromPFA_ = false;
     bool isPFAFlag_ = false;
+    bool isIFAFlag_ = false;
     bool needInit_ = false;
     bool enableS1OutSplit = false;
 };

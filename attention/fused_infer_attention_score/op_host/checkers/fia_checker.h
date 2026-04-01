@@ -31,7 +31,7 @@
 #include "./post_quant_checker.h"
 #include "./pse_checker.h"
 #include "./rope_checker.h"
-#include "./shape_checker.h"
+#include "./common_checker.h"
 #include "./softmax_lse_checker.h"
 #include "./system_prefix_checker.h"
 
@@ -45,8 +45,8 @@ public:
 
     ge::graphStatus CheckSinglePara(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckParaExistence(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckFeature(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckCrossFeature(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo);
 
 private:
     std::unique_ptr<ActualSeqLenChecker> actualSeqLenChecker_;
@@ -58,7 +58,7 @@ private:
     std::unique_ptr<PostQuantChecker> postQuantChecker_;
     std::unique_ptr<PSEChecker> pseChecker_;
     std::unique_ptr<RopeChecker> ropeChecker_;
-    std::unique_ptr<ShapeChecker> shapeChecker_;
+    std::unique_ptr<CommonChecker> commonChecker_;
     std::unique_ptr<SoftmaxLSEChecker> softmaxLSEChecker_;
     std::unique_ptr<SystemPrefixChecker> systemPrefixChecker_;
 

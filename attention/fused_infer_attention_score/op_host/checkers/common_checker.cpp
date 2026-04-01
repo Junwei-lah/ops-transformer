@@ -9,7 +9,7 @@
   */
 
 /*!
- * \file shape_checker.cpp
+ * \file common_checker.cpp
  * \brief
  */
 
@@ -20,7 +20,7 @@
 #include "log/error_code.h"
 #include "register/op_def_registry.h"
 #include "../fused_infer_attention_score_tiling_constants.h"
-#include "shape_checker.h"
+#include "common_checker.h"
 
 namespace optiling {
 using std::map;
@@ -31,7 +31,7 @@ using namespace AscendC;
 using namespace arch35FIA;
 
 // 公共校验函数
-ge::graphStatus ShapeChecker::CheckInputFormat(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckInputFormat(const FiaTilingInfo &fiaInfo)
 {
     if (CheckFormatSupport(fiaInfo.opParamInfo.query.desc, "query") != ge::GRAPH_SUCCESS ||
         CheckFormatSupport(fiaInfo.opParamInfo.key.desc, "key") != ge::GRAPH_SUCCESS ||
@@ -42,7 +42,7 @@ ge::graphStatus ShapeChecker::CheckInputFormat(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckParaExistenceImpl(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckParaExistenceImpl(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF(fiaInfo.opParamInfo.query.desc == nullptr || fiaInfo.opParamInfo.query.shape == nullptr,
         OPS_REPORT_VECTOR_INNER_ERR(fiaInfo.opName, "Query input is null pointer!"),
@@ -59,7 +59,7 @@ ge::graphStatus ShapeChecker::CheckParaExistenceImpl(const FiaTilingInfo &fiaInf
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckDtypeCommon(const gert::CompileTimeTensorDesc *desc,
+ge::graphStatus CommonChecker::CheckDtypeCommon(const gert::CompileTimeTensorDesc *desc,
     const std::string &name, std::map<std::string, std::vector<ge::DataType>> dataMap)
 {
     if (desc != nullptr) {
@@ -77,7 +77,7 @@ ge::graphStatus ShapeChecker::CheckDtypeCommon(const gert::CompileTimeTensorDesc
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckPAKeyValue(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckPAKeyValue(const FiaTilingInfo &fiaInfo)
 {
     const gert::StorageShape *keyShape = fiaInfo.opParamInfo.key.shape;
     const gert::StorageShape *valueShape = fiaInfo.opParamInfo.value.shape;
@@ -204,7 +204,7 @@ ge::graphStatus ShapeChecker::CheckPAKeyValue(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-bool ShapeChecker::CheckEmptyTensorList(const FiaTilingInfo &fiaInfo)
+bool CommonChecker::CheckEmptyTensorList(const FiaTilingInfo &fiaInfo)
 {
     for (int64_t tmpIdx = 0; tmpIdx < fiaInfo.kCache.size(); ++tmpIdx) {
         if (fiaInfo.kCache[tmpIdx]->GetStorageShape().GetShapeSize() != 0) {
@@ -217,7 +217,7 @@ bool ShapeChecker::CheckEmptyTensorList(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-bool ShapeChecker::CheckNormalTensorList(const FiaTilingInfo &fiaInfo)
+bool CommonChecker::CheckNormalTensorList(const FiaTilingInfo &fiaInfo)
 {
     std::string layoutStr(fiaInfo.opParamInfo.layOut);
     if (layoutStr == "BSH") { // check all H across batches and KVs are the same under BSH layout
@@ -366,7 +366,7 @@ bool ShapeChecker::CheckNormalTensorList(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-ge::graphStatus ShapeChecker::CheckTensorList(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckTensorList(const FiaTilingInfo &fiaInfo)
 {
     std::string layoutStr(fiaInfo.opParamInfo.layOut);
     OP_CHECK_IF((fiaInfo.opParamInfo.blockTable.tensor != nullptr),
@@ -393,7 +393,7 @@ ge::graphStatus ShapeChecker::CheckTensorList(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckMultiDtype(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckMultiDtype(const FiaTilingInfo &fiaInfo)
 {
     const std::map<std::string, std::vector<ge::DataType>> QKVD_Different_MAP = {
         {"query",                  {ge::DT_FLOAT16, ge::DT_BF16}},
@@ -424,7 +424,7 @@ ge::graphStatus ShapeChecker::CheckMultiDtype(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckAxis(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckAxis(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF(fiaInfo.bSize > B_LIMIT || fiaInfo.bSize <= 0,
                 OP_LOGE(fiaInfo.opName, "The axis B only support (0, %u], the current is %u.",
@@ -481,7 +481,7 @@ ge::graphStatus ShapeChecker::CheckAxis(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-void ShapeChecker::GetQueryDimAndOutDim(const gert::StorageShape* queryShape, const gert::StorageShape* outShape,
+void CommonChecker::GetQueryDimAndOutDim(const gert::StorageShape* queryShape, const gert::StorageShape* outShape,
     const std::string &layoutStr, int64_t &tmpQueryDim, int64_t &outDim, uint32_t i) {
     if (layoutStr == "BNSD_BSND" || layoutStr == "BSND_BNSD") {
         if (i == 1) { // BNSD_BSND：query:N, output:S; BSND_BNSD：query:S, output:N
@@ -531,7 +531,7 @@ void ShapeChecker::GetQueryDimAndOutDim(const gert::StorageShape* queryShape, co
     }
 }
 
-ge::graphStatus ShapeChecker::CheckQueryOutConsistency(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckQueryOutConsistency(const FiaTilingInfo &fiaInfo)
 {
     const gert::StorageShape *queryShape = fiaInfo.opParamInfo.query.shape;
     const gert::StorageShape *attentionOutShape = fiaInfo.opParamInfo.attenOut.shape;
@@ -573,9 +573,9 @@ ge::graphStatus ShapeChecker::CheckQueryOutConsistency(const FiaTilingInfo &fiaI
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckKeyValueConsistency(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckKeyValueConsistency(const FiaTilingInfo &fiaInfo)
 {
-    if (fiaInfo.pageAttentionFlag || fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST) {
+    if (fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION || fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST) {
         return ge::GRAPH_SUCCESS;
     }
     const gert::StorageShape *keyShape = fiaInfo.opParamInfo.key.shape;
@@ -619,7 +619,7 @@ ge::graphStatus ShapeChecker::CheckKeyValueConsistency(const FiaTilingInfo &fiaI
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckQueryShape(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckQueryShape(const FiaTilingInfo &fiaInfo)
 {
     uint32_t attrN = fiaInfo.n1Size;
     const gert::StorageShape *queryShape = fiaInfo.opParamInfo.query.shape;
@@ -656,7 +656,7 @@ ge::graphStatus ShapeChecker::CheckQueryShape(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckKeyNHVaild(const FiaTilingInfo &fiaInfo, const gert::Shape &keyShape)
+ge::graphStatus CommonChecker::CheckKeyNHVaild(const FiaTilingInfo &fiaInfo, const gert::Shape &keyShape)
 {
     uint32_t attrKvN = fiaInfo.n2Size;
     size_t keyDim = keyShape.GetDimNum();
@@ -692,7 +692,7 @@ ge::graphStatus ShapeChecker::CheckKeyNHVaild(const FiaTilingInfo &fiaInfo, cons
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckKeyDVaild(const FiaTilingInfo &fiaInfo, const gert::Shape &keyShape)
+ge::graphStatus CommonChecker::CheckKeyDVaild(const FiaTilingInfo &fiaInfo, const gert::Shape &keyShape)
 {
     size_t keyDim = keyShape.GetDimNum();
     uint32_t keyHeadDim = 0;
@@ -710,9 +710,9 @@ ge::graphStatus ShapeChecker::CheckKeyDVaild(const FiaTilingInfo &fiaInfo, const
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckKeyShape(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckKeyShape(const FiaTilingInfo &fiaInfo)
 {
-    if (fiaInfo.pageAttentionFlag) {
+    if (fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION) {
         return ge::GRAPH_SUCCESS;
     }
     if (fiaInfo.kvStorageMode == KvStorageMode::BATCH_CONTINUOUS) {
@@ -729,7 +729,7 @@ ge::graphStatus ShapeChecker::CheckKeyShape(const FiaTilingInfo &fiaInfo)
     }
 }
 
-ge::graphStatus ShapeChecker::CheckQueryKeyTensorlistConsistency(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckQueryKeyTensorlistConsistency(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF(fiaInfo.bSize != fiaInfo.kCache.size(),
         OP_LOGE(fiaInfo.opName,
@@ -746,9 +746,9 @@ ge::graphStatus ShapeChecker::CheckQueryKeyTensorlistConsistency(const FiaTiling
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckQueryKeyConsistency(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckQueryKeyConsistency(const FiaTilingInfo &fiaInfo)
 {
-    if (fiaInfo.pageAttentionFlag || fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST) {
+    if (fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION || fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST) {
         return ge::GRAPH_SUCCESS;
     }
     ge::DataType queryDataType = fiaInfo.opParamInfo.query.desc->GetDataType();
@@ -770,9 +770,9 @@ ge::graphStatus ShapeChecker::CheckQueryKeyConsistency(const FiaTilingInfo &fiaI
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckMultiAttr(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckMultiAttr(const FiaTilingInfo &fiaInfo)
 {
-    OP_CHECK_IF(fiaInfo.pageAttentionFlag && fiaInfo.isQKVDDifferent,
+    OP_CHECK_IF(fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION && fiaInfo.isQKVDDifferent,
         OPS_REPORT_VECTOR_INNER_ERR(fiaInfo.opName, "Not support PA when query and key headdim is not equal to value headdim."),
         return ge::GRAPH_FAILED);
     OP_CHECK_IF(fiaInfo.pseShiftFlag && fiaInfo.isQKVDDifferent,
@@ -795,7 +795,7 @@ ge::graphStatus ShapeChecker::CheckMultiAttr(const FiaTilingInfo &fiaInfo)
 }
 
 // enableNonQuant 相关校验函数
-ge::graphStatus ShapeChecker::CheckNonQuantDataType(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckNonQuantDataType(const FiaTilingInfo &fiaInfo)
 {
     const std::map<std::string, std::vector<ge::DataType>> NO_QUANT_MAP = {
         {"query",                  {ge::DT_FLOAT16, ge::DT_BF16}},
@@ -813,7 +813,7 @@ ge::graphStatus ShapeChecker::CheckNonQuantDataType(const FiaTilingInfo &fiaInfo
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckNonQuantAttr(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckNonQuantAttr(const FiaTilingInfo &fiaInfo)
 {
     if (CheckNonQuantHeadNum(fiaInfo) != ge::GRAPH_SUCCESS ||
         CheckNonQuantInputLayout(fiaInfo) != ge::GRAPH_SUCCESS ||
@@ -823,7 +823,7 @@ ge::graphStatus ShapeChecker::CheckNonQuantAttr(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckNonQuantHeadNum(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckNonQuantHeadNum(const FiaTilingInfo &fiaInfo)
 {
     if ((fiaInfo.n1Size < 0) || (fiaInfo.n2Size < 0)) {
         OP_LOGE(fiaInfo.opName, "numHeads(%d) or numKeyValueHeads(%d) is negative!", fiaInfo.n1Size, fiaInfo.n2Size);
@@ -845,7 +845,7 @@ ge::graphStatus ShapeChecker::CheckNonQuantHeadNum(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.opParamInfo.layOut == nullptr) {
         return ge::GRAPH_FAILED;
@@ -954,7 +954,7 @@ ge::graphStatus ShapeChecker::CheckNonQuantInputLayout(const FiaTilingInfo &fiaI
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckNonQuantInnerPrecise(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckNonQuantInnerPrecise(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF(fiaInfo.innerPrecise > INNER_PRECISE_LIMIT || fiaInfo.innerPrecise < 0,
         OP_LOGE(fiaInfo.opName, "The attr innerPrecise only support [0, %u], the current is %u.",
@@ -964,7 +964,7 @@ ge::graphStatus ShapeChecker::CheckNonQuantInnerPrecise(const FiaTilingInfo &fia
     return ge::GRAPH_SUCCESS;
 }
 
-bool ShapeChecker::CheckTNDLayoutCrossover(const FiaTilingInfo &fiaInfo)
+bool CommonChecker::CheckTNDLayoutCrossover(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.inputLayout != TilingKeyLayout::TND) {
         return true;
@@ -988,7 +988,7 @@ bool ShapeChecker::CheckTNDLayoutCrossover(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-bool ShapeChecker::CheckNTDLayoutCrossover(const FiaTilingInfo &fiaInfo)
+bool CommonChecker::CheckNTDLayoutCrossover(const FiaTilingInfo &fiaInfo)
 {
     if (fiaInfo.inputLayout != TilingKeyLayout::NTD) {
         return true;
@@ -1018,7 +1018,7 @@ bool ShapeChecker::CheckNTDLayoutCrossover(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-bool ShapeChecker::CheckTransposeLayoutCrossover(const FiaTilingInfo &fiaInfo)
+bool CommonChecker::CheckTransposeLayoutCrossover(const FiaTilingInfo &fiaInfo)
 {
     std::string layoutStr(fiaInfo.opParamInfo.layOut);
     if (layoutStr != "BSH_BNSD" && layoutStr != "BSND_BNSD" && layoutStr != "BNSD_BSND") {
@@ -1058,7 +1058,7 @@ bool ShapeChecker::CheckTransposeLayoutCrossover(const FiaTilingInfo &fiaInfo)
     return true;
 }
 
-ge::graphStatus ShapeChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
 {
     if (enableNonQuant_) {
         if (CheckNonQuantDataType(fiaInfo) != ge::GRAPH_SUCCESS ||
@@ -1070,7 +1070,7 @@ ge::graphStatus ShapeChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
 {
     if (CheckParaExistenceImpl(fiaInfo) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
@@ -1078,10 +1078,14 @@ ge::graphStatus ShapeChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus ShapeChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus CommonChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
+{
+    return ge::GRAPH_SUCCESS;
+}
+ge::graphStatus CommonChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     if (enableNonQuant_) {
-        if (fiaInfo.pageAttentionFlag) {
+        if (fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION) {
             if (CheckPAKeyValue(fiaInfo) != ge::GRAPH_SUCCESS) { // PA场景
                 return ge::GRAPH_FAILED;
             }
@@ -1101,13 +1105,6 @@ ge::graphStatus ShapeChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
         if (!CheckTNDLayoutCrossover(fiaInfo) || !CheckNTDLayoutCrossover(fiaInfo) || !CheckTransposeLayoutCrossover(fiaInfo)) {
             return ge::GRAPH_FAILED;
         }
-    }
-    return ge::GRAPH_SUCCESS;
-}
-
-ge::graphStatus ShapeChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
-{
-    if (enableNonQuant_) {
         if (CheckMultiDtype(fiaInfo) != ge::GRAPH_SUCCESS ||
             CheckAxis(fiaInfo) != ge::GRAPH_SUCCESS ||
             CheckQueryOutConsistency(fiaInfo) != ge::GRAPH_SUCCESS ||

@@ -9,12 +9,12 @@
   */
 
 /*!
- * \file shape_checker.h
+ * \file common_checker.h
  * \brief
  */
 
-#ifndef SHAPE_CHECKER_H
-#define SHAPE_CHECKER_H
+#ifndef COMMON_CHECKER_H
+#define COMMON_CHECKER_H
 
 #include <map>
 #include <numeric>
@@ -23,16 +23,16 @@
 
 using std::map;
 namespace optiling {
-class ShapeChecker : public BaseChecker {
+class CommonChecker : public BaseChecker {
 public:
-    ShapeChecker(bool enableNonQuant, bool enableFullQuant, bool enableAntiQuant) :
+    CommonChecker(bool enableNonQuant, bool enableFullQuant, bool enableAntiQuant) :
         BaseChecker(enableNonQuant, enableFullQuant, enableAntiQuant) {}
-    ~ShapeChecker() override = default;
+    ~CommonChecker() override = default;
 
     ge::graphStatus CheckSinglePara(const FiaTilingInfo &fiaInfo) override;
     ge::graphStatus CheckParaExistence(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckFeature(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckCrossFeature(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo) override;
 
 private:
     // 公共校验函数

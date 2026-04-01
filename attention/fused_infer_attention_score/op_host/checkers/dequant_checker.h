@@ -29,15 +29,15 @@ public:
 
     ge::graphStatus CheckSinglePara(const FiaTilingInfo &fiaInfo) override;
     ge::graphStatus CheckParaExistence(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckFeature(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckCrossFeature(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo) override;
 
 private:
     // enableNonQuant 相关校验函数
     ge::graphStatus CheckExistenceNoquant(const FiaTilingInfo &fiaInfo);
 
     // enableFullQuant 相关校验函数
-    ge::graphStatus CheckDataTypeFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckDataTypeSupportFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleDtypeMLAFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleDtypeGQAPerblock(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleDtypeGQAPertensor(const FiaTilingInfo &fiaInfo);
@@ -46,7 +46,6 @@ private:
     ge::graphStatus CheckDequantModeGQAPerblock(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantModeGQAPertensor(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantModeFullquant(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckDequantScaleDimNumGQAPerblock(const FiaTilingInfo &fiaInfo);
 
     ge::graphStatus CheckTensorExistFullquant(const FiaTilingInfo &fiaInfo, const gert::Tensor *tensor,
         const std::string &quantModeName, const std::string &inputName);
@@ -59,11 +58,15 @@ private:
     ge::graphStatus CheckFeaturePertensorFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeaturePerblockFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureMLAFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureSupportFullquant(const FiaTilingInfo &fiaInfo);
 
-    ge::graphStatus CheckDequantScaleShapeMLAFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckDequantScaleKVMLAFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckDequantScaleQueryMLAFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleShapePertensor(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckQuantScale1ShapePerblock(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleShapePerblock(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDequantScaleShapeFullquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckDequantScaleShapeCrossFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckInputDTypeFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckInputLayoutPerblock(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckInputLayoutPertensor(const FiaTilingInfo &fiaInfo);
@@ -72,7 +75,6 @@ private:
     ge::graphStatus CheckInputAxisFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckN1SizeFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckN2SizeFullquant(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckQSSizeFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckGSizeFullquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckDSizeFullquant(const FiaTilingInfo &fiaInfo);
 
@@ -90,7 +92,8 @@ private:
 
     // Feature
     ge::graphStatus CheckFeatureForAntiquant(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckFeatureExtendForAntiquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureLayoutForAntiquant(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureQuerySForAntiquant(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeaturePAForAntiquant(const FiaTilingInfo &fiaInfo);
 
     // MultiPara

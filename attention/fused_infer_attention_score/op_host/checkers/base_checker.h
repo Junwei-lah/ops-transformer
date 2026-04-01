@@ -36,8 +36,8 @@ public:
 protected:
     virtual ge::graphStatus CheckSinglePara(const FiaTilingInfo &fiaInfo) = 0;
     virtual ge::graphStatus CheckParaExistence(const FiaTilingInfo &fiaInfo) = 0;
-    virtual ge::graphStatus CheckFeature(const FiaTilingInfo &fiaInfo) = 0;
-    virtual ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) = 0;
+    virtual ge::graphStatus CheckCrossFeature(const FiaTilingInfo &fiaInfo) = 0;
+    virtual ge::graphStatus CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo) = 0;
 
     // public check funcs
     ge::graphStatus CheckDtypeSupport(const gert::CompileTimeTensorDesc *desc, const std::string &name) const;

@@ -31,20 +31,21 @@ public:
 
     ge::graphStatus CheckSinglePara(const FiaTilingInfo &fiaInfo) override;
     ge::graphStatus CheckParaExistence(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckFeature(const FiaTilingInfo &fiaInfo) override;
-    ge::graphStatus CheckMultiPara(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckCrossFeature(const FiaTilingInfo &fiaInfo) override;
+    ge::graphStatus CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo) override;
 
 private:
     // 公共校验函数
     ge::graphStatus CheckSingleDtype(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckExistenceQuantScale2(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureAttenOut(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureQueryDType(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckFeatureLayout(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureOutputEqual(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeaturePrefix(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckFeatureRowValid(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckMultiParaQuantOffset2(const FiaTilingInfo &fiaInfo);
-    ge::graphStatus CheckMultiParaShape(const FiaTilingInfo &fiaInfo);
     ge::graphStatus CheckAntiquantNotSupport(const FiaTilingInfo &fiaInfo);
+    ge::graphStatus CheckMultiParaQuantOffset2(const FiaTilingInfo &fiaInfo);
 private:
 };
 

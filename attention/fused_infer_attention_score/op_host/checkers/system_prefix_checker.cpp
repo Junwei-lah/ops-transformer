@@ -13,7 +13,6 @@
  * \brief
  */
 
-#include <map>
 #include <numeric>
 #include <graph/utils/type_utils.h>
 #include "log/log.h"
@@ -23,9 +22,7 @@
 #include "system_prefix_checker.h"
 
 namespace optiling {
-using std::map;
 using std::string;
-using std::pair;
 using namespace ge;
 using namespace AscendC;
 using namespace arch35FIA;
@@ -287,9 +284,14 @@ ge::graphStatus SystemPrefixChecker::CheckUnSupportFeature(const FiaTilingInfo &
     bool enablePFARope = fiaInfo.mlaMode == MlaMode::ROPE_SPLIT_D128;
     bool enablePFAMLA = fiaInfo.mlaMode == MlaMode::ROPE_COMBINE_D128;
     // 不支持page attention场景
-    OP_CHECK_IF((fiaInfo.pageAttentionFlag),
+    OP_CHECK_IF((fiaInfo.kvStorageMode == KvStorageMode::PAGE_ATTENTION),
         OP_LOGE(fiaInfo.opName,
             "prefix is not supported when page attention is enabled."),
+        return ge::GRAPH_FAILED);
+    // 不支持tensorlist
+    OP_CHECK_IF((fiaInfo.kvStorageMode == KvStorageMode::TENSOR_LIST),
+        OP_LOGE(fiaInfo.opName,
+            "prefix is not supported when tensorlist is enabled."),
         return ge::GRAPH_FAILED);
     // 不支持左padding场景
     OP_CHECK_IF((fiaInfo.qPaddingSizeFlag || fiaInfo.kvPaddingSizeFlag),
@@ -512,7 +514,7 @@ ge::graphStatus SystemPrefixChecker::CheckParaExistence(const FiaTilingInfo &fia
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SystemPrefixChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus SystemPrefixChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
     if (ge::GRAPH_SUCCESS != CheckUnSupportFeature(fiaInfo)) {
         return ge::GRAPH_FAILED;
@@ -527,7 +529,7 @@ ge::graphStatus SystemPrefixChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus SystemPrefixChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus SystemPrefixChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
     return ge::GRAPH_SUCCESS;
 }

@@ -31,6 +31,60 @@ using namespace AscendC;
 using namespace arch35FIA;
 
 // 公共校验函数
+// check blocktable dtype
+ge::graphStatus PagedAttentionChecker::CheckBlockTableDtype(const FiaTilingInfo &fiaInfo)
+{
+    if (fiaInfo.opParamInfo.blockTable.tensor == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
+    const gert::CompileTimeTensorDesc *blockTableDesc = fiaInfo.opParamInfo.blockTable.desc;
+    OP_CHECK_IF(blockTableDesc->GetDataType() != ge::DT_INT32,
+        OP_LOGE(fiaInfo.opName,
+                "When page attention enable, blockTable datatype only support INT32."),
+            return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
+// check blockTable shape size
+ge::graphStatus PagedAttentionChecker::CheckBlockTableShapeSize(const FiaTilingInfo &fiaInfo)
+{
+    if (fiaInfo.opParamInfo.blockTable.tensor == nullptr) {
+        return ge::GRAPH_SUCCESS;
+    }
+    const gert::Shape blockTableShape = fiaInfo.opParamInfo.blockTable.tensor->GetStorageShape();
+
+    // check dim num
+    OP_CHECK_IF(blockTableShape.GetDimNum() != 2,
+        OP_LOGE(fiaInfo.opName,
+                "When page attention enable, the dim num(%zu) of blockTable should be 2.",
+                blockTableShape.GetDimNum()),
+            return ge::GRAPH_FAILED);
+
+    // check blockTable each dim cannot be 0
+    OP_CHECK_IF(blockTableShape.GetShapeSize() == 0,
+        OP_LOGE(fiaInfo.opName,
+                "When page attention enable, blockTable each dim can not be 0, now is [%ld, %ld].",
+                blockTableShape.GetDim(0), blockTableShape.GetDim(1)),
+            return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
+// check blocksize
+ge::graphStatus PagedAttentionChecker::CheckBlockSize(const FiaTilingInfo &fiaInfo)
+{
+    OP_CHECK_IF(fiaInfo.opParamInfo.blockSize == nullptr,
+        OP_LOGE(fiaInfo.opName,
+                "When page attention enable, blockSize should not be null."),
+            return ge::GRAPH_FAILED);
+    
+    OP_CHECK_IF(fiaInfo.blockSize <= 0,
+        OP_LOGE(fiaInfo.opName,
+                "When page attention enable, blockSize(%d) should be > 0.",
+                fiaInfo.blockSize),
+            return ge::GRAPH_FAILED);
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus PagedAttentionChecker::CheckBlockTableExistence(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF(fiaInfo.opParamInfo.blockTable.tensor == nullptr,
@@ -40,7 +94,7 @@ ge::graphStatus PagedAttentionChecker::CheckBlockTableExistence(const FiaTilingI
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PagedAttentionChecker::CheckFeatureExistence(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PagedAttentionChecker::CheckFeatureSupport(const FiaTilingInfo &fiaInfo)
 {
     OP_CHECK_IF((fiaInfo.opParamInfo.queryPaddingSize.tensor != nullptr) ||
         (fiaInfo.opParamInfo.kvPaddingSize.tensor != nullptr),
@@ -116,19 +170,6 @@ ge::graphStatus PagedAttentionChecker::CheckMaskShape(const FiaTilingInfo &fiaIn
                 fiaInfo.sparseMode, attenMaskShape.GetDim(attenMaskDimNum-1), maxBlockNumPerBatch, fiaInfo.blockSize),
             return ge::GRAPH_FAILED);
     }
-    return ge::GRAPH_SUCCESS;
-}
-
-// check blocktable dtype
-ge::graphStatus PagedAttentionChecker::CheckBlockTableDtype(const FiaTilingInfo &fiaInfo)
-{
-    if (fiaInfo.opParamInfo.blockTable.tensor == nullptr) {
-        return ge::GRAPH_SUCCESS;
-    }
-    const gert::CompileTimeTensorDesc *blockTableDesc = fiaInfo.opParamInfo.blockTable.desc;
-    OP_CHECK_IF(blockTableDesc->GetDataType() != ge::DT_INT32,
-        OP_LOGE(fiaInfo.opName, "When page attention enable, blockTable datatype only support INT32."),
-        return ge::GRAPH_FAILED);
     return ge::GRAPH_SUCCESS;
 }
 
@@ -296,19 +337,6 @@ ge::graphStatus PagedAttentionChecker::CheckBlockTableShape(const FiaTilingInfo 
     if (fiaInfo.isMaxWorkspace) {
         return ge::GRAPH_SUCCESS;
     }
-    const gert::Shape blockTableShape = fiaInfo.opParamInfo.blockTable.tensor->GetStorageShape();
-
-    // check dim num
-    OP_CHECK_IF(blockTableShape.GetDimNum() != 2,
-        OP_LOGE(fiaInfo.opName, "When page attention enable, the dim num(%zu) of blockTable should be 2.",
-                blockTableShape.GetDimNum()),
-            return ge::GRAPH_FAILED);
-
-    // check blockTable each dim cannot be 0
-    OP_CHECK_IF(blockTableShape.GetShapeSize() == 0,
-        OP_LOGE(fiaInfo.opName, "When page attention enable, blockTable each dim can not be 0, now is [%ld, %ld].",
-            blockTableShape.GetDim(0), blockTableShape.GetDim(1)),
-        return ge::GRAPH_FAILED);
     
     if (fiaInfo.opParamInfo.actualSeqLengths.tensor == nullptr) {
         return ge::GRAPH_SUCCESS;
@@ -316,7 +344,7 @@ ge::graphStatus PagedAttentionChecker::CheckBlockTableShape(const FiaTilingInfo 
 
     // 每个batch的 blockNum 小于 blocktable dim2
     int64_t maxBlockNumPerBatch = GetMaxBlockNumPerBatch(fiaInfo);
-
+    const gert::Shape blockTableShape = fiaInfo.opParamInfo.blockTable.tensor->GetStorageShape();
     OP_CHECK_IF(((blockTableShape.GetDim(0) != fiaInfo.bSize) || (blockTableShape.GetDim(1) < maxBlockNumPerBatch)),
         OP_LOGE(fiaInfo.opName,
             "When page attention enable, block table shape should be [%u, >=%ld], now is [%ld, %ld].",
@@ -347,18 +375,8 @@ ge::graphStatus PagedAttentionChecker::CheckBlockTableShape(const FiaTilingInfo 
 }
 
 // check blocksize
-ge::graphStatus PagedAttentionChecker::CheckBlockSize(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PagedAttentionChecker::CheckBlockSizeSupport(const FiaTilingInfo &fiaInfo)
 {
-    OP_CHECK_IF(fiaInfo.opParamInfo.blockSize == nullptr,
-        OP_LOGE(fiaInfo.opName,
-            "When page attention enable, blockSize shuld not be null."),
-        return ge::GRAPH_FAILED);
-
-    OP_CHECK_IF(fiaInfo.blockSize == 0,
-        OP_LOGE(fiaInfo.opName,
-            "When page attention enable, blockSize should not be 0."),
-        return ge::GRAPH_FAILED);
-
     if (enableNonQuant_) { // 非量化
         if (fiaInfo.ropeMode != RopeMode::NO_ROPE) { // MLA场景 [16, 1024]且16对齐
             OP_CHECK_IF(fiaInfo.blockSize > BLOCK_SIZE_MAX_FOR_NO_QUANT ||
@@ -438,7 +456,7 @@ ge::graphStatus PagedAttentionChecker::CheckBlockSize(const FiaTilingInfo &fiaIn
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PagedAttentionChecker::CheckPADimNum(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PagedAttentionChecker::CheckKVLayout(const FiaTilingInfo &fiaInfo)
 {
     if (!enableFullQuant_) {
         return ge::GRAPH_SUCCESS;
@@ -473,14 +491,34 @@ ge::graphStatus PagedAttentionChecker::CheckPADimNum(const FiaTilingInfo &fiaInf
     return ge::GRAPH_SUCCESS;
 }
 
+ge::graphStatus PagedAttentionChecker::CheckFeatureQueryS(const FiaTilingInfo &fiaInfo)
+{
+    // When antiquantMode is 0 or 1 and data type of key/value is int8 scenario, page attention is not supported.
+    if (fiaInfo.s1Size > 1) {
+        int64_t keyAntiquantMode = 0;
+        if (fiaInfo.opParamInfo.keyAntiquantMode != nullptr) {
+            keyAntiquantMode = *fiaInfo.opParamInfo.keyAntiquantMode;
+        }
+        OP_CHECK_IF(
+            (keyAntiquantMode == PER_CHANNEL_MODE || keyAntiquantMode == PER_TOKEN_MODE) &&
+                fiaInfo.inputKvType == ge::DT_INT8,
+            OP_LOGE(fiaInfo.opName,
+                "In keyAntiquant/valueAntiquant split mode and data type of key/value is int8 scenario, if "
+                "keyAntiquantMode/valueAntiquantMode is 0 or 1, page attention is not supported!"),
+                return ge::GRAPH_FAILED);
+    }
+    return ge::GRAPH_SUCCESS;
+}
+
 ge::graphStatus PagedAttentionChecker::CheckSinglePara(const FiaTilingInfo &fiaInfo)
 {
-    if (!fiaInfo.pageAttentionFlag) {
+    if (fiaInfo.kvStorageMode != KvStorageMode::PAGE_ATTENTION) {
         return ge::GRAPH_SUCCESS;
     }
 
     if (ge::GRAPH_SUCCESS != CheckBlockTableDtype(fiaInfo) ||
-        ge::GRAPH_SUCCESS != CheckQDtypeSupport(fiaInfo)) {
+        ge::GRAPH_SUCCESS != CheckBlockTableShapeSize(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckBlockSize(fiaInfo)) {
             return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
@@ -488,41 +526,41 @@ ge::graphStatus PagedAttentionChecker::CheckSinglePara(const FiaTilingInfo &fiaI
 
 ge::graphStatus PagedAttentionChecker::CheckParaExistence(const FiaTilingInfo &fiaInfo)
 {
-    if (!fiaInfo.pageAttentionFlag) {
+    if (fiaInfo.kvStorageMode != KvStorageMode::PAGE_ATTENTION) {
         return ge::GRAPH_SUCCESS;
     }
 
-    if (ge::GRAPH_SUCCESS != CheckBlockTableExistence(fiaInfo) ||
-        ge::GRAPH_SUCCESS != CheckFeatureExistence(fiaInfo) ||
-        ge::GRAPH_SUCCESS != CheckSeqLengthKVExistence(fiaInfo)) {
+    if (ge::GRAPH_SUCCESS != CheckBlockTableExistence(fiaInfo)) {
             return ge::GRAPH_FAILED;
     }
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PagedAttentionChecker::CheckFeature(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PagedAttentionChecker::CheckCrossFeature(const FiaTilingInfo &fiaInfo)
 {
-    if (!fiaInfo.pageAttentionFlag) {
+    if (fiaInfo.kvStorageMode != KvStorageMode::PAGE_ATTENTION) {
         return ge::GRAPH_SUCCESS;
     }
-    if (ge::GRAPH_SUCCESS != CheckMaskShape(fiaInfo)) {
+    if (ge::GRAPH_SUCCESS != CheckSeqLengthKVExistence(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckKVLayout(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckBlockSizeSupport(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckBlockTableShape(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckMaskShape(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckFeatureSupport(fiaInfo) ||
+        ge::GRAPH_SUCCESS != CheckQDtypeSupport(fiaInfo)) {
             return ge::GRAPH_FAILED;
+    }
+    if (enableAntiQuant_) {
+        if (ge::GRAPH_SUCCESS != CheckFeatureQueryS(fiaInfo)) {
+            return ge::GRAPH_FAILED;
+        }
     }
 
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus PagedAttentionChecker::CheckMultiPara(const FiaTilingInfo &fiaInfo)
+ge::graphStatus PagedAttentionChecker::CheckMultiParaConsistency(const FiaTilingInfo &fiaInfo)
 {
-    if (!fiaInfo.pageAttentionFlag) {
-        return ge::GRAPH_SUCCESS;
-    }
-
-    if (ge::GRAPH_SUCCESS != CheckBlockSize(fiaInfo) ||
-        ge::GRAPH_SUCCESS != CheckPADimNum(fiaInfo) ||
-        ge::GRAPH_SUCCESS != CheckBlockTableShape(fiaInfo)) {
-            return ge::GRAPH_FAILED;
-    }
     return ge::GRAPH_SUCCESS;
 }
 } // namespace optiling
