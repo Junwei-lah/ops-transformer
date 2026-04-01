@@ -33,5 +33,8 @@ if (BUILD_OPS_RTY_KERNEL) # 回黄kernel
         )
     endif()
 else() # custom
-    add_modules_sources(OPTYPE grouped_matmul_add ACLNNTYPE aclnn_exclude)
+    add_modules_sources(
+        OP_API_INDEPENDENT ON
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api
+        OPTYPE grouped_matmul_add ACLNNTYPE aclnn_exclude)
 endif()

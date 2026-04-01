@@ -802,7 +802,7 @@ GMMSwigluQuant@ops-transformer:
                 - ops/ops-transformer/gmm/grouped_matmul/op_kernel/grouped_matmul.h
                 - ops/ops-transformer/gmm/grouped_matmul/op_host/op_tiling/grouped_matmul_tiling.cpp
                 - ops/ops-transformer/gmm/grouped_matmul/op_host/op_tiling/grouped_matmul_tiling.h
-                - ops/ops-transformer/gmm/grouped_matmul/op_host/op_api/aclnn_grouped_matmul.cpp
+                - ops/ops-transformer/gmm/grouped_matmul/op_api/aclnn_grouped_matmul.cpp
                 - ops/ops-transformer/gmm/grouped_matmul_swiglu_quant_v2/op_kernel/grouped_matmul_swiglu_quant_spilit_fusion.h
                 - ops/ops-transformer/gmm/grouped_matmul_swiglu_quant_v2/op_kernel/grouped_matmul_swiglu_quant_v2_a8w4_msd_mid.h
                 - ops/ops-transformer/gmm/grouped_matmul_swiglu_quant_v2/op_kernel/grouped_matmul_swiglu_quant_v2_a8w4_msd_post.h

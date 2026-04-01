@@ -38,6 +38,8 @@ if("${CONDITION_UNIT}" STREQUAL "ascend950")
 endif()
 
 if(NOT BUILD_OPS_RTY_KERNEL)
-    add_modules_sources(OPTYPE grouped_matmul ACLNNTYPE aclnn_exclude)
+    add_modules_sources(
+        OP_API_INDEPENDENT ON
+        OP_API_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../op_api
+        OPTYPE grouped_matmul ACLNNTYPE aclnn_exclude)
 endif()
-

@@ -29,7 +29,7 @@
 #include "opdev/tensor_view_utils.h"
 #include "opdev/make_op_executor.h"
 
-#include "../../../grouped_matmul/op_host/op_api/grouped_matmul_util.h"
+#include "../../grouped_matmul/op_api/grouped_matmul_util.h"
 #include "grouped_matmul_add_util.h"
 #include "grouped_matmul_add.h"
 

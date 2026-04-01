@@ -18,10 +18,10 @@
 
 #include "gtest/gtest.h"
 
-#include "../../../../op_host/op_api/aclnn_grouped_matmul_v3.h"
-#include "../../../../op_host/op_api/aclnn_grouped_matmul_v4.h"
-#include "../../../../op_host/op_api/aclnn_grouped_matmul_v5.h"
-#include "../../../../op_host/op_api/aclnn_grouped_matmul_weight_nz.h"
+#include "../../../../op_api/aclnn_grouped_matmul_v3.h"
+#include "../../../../op_api/aclnn_grouped_matmul_v4.h"
+#include "../../../../op_api/aclnn_grouped_matmul_v5.h"
+#include "../../../../op_api/aclnn_grouped_matmul_weight_nz.h"
 #include "op_api_ut_common/op_api_ut.h"
 #include "op_api_ut_common/tensor_desc.h"
 #include "opdev/platform.h"

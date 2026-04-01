@@ -13,7 +13,7 @@
 #include "opdev/format_utils.h"
 #include "aclnn_kernels/common/op_error_check.h"
 #include "quant_grouped_matmul_inplace_add_util.h"
-#include "../../../grouped_matmul/op_host/op_api/grouped_matmul_util.h"
+#include "../../grouped_matmul/op_api/grouped_matmul_util.h"
 
 namespace QGmmInPlaceAdd {
 template <typename T>

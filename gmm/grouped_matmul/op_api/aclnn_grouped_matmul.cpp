@@ -20,7 +20,7 @@
 #include "aclnn_kernels/transdata.h"
 #include "grouped_matmul.h"
 #include "aclnn_kernels/contiguous.h"
-#include "../grouped_matmul_host_util.h"
+#include "../op_host/grouped_matmul_host_util.h"
 #include "acl/acl.h"
 #include "aclnn/aclnn_base.h"
 #include "aclnn_kernels/common/op_error_check.h"
