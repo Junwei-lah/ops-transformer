@@ -21,6 +21,8 @@
 namespace MoeInitRoutingV3 {
 using namespace AscendC;
 
+constexpr int64_t CUMSUM_MODE = 0LL;
+constexpr int64_t COUNT_MODE = 1LL;
 constexpr int64_t KEY_VALUE_MODE = 2LL;
 constexpr int64_t KEY_VALUE_MODE_DIM_NUM = 2LL;
 
@@ -238,10 +240,18 @@ __aicore__ inline void ExpertTokensCount::expertCountCompute()
             }
         }
         expertCountElements_ = Min(expertCountElements_, static_cast<int64_t>((expertOffset + 1) * KEY_VALUE_MODE));
-    } else {
+    } else if (expertTokensNumType_ == COUNT_MODE) {
         for (int64_t i = 0; i < actualExpertNum_; i++) {
             int64_t expertCount = static_cast<int64_t>(expertCountTempInLocal.GetValue(i));
             expertCountOutLocal.SetValue(i, expertCount);
+            actualExpertTotalNum_ += expertCount;
+        }
+    } else if (expertTokensNumType_ == CUMSUM_MODE) {
+        int64_t cumsumCount = 0;
+        for (int64_t i = 0; i < actualExpertNum_; i++) {
+            int64_t expertCount = static_cast<int64_t>(expertCountTempInLocal.GetValue(i));
+            cumsumCount += expertCount;
+            expertCountOutLocal.SetValue(i, cumsumCount);
             actualExpertTotalNum_ += expertCount;
         }
     }
