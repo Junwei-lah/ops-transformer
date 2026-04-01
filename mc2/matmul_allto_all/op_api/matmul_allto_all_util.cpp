@@ -164,19 +164,22 @@ bool CheckShapeAAMM(const aclTensor* x1, const aclTensor* x2, const aclTensor* b
 bool IsTransposeLastTwoDims(const aclTensor *tensor) {
     // 当输入tensor的shape小于2或者大于6的时候，返回错误
     if (tensor->GetViewShape().GetDimNum() < 2 || tensor->GetViewShape().GetDimNum() > 6) {
+        OP_LOGD("The view_shape dim is: %ld", tensor->GetViewShape().GetDimNum());
         return false;
     }
+
     int64_t dim1 = tensor->GetViewShape().GetDimNum() - 1;
     int64_t dim2 = tensor->GetViewShape().GetDimNum() - 2;
     // BMM 场景下，Batch维度的stride需要等于 N, D 的乘积
     if (tensor->GetViewStrides()[dim2] == 1
-      && tensor->GetViewStrides()[dim1] == tensor->GetViewShape().GetDim(dim2)) {
-        if (tensor->GetViewShape().GetDim(dim1) == 1
-          && tensor->GetViewShape().GetDim(dim2) == 1) {
+        && tensor->GetViewStrides()[dim1] == tensor->GetViewShape().GetDim(dim2)) {
+        if (tensor->GetViewShape().GetDim(dim1) == 1 && tensor->GetViewShape().GetDim(dim2) == 1) {
+            OP_LOGI("The input tensor is contiguous.");
             return false;
-          }
+        }
+        OP_LOGI("The input tensor is not contiguous.");
         return true;
-      }
+    }
     return false;
 }
 
