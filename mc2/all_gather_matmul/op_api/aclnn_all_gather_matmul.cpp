@@ -23,6 +23,7 @@
 #include "opdev/platform.h"
 #include "common/op_host/op_api/matmul_util.h"
 #include "common/utils/hccl_util.h"
+#include "common/op_api/mc2_aclnn_util.h"
 
 using namespace Ops::Transformer;
 using namespace op;
@@ -199,6 +200,13 @@ aclnnStatus aclnnAllGatherMatmulGetWorkspaceSize(const aclTensor *x1, const aclT
   bool transposeX1 = IsTransposeLastTwoDims(x1);
   bool transposeX2 = IsTransposeLastTwoDims(x2);
   CHECK_RET(CheckShape(x1, x2, output, gatherOut, transposeX1), ACLNN_ERR_PARAM_INVALID);
+  // 【A2】校验非连续入参合法性
+  if (GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B) {
+    OP_API_CHECK(!transposeX2 && !MC2Aclnn::IsTensorContiguous(x2), {
+      OP_LOGE(ACLNN_ERR_PARAM_INVALID,
+              "The x2 without transpose in aclnnAllGatherMatmul must be contiguous, but it is non-contiguous.");
+      return ACLNN_ERR_PARAM_INVALID;});
+  }
   bool isGatherOut = IsGatherOut(gatherOut);
   if (IsAscend910A5()) {
     const char *commMode = "ccu";

@@ -146,4 +146,25 @@ TEST_F(L2AllGatherMatmulTest, TestAllGatherFirstApiGatherOutFalse)
     EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
 }
 
+TEST_F(L2AllGatherMatmulTest, TestAllGatherFirstApiX2NonContiguousWithoutTranspose)
+{
+    // 测试场景：非转置的连续x2输入，应返回校验失败
+    TensorDesc x1Desc = TensorDesc({128, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
+
+    // 设置x2非转置非连续步长，假设每行之间间隔10个元素[64 + 10, 1]，实际内存存储storageShape为[512, 64 + 10]
+    TensorDesc x2Desc = TensorDesc({256, 512}, ACL_FLOAT16, ACL_FORMAT_ND, {512 + 10, 1});
+    TensorDesc outDesc = TensorDesc({128, 512}, ACL_FLOAT16, ACL_FORMAT_ND);
+    TensorDesc gatherOutDesc = TensorDesc({128, 256}, ACL_FLOAT16, ACL_FORMAT_ND);
+
+    auto ut = OP_API_UT(aclnnAllGatherMatmul, 
+                        INPUT(x1Desc, x2Desc, nullptr, "test_all_gather_group", 0, 8, 1),
+                        OUTPUT(outDesc, gatherOutDesc));
+
+    // 预期：由于 x2 是非连续的（非转置），应该返回 ACLNN_ERR_PARAM_INVALID
+    uint64_t workspaceSize = 0;
+    aclOpExecutor* executor = nullptr;
+    aclnnStatus aclRet = ut.TestGetWorkspaceSizeWithNNopbaseInner(&workspaceSize, executor);
+    EXPECT_EQ(aclRet, ACLNN_ERR_PARAM_INVALID);
+}
+
 } // AllGatherMatmulUT

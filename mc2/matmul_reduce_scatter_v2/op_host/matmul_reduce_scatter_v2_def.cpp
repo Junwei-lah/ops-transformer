@@ -136,7 +136,8 @@ class MatmulReduceScatterV2 : public OpDef {
                  ge::FORMAT_ND, ge::FORMAT_ND})
         .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                              ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-                             ge::FORMAT_ND, ge::FORMAT_ND});
+                             ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     aicore_config_910b.Input("x2")
         .ParamType(REQUIRED)
         .DataType({ge::DT_BF16, ge::DT_FLOAT16, ge::DT_INT8, ge::DT_INT8,
@@ -159,7 +160,8 @@ class MatmulReduceScatterV2 : public OpDef {
                  ge::FORMAT_ND, ge::FORMAT_ND})
         .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                              ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-                             ge::FORMAT_ND, ge::FORMAT_ND});
+                             ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     aicore_config_910b.Input("x1_scale")
         .ParamType(OPTIONAL)
         .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT,
@@ -170,7 +172,8 @@ class MatmulReduceScatterV2 : public OpDef {
                  ge::FORMAT_ND, ge::FORMAT_ND})
         .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                              ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-                             ge::FORMAT_ND, ge::FORMAT_ND});
+                             ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     aicore_config_910b.Input("x2_scale")
         .ParamType(OPTIONAL)
         .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_INT64, ge::DT_FLOAT,
@@ -181,7 +184,8 @@ class MatmulReduceScatterV2 : public OpDef {
                  ge::FORMAT_ND, ge::FORMAT_ND})
         .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                              ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-                             ge::FORMAT_ND, ge::FORMAT_ND});
+                             ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     aicore_config_910b.Input("quant_scale")
         .ParamType(OPTIONAL)
         .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT,
@@ -192,7 +196,8 @@ class MatmulReduceScatterV2 : public OpDef {
                  ge::FORMAT_ND, ge::FORMAT_ND})
         .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                              ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
-                             ge::FORMAT_ND, ge::FORMAT_ND});
+                             ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     aicore_config_910b.Output("y")
         .ParamType(REQUIRED)
         .DataType({ge::DT_BF16, ge::DT_FLOAT16, ge::DT_FLOAT16, ge::DT_BF16,

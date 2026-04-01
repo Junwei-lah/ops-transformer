@@ -22,7 +22,8 @@ class MatmulReduceScatter : public OpDef {
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_BF16})
         .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
+        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
     this->Input("x2")
         .ParamType(REQUIRED)
         .DataType({ge::DT_FLOAT16, ge::DT_BF16})
@@ -33,7 +34,8 @@ class MatmulReduceScatter : public OpDef {
         .ParamType(OPTIONAL)
         .DataType({ge::DT_FLOAT16, ge::DT_BF16})
         .Format({ge::FORMAT_ND, ge::FORMAT_ND})
-        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND});
+        .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND})
+        .AutoContiguous();
 
     this->Output("y")
         .ParamType(REQUIRED)
