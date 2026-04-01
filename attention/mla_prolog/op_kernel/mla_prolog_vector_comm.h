@@ -387,8 +387,10 @@ __aicore__ inline void DynamicQuant(const LocalTensor<float> &outputLocal,
           col 列数
           stride 一行的真实长度
  */
-__aicore__ inline void QuantPerChannel(const LocalTensor<int8_t> &outLocal, const LocalTensor<float> &inputLocal, const LocalTensor<float> &quantScaleLocal,
-                                       const LocalTensor<uint8_t> &shareTmpUb, const Rectangle& rectangleParams)
+template<typename T, typename C, typename O>
+__aicore__ inline void QuantPerChannel(const LocalTensor<O> &outLocal, const LocalTensor<T> &inputLocal,
+            const LocalTensor<C> &quantScaleLocal, const LocalTensor<uint8_t> &shareTmpUb,
+            const Rectangle& rectangleParams)
 {
 #if __CCE_AICORE__ == 310
     QuantPerChannelVf(outLocal, inputLocal, quantScaleLocal, rectangleParams.row, rectangleParams.col, rectangleParams.stride);
@@ -411,12 +413,18 @@ __aicore__ inline void QuantPerChannel(const LocalTensor<int8_t> &outLocal, cons
           col 列数
           stride 一行的真实长度
  */
-__aicore__ inline void QuantPerTensor(const LocalTensor<int8_t> &outLocal, const LocalTensor<float> &inputLocal, const LocalTensor<float> &quantScaleLocal,
-                                   const LocalTensor<uint8_t> &shareTmpUb, const Rectangle& rectangleParams)
+template<typename T, typename C, typename O>
+__aicore__ inline void QuantPerTensor(const LocalTensor<O> &outLocal, const LocalTensor<T> &inputLocal,
+        const LocalTensor<C> &quantScaleLocal, const LocalTensor<uint8_t> &shareTmpUb,
+        const Rectangle& rectangleParams)
 {
+#if __CCE_AICORE__ == 310
+    QuantPerTensorVF(outLocal, inputLocal, quantScaleLocal, rectangleParams.row, rectangleParams.col);
+#else
     RowMuls(inputLocal, inputLocal, quantScaleLocal, rectangleParams);
     AscendC::PipeBarrier<PIPE_V>();
     CastFP32ToINT8(outLocal, inputLocal, shareTmpUb, rectangleParams.row * rectangleParams.col);
+#endif
 }
 
 /**
@@ -439,9 +447,9 @@ __aicore__ inline void QuantPerTensorToFP8e4m3(const LocalTensor<FP8E4M3> &outLo
 }
 
 /**
- * @brief QuantPerTile 对输入tensor进行per-tile量化操作，FP32->fp8 e4m3，每个tile出一个量化系数。
-            量化流程：先对输入的每行的每个tile做动态量化，最后转换为fp8.
- * @param outLocal 输出tensor [row * col]，量化后的fp8数据，后续跟随scale数据
+ * @brief QuantPerTile 对输入tensor进行per-tile量化操作，FP32->fp8 e4m3/hifloat8，每个tile出一个量化系数。
+            量化流程：先对输入的每行的每个tile做动态量化，最后转换为fp8/hif8.
+ * @param outLocal 输出tensor [row * col]，量化后的fp8/hif8数据，后续跟随scale数据
  * @param inputLocal 输入tensor [row * col]
  * @param shareTmpUb 临时buffer，内部需要空间为：
  *          [Align(row * tileNum, 8) + row * tileNum * 8 + 其他中间计算所需空间] * sizeof(float)
@@ -452,13 +460,14 @@ __aicore__ inline void QuantPerTensorToFP8e4m3(const LocalTensor<FP8E4M3> &outLo
  *          row 待处理的行数
  *          col 待处理的列数 （col = tileSize * tileNum）
  */
-__aicore__ inline void QuantPerTileToFp8e4m3(const LocalTensor<FP8E4M3> &outLocal,
+template<typename O>
+__aicore__ inline void QuantPerTile8Bit(const LocalTensor<O> &outLocal,
                                     const LocalTensor<float> &inputLocal,
                                     const PerTileQuantParams& perTileQuantParams)
 {
 #if __CCE_AICORE__ == 310
     LocalTensor<float> quantScaleLocal = outLocal[perTileQuantParams.row * perTileQuantParams.col].template ReinterpretCast<float>();
-    QuantPerTileVF<float, float, FP8E4M3>(outLocal, inputLocal, quantScaleLocal, perTileQuantParams.row, perTileQuantParams.col, perTileQuantParams.tileSize);
+    QuantPerTileVF<float, float, O>(outLocal, inputLocal, quantScaleLocal, perTileQuantParams.row, perTileQuantParams.col, perTileQuantParams.tileSize);
 #endif
 }
 

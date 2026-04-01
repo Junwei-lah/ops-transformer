@@ -22,6 +22,7 @@ namespace MlaProlog {
 constexpr float INT8_MAX_VALUE = 127.0f;
 constexpr float FP8_E4M3FN_MAX_VALUE = 448.0f;
 constexpr float FP8_E4M3FN_MIN_VALUE = -448.0f;
+constexpr float HIFLOAT8_MAX_VALUE = 32768.0f;
 constexpr uint32_t FP8_E4M3FN_BLOCK_SIZE = 32;
 constexpr uint16_t FP8_E4M3_MAX_EXP = 0x0400;
 constexpr uint16_t MAX_EXP_FOR_BF16 = 0x7f80;
@@ -39,7 +40,7 @@ constexpr uint8_t PER_TILE_QUANT_MODE = 1;
 constexpr float NEG_INFINITY = -INFINITY;
 constexpr uint16_t REDUCE_SIZE = 8;
 
-template<typename T, typename C, typename O, uint8_t M = 0> // M=0为fp8全量化pertensor量化；M=1为fp8全量化pertile量化
+template<typename T, typename C, typename O, uint8_t M = 0> // M=0为fp8全量化pertoken量化；M=1为fp8全量化pertile量化
 __simd_vf__ void ComputeVFImpl(__ubuf__ T* xAddr, __ubuf__ O* yAddr, __ubuf__ float* scaleAddr,
     uint32_t rowIndex, uint32_t rowCount, uint32_t dtypeSize, uint16_t VL, uint16_t vfLoop, const float alphaValue)
 {
@@ -52,6 +53,9 @@ __simd_vf__ void ComputeVFImpl(__ubuf__ T* xAddr, __ubuf__ O* yAddr, __ubuf__ fl
     constexpr static AscendC::MicroAPI::CastTrait castTraitF32ToHalf = {
         AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::NO_SAT,
         AscendC::MicroAPI::MaskMergeMode::ZEROING, RoundMode::CAST_ODD};
+    constexpr static AscendC::MicroAPI::CastTrait castTraitF32ToHif8 = {
+        AscendC::MicroAPI::RegLayout::ZERO, AscendC::MicroAPI::SatMode::NO_SAT,
+        AscendC::MicroAPI::MaskMergeMode::ZEROING, RoundMode::CAST_ROUND};
     static constexpr AscendC::MicroAPI::DivSpecificMode mode = {AscendC::MicroAPI::MaskMergeMode::ZEROING, true};
     AscendC::MicroAPI::RegTensor<T> xInput; // 搬入的x
     AscendC::MicroAPI::RegTensor<float> xFp32; // cast成float之后的x
@@ -109,6 +113,8 @@ __simd_vf__ void ComputeVFImpl(__ubuf__ T* xAddr, __ubuf__ O* yAddr, __ubuf__ fl
         AscendC::MicroAPI::Div(xNorm, xFp32, xScaleDup, validMask2);
         if constexpr (std::is_same<O, fp8_e4m3fn_t>::value) {
             AscendC::MicroAPI::Cast<O, float, castTraitPack2>(yOutput, xNorm, validMask2);
+        } else if constexpr (std::is_same<O, hifloat8_t>::value) {
+            AscendC::MicroAPI::Cast<O, float, castTraitF32ToHif8>(yOutput, xNorm, validMask2);
         } else {
             AscendC::MicroAPI::Cast<half, float, castTraitF32ToHalf>(yHalf, xNorm, validMask2);
             AscendC::MicroAPI::Cast<O, half, castTraitPack2>(yOutput, yHalf, validMask2);
@@ -127,7 +133,8 @@ __aicore__ inline void ComputeVF(__ubuf__ T* xAddr, __ubuf__ O* yAddr, __ubuf__ 
     uint32_t rowCount = col;
     uint16_t vfLoop = (rowCount + VL - 1) / VL;
 
-    constexpr float maxValue = std::is_same<O, fp8_e4m3fn_t>::value ? FP8_E4M3FN_MAX_VALUE : INT8_MAX_VALUE;
+    constexpr float maxValue = std::is_same<O, fp8_e4m3fn_t>::value ? FP8_E4M3FN_MAX_VALUE :
+        std::is_same<O, hifloat8_t>::value ? HIFLOAT8_MAX_VALUE: INT8_MAX_VALUE;
     const float alphaValue = static_cast<float>(1.0) / maxValue;
     ComputeVFImpl<T, C, O>(xAddr, yAddr, scaleAddr, rowIndex, rowCount, dtypeSize, VL, vfLoop, alphaValue);
 }
@@ -418,7 +425,9 @@ __aicore__ inline void QuantPerTileVF(const LocalTensor<O>& outputLocal, const L
     uint32_t dtypeSize = sizeof(float);
     uint16_t VL = AscendC::VECTOR_REG_WIDTH / dtypeSize;
     uint16_t vfLoop = (tileSize + VL - 1) / VL;
-    const float alphaValue = static_cast<float>(1.0) / FP8_E4M3FN_MAX_VALUE;
+    constexpr float maxValue = std::is_same<O, fp8_e4m3fn_t>::value ? FP8_E4M3FN_MAX_VALUE :
+        std::is_same<O, hifloat8_t>::value ? HIFLOAT8_MAX_VALUE : INT8_MAX_VALUE;
+    const float alphaValue = static_cast<float>(1.0) / maxValue;
     uint32_t loopCount = cnt / tileSize;
     for (uint32_t rowIndex = 0; rowIndex < loopCount; rowIndex++) {
         ComputeVFImpl<T, C, O, PER_TILE_QUANT_MODE>(inputBuf, outputBuf, quantScaleBuf + rowIndex,

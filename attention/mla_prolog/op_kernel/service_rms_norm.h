@@ -43,7 +43,7 @@ namespace MlaProlog {
           row 处理的行数；预留参数，当前仅支持单个batch的处理，row为1，对应S1
           col 列数，对应H
  */
-template <typename T, typename GammaType, typename C, typename O>
+template <typename T, typename GammaType, typename C, typename O, typename U>
 __aicore__ inline void RmsNormNormal(const LocalTensor<O>& outputLocal, const GlobalTensor<T>& inputGm, const LocalTensor<GammaType>& gammaLocal,
                                const LocalTensor<float> &dequantScaleWDqLocal,
                                const LocalTensor<float> &dequantScaleXLocal, const LocalTensor<uint8_t>& shareTmpUb,
@@ -55,10 +55,21 @@ __aicore__ inline void RmsNormNormal(const LocalTensor<O>& outputLocal, const Gl
     DataCopyExtParams copyParams{1, static_cast<uint32_t>(rmsNormParams.col * sizeof(T)), 0, 0, 0};
     DataCopyPadExtParams<T> padParams{false, 0, 0, 0};
 
-    if constexpr (std::is_same<T, float>::value) {
+    if constexpr (std::is_same<T, float>::value && std::is_same<U, FP8E8M0>::value) {
         DataCopyPad(xFp32Local, inputGm, copyParams, padParams);
         SetFlag<HardEvent::MTE2_V>(EVENT_ID0);
         WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
+    } else if constexpr (std::is_same<T, float>::value && std::is_same<U, float>::value) {
+        DataCopyPad(xFp32Local, inputGm, copyParams, padParams);
+        SetFlag<HardEvent::MTE2_V>(EVENT_ID0);
+        WaitFlag<HardEvent::MTE2_V>(EVENT_ID0);
+        Rectangle rectangleParams {
+            (uint32_t)rmsNormParams.row,
+            (uint32_t)rmsNormParams.col,
+            (uint32_t)rmsNormParams.col // columnStride
+        };
+        Dequant(xFp32Local, xFp32Local, dequantScaleWDqLocal, dequantScaleXLocal, rectangleParams);
+        AscendC::PipeBarrier<PIPE_V>();
     } else if constexpr (std::is_same<T, int32_t>::value) {
         LocalTensor<T> xInt32Local = shareTmpUb.ReinterpretCast<T>();
         DataCopyPad(xInt32Local, inputGm, copyParams, padParams);
@@ -129,10 +140,10 @@ __aicore__ inline void RmsNormDynamicQuant(const LocalTensor<O>& outputLocal, co
                                            RmsNormParam& rmsNormParams, bool enableSmoothScalesCq = true) {
     int64_t cnt = rmsNormParams.row * rmsNormParams.col;
     LocalTensor<C> xFp32Local = shareTmpUb.ReinterpretCast<C>();
-    RmsNormNormal<T, GammaType, C, C>(xFp32Local, inputGm, gammaLocal, dequantScaleWDqLocal, dequantScaleXLocal, shareTmpUb[rmsNormParams.col * sizeof(C)], rmsNormParams);
+    RmsNormNormal<T, GammaType, C, C, U>(xFp32Local, inputGm, gammaLocal, dequantScaleWDqLocal, dequantScaleXLocal, shareTmpUb[rmsNormParams.col * sizeof(C)], rmsNormParams);
     AscendC::PipeBarrier<PIPE_V>();
 #if __CCE_AICORE__ == 310
-    if constexpr (std::is_same<O, fp8_e4m3fn_t>::value) {
+    if constexpr (std::is_same<O, fp8_e4m3fn_t>::value && std::is_same<U, fp8_e8m0_t>::value) {
         LocalTensor<bfloat16_t> xBf16Local = xFp32Local[cnt].template ReinterpretCast<bfloat16_t>();
         Cast(xBf16Local, xFp32Local, RoundMode::CAST_ROUND, cnt);
         AscendC::PipeBarrier<PIPE_V>();
