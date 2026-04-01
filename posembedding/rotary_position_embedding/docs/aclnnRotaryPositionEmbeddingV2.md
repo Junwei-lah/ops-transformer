@@ -10,7 +10,7 @@
 | <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>                        |    √    |
 | <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term> |    √    |
 | <term>Atlas 200I/500 A2 推理产品</term>                                         |    ×    |
-| <term>Atlas 推理系列产品 </term>                                                |    ×    |
+| <term>Atlas 推理系列产品</term>                                                |    ×    |
 | <term>Atlas 训练系列产品</term>                                                 |    ×    |
 
 ## 功能说明
@@ -21,7 +21,9 @@
   - interleave模式，且B * N * S > 28800。
   - half模式仅在以下场景时推荐使用：输入矩阵x需要在最后一个维度切分多份时，每一份都需要调用aclnnRotaryPositionEmbedding接口进行旋转位置编码计算，可以通过构造旋转编码矩阵实现一次调用获得性能收益，以x的layout为BSND需要切分为3份为例：
      x切分为3份，$x = [x1|x2|x3]_{(dim=4)} ∈ R^{B×S×N×D}, x1 ∈ R^{B×S×N×D1},x2 ∈ R^{B×S×N×D2},x3 ∈ R^{B×S×N×D3}, 其中D = D1 + D2 + D3$，那么可以构造一个rotate矩阵，实现调用一次aclnnRotaryPositionEmbeddingV2接口完成x的旋转位置编码计算功能，rotate矩阵构造如下：
+
      $$rotate = diag(rotate1, rotate2, rotate3) = \begin{pmatrix}rotate1&0&0\\0&rotate2&0\\0&0&rotate3\\\end{pmatrix}$$
+     
      其中rotate1、rotate2、rotate3分别为x1、x2、x3的旋转编码矩阵，单个旋转矩阵构建参考调用示例。
 
 - 计算公式：

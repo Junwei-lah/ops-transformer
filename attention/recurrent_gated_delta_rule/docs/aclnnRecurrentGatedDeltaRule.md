@@ -279,22 +279,22 @@ aclnnStatus aclnnRecurrentGatedDeltaRule(
   </thead>
   <tbody>
     <tr>
-      <td>workspace (void*)</td>
+      <td>workspace</td>
       <td>输入</td>
       <td>在Device侧申请的workspace内存地址。</td>
     </tr>
     <tr>
-      <td>workspaceSize (uint64_t)</td>
+      <td>workspaceSize</td>
       <td>输入</td>
       <td>在Device侧申请的workspace大小，由第一段接口aclnnRecurrentGatedDeltaRuleGetWorkspaceSize获取。</td>
     </tr>
     <tr>
-      <td>workspace (void*)</td>
+      <td>executor</td>
       <td>输入</td>
       <td>op执行器，包含算子计算流程。</td>
     </tr>
     <tr>
-      <td>workspace (void*)</td>
+      <td>stream</td>
       <td>输入</td>
       <td>指定执行任务的Stream。</td>
     </tr>

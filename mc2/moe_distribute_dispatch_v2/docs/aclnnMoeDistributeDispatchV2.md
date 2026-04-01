@@ -24,7 +24,7 @@
     详细说明请参考以下参数说明。
 - 计算公式：
 
-    - 情形1：如果quaneMode=0（非量化场景）：
+    - 情形1：如果quantMode=0（非量化场景）：
 
     $$
     allToAllXOut = AllToAllV(X)\\
@@ -35,7 +35,7 @@
     \end{cases}
     $$
 
-    - 情形2：如果quaneMode=1（静态量化场景）：
+    - 情形2：如果quantMode=1（静态量化场景）：
 
     $$
     xFp32 = CastToFp32(X) \times scales \\
@@ -48,7 +48,7 @@
     \end{cases}
     $$
 
-    - 情形3：如果quaneMode=2（pertoken动态量化场景）：
+    - 情形3：如果quantMode=2（pertoken动态量化场景）：
 
     $$
     xFp32 = CastToFp32(X) \times scales \\
@@ -68,7 +68,7 @@
     \end{cases}
     $$
 
-    - 情形4：如果quaneMode=3（pertile动态量化场景）：
+    - 情形4：如果quantMode=3（pertile动态量化场景）：
 
     $$
     xFp32 = CastToFp32(X) \times scales \\
@@ -88,7 +88,7 @@
     \end{cases}
     $$
 
-    - 情形5：如果quaneMode=4（mxfp8量化场景）：
+    - 情形5：如果quantMode=4（mxfp8量化场景）：
 
     $$
     sharedExp = Floor(log_2(max(x))) - emax \\
@@ -553,7 +553,7 @@ aclnnStatus aclnnMoeDistributeDispatchV2(
     <td>输入和输出的shape不在支持的范围内。</td>
     </tr>
     <tr>
-        <td>参数的取值不在支持的范围。</td>
+        <td>参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>

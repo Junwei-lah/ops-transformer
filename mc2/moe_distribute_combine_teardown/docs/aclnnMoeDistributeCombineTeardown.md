@@ -165,7 +165,7 @@ aclnnStatus aclnnMoeDistributeCombineTeardown(
         <td>sharedExpertXOptional（aclTensor*）</td>
         <td>可选输入</td>
         <td>表示共享专家计算后的Token</td>
-        <td>不支持空Tensor。要求是一个2D或3D的Tensor，当Tesnor为2D时，shape为 (BS,H)；当Tensor为3D时，前两位的乘积需等于BS，第三维需等于H。数据类型需跟expandX保持一致。可选择传入有效数据或填空指针，传入有效数据时，sharedExpertNum需为0。</td>
+        <td>不支持空Tensor。要求是一个2D或3D的Tensor，当Tensor为2D时，shape为 (BS,H)；当Tensor为3D时，前两位的乘积需等于BS，第三维需等于H。数据类型需跟expandX保持一致。可选择传入有效数据或填空指针，传入有效数据时，sharedExpertNum需为0。</td>
         <td>FLOAT16、BFLOAT16</td>
         <td>ND</td>
         <td>(BS, H)或(a, b, H)</td>
@@ -369,7 +369,7 @@ aclnnStatus aclnnMoeDistributeCombineTeardown(
         <td>输入和输出的shape不在支持的范围内。</td>
     </tr>
     <tr>
-        <td>参数的取值不在支持的范围。</td>
+        <td>参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>

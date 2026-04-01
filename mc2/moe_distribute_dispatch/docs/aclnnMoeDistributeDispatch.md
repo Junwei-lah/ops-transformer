@@ -19,7 +19,7 @@
 
 - 计算公式：
 
-    - 情形1：如果quaneMode=0（非量化场景）：
+    - 情形1：如果quantMode=0（非量化场景）：
 
     $$
     allToAllXOut = AllToAllV(X)\\
@@ -30,7 +30,7 @@
     \end{cases}
     $$
 
-    - 情形2：如果quaneMode=2（pertoken动态量化场景）：
+    - 情形2：如果quantMode=2（pertoken动态量化场景）：
 
     $$
     xFp32 = CastToFp32(X) \times scales \\
@@ -448,7 +448,7 @@ aclnnStatus aclnnMoeDistributeDispatch(
     <td>输入和输出的shape不在支持的范围内。</td>
     </tr>
     <tr>
-        <td>参数的取值不在支持的范围。</td>
+        <td>参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>

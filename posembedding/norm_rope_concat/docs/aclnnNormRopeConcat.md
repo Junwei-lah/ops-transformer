@@ -268,7 +268,7 @@ aclnnStatus aclnnNormRopeConcat(
         <td>normKeyBias</td>
         <td>输入</td>
         <td>表示LayerNorm的仿射变换参数，作用在Key上。</td>
-        <td>可选，normType=2需要提供。</td>
+        <td>可选，normType=2时需要提供。</td>
         <td>FLOAT16、BFLOAT16、FLOAT</td>
         <td>ND</td>
         <td>[D]</td>

@@ -43,7 +43,7 @@
     $$
     y [rowIndex[i],:] = y[rowIndex[i],:] + sharedInputWeight \times sharedInput[j, :]
     $$
-  - 4.共享专家输出融合:最终输出结果是所有专家输出与共享专家输出，按照rowIndex所有进行合并的结果，计算过程如下：
+  - 4.共享专家输出融合：最终输出结果是所有专家输出与共享专家输出，按照rowIndex所有进行合并的结果，计算过程如下：
 
     $$
     y[rowIndex[i],:] = \sum_{i \in \mathcal{E}[j]} y_i [j - start_i] + sharedInputWeight \times sharedInput[j, :]

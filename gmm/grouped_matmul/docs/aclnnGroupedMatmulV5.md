@@ -811,7 +811,7 @@ aclnnStatus aclnnGroupedMatmulV5(
     </details>
 
     <details>
-      <summary><term>动态量化（T-T && T-C && K-T && K-C量化）场景约束</term></summary>
+      <summary>动态量化（T-T && T-C && K-T && K-C量化）场景约束</summary>
         <a id="动态量化（T-T && T-C && K-T && K-C量化）场景约束"></a>
 
       - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、 activationInputOptional
@@ -840,7 +840,7 @@ aclnnStatus aclnnGroupedMatmulV5(
     </details>
 
     <details>
-      <summary><term>动态量化（mx量化）场景约束</term></summary>
+      <summary>动态量化（mx量化）场景约束</summary>
         <a id="动态量化（mx量化）场景约束"></a>
 
     - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、 activationInputOptional
@@ -870,7 +870,7 @@ aclnnStatus aclnnGroupedMatmulV5(
     </details>
 
     <details>
-      <summary><term>动态量化（G-B量化）场景约束</term></summary>
+      <summary>动态量化（G-B量化）场景约束</summary>
         <a id="动态量化（G-B量化）场景约束"></a>
 
     - 以下入参为空：biasOptional、offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、activationInputOptional
@@ -938,7 +938,7 @@ aclnnStatus aclnnGroupedMatmulV5(
       |0|weight单tensor|每个tensor 2维，shape为（E, N）|
 
     <details>
-      <summary><term>不同groupType约束</term></summary>
+      <summary>不同groupType约束</summary>
         <a id="不同groupType约束"></a>
 
     - 不同groupType支持场景:

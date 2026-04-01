@@ -274,7 +274,7 @@ aclnnStatus aclnnMatmulAlltoAll(
 * 默认支持确定性计算。
 * NPU卡数(rankSize)，根据设备型号有不同限制：
   - <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8卡。
-  - <term>Atlas A3 训练系列产品/Atlas A2 推理系列产品</term>：支持2、4、8、16卡。
+  - <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>：支持2、4、8、16卡。
   - <term>Ascend 950PR/Ascend 950DT</term>：支持2、4、8、16卡。
 * 参数说明中shape使用的变量H2必须整除NPU卡数。
 * H1范围仅支持[1, 65535]。

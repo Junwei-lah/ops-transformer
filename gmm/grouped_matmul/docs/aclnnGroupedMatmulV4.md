@@ -826,7 +826,7 @@ aclnnStatus aclnnGroupedMatmulV4(
     </details>
 
     <details>
-      <summary><term>动态量化（T-T && T-C && K-T && K-C量化）场景约束</term></summary>
+      <summary>动态量化（T-T && T-C && K-T && K-C量化）场景约束</summary>
         <a id="动态量化（T-T && T-C && K-T && K-C量化）场景约束"></a>
 
       - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、 activationInputOptional
@@ -855,7 +855,7 @@ aclnnStatus aclnnGroupedMatmulV4(
     </details>
 
     <details>
-      <summary><term>动态量化（mx量化）场景约束</term></summary>
+      <summary>动态量化（mx量化）场景约束</summary>
         <a id="动态量化（mx量化）场景约束"></a>
 
     - 以下入参为空：offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、 activationInputOptional
@@ -881,11 +881,11 @@ aclnnStatus aclnnGroupedMatmulV4(
         |0|x单tensor|每个tensor 3维，shape为（M, ceil(K / 64), 2）|
         |2|x单tensor|每个tensor 3维，shape为((K / 64) + g, M, 2), 起始地址偏移与scale 同理|
 
-    - 对于mx量化中输入x为FLOAT4_E2M1时，需要满足K为偶数且K不为2。当weight 非转置时还需满足N为偶数。
+    - 对于mx量化中输入x为FLOAT4_E2M1时，需要满足K为偶数且K不为2。当weight非转置时还需满足N为偶数。
     </details>
 
     <details>
-      <summary><term>动态量化（G-B量化）场景约束</term></summary>
+      <summary>动态量化（G-B量化）场景约束</summary>
         <a id="动态量化（G-B量化）场景约束"></a>
 
     - 以下入参为空：biasOptional、offsetOptional、antiquantScaleOptional、antiquantOffsetOptional、activationInputOptional
@@ -921,7 +921,7 @@ aclnnStatus aclnnGroupedMatmulV4(
     </details>
 
     <details>
-      <summary><term>非量化场景约束</term></summary>
+      <summary>非量化场景约束</summary>
         <a id="非量化场景约束"></a>
 
     - 非量化场景支持的数据类型为：
@@ -937,7 +937,7 @@ aclnnStatus aclnnGroupedMatmulV4(
     </details>
 
     <details>
-      <summary><term>伪量化场景约束</term></summary>
+      <summary>伪量化场景约束</summary>
         <a id="伪量化场景约束"></a>
 
     - 伪量化场景支持的数据类型为：
@@ -963,7 +963,7 @@ aclnnStatus aclnnGroupedMatmulV4(
     </details>
 
     <details>
-      <summary><term>不同groupType约束</term></summary>
+      <summary>不同groupType约束</summary>
         <a id="不同groupType约束"></a>
 
     - 不同groupType支持场景:

@@ -4,12 +4,12 @@
 
 | 产品                                        | 是否支持 |
 | :------------------------------------------ | :------: |
-| Ascend 950PR/Ascend 950DT系列               |    √     |
-| Atlas A3 训练系列产品/Atlas A3 推理系列产品 |    ×     |
-| Atlas A2 训练系列产品/Atlas A2 推理系列产品 |    ×     |
-| Atlas 200I/500 A2 推理产品                  |    ×     |
-| Atlas 推理系列产品                          |    ×     |
-| Atlas 训练系列产品                          |    ×     |
+| <term>Ascend 950PR/Ascend 950DT</term>                |    √     |
+| <term>Atlas A3 训练系列产品/Atlas A3 推理系列产品</term>  |    ×     |
+| <term>Atlas A2 训练系列产品/Atlas A2 推理系列产品</term>  |    ×     |
+| <term>Atlas 200I/500 A2 推理产品</term>                   |    ×     |
+| <term>Atlas 推理系列产品</term>                           |    ×     |
+| <term>Atlas 训练系列产品</term>                           |    ×     |
 
 ## 功能说明
 
@@ -486,7 +486,7 @@ aclnnStatus aclnnAlltoAllvQuantGroupedMatMul(
 
 示例代码如下，仅供参考，具体编译和执行过程请参考编译与运行样例。
 
-注意：由于量化接口仅支持Ascend 950PR/Ascend 950DT系列，以下示例基于该系列实现。本示例代码以2卡为例，请根据实际环境卡数修改 `EP_WORLD_SIZE`。
+注意：由于量化接口仅支持<term>Ascend 950PR/Ascend 950DT</term>，以下示例基于该系列实现。本示例代码以2卡为例，请根据实际环境卡数修改 `EP_WORLD_SIZE`。
 
 ```cpp
 #include <thread>

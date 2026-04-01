@@ -269,7 +269,7 @@ aclnnStatus aclnnGroupedMatmulFinalizeRoutingWeightNzV2(
     <tr>
       <td>tuningConfigOptional</td>
       <td>输入</td>
-      <td>数组中的第一个元素表示各个专家处理的token数的预期值，算子tiling时会按照数组的第一个元素合理进行tiling切分，性能更优。数组中的第二个元素设置为1，则算子tiling时会根据实际输入尝试使用更适合的算法，当k<=2048的时候，性能可能更优。从第三个元素开始预留，用户无须填写。未来会进行扩展。兼容历史版本，用户如不使用该参数，不传入(即为nullptr)即可。</td>
+      <td>数组中的第一个元素表示各个专家处理的token数的预期值，算子tiling时会按照数组的第一个元素合理进行tiling切分，性能更优。数组中的第二个元素设置为1，则算子tiling时会根据实际输入尝试使用更适合的算法，当k<=2048的时候，性能可能更优。从第三个元素开始预留，用户无须填写。未来会进行扩展。兼容历史版本，用户如不使用该参数，不传入（即为nullptr）即可。</td>
       <td>-</td>
       <td>INT64</td>
       <td>-</td>

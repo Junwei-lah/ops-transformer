@@ -390,7 +390,7 @@ aclnnStatus aclnnGroupedMatmulV3(
 - <term>Ascend 950PR/Ascend 950DT</term>：
 
   <details>
-    <summary><term>非量化量化场景约束</term></summary>
+    <summary>非量化量化场景约束</summary>
       <a id="非量化场景约束"></a>
 
   - 非量化场景支持的数据类型为：
@@ -406,7 +406,7 @@ aclnnStatus aclnnGroupedMatmulV3(
   </details>
 
   <details>
-  <summary><term>伪量化量化场景约束</term></summary>
+  <summary>伪量化量化场景约束</summary>
   <a id="伪量化场景约束"></a>
 
   - 伪量化场景支持的数据类型为：
@@ -443,7 +443,7 @@ aclnnStatus aclnnGroupedMatmulV3(
   </details>
 
   <details>
-  <summary><term>groupType场景约束</term></summary>
+  <summary>groupType场景约束</summary>
   <a id="groupType场景约束"></a>
 
   - 不同groupType支持场景：

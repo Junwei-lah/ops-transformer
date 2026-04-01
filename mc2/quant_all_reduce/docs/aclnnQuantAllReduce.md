@@ -255,7 +255,7 @@ aclnnStatus aclnnQuantAllReduce(
 
 说明：本示例代码调用了部分HCCL集合通信库接口：HcclCommInitClusterInfoConfig、HcclGetCommName、HcclCommDestroy, 请参考[<<HCCL API (C)>>](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/API/hcclapiref/hcclcpp_07_0001.html)。
 
-- <term>Ascend 950PR/Ascend 950DT系列</term>：
+- <term>Ascend 950PR/Ascend 950DT</term>：
 
     ```Cpp
     #include <thread>

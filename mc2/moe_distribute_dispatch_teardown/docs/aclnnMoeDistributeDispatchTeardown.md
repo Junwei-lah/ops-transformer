@@ -370,7 +370,7 @@ aclnnStatus aclnnMoeDistributeDispatchTeardown(
   <td>输入和输出的shape不在支持的范围内。</td>
   </tr>
   <tr>
-      <td>参数的取值不在支持的范围。</td>
+      <td>参数的取值不在支持的范围内。</td>
   </tr>
   </tbody>
   </table>

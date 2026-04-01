@@ -18,9 +18,10 @@
 
 - 接口功能：适配decode & prefill场景的FlashAttention算子，既可以支持prefill计算场景（PromptFlashAttention），也可支持decode计算场景（IncreFlashAttention）。
 
-    相比于FusedInferAttentionScoreV3，本接口新增dequantScaleQueryOptional、learnableSinkOptional、queryQuantMode参数,另外新增alibi的fullmask能力。
+    相比于FusedInferAttentionScoreV3，本接口新增dequantScaleQueryOptional、learnableSinkOptional、queryQuantMode参数，另外新增alibi的fullmask能力。
 
     **说明：** 
+
     decode场景下特有KV Cache：KV Cache是大模型推理性能优化的一个常用技术。采样时，Transformer模型会以给定的prompt/context作为初始输入进行推理（可以并行处理），随后逐一生成额外的token来继续完善生成的序列（体现了模型的自回归性质）。在采样过程中，Transformer会执行自注意力操作，为此需要给当前序列中的每个项目（无论是prompt/context还是生成的token）提取键值（KV）向量。这些向量存储在一个矩阵中，通常被称为kv缓存（KV Cache）。
 - 计算公式：
 
@@ -38,7 +39,7 @@
     Attention(Q,K,V)=Softmax(\frac{QK^T}{\sqrt{d}} + FullMask)V
     $$
 
-    其中$Q$和$K^T$的乘积代表输入$x$的注意力，为避免该值变得过大，通常除以$d$的开根号进行缩放,加上alibi的fullmask，并对每行进行softmax归一化，与$V$相乘后得到一个$n*d$的矩阵。
+    其中$Q$和$K^T$的乘积代表输入$x$的注意力，为避免该值变得过大，通常除以$d$的开根号进行缩放，加上alibi的fullmask，并对每行进行softmax归一化，与$V$相乘后得到一个$n*d$的矩阵。
 
     **说明**：
     <blockquote>query、key、value数据排布格式支持从多种维度解读，其中B（Batch）表示输入样本批量大小、S（Seq-Length）表示输入样本序列长度、H（Hidden-Size）表示隐藏层的大小、N（Head-Num）表示多头数、D（Head-Dim）表示隐藏层最小的单元尺寸，且满足D=H/N、T表示所有Batch输入样本序列长度的累加和。
