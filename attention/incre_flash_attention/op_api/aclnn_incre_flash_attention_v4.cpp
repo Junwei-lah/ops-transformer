@@ -12,22 +12,11 @@
 #include "opdev/common_types.h"
 #include "opdev/platform.h"
 #include "aclnn_incre_flash_attention_v4.h"
+#include "aclnnInner_incre_flash_attention.h" // 该文件是自动生成，在build/autogen/inner路径下
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern aclnnStatus aclnnInnerIncreFlashAttentionGetWorkspaceSize(
-    const aclTensor *query, const aclTensorList *key, const aclTensorList *value, const aclTensor *pseShift,
-    const aclTensor *attenMask, const aclIntArray *actualSeqLengths, const aclTensor *deqScale1,
-    const aclTensor *quantScale1, const aclTensor *deqScale2, const aclTensor *quantScale2,
-    const aclTensor *quantOffset2, const aclTensor *antiquantScale, const aclTensor *antiquantOffset,
-    const aclTensor *blocktable, const aclTensor *kvPaddingSize, int64_t numHeads, double scaleValue, char *inputLayout,
-    int64_t numKeyValueHeads, int64_t blockSize, int64_t innerPrecise, const aclTensor *attentionOut,
-    uint64_t *workspaceSize, aclOpExecutor **executor);
-
-extern aclnnStatus aclnnInnerIncreFlashAttention(void *workspace, uint64_t workspaceSize, aclOpExecutor *executor,
-                                                 const aclrtStream stream);
 
 aclnnStatus aclnnIncreFlashAttentionV4GetWorkspaceSize(
     const aclTensor *query, const aclTensorList *key, const aclTensorList *value, const aclTensor *pseShift,

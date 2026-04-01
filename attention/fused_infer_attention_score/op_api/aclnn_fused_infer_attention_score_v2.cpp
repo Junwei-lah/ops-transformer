@@ -15,6 +15,7 @@
 #include "opdev/op_def.h"
 #include "opdev/op_log.h"
 #include "fused_infer_attention_score_inner.h"
+#include "aclnnInner_fused_infer_attention_score.h" // 该文件为自动生成，在build/autogen/inner路径下
 
 using namespace op;
 

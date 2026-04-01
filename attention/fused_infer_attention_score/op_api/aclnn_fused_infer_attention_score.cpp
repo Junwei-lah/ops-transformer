@@ -13,6 +13,7 @@
 #include "opdev/platform.h"
 #include "aclnn_fused_infer_attention_score.h"
 #include "fused_infer_attention_score_inner.h"
+#include "aclnnInner_fused_infer_attention_score.h" // 该文件为自动生成，在build/autogen/inner路径下
 
 #ifdef __cplusplus
 extern "C" {

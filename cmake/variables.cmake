@@ -149,9 +149,10 @@ if (NOT BUILD_OPEN_PROJECT)
     ${TOP_DIR}/asl/ops/cann/ops/built-in/op_fallback
     ${TOP_DIR}/hcomm/include
     ${TOP_DIR}/hccl/include
+    ${TOP_DIR}/tmp/host-prefix/src/host-build/asl/ops/cann/ops/built-in/op_host/inner/
   )
 else()
-  list(APPEND OPAPI_INCLUDE ${OPBASE_INC_DIRS})
+  list(APPEND OPAPI_INCLUDE ${OPBASE_INC_DIRS} ${OPS_TRANSFORMER_DIR}/build/autogen/inner/)
 endif()
 
 set(OP_TILING_INCLUDE
