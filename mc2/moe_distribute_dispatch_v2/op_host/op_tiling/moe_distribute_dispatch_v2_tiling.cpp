@@ -34,6 +34,7 @@
 #include "graph/utils/type_utils.h"
 #include "register/op_def_registry.h"
 #include "platform/platform_infos_def.h"
+#include "../../common/op_kernel/mc2_moe_context.h"
 #include "../../op_kernel/moe_distribute_dispatch_tiling.h"
 #include "arch35/moe_distribute_dispatch_tiling_arch35.h"
 #include "../../op_kernel/moe_distribute_dispatch_v2_tiling.h"
@@ -1379,6 +1380,30 @@ static bool CheckTensorPtrNullptr(const gert::TilingContext *context, const char
     return true;
 }
 
+static ge::graphStatus CheckMc2Context(gert::TilingContext *context, const char *nodeName, DispatchV2Config &config)
+{
+    const gert::StorageShape *contextStorageShape = context->GetInputShape(config.contextIndex);
+    OP_TILING_CHECK(contextStorageShape == nullptr, OP_LOGE(nodeName, "contextShape is null."),
+        return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(contextStorageShape->GetStorageShape().GetDimNum() != ONE_DIM,
+        OP_LOGE(nodeName, "contextShape dims must be 1, but current dim num is %lu.",
+        contextStorageShape->GetStorageShape().GetDimNum()), return ge::GRAPH_FAILED);
+    int64_t contextDim0 = contextStorageShape->GetStorageShape().GetDim(0);
+    OP_LOGD(nodeName, "context dim0 = %ld", contextDim0);
+
+    auto contextDesc = context->GetInputDesc(config.contextIndex);
+    OP_TILING_CHECK(contextDesc == nullptr, OP_LOGE(nodeName, "contextDesc is null."), return ge::GRAPH_FAILED);
+    OP_TILING_CHECK(contextDesc->GetDataType() != ge::DT_INT32,
+        OP_LOGE(nodeName, "context dataType is invalid, dataType should be int32, but is %s.",
+        Ops::Base::ToString(contextDesc->GetDataType()).c_str()), return ge::GRAPH_FAILED);
+
+    OP_TILING_CHECK(
+        static_cast<ge::Format>(ge::GetPrimaryFormat(contextDesc->GetStorageFormat())) == ge::FORMAT_FRACTAL_NZ,
+        OP_LOGE(nodeName, "context format is invalid."), return ge::GRAPH_FAILED);
+
+    return ge::GRAPH_SUCCESS;
+}
+
 static ge::graphStatus TilingCheckMoeDistributeDispatch(gert::TilingContext *context, const char *nodeName,
     const bool isActiveMask, const bool isScales, const bool hasElasticInfo, const bool isPerformance, const uint32_t quantMode,
     const bool isLayered, DispatchV2Config &config)
@@ -1682,6 +1707,13 @@ ge::graphStatus MoeDistributeDispatchA3TilingFuncImplPublic(gert::TilingContext 
         OP_TILING_CHECK((isScales && (quantMode == static_cast<uint32_t>(QuantModeA5::NON_QUANT))) || ((!isScales) && (quantMode == static_cast<uint32_t>(QuantModeA5::STATIC_QUANT))),
             OP_LOGE(nodeName, "quant mode and scales not match, isScales is %d, quantMode is %u.",
             static_cast<int32_t>(isScales), quantMode), return ge::GRAPH_FAILED);
+    }
+
+    // 检查context输入
+    if (config.isMc2Context) {
+        OP_TILING_CHECK(
+            CheckMc2Context(context, nodeName, config) != ge::GRAPH_SUCCESS,
+            OP_LOGE(nodeName, "Tiling check context failed."), return ge::GRAPH_FAILED);
     }
 
     // 检查输入输出的dim、format、dataType
