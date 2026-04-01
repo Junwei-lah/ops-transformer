@@ -54,12 +54,6 @@ __aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNotNoneDropPadTrue
     MoeTokenUnpermuteWithRoutingMapGradBase<PermutedTokenT, IdxT, ProbsT>::Init(
         unpermuted_tokens_grad, outIndex, permuteTokenId, routing_map, permuted_tokens, probs, permuted_tokens_grad,
         probs_grad, tiling_data);
-    // 申请2块空间手动double buffer
-    this->pipe.InitBuffer(unpermutedGradTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * SIZE_FLOAT);
-    this->pipe.InitBuffer(permutedTokensTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * SIZE_FLOAT);
-    this->pipe.InitBuffer(probGradReduceSumTBuf, this->hiddenSizeLoopTimesAlign * SIZE_FLOAT);
-    this->pipe.InitBuffer(permutedTokensGradTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * this->inputTypeSize);
-    this->pipe.InitBuffer(probGradOutTBuf, BLOCK_SIZE_32);
     int64_t taskNum = this->tokensNum * this->numExpert;
     if (taskNum > 0) {
         int64_t totalCoreNum = this->tailCoreNum + this->formerCoreNum;
@@ -71,10 +65,18 @@ __aicore__ inline void MoeTokenUnpermuteWithRoutingMapGradProbNotNoneDropPadTrue
                 ? (initProbNumPerCore + 1) * this->coreIndex
                 : (initProbNumPerCore + 1) * initFormerCoreNum
                     + (this->coreIndex - initFormerCoreNum) * initProbNumPerCore;
-            InitOutput<ProbsT>(this->probGradGm[initAddr], initNum, ProbsT(0));
+            GlobalTensor<ProbsT> probGradInitGm;
+            probGradInitGm.SetGlobalBuffer((__gm__ ProbsT*)probs_grad + initAddr);
+            Fill(probGradInitGm, initNum, static_cast<ProbsT>(0));
         }
         SyncAll();
     }
+    // 申请2块空间手动double buffer
+    this->pipe.InitBuffer(unpermutedGradTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * SIZE_FLOAT);
+    this->pipe.InitBuffer(permutedTokensTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * SIZE_FLOAT);
+    this->pipe.InitBuffer(probGradReduceSumTBuf, this->hiddenSizeLoopTimesAlign * SIZE_FLOAT);
+    this->pipe.InitBuffer(permutedTokensGradTQue, DOUBLE_BUFFER, this->hiddenSizeAlign * this->inputTypeSize);
+    this->pipe.InitBuffer(probGradOutTBuf, BLOCK_SIZE_32);
 }
 
 template <typename PermutedTokenT, typename IdxT, typename ProbsT>
