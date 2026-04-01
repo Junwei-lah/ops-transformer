@@ -124,8 +124,8 @@ public:
                                  ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                                  ge::FORMAT_ND, ge::FORMAT_ND})
             .AutoContiguous();
-        this->Input("gmmXScaleOptional")
-            .ParamType(OPTIONAL)
+        this->Input("gmmXScale")
+            .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT,
                        ge::DT_FLOAT, ge::DT_FLOAT,
                        ge::DT_FLOAT8_E8M0, ge::DT_FLOAT8_E8M0,  // MX: E4M3-E4M3
@@ -141,8 +141,8 @@ public:
                                  ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND,
                                  ge::FORMAT_ND, ge::FORMAT_ND})
             .AutoContiguous();
-        this->Input("gmmWeightScaleOptional")
-            .ParamType(OPTIONAL)
+        this->Input("gmmWeightScale")
+            .ParamType(REQUIRED)
             .DataType({ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT, ge::DT_FLOAT,
                        ge::DT_FLOAT, ge::DT_FLOAT,
                        ge::DT_FLOAT8_E8M0, ge::DT_FLOAT8_E8M0,  // MX: E4M3-E4M3

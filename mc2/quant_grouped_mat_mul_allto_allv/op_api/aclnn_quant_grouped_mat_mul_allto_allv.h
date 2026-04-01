@@ -73,8 +73,8 @@ extern "C" {
  * 因为集合通信及BatchMatMul计算所需，输入输出shape需满足以下数学关系：（其中ep=epWorldSize）
  * gmmX: (A, H1);
  * gmmWeight: (e, H1, N1);
- * gmmXScaleOptional: pertensor场景(1,);
- * gmmWeightScaleOptional: pertensor场景(1,)
+ * gmmXScale: pertensor场景(1,);
+ * gmmWeightScale: pertensor场景(1,)
  * mmXOptional: (BS, H2);
  * mmWeightOptional: (H2, N2);
  * mmXScaleOptional: pertensor场景(1,);

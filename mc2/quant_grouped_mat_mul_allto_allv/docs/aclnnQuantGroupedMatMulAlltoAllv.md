@@ -16,7 +16,7 @@
 ## 功能说明
 
 - 接口功能：
-    - 完成量化的路由专家GroupedMatMul、Unpermute、AlltoAllv融合并实现与共享专家MatMul并行融合，先计算后通信，支持Pertensor-Pertensor[量化模式](../../../docs/zh/context/量化介绍.md)。
+    - 完成量化的路由专家GroupedMatMul、Unpermute、AlltoAllv融合并实现与共享专家MatMul并行融合，先计算后通信，支持Pertensor-Pertensor、Mx[量化模式](../../../docs/zh/context/量化介绍.md)。
 
 - 计算公式：
     - 路由专家：
@@ -82,11 +82,11 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
 
     <table style="undefined;table-layout: fixed; width: 1200px">
         <colgroup>
-            <col style="width: 180px">
-            <col style="width: 90px">
+            <col style="width: 188px">
+            <col style="width: 85px">
             <col style="width: 220px">
             <col style="width: 280px">
-            <col style="width: 120px">
+            <col style="width: 200px">
             <col style="width: 90px">
             <col style="width: 100px">
             <col style="width: 80px">
@@ -110,7 +110,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>公式中的输入 gmmX。</td>
                 <td>支持的 shape 包括 (A, H)。</td>
-                <td>HIFLOAT8</td>
+                <td><li>TT量化：HIFLOAT8</li><li>Mx量化：FLOAT8_E4M3FN、FLOAT8_E5M2</li></td>
                 <td>ND</td>
                 <td>2</td>
                 <td>x</td>
@@ -121,7 +121,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>公式中的输入 gmmWeight。</td>
                 <td>支持的 shape 包括 (e, H, N1)。e 为每卡部署的专家数，H 为 hidden size，N1 为 MoE FFN 中间维度。</td>
-                <td>HIFLOAT8</td>
+                <td><li>TT量化：HIFLOAT8</li><li>Mx量化：FLOAT8_E4M3FN、FLOAT8_E5M2</li></td>
                 <td>ND</td>
                 <td>3</td>
                 <td>x</td>
@@ -131,8 +131,8 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>gmmXScale</td>
                 <td>输入</td>
                 <td>gmmX 的量化系数。</td>
-                <td>默认为空。支持的 shape 包括 (1, )。</td>
-                <td>FLOAT32</td>
+                <td><li>默认为空。支持的 shape 包括 (1, )。</li><li>Mx量化时shape：(M, ceil(K/64), 2)</li></td>
+                <td><li>TT量化：FLOAT32</li><li>Mx量化：FLOAT8_E8M0</li></td>
                 <td>ND</td>
                 <td>1</td>
                 <td>x</td>
@@ -142,8 +142,8 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>gmmWeightScale</td>
                 <td>输入</td>
                 <td>gmmWeight 的量化系数。</td>
-                <td>默认为空。支持的 shape 包括 (1, )。</td>
-                <td>FLOAT32</td>
+                <td><li>默认为空。支持的 shape 包括 (1, )。</li><li>Mx量化时shape：(e, ceil(K/64), N, 2)，weight转置时为(e, N, ceil(K/64), 2)</li></td>
+                <td><li>TT量化：FLOAT32</li><li>Mx量化：FLOAT8_E8M0</li></td>
                 <td>ND</td>
                 <td>1</td>
                 <td>x</td>
@@ -176,7 +176,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>公式中的输入 mmX。</td>
                 <td>支持的 shape 包括 (bs, H)。bs 为每卡部署的专家个数，H 为 hidden size。</td>
-                <td>BFLOAT16、FLOAT16</td>
+                <td><li>TT量化：BFLOAT16、FLOAT16</li><li>Mx量化：FLOAT8_E4M3FN、FLOAT8_E5M2</li></td>
                 <td>ND</td>
                 <td>2</td>
                 <td>x</td>
@@ -187,7 +187,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>公式中的输入 mmWeight。</td>
                 <td>不支持空。支持的 shape 包括 (H, N1)。H 为 hidden size，N1 为共享专家 FFN 的中间层维度。</td>
-                <td>HIFLOAT8</td>
+                <td><li>TT量化：HIFLOAT8</li><li>Mx量化：FLOAT8_E4M3FN、FLOAT8_E5M2</li></td>
                 <td>ND</td>
                 <td>2</td>
                 <td>x</td>
@@ -198,7 +198,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>mmX 的量化系数。</td>
                 <td>支持的 shape 包括 (1, )。</td>
-                <td>FLOAT32</td>
+                <td><li>TT量化：FLOAT32</li><li>Mx量化：FLOAT8_E8M0</li></td>
                 <td>ND</td>
                 <td>1</td>
                 <td>x</td>
@@ -209,7 +209,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>输入</td>
                 <td>mmWeight 的量化系数。</td>
                 <td>支持的 shape 包括 (1, )。</td>
-                <td>FLOAT32</td>
+                <td><li>TT量化：FLOAT32</li><li>Mx量化：FLOAT8_E8M0</li></td>
                 <td>ND</td>
                 <td>1</td>
                 <td>x</td>
@@ -230,7 +230,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>gmmXQuantMode</td>
                 <td>输入</td>
                 <td>gmmX 的量化模式。</td>
-                <td>必须传入量化模式，当前仅支持 1，表示 pertensor 量化。支持的量化模式包括：0 表示不量化，1 表示 pertensor 量化。</td>
+                <td>必须传入量化模式，当前支持 1 （pertensor量化）和 6（Mx量化）。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>1</td>
@@ -241,7 +241,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>gmmWeightQuantMode</td>
                 <td>输入</td>
                 <td>gmmWeight 的量化模式。</td>
-                <td>必须传入量化模式，当前仅支持 1，表示 pertensor 量化。支持的量化模式包括：0 表示不量化，1 表示 pertensor 量化。</td>
+                <td>必须传入量化模式，当前支持 1 （pertensor量化）和 6（Mx量化）。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>1</td>
@@ -252,7 +252,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>mmXQuantMode</td>
                 <td>输入</td>
                 <td>mmX 的量化模式。</td>
-                <td>mmX 非空，则必须传入量化模式，当前仅支持 1，表示 pertensor 量化。支持的量化模式包括：0 表示不量化，1 表示 pertensor 量化。</td>
+                <td>mmX 非空，则必须传入量化模式，当前支持 1 （pertensor量化）和 6（Mx量化）。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>1</td>
@@ -263,7 +263,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>mmWeightQuantMode</td>
                 <td>输入</td>
                 <td>mmWeight 的量化模式。</td>
-                <td>mmWeight 不为空，则必须传入量化模式，当前仅支持 1，表示 pertensor 量化。支持的量化模式包括：0 表示不量化，1 表示 pertensor 量化。</td>
+                <td>mmWeight 不为空，则必须传入量化模式，当前支持 1 （pertensor量化）和 6（Mx量化）。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>1</td>
@@ -274,7 +274,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>commQuantMode</td>
                 <td>输入</td>
                 <td>低比特通信量化模式。</td>
-                <td>当前低比特功能预留，必须传入 0，表示不量化。支持的量化模式包括：0 表示不量化，1 表示 pertensor 量化。</td>
+                <td>当前低比特功能预留，必须传入 0，表示不量化。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>1</td>
@@ -296,7 +296,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
                 <td>groupSize</td>
                 <td>输入</td>
                 <td>PerGroup 量化分组大小。</td>
-                <td>用于 Matmul 计算三个方向上的量化分组大小，预留参数，仅支持配置为 0，取值不生效。groupSize 输入由 3 个方向的 groupSizeM，groupSizeN，groupSizeK 三个值拼接组成，每个值占 16 位，共占用 int64_t 类型 groupSize 的低 48 位（高 16 位无效），计算公式为：groupSize = groupSizeK \| groupSizeN << 16 \| groupSizeM << 32。</td>
+                <td>用于 Matmul 计算三个方向上的量化分组大小，预留参数，仅支持配置为 0，取值不生效。groupSize 输入由 3 个方向的 groupSizeM，groupSizeN，groupSizeK 三个值拼接组成，每个值占 16 位，共占用 int64_t 类型 groupSize 的低 48 位（高 16 位无效），计算公式为：groupSize = groupSizeK | groupSizeN << 16 | groupSizeM << 32。</td>
                 <td>INT64</td>
                 <td>-</td>
                 <td>-</td>
@@ -328,8 +328,8 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
             <tr>
                 <td>sendCounts</td>
                 <td>输入</td>
-                <td>AlltoAllv 使用的 send count。</td>
-                <td>支持的维度为 e * ep。</td>
+                <td>AlltoAllv 使用的 send count。表示其他Rank向当前rank上各expert发送的token数量。</td>
+                <td>支持的维度为 e * ep。按<code>sendCounts[fromRank][expertId]</code>一维展开, 例如e=3时顺序为<code>e0,e1,e2,e0,e1,e2, ...</code></td>
                 <td>aclIntArray*（元素类型 INT64）</td>
                 <td>ND</td>
                 <td>-</td>
@@ -339,7 +339,7 @@ aclnnStatus aclnnQuantGroupedMatMulAlltoAllv(
             <tr>
                 <td>recvCounts</td>
                 <td>输入</td>
-                <td>AlltoAllv 使用的 recv count。</td>
+                <td>AlltoAllv 使用的 recv count。表示AlltoAllv后本卡需要接收到的token数量。</td>
                 <td>支持的维度为 e * ep。</td>
                 <td>aclIntArray*（元素类型 INT64）</td>
                 <td>ND</td>
