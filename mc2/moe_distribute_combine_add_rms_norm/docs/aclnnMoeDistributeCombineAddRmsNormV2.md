@@ -52,7 +52,7 @@ $$
 
 ## 函数原型
 
-每个算子分为两段式接口，必须先调用 “aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeDistributeCombineAddRmsNormV2”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用 “aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeDistributeCombineAddRmsNormV2”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2GetWorkspaceSize(
@@ -113,7 +113,7 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1550px"> 
+    <table style="undefined;table-layout: fixed; width: 1550px">
     <colgroup>
     <col style="width: 180px">
     <col style="width: 120px">
@@ -616,9 +616,12 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNormV2(
     <td>1. 输入和输出的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
-    <td>ACLNN_ERR_INNER_TILING_ERROR</td>
-    <td>561002</td>
-    <td>1. 输入和输出的shape不在支持的范围内；<br>2. 参数的取值不在支持的范围内。</td>
+    <td class="merged-cell" rowspan="2">ACLNN_ERR_INNER_TILING_ERROR</td>
+    <td class="merged-cell" rowspan="2">561002</td>
+    <td>1. 输入和输出的shape不在支持的范围内；</td>
+    </tr>
+    <tr>
+    <td>2. 参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>

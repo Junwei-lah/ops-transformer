@@ -31,7 +31,7 @@ $$
 
 ## 函数原型
 
-每个算子分为两段式接口，必须先调用 “aclnnMoeDistributeCombineAddRmsNormGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeDistributeCombineAddRmsNorm”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用 “aclnnMoeDistributeCombineAddRmsNormGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeDistributeCombineAddRmsNorm”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnMoeDistributeCombineAddRmsNormGetWorkspaceSize(
@@ -490,9 +490,12 @@ aclnnStatus aclnnMoeDistributeCombineAddRmsNorm(
     <td>输入和输出的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
-    <td>ACLNN_ERR_INNER_TILING_ERROR</td>
-    <td>561002</td>
-    <td>1. 输入和输出的shape不在支持的范围内；<br>2. 参数的取值不在支持的范围内。</td>
+    <td class="merged-cell" rowspan="2">ACLNN_ERR_INNER_TILING_ERROR</td>
+    <td class="merged-cell" rowspan="2">561002</td>
+    <td>1. 输入和输出的shape不在支持的范围内；</td>
+    </tr>
+    <tr>
+    <td>2. 参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>

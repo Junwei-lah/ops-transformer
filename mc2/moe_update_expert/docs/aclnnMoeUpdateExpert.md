@@ -49,7 +49,7 @@
 
 ## 函数原型
 
-每个算子分为两段式接口，必须先调用 “aclnnMoeUpdateExpertGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeUpdateExpert”接口执行计算。
+每个算子分为[两段式接口](../../../docs/zh/context/两段式接口.md)，必须先调用 “aclnnMoeUpdateExpertGetWorkspaceSize”接口获取计算所需workspace大小以及包含了算子计算流程的执行器，再调用“aclnnMoeUpdateExpert”接口执行计算。
 
 ```cpp
 aclnnStatus aclnnMoeUpdateExpertGetWorkspaceSize(
@@ -79,106 +79,148 @@ aclnnStatus aclnnMoeUpdateExpert(
 
 - **参数说明**
 
-    <table style="undefined;table-layout: fixed; width: 1392px"> <colgroup>
-    <col style="width: 120px">
-    <col style="width: 120px">
-    <col style="width: 160px">
+    <table style="undefined;table-layout: fixed; width: 1390px"> <colgroup>
     <col style="width: 150px">
-    <col style="width: 80px">
+    <col style="width: 160px">
+    <col style="width: 200px">
+    <col style="width: 200px">
+    <col style="width: 130px">
+    <col style="width: 180px">
+    <col style="width: 180px">
+    <col style="width: 190px">
     </colgroup>
     <thead>
     <tr>
     <th>参数名</th>
     <th>输入/输出</th>
     <th>描述</th>
+    <th>使用说明</th>
     <th>数据类型</th>
     <th>数据格式</th>
+    <th>维度(shape)</th>
+    <th>非连续Tensor</th>
     </tr>
     </thead>
     <tbody>
     <tr>
-    <td>expertIds</td>
+    <td>expertIds(aclTensor*)</td>
     <td>输入</td>
-    <td>每个token的topK个专家索引，要求为2D Tensor，shape为 (BS, K)；支持非连续的Tensor。</td>
+    <td>每个token的topK个专家索引。</td>
+    <td>要求为2D Tensor，shape为 (BS, K)。</td>
     <td>INT32、INT64</td>
     <td>ND</td>
+    <td>2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>eplbTable</td>
+    <td>eplbTable(aclTensor*)</td>
     <td>输入</td>
-    <td>逻辑专家到物理专家的映射表（外部需保证值正确）：<br><ul><li> 共world_size*place_per_rank个专家实例（world_size为卡数，place_per_rank为单卡部署路由专家实例数）。</li><li>每行第一列为对应逻辑专家的部署实例数（取值[1, world_size]），后[1, count]列为实例编号（取值[0, world_size*place_per_rank)，且不重复）。</li><li>要求为2D Tensor，shape为 (moeExperNum, F)；支持非连续的Tensor。</li></ul></td>
+    <td>逻辑专家到物理专家的映射表（外部需保证值正确）。</td>
+    <td><ul><li>共world_size * place_per_rank个专家实例。</li><li>每行第一列为对应逻辑专家的部署实例数（取值[1, world_size]），后[1, count]列为实例编号（取值[0, world_size*place_per_rank)，且不重复）。</li><li>要求为2D Tensor，shape为 (moeExperNum, F)。</li></ul></td>
     <td>INT32</td>
     <td>ND</td>
+    <td>2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>expertScalesOptional</td>
+    <td>expertScalesOptional (aclTensor*)</td>
     <td>输入</td>
-    <td>每个token的topK个专家的scale权重（需保证token内部按降序排列），可传有效数据或空指针（传有效数据时，pruningThresholdOptional必须同时传有效数据）。<br>要求为2D Tensor，shape为 (BS, K)；支持非连续的Tensor。</td>
+    <td>每个token的topK个专家的scale权重。</td>
+    <td><ul><li>需保证token内部按降序排列。</li><li>可传有效数据或空指针，传有效数据时pruningThresholdOptional必须同时传有效数据。</li><li>要求为2D Tensor，shape为 (BS, K)。</li></ul></td>
     <td>FLOAT16、BFLOAT16、FLOAT</td>
     <td>ND</td>
+    <td>2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>pruningThresholdOptional</td>
+    <td>pruningThresholdOptional (aclTensor*)</td>
     <td>输入</td>
-    <td>专家scale权重的最小阈值（token对应专家scale小于阈值时会被剪枝），可传有效数据或空指针（传有效数据时，expertScalesOptional必须同时传有效数据）。<br>要求为1D或2D Tensor，shape为 (K,) 或 (1, K)；支持非连续的Tensor。</td>
+    <td>专家scale权重的最小阈值（token对应专家scale小于阈值时会被剪枝）。</td>
+    <td><ul><li>可传有效数据或空指针，传有效数据时expertScalesOptional必须同时传有效数据。</li><li>要求为1D或2D Tensor，shape为 (K,) 或 (1, K)。</li></ul></td>
     <td>FLOAT</td>
     <td>ND</td>
+    <td>1/2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>activeMaskOptional</td>
+    <td>activeMaskOptional (aclTensor*)</td>
     <td>输入</td>
-    <td>表示token是否参与通信，可传有效数据或空指针：<br><ul><li> 传有效数据时，expertScalesOptional和pruningThresholdOptional必须同时传有效数据；true表示参与通信，且true需排在false前（例：{true, false, true}非法）。</li><li> 传空指针时，默认所有token参与通信。<br>要求为1D Tensor，shape为 (BS,)；支持非连续的Tensor。</li></ul></td>
+    <td>表示token是否参与通信。</td>
+    <td><ul><li>可传有效数据或空指针，传有效数据时expertScalesOptional和pruningThresholdOptional必须同时传有效数据。</li><li>true表示参与通信，且true需排在false前（例：{true, false, true}非法）。</li><li>传空指针时，默认所有token参与通信。</li><li>要求为1D Tensor，shape为 (BS,)。</li></ul></td>
     <td>BOOL</td>
     <td>ND</td>
+    <td>1</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>localRankId</td>
+    <td>localRankId(int64_t)</td>
     <td>输入</td>
-    <td>本卡Id，balanceMode=0 时取值范围[0, worldSize)，同一个通信域中各卡的localRankId不重复。</td>
+    <td>本卡Id。</td>
+    <td><ul><li>balanceMode=0时取值范围[0, worldSize)。</li><li>同一个通信域中各卡的localRankId不重复。</li></ul></td>
     <td>INT64</td>
-    <td>ND</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
-    <td>worldSize</td>
+    <td>worldSize(int64_t)</td>
     <td>输入</td>
-    <td>通信域大小，balanceMode=0 时取值范围[2, 768]。</td>
+    <td>通信域大小。</td>
+    <td>balanceMode=0时取值范围[2, 768]。</td>
     <td>INT64</td>
-    <td>ND</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
-    <td>balanceMode</td>
+    <td>balanceMode(int64_t)</td>
     <td>输入</td>
-    <td>均衡规则，默认值为0：<br><ul><li> 0：按rank分发；</li><li> 1：按token分发；<br>取值范围[0, 1]。</li></ul></td>
+    <td>均衡规则，默认值为0。</td>
+    <td><ul><li>0：按rank分发。</li><li>1：按token分发。</li><li>取值范围[0, 1]。</li></ul></td>
     <td>INT64</td>
-    <td>ND</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
-    <td>balancedExpertIds</td>
+    <td>balancedExpertIds (aclTensor*)</td>
     <td>输出</td>
-    <td>映射后每个token的topK个专家所在物理专家的实例编号，要求为2D Tensor，shape为 (BS, K)；数据类型、数据格式与`expertIds`保持一致。</td>
-    <td>与expertIds一致（INT32/INT64）</td>
+    <td>映射后每个token的topK个专家所在物理专家的实例编号。</td>
+    <td><ul><li>要求为2D Tensor，shape为 (BS, K)。</li><li>数据类型、数据格式与expertIds保持一致。</li></ul></td>
+    <td>INT32、INT64</td>
     <td>ND</td>
+    <td>2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>balancedActiveMask</td>
+    <td>balancedActiveMask (aclTensor*)</td>
     <td>输出</td>
-    <td>剪枝后均衡的activeMask，仅当expertScalesOptional和pruningThresholdOptional传有效数据时有效。<br>要求为2D Tensor，shape为 (BS, K)；支持非连续的Tensor。</td>
+    <td>剪枝后均衡的activeMask，仅当expertScalesOptional和pruningThresholdOptional传有效数据时有效。</td>
+    <td>要求为2D Tensor，shape为 (BS, K)。</td>
     <td>BOOL</td>
     <td>ND</td>
+    <td>2</td>
+    <td>×</td>
     </tr>
     <tr>
-    <td>workspaceSize</td>
+    <td>workspaceSize(uint64_t*)</td>
     <td>输出</td>
     <td>返回需要在Device侧申请的workspace大小。</td>
+    <td>-</td>
     <td>UINT64</td>
-    <td>ND</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     <tr>
-    <td>executor</td>
+    <td>executor(aclOpExecutor**)</td>
     <td>输出</td>
     <td>返回op执行器，包含了算子的计算流程。</td>
+    <td>-</td>
     <td>aclOpExecutor*</td>
-    <td>ND</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
     </tr>
     </tbody>
     </table>
@@ -213,9 +255,12 @@ aclnnStatus aclnnMoeUpdateExpert(
     <td>输入和输出的数据类型不在支持的范围内。</td>
     </tr>
     <tr>
-    <td>ACLNN_ERR_INNER_TILING_ERROR</td>
-    <td>561002</td>
-    <td>1. 输入和输出的shape不在支持的范围内；<br>2. 参数的取值不在支持的范围内。</td>
+    <td class="merged-cell" rowspan="2">ACLNN_ERR_INNER_TILING_ERROR</td>
+    <td class="merged-cell" rowspan="2">561002</td>
+    <td>1. 输入和输出的shape不在支持的范围内；</td>
+    </tr>
+    <tr>
+    <td>2. 参数的取值不在支持的范围内。</td>
     </tr>
     </tbody>
     </table>
