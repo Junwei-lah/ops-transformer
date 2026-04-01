@@ -82,6 +82,7 @@ protected:
     ge::graphStatus GetOptionalInput();
     ge::graphStatus AnalyzeFormat();
     ge::graphStatus DoMatmulTiling();
+    ge::graphStatus SetScheduleConfig();
     ge::graphStatus CheckExpectedShapes(const gert::Shape &queryShape, const gert::Shape &keyShape,
                                         const gert::Shape &valueShape, const gert::Shape &betaShape,
                                         const gert::Shape &stateShape, const gert::Shape &actualSeqLengthsShape,
