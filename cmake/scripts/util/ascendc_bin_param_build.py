@@ -488,8 +488,12 @@ check_stop
         compile_file = os.path.join(self.out_path, '-'.join(name_com) + '.sh')
         compile_file = os.path.realpath(compile_file)
 
-        bin_cmd_str = 'res=$(asc_opc $1 --main_func={fun} --input_param={param} --soc_version={soc} \
-                --output=$2 --impl_mode={impl} --simplified_key_mode=0 --op_mode=dynamic '
+        if const_var.CHECK_ASC_DEVKIT_VERSION:
+            bin_cmd_str = 'res=$(asc_opc $1 --main_func={fun} --input_param={param} --soc_version={soc} \
+                 --output=$2 --impl_mode={impl} --simplified_key_mode=0 --op_mode=dynamic '
+        else:
+            bin_cmd_str = 'res=$(opc $1 --main_func={fun} --input_param={param} --soc_version={soc} \
+                 --output=$2 --impl_mode={impl} --simplified_key_mode=0 --op_mode=dynamic '
         ci_mode_flag = (os.environ.get('CI_MODE', 'FALSE') == 'TRUE')
         build_cmd_var = "#!/bin/bash\n"
         build_cmd_var += f'echo "[{self.soc}] Generating {bin_file} ..."\n'
