@@ -17,8 +17,6 @@ namespace MC2Aclnn {
 
 bool IsNeedScaleTrans(const aclTensor *mxScaleTensor);
 
-bool IsTensorContiguous(const aclTensor *tensor);
-
 } // namespace MC2Aclnn
 
 #endif  // MC2_ACLNN_UTIL_H_

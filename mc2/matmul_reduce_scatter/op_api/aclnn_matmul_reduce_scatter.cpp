@@ -27,7 +27,6 @@
 #include "opdev/common_types.h"
 #include "common/op_host/op_api/matmul_util.h"
 #include "common/utils/hccl_util.h"
-#include "common/op_api/mc2_aclnn_util.h"
 
 using namespace op;
 
@@ -130,15 +129,6 @@ static aclnnStatus CheckParams(const aclTensor *x1, const aclTensor *x2, const a
   if (bias != nullptr) {
    OP_LOGW("MatmulReducescatter, The current version does not support the scenario where bias is not 0. "
     "Features and accuracy are not guaranteed if inputting bias with values other than 0s.");
-  }
-
-  // 【A2】检查x2矩阵非连续合法性
-  if (op::GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B) {
-    if (!Ops::Transformer::IsTransposeLastTwoDims(x2) && !MC2Aclnn::IsTensorContiguous(x2)) {
-      OP_LOGE(ACLNN_ERR_PARAM_INVALID, "The x2 without transpose in MatmulReduceScatter must be contiguous,"
-              "but it is non-contiguous.");
-      return ACLNN_ERR_PARAM_INVALID;
-    }
   }
 
   // 2. 检查输入的数据类型是否在API支持的数据类型范围之内，需要根据api定义校验

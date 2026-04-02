@@ -285,11 +285,6 @@ static aclnnStatus CheckParams(
         CheckDtypeValid(
             x1, x2, bias, dequantScale, pertokenScale, x3, commQuantScale1Optional, commQuantScale2Optional, output),
         ACLNN_ERR_PARAM_INVALID);
-    
-    // 【A2】检查x2矩阵非连续合法性
-    if (op::GetCurrentPlatformInfo().GetSocVersion() == SocVersion::ASCEND910B) {
-        CHECK_RET(MatmulAllReduceCheckValidContiguous(x2, "x2"), ACLNN_ERR_PARAM_INVALID);
-    }
 
     // 3. 检查attr是否符合规则
     CHECK_RET(CheckAttr(reduceOp, streamMode), ACLNN_ERR_PARAM_INVALID);
