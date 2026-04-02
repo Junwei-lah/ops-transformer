@@ -19,12 +19,10 @@ class AclnnGroupedMatmulNoQuantDAV3510Checker {
 public:
     explicit AclnnGroupedMatmulNoQuantDAV3510Checker(const GroupedMatmulParams &gmmParams) : gmmParams_(gmmParams){};
     ~AclnnGroupedMatmulNoQuantDAV3510Checker(){};
-    aclnnStatus CheckGroupedMatmulFunctionParamsNoQuantDAV3510() const;
     aclnnStatus CheckGroupedMatmulGroupSizeNoQuantDAV3510();
 
 
 private:
-    aclnnStatus CheckEmptyTensor() const;
     aclnnStatus CheckTensorListLength(const aclTensorList *tensorList) const;
 private:
     GroupedMatmulParams gmmParams_;

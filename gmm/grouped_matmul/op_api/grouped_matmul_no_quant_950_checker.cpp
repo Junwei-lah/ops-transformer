@@ -14,23 +14,6 @@ using namespace gmm;
 
 constexpr int64_t MAX_LENGTH = 1024UL;
 
-aclnnStatus AclnnGroupedMatmulNoQuantDAV3510Checker::CheckGroupedMatmulFunctionParamsNoQuantDAV3510() const
-{
-    CHECK_COND(CheckEmptyTensor() == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID, "GMM check empty tensor failed.");
-    return ACLNN_SUCCESS;
-}
-
-aclnnStatus AclnnGroupedMatmulNoQuantDAV3510Checker::CheckEmptyTensor() const
-{
-    for (size_t i = 0; i < gmmParams_.x->Size(); ++i) {
-        auto shape = (*gmmParams_.x)[i]->GetViewShape();
-        int64_t index = gmmParams_.groupType == SPLIT_K ? shape.GetDimNum() - 2 : shape.GetDimNum() - 1;
-        CHECK_COND(shape.GetDim(index) != 0, ACLNN_ERR_PARAM_INVALID,
-                   "GMM no quant do not support origin k equals 0.");
-    }
-    return ACLNN_SUCCESS;
-}
-
 aclnnStatus AclnnGroupedMatmulNoQuantDAV3510Checker::CheckGroupedMatmulGroupSizeNoQuantDAV3510() {
   CHECK_COND(CheckTensorListLength(gmmParams_.x) == ACLNN_SUCCESS, ACLNN_ERR_PARAM_INVALID,
              "Invalid length of tensorList x in no quant case.");
