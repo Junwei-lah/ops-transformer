@@ -1089,14 +1089,26 @@ ge::graphStatus QSFATilingCheck::CheckFeatureMlaAntiquantShape() const
         return ge::GRAPH_FAILED);
 
     if (isA5_) {
-        std::vector<uint32_t> gSizeSupportList = {1, 2, 4, 8, 16, 32, 48, 64, 128};
+        std::vector<uint32_t> gSizeSupportList = {1, 2, 4, 8, 16, 32, 48, 64};
         OP_CHECK_IF(std::find(gSizeSupportList.begin(), gSizeSupportList.end(), gSize_) == gSizeSupportList.end(),
-            OP_LOGE(opName_, "group num should be in 1, 2, 4, 8, 16, 32, 48, 64, 128, but got %u", gSize_),
+            OP_LOGE(opName_, "group num should be in 1, 2, 4, 8, 16, 32, 48, 64, but got %u", gSize_),
             return ge::GRAPH_FAILED);
     } else {
         std::vector<uint32_t> gSizeSupportList = {1, 2, 4, 8, 16, 32, 64, 128};
         OP_CHECK_IF(std::find(gSizeSupportList.begin(), gSizeSupportList.end(), gSize_) == gSizeSupportList.end(),
             OP_LOGE(opName_, "group num should be in 1, 2, 4, 8, 16, 32, 64, 128, but got %u", gSize_),
+            return ge::GRAPH_FAILED);
+    }
+
+    if (isA5_) {
+        OP_CHECK_IF(sparseBlockSize_ != 1,
+            OP_LOGE(opName_, "sparse block size must be 1, but got %u", sparseBlockSize_),
+            return ge::GRAPH_FAILED);
+    } else {
+        std::vector<uint32_t> sparseBlockSizeSupportList = {1, 2, 4, 8, 16};
+        OP_CHECK_IF(std::find(sparseBlockSizeSupportList.begin(), sparseBlockSizeSupportList.end(),
+            sparseBlockSize_) == sparseBlockSizeSupportList.end(),
+            OP_LOGE(opName_, "sparse block size should be in 1, 2, 4, 8, 16, but got %u", sparseBlockSize_),
             return ge::GRAPH_FAILED);
     }
     
