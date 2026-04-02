@@ -197,7 +197,7 @@ aclnnStatus aclnnDequantRopeQuantKvcache(
         <td>输入</td>
         <td>公式中的输入scaleK用于量化k的scale因子。</td>
         <td>当cache_mode为page且x为3维时shape为[B*S]，否则shape为[B]。</td>
-        <td>INT32</td>
+        <td>FLOAT</td>
         <td>ND</td>
         <td>1-2</td>
         <td>√</td>
@@ -225,7 +225,7 @@ aclnnStatus aclnnDequantRopeQuantKvcache(
     <tr>
         <td>offsetVOptional</td>
         <td>输入</td>
-        <td>公式中的输入offsetVOptional用于量化k的offset因子。</td>
+        <td>公式中的输入offsetVOptional用于量化v的offset因子。</td>
         <td>shape为[Nkv, D]。</td>
         <td>FLOAT</td>
         <td>ND</td>
@@ -305,8 +305,8 @@ aclnnStatus aclnnDequantRopeQuantKvcache(
     <tr>
         <td>cacheModeOptional</td>
         <td>输入</td>
-        <td>表示kCacheRef的更新方式，目前仅支持“page”和“contiguous”，默认为“contiguous”。</td>
-        <td>目前仅支持“BSND”。</td>
+        <td>表示kCacheRef的更新方式。</td>
+        <td>目前仅支持“page”和“contiguous”，默认为“contiguous”。</td>
         <td>CHAR</td>
         <td>-</td>
         <td>-</td>
