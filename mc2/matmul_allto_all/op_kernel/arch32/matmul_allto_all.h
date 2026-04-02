@@ -52,7 +52,7 @@ using namespace AscendC;
 #include "../../3rd/template_linear_algebra/op_kernel/template_linear_algebra/status.hpp"
 using namespace Catlass;
 
-namespace MatmulAlltoAllImpl {
+namespace Mc2Kernel {
 
 // MMA2A : MatmulAlltoAll
 #define TemplateMMA2AClass typename AType, typename BType, typename BiasType, typename pertokenScaleType, typename scaleType, typename cType, bool hasBias, bool TB
@@ -392,5 +392,5 @@ __aicore__ inline void MatmulAlltoAll<TemplateMMA2AFunc>::Process()
     }
     SyncAll<false>();
 }
-} // MatmulAlltoAllImpl
+} // Mc2Kernel
 #endif // MATMUL_ALLTO_ALL_H

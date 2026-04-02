@@ -16,11 +16,7 @@
 #ifndef MX_QUANT_MATMUL_ALLTO_ALL_ARCH35_H
 #define MX_QUANT_MATMUL_ALLTO_ALL_ARCH35_H
 
-#include "matmul_allto_all_tiling_data.h"
-
-namespace MatmulAlltoAllImpl {
-using namespace AscendC;
-
+namespace Mc2Kernel {
 // ============================================================================
 // 类型特征：定义打包因子（每个元素包含的标量数）
 // eg: fp4（2个打包）和 fp8（1个独立）
@@ -69,7 +65,7 @@ class MxQuantMatmulAlltoAllArch35 {
 public:
     __aicore__ inline MxQuantMatmulAlltoAllArch35(SchedulerType *pipeLine) : pipeLine_(pipeLine){};
     __aicore__ inline void Init(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias, GM_ADDR y, GM_ADDR x1Scale, GM_ADDR x2Scale,
-                                GM_ADDR workspaceGM, MatmulAlltoAllTilingDataType *tilingData, TPipe *tPipe);
+                                GM_ADDR workspaceGM, MatmulAlltoAllTilingDataType *tilingData, AscendC::TPipe *tPipe);
     __aicore__ inline void Process();
 
 private:
@@ -79,7 +75,7 @@ private:
     SchedulerType *pipeLine_;
     SchedulerContextType pipeLineContext_;
     MatmulAlltoAllTilingDataType *tilingData_;
-    TPipe *tPipe_;
+    AscendC::TPipe *tPipe_;
     GM_ADDR x1_;
     GM_ADDR x2_;
     GM_ADDR y_;
@@ -100,7 +96,7 @@ template <typename SchedulerType, typename SchedulerContextType, typename Matmul
 __aicore__ inline void
 MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllTilingDataType>::Init(
     GM_ADDR x1, GM_ADDR x2, GM_ADDR bias, GM_ADDR y, GM_ADDR x1Scale, GM_ADDR x2Scale, GM_ADDR workspaceGM,
-    MatmulAlltoAllTilingDataType *tilingData, TPipe *tPipe)
+    MatmulAlltoAllTilingDataType *tilingData, AscendC::TPipe *tPipe)
 {
     // 获取tilingdata数据
     tilingData_ = tilingData;
@@ -253,5 +249,5 @@ MxQuantMatmulAlltoAllArch35<SchedulerType, SchedulerContextType, MatmulAlltoAllT
     pipeLine_->Process(taskCnt);
 }
 
-} // namespace MatmulAlltoAllImpl
+} // namespace Mc2Kernel
 #endif

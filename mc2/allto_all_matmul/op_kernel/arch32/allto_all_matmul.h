@@ -48,7 +48,7 @@
 using namespace AscendC;
 using namespace Catlass;
 
-namespace AlltoAllMatmulImpl {
+namespace Mc2Kernel {
 
 // A2AMM : AlltoAllMatmul
 #define TemplateA2AMMClass typename AType, typename BType, typename BiasType, typename PerTokenScaleType, typename ScaleType, typename CType, typename AllToAllResultType, bool hasBias, bool transB, int32_t QuantType
@@ -814,5 +814,5 @@ __aicore__ inline void AlltoAllMatmul<TemplateA2AMMFunc>::Process()
     SyncAll<false>();
 }
 
-} // AlltoAllMatmulImpl
+} // Mc2Kernel
 #endif // ALL_TO_ALL_MATMUL_H

@@ -24,7 +24,7 @@
 
 using namespace AscendC;
 using namespace matmul_allto_all_910b_tiling_key;
-using namespace MatmulAlltoAllImpl;
+using namespace Mc2Kernel;
 
 template<bool MM_ALLTO_ALL_TRANS_X2, bool MM_ALLTO_ALL_HAS_BIAS, bool MM_ALLTO_ALL_QUANT_BF16>
 __global__ __aicore__ void matmul_allto_all(GM_ADDR x1, GM_ADDR x2, GM_ADDR bias, 

@@ -23,7 +23,7 @@
 #include "arch32/allto_all_matmul.h"
 
 using namespace AscendC;
-using namespace AlltoAllMatmulImpl;
+using namespace Mc2Kernel;
 
 #if ((ORIG_DTYPE_X1 == ORIG_DTYPE_X2) && (ORIG_DTYPE_X1 == DT_FLOAT16 || ORIG_DTYPE_X1 == DT_BF16))
 #define QUANT_TYPE MC2_NON_QUANT
