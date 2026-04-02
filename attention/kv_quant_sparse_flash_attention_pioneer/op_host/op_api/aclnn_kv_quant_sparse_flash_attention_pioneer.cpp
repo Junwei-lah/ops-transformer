@@ -96,8 +96,8 @@ aclnnStatus kvQuantSparseFlashAttentionPioneerContiguous(
     const aclTensor *&blockTableOptional,
     const aclTensor *&actualSeqLengthsQueryOptional,
     const aclTensor *&actualSeqLengthsKvOptional,
-    const aclTensor *keySinkOptional,
-    const aclTensor *valueSinkOptional,
+    const aclTensor *&keySinkOptional,
+    const aclTensor *&valueSinkOptional,
     aclOpExecutor *executor)
 {
     query = l0op::Contiguous(query, executor);
