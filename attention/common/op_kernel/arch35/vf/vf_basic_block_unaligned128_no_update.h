@@ -107,6 +107,7 @@ __simd_vf__ void ProcessVec1NoUpdateGeneralImpl128VF(
         Arange(vreg_alibi_unroll, posShift + 64);
     }
     for (uint16_t i = 0; i < m; ++i) {
+        // 先在 score 域完成缩放、PSE 和 mask；row_max 必须基于这些最终 score 来计算。
         LoadAlign(vreg_input_x, srcUb + i * s2BaseSize);
         LoadAlign(vreg_input_x_unroll, srcUb + floatRepSize + i * s2BaseSize);
         if constexpr (isMlaFullQuant) {
@@ -207,6 +208,7 @@ __simd_vf__ void ProcessVec1NoUpdateGeneralImpl128VF(
     LocalMemBar<MemType::VEC_STORE, MemType::VEC_LOAD>();
 
     for (uint16_t i = 0; i < m; ++i) {
+        // row_max 固定后再做 exp(score - row_max) 和 row_sum；这里写出的 exp 分子块会被后续 BMM2 复用。
         LoadAlign<T, MicroAPI::LoadDist::DIST_BRC_B32>(
             vreg_max_brc, maxUbStart + i);
         if constexpr (IsSameType<T2, float>::value) {

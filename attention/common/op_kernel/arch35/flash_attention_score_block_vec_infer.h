@@ -418,6 +418,7 @@ __aicore__ inline void FABlockVecInfer<TEMPLATE_ARGS>::SoftmaxDataCopyOut(
             this->Vec1SinkCompute(runInfo, constInfo, sumUb, maxUb);
         }
     }
+    // 常规 infer 只需要 softmax 的 LSE 辅助输出；真正的 attention 结果会在 Vec2 阶段写出。
     SoftmaxLseCopyOut(sumUb, maxUb, runInfo, constInfo);
 }
 
@@ -515,6 +516,7 @@ __aicore__ inline void FABlockVecInfer<TEMPLATE_ARGS>::SoftmaxLseCopyOut(
         return;
     }
     LocalTensor<float> lseUb = this->softmaxLseQueue.template AllocTensor<float>();
+    // LSE = log(row_sum) + row_max；对于整行无效的位置，这里会保留为 +inf。
     ComputeLseOutputVF(lseUb, softmaxSumTmp, softmaxMaxTmp, runInfo.halfS1RealSize);
     softmaxLseQueue.template EnQue(lseUb);
     softmaxLseQueue.DeQue<float>();

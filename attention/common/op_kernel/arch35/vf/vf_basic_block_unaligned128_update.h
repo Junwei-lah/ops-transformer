@@ -109,6 +109,7 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
     }
     // x_max = max(src, axis=-1, keepdims=True); x_max = Max(x_max, inMax)
     for (uint16_t i = 0; i < m; ++i) {
+        // 后续分块和首块保持相同的 score 变换顺序，保证 online softmax 合并前后的数值语义一致。
         LoadAlign(vreg_input_x, srcUb + i * s2BaseSize);
         LoadAlign(vreg_input_x_unroll, srcUb + floatRepSize + i * s2BaseSize);
         if constexpr (isMlaFullQuant) {
@@ -206,6 +207,7 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
     LocalMemBar<MemType::VEC_STORE, MemType::VEC_LOAD>();
     LoadAlign(vreg_input_max, tmpMaxUb2); // 获取新的max[s1, 1]
     Max(vreg_max_new, vreg_input_max, vreg_in_max, preg_all); // 计算新、旧max的最大值
+    // exp_max_fp32 保存 exp(old_max - new_max)，Vec2 和全局 sum 更新都依赖这个缩放因子。
     StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(
         (__ubuf__ T *&)tmpMaxUb2, vreg_max_new, preg_all);
     if constexpr (isMlaFullQuant) {
@@ -221,6 +223,7 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
     LocalMemBar<MemType::VEC_STORE, MemType::VEC_LOAD>();
 
     for (uint16_t i = 0; i < m; ++i) {
+        // 这里使用 new_max 重新归一化当前分块，使当前 exp 和历史分块可以在同一基准上累加。
         LoadAlign<T, MicroAPI::LoadDist::DIST_BRC_B32>(
             vreg_max, tmpMaxUb2 + i);
 

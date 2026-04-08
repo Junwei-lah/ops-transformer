@@ -364,6 +364,7 @@ __aicore__ inline void ProcessVec1Vf(const LocalTensor<T2>& dstTensor, TBuf<> *v
     static_assert(oriNRange < N_INVALID, "VF mul_sel_softmaxflashv2_cast_nz, oriNRange is invalid");
 
     if constexpr (!isUpdate) {
+        // 首个 S2 分块：直接得到当前分块的 row_max / row_sum，并把 exp(score - row_max) 输出给 BMM2。
         ProcessVec1NoUpdate<T, T2, pseShiftType, s1BaseSize, s2BaseSize, oriNRange, hasAtten, pseMode,
             hasDrop, isMlaSgd, isMlaFullQuant, useNz, hasSink>(
             dstTensor, vselrIndexesBuf, expSumTensor, maxTensor, srcTensor, expMaxTensor,
@@ -371,6 +372,7 @@ __aicore__ inline void ProcessVec1Vf(const LocalTensor<T2>& dstTensor, TBuf<> *v
             m, originN, pseStride, slopes, posShift, scale, dScaleQK, minValue, keepProb, queryScaleUb,
             deSCaleKValue, pScale, sinkValue);
     } else {
+        // 后续 S2 分块：重新计算当前分块统计量，并与旧分块用在线 softmax 公式合并。
         ProcessVec1Update<T, T2, pseShiftType, s1BaseSize, s2BaseSize, oriNRange, hasAtten, pseMode,
             hasDrop, isMlaSgd, isMlaFullQuant, useNz, hasSink>(
             dstTensor, vselrIndexesBuf, expSumTensor, maxTensor, srcTensor, expMaxTensor,

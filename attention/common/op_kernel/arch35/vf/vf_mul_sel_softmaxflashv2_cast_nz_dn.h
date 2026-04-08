@@ -143,6 +143,7 @@ __simd_vf__ inline void ProcessVec1DnNoUpdateVF(__ubuf__ T2 *x_exp, __ubuf__ flo
                 LoadAlign<uint32_t, MicroAPI::MaskDist::DIST_DS>(preg_compare1, mask_ub1 + iter_m * m);
                 LoadAlign<uint32_t, MicroAPI::MaskDist::DIST_DS>(preg_compare2, mask_ub2 + iter_m * m);
                 LoadAlign<uint32_t, MicroAPI::MaskDist::DIST_DS>(preg_compare3, mask_ub3 + iter_m * m);
+                // DN 快路径也遵循同样规则：先把被 mask 的 score 改成 minValue，再参与 row_max。
                 Select(src0, src0, vreg_min, preg_compare0);
                 Select(src1, src1, vreg_min, preg_compare1);
                 Select(src2, src2, vreg_min, preg_compare2);
@@ -233,6 +234,7 @@ __simd_vf__ inline void ProcessVec1DnNoUpdateVF(__ubuf__ T2 *x_exp, __ubuf__ flo
             LoadAlign(vreg_x_f32_3, input_x_local_UB + ubN * m / 2 + ubN * m / 4 + i0 * m);
         }
 
+        // 在 row_max 已经确定后，DN 路径同样是 exp(score - row_max) -> row_sum。
         Muls(vreg_x_f32_0, vreg_x_f32_0, dScale, preg_108);
         Muls(vreg_x_f32_1, vreg_x_f32_1, dScale, preg_108);
         Muls(vreg_x_f32_2, vreg_x_f32_2, dScale, preg_108);

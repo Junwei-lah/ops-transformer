@@ -496,6 +496,7 @@ __aicore__ inline void FABlockVecBase<TEMPLATE_BASE_ARGS>::InvalidLineProcess(
             constInfo.softMaxCheckRes = false;
         } else {
             if (unlikely(runInfo.s2LoopCount == runInfo.s2LoopLimit)) {
+                // 整行都被 mask 成 -inf 时，把 sum 修正为极大值，避免 Vec2 归一化阶段出现异常值。
                 SoftmaxSumUpdate<T>(sumUb, maxUb, runInfo.halfS1RealSize, this->negativeFloatScalar,
                     this->positiveFloatScalar);
             }
@@ -737,6 +738,7 @@ __aicore__ inline void FABlockVecBase<TEMPLATE_BASE_ARGS>::ProcessVec1Nd(
     auto stage1CastTensor = this->stage1OutQue[stage1Offset].template AllocTensor<INPUT_T>();
     constexpr bool useMlaSgdFlag = ((isMlaFullQuant) && layout != LayOutTypeEnum::LAYOUT_BNSD);
     if (runInfo.s2LoopCount == 0) {
+        // Vec1 负责 score tile 的 softmax 统计：输出 row_max / row_sum，并把 exp(score - row_max) 交给 BMM2。
         if (likely(runInfo.s2RealSize == 128)) {
             ProcessVec1Vf<T, INPUT_T, pseShiftType, false, s1BaseSize, s2BaseSize, EQ_128, hasAtten, pseMode, hasDrop, useMlaSgdFlag, isMlaFullQuant>(
                 stage1CastTensor, this->vselrIndexesBuf, sumUb, maxUb, mmRes, expUb, sumUb, maxUb,
@@ -854,6 +856,7 @@ __aicore__ inline void FABlockVecBase<TEMPLATE_BASE_ARGS>::ProcessVec1Nd(
     outputBuf.SetCrossCore();
     // ======================================================
     if (runInfo.s2LoopCount != 0) {
+        // 在线 softmax 合并：sum_new = exp(old_max - new_max) * sum_old + sum_cur。
         UpdateExpSumAndExpMax<T>(sumUb, maxUb, expUb, sumUb, maxUb, apiTmpBuffer, runInfo.halfS1RealSize);
     }
     if constexpr (IsSameType<INPUT_T, float>::value) {
@@ -865,6 +868,7 @@ __aicore__ inline void FABlockVecBase<TEMPLATE_BASE_ARGS>::ProcessVec1Nd(
         }
     }
     if (unlikely(runInfo.s2LoopCount == runInfo.s2LoopLimit)) {
+        // infer 路径在这里仅输出 LSE / FD 统计；完整概率矩阵不会单独落盘。
         GetDerived()->SoftmaxDataCopyOut(runInfo, constInfo, sumUb, maxUb);
     }
 }
