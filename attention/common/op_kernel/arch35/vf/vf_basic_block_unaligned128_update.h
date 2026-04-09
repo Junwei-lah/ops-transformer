@@ -182,7 +182,9 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
                 (__ubuf__ T *&)srcUb + i * s2BaseSize, vreg_sel, preg_all);
             StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(
                 (__ubuf__ T *&)srcUb + floatRepSize + i * s2BaseSize, vreg_sel_unroll_new, preg_tail_n);
+            // 当前分块先做逐元素 vmax，把一行内两个 64-lane 片段折叠到一起。
             Max(vreg_max_tmp, vreg_sel, vreg_sel_unroll_new, preg_all);
+            // 然后按行 ReduceMax，得到当前分块的 cur_m。
             Reduce<MicroAPI::ReduceType::MAX, float, float, MicroAPI::MaskMergeMode::ZEROING>(
                 vreg_input_max, vreg_max_tmp, preg_all);
         } else {
@@ -191,6 +193,7 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
                 (__ubuf__ T *&)srcUb + i * s2BaseSize, vreg_input_x, preg_all);
             StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(
                 (__ubuf__ T *&)srcUb + floatRepSize + i * s2BaseSize, vreg_input_x_unroll_new, preg_tail_n);    
+            // 无 mask 分支同样先 vmax，再 ReduceMax 得到当前分块的 cur_m。
             Max(vreg_max_tmp, vreg_input_x, vreg_input_x_unroll_new, preg_all);
             Reduce<MicroAPI::ReduceType::MAX, float, float, MicroAPI::MaskMergeMode::ZEROING>(
                 vreg_input_max, vreg_max_tmp, preg_all);
@@ -206,6 +209,7 @@ __simd_vf__ void ProcessVec1UpdateGeneralImpl128VF(
     LoadAlign(vreg_in_max, inMaxUb);
     LocalMemBar<MemType::VEC_STORE, MemType::VEC_LOAD>();
     LoadAlign(vreg_input_max, tmpMaxUb2); // 获取新的max[s1, 1]
+    // online softmax 的第二步：把当前分块的 cur_m 和历史 old_m 再做一次 vmax，得到 new_m。
     Max(vreg_max_new, vreg_input_max, vreg_in_max, preg_all); // 计算新、旧max的最大值
     // exp_max_fp32 保存 exp(old_max - new_max)，Vec2 和全局 sum 更新都依赖这个缩放因子。
     StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(

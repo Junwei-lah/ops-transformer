@@ -180,7 +180,9 @@ __simd_vf__ void ProcessVec1NoUpdateGeneralImpl128VF(
                 (__ubuf__ T *&)srcUb + i * s2BaseSize, vreg_sel, preg_all);
             StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(
                 (__ubuf__ T *&)srcUb + floatRepSize + i * s2BaseSize, vreg_sel_unroll_new, preg_tail_n);
+            // 这里先做一轮逐元素 vmax，把一行的两个 64-lane 片段合并到同一个寄存器里。
             Max(vreg_max_tmp, vreg_sel, vreg_sel_unroll_new, preg_all);
+            // 再做按行 ReduceMax，得到这一行 softmax 真正使用的 m。
             Reduce<MicroAPI::ReduceType::MAX, float, float, MicroAPI::MaskMergeMode::ZEROING>(
                 vreg_input_max, vreg_max_tmp, preg_all);
         } else {
@@ -190,6 +192,7 @@ __simd_vf__ void ProcessVec1NoUpdateGeneralImpl128VF(
             StoreAlign<T, MicroAPI::StoreDist::DIST_NORM_B32>(
                 (__ubuf__ T *&)srcUb + floatRepSize + i * s2BaseSize, vreg_input_x_unroll_new, preg_tail_n);
 
+            // 无 mask 时仍然是同样的两段式求 m：先 vmax，再 ReduceMax。
             Max(vreg_max_tmp, vreg_input_x, vreg_input_x_unroll_new, preg_all);
             Reduce<MicroAPI::ReduceType::MAX, float, float, MicroAPI::MaskMergeMode::ZEROING>(
                 vreg_input_max, vreg_max_tmp, preg_all);
