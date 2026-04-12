@@ -157,9 +157,9 @@ __simd_vf__ inline void UpdateExpSumAndExpMaxImplVF(__ubuf__ T * maxUb, __ubuf__
         RegTensor<float> vreg_exp_sum_update;
         MaskReg preg_all = CreateMask<half, MaskPattern::ALL>();
         // 注意：当m大于64的时候需要开启循环
-        LoadAlign(vreg_max, tmpMaxUb);
-        LoadAlign(vreg_in_max, inMaxUb);
-        ExpSub<float, half, RegLayout::ZERO>(vreg_exp_max_even_fp32, vreg_in_max, vreg_max, preg_all);
+        LoadAlign(vreg_max, tmpMaxUb);   // 读入new_m
+        LoadAlign(vreg_in_max, inMaxUb); // 读入old_m
+        ExpSub<float, half, RegLayout::ZERO>(vreg_exp_max_even_fp32, vreg_in_max, vreg_max, preg_all);  // L = exp((old_m - new_m) * L_OLD + cur_L
         ExpSub<float, half, RegLayout::ONE>(vreg_exp_max_odd_fp32, vreg_in_max, vreg_max, preg_all);
         Interleave(vreg_exp_max, vreg_exp_max_tmp, vreg_exp_max_even_fp32, vreg_exp_max_odd_fp32);
         StoreAlign<float, MicroAPI::StoreDist::DIST_NORM_B32>(
