@@ -13,8 +13,10 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import math
+import os
 import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
@@ -643,6 +645,7 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
     core_spos_end: List[int] = []
     bn_start_idx: List[int] = []
     gs1_start_idx: List[int] = []
+    core_weights: List[int] = []
 
     def ensure_core_start(core: int, head: int, batch: int, spos: int) -> None:
         while len(core_n_start) <= core:
@@ -654,6 +657,7 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
             core_spos_end.append(0)
             bn_start_idx.append(0)
             gs1_start_idx.append(0)
+            core_weights.append(0)
         core_n_start[core] = head
         core_sid_start[core] = batch
         core_spos_start[core] = spos
@@ -716,6 +720,7 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
                 tmp_n_end = head + 1
                 tmp_sid_end = b_idx + 1
                 tmp_spos_end = s_outer_idx + 1
+                core_weights[cur_core] += actual_inner_blocks
                 cur_weight += actual_inner_blocks
                 pre -= s_outer_for_split
                 nxt += s_outer_for_split
@@ -732,6 +737,8 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
     sinner_block_num = ceil_div(cfg.seq_inner_size, s_inner)
     total_size = (total_blocks_one_head // sinner_block_num) * cfg.head_num_size if sinner_block_num else 0
     split_factor_size = ceil_div(total_size, cube_used_cores)
+    used_core_weights = core_weights[:cube_used_cores]
+    load_balance = build_load_balance(used_core_weights, cur_core_num, core_weight_target)
 
     core_ranges = []
     for idx in range(cube_used_cores):
@@ -749,6 +756,12 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
                 "bn_end_idx": bn_start_idx[idx + 1] if idx + 1 < len(bn_start_idx) else None,
                 "gs1_start_idx": gs1_start_idx[idx],
                 "gs1_end_idx": gs1_start_idx[idx + 1] if idx + 1 < len(gs1_start_idx) else None,
+                "task_blocks": used_core_weights[idx],
+                "load_ratio_to_mean": (
+                    used_core_weights[idx] / load_balance["meanTaskBlocks"]
+                    if load_balance["meanTaskBlocks"] > 0
+                    else 0
+                ),
             }
         )
 
@@ -761,6 +774,8 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
         "multiSmaxsInnerLoopTimes": multi_smax_inner_loop_times,
         "actualCoreNums": actual_core_nums,
         "cubeUsedCores": cube_used_cores,
+        "coreTaskBlocks": used_core_weights,
+        "loadBalance": load_balance,
         "multiCoreParamsRegbase": {
             "coreNum": cube_used_cores,
             "totalSize": total_size,
@@ -780,6 +795,154 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
         },
         "coreRanges": core_ranges,
     }
+
+
+def build_load_balance(core_weights: List[int], candidate_cube_cores: int, target: float) -> Dict[str, Any]:
+    used = len(core_weights)
+    total = sum(core_weights)
+    mean = total / used if used else 0.0
+    max_weight = max(core_weights) if core_weights else 0
+    min_weight = min(core_weights) if core_weights else 0
+    max_core = core_weights.index(max_weight) if core_weights else -1
+    min_core = core_weights.index(min_weight) if core_weights else -1
+    variance = sum((w - mean) ** 2 for w in core_weights) / used if used else 0.0
+    stddev = math.sqrt(variance)
+    cv = stddev / mean if mean > 0 else 0.0
+    max_over_mean = max_weight / mean if mean > 0 else 0.0
+    min_over_mean = min_weight / mean if mean > 0 else 0.0
+    idle_candidate_cores = max(0, candidate_cube_cores - used)
+
+    if used <= 1:
+        rating = "single_core"
+    elif max_over_mean <= 1.10 and cv <= 0.08:
+        rating = "excellent"
+    elif max_over_mean <= 1.25 and cv <= 0.15:
+        rating = "good"
+    elif max_over_mean <= 1.50 and cv <= 0.25:
+        rating = "moderate"
+    else:
+        rating = "poor"
+
+    interpretation = [
+        f"Used {used}/{candidate_cube_cores} cube cores; {idle_candidate_cores} candidate cube cores are idle.",
+        f"Task blocks total={total}, mean={mean:.2f}, max={max_weight} on core {max_core}, min={min_weight} on core {min_core}.",
+        f"Max/mean={max_over_mean:.3f}, min/mean={min_over_mean:.3f}, coefficient_of_variation={cv:.3f}; rating={rating}.",
+        "Task blocks are the same effective inner-block weights used by the split-core estimator.",
+    ]
+
+    return {
+        "usedCubeCores": used,
+        "candidateCubeCores": candidate_cube_cores,
+        "idleCandidateCubeCores": idle_candidate_cores,
+        "totalTaskBlocks": total,
+        "meanTaskBlocks": mean,
+        "targetTaskBlocks": target,
+        "maxTaskBlocks": max_weight,
+        "maxTaskCore": max_core,
+        "minTaskBlocks": min_weight,
+        "minTaskCore": min_core,
+        "stddevTaskBlocks": stddev,
+        "coefficientOfVariation": cv,
+        "maxOverMean": max_over_mean,
+        "minOverMean": min_over_mean,
+        "rating": rating,
+        "interpretation": interpretation,
+    }
+
+
+def render_load_balance_svg(result: Dict[str, Any], path: str) -> None:
+    split_core = result["splitCore"]
+    weights = split_core.get("coreTaskBlocks", [])
+    load_balance = split_core.get("loadBalance", {})
+    if not weights:
+        raise SystemExit("No core task weights are available for plotting.")
+
+    width = max(900, 80 + len(weights) * 34)
+    height = 520
+    margin_left = 72
+    margin_right = 28
+    margin_top = 86
+    margin_bottom = 92
+    plot_w = width - margin_left - margin_right
+    plot_h = height - margin_top - margin_bottom
+    max_weight = max(max(weights), 1)
+    mean = float(load_balance.get("meanTaskBlocks", 0.0))
+    target = float(load_balance.get("targetTaskBlocks", 0.0))
+    bar_gap = 8
+    bar_w = max(10, (plot_w - bar_gap * (len(weights) - 1)) / len(weights))
+
+    def y_of(value: float) -> float:
+        return margin_top + plot_h - (value / max_weight) * plot_h
+
+    mean_y = y_of(mean)
+    target_y = y_of(target) if target > 0 else None
+    title = "PFA split-core task blocks per cube core"
+    subtitle = (
+        f"rating={load_balance.get('rating', 'n/a')} | "
+        f"used={load_balance.get('usedCubeCores', len(weights))}/"
+        f"{load_balance.get('candidateCubeCores', len(weights))} cube cores | "
+        f"max/mean={float(load_balance.get('maxOverMean', 0.0)):.3f} | "
+        f"cv={float(load_balance.get('coefficientOfVariation', 0.0)):.3f}"
+    )
+
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="#f8fafc"/>',
+        f'<text x="{margin_left}" y="34" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">{html.escape(title)}</text>',
+        f'<text x="{margin_left}" y="60" font-family="Arial, sans-serif" font-size="13" fill="#475569">{html.escape(subtitle)}</text>',
+        f'<line x1="{margin_left}" y1="{margin_top + plot_h}" x2="{width - margin_right}" y2="{margin_top + plot_h}" stroke="#334155" stroke-width="1"/>',
+        f'<line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + plot_h}" stroke="#334155" stroke-width="1"/>',
+    ]
+
+    for tick in range(5):
+        value = max_weight * tick / 4
+        y = y_of(value)
+        parts.append(f'<line x1="{margin_left}" y1="{y:.2f}" x2="{width - margin_right}" y2="{y:.2f}" stroke="#e2e8f0" stroke-width="1"/>')
+        parts.append(f'<text x="{margin_left - 10}" y="{y + 4:.2f}" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">{value:.0f}</text>')
+
+    parts.append(f'<line x1="{margin_left}" y1="{mean_y:.2f}" x2="{width - margin_right}" y2="{mean_y:.2f}" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 5"/>')
+    parts.append(f'<text x="{width - margin_right}" y="{mean_y - 7:.2f}" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#dc2626">mean {mean:.1f}</text>')
+    if target_y is not None:
+        parts.append(f'<line x1="{margin_left}" y1="{target_y:.2f}" x2="{width - margin_right}" y2="{target_y:.2f}" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 5"/>')
+        parts.append(f'<text x="{width - margin_right}" y="{target_y + 16:.2f}" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#2563eb">target {target:.1f}</text>')
+
+    for idx, weight in enumerate(weights):
+        x = margin_left + idx * (bar_w + bar_gap)
+        y = y_of(weight)
+        h = margin_top + plot_h - y
+        ratio = weight / mean if mean > 0 else 0
+        fill = "#0f766e" if ratio <= 1.10 else "#f59e0b" if ratio <= 1.35 else "#dc2626"
+        parts.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{bar_w:.2f}" height="{h:.2f}" rx="2" fill="{fill}"/>')
+        parts.append(f'<text x="{x + bar_w / 2:.2f}" y="{max(y - 6, margin_top - 8):.2f}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">{weight}</text>')
+        label_y = margin_top + plot_h + 18
+        label = str(idx)
+        if len(weights) > 36 and idx % 2 == 1:
+            label = ""
+        parts.append(f'<text x="{x + bar_w / 2:.2f}" y="{label_y}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">{label}</text>')
+
+    legend_y = height - 44
+    legend = [
+        ("#0f766e", "<=110% mean"),
+        ("#f59e0b", "<=135% mean"),
+        ("#dc2626", ">135% mean"),
+        ("#dc2626", "mean line"),
+        ("#2563eb", "target line"),
+    ]
+    x = margin_left
+    for color, text in legend:
+        parts.append(f'<rect x="{x}" y="{legend_y - 10}" width="12" height="12" fill="{color}"/>')
+        parts.append(f'<text x="{x + 18}" y="{legend_y}" font-family="Arial, sans-serif" font-size="12" fill="#475569">{html.escape(text)}</text>')
+        x += 128
+
+    parts.append(f'<text x="{margin_left}" y="{height - 18}" font-family="Arial, sans-serif" font-size="12" fill="#64748b">x-axis: cube core id; each cube core maps to two AIV cores in SPLIT_NBS_CUBE.</text>')
+    parts.append("</svg>")
+
+    directory = os.path.dirname(os.path.abspath(path))
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(parts))
 
 
 def simulate(cfg: PFAConfig) -> Dict[str, Any]:
@@ -872,6 +1035,7 @@ def main() -> int:
     parser.add_argument("-i", "--input", help="Input JSON file. If omitted, reads JSON from stdin.")
     parser.add_argument("--example", action="store_true", help="Print an example input JSON and exit.")
     parser.add_argument("--compact", action="store_true", help="Print compact JSON.")
+    parser.add_argument("--plot", help="Write an SVG bar chart of per-cube-core task blocks to this path.")
     args = parser.parse_args()
 
     if args.example:
@@ -881,6 +1045,9 @@ def main() -> int:
     data = load_input(args.input)
     cfg = PFAConfig.from_dict(data)
     result = simulate(cfg)
+    if args.plot:
+        render_load_balance_svg(result, args.plot)
+        result["visualization"] = {"loadBalanceSvg": os.path.abspath(args.plot)}
     if args.compact:
         print(json.dumps(result, separators=(",", ":"), ensure_ascii=False))
     else:
