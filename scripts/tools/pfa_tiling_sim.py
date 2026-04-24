@@ -738,7 +738,8 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
     total_size = (total_blocks_one_head // sinner_block_num) * cfg.head_num_size if sinner_block_num else 0
     split_factor_size = ceil_div(total_size, cube_used_cores)
     used_core_weights = core_weights[:cube_used_cores]
-    load_balance = build_load_balance(used_core_weights, cur_core_num, core_weight_target)
+    candidate_core_weights = used_core_weights + [0] * max(0, cur_core_num - cube_used_cores)
+    load_balance = build_load_balance(candidate_core_weights, cur_core_num, core_weight_target, cube_used_cores)
 
     core_ranges = []
     for idx in range(cube_used_cores):
@@ -775,6 +776,7 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
         "actualCoreNums": actual_core_nums,
         "cubeUsedCores": cube_used_cores,
         "coreTaskBlocks": used_core_weights,
+        "candidateCoreTaskBlocks": candidate_core_weights,
         "loadBalance": load_balance,
         "multiCoreParamsRegbase": {
             "coreNum": cube_used_cores,
@@ -797,15 +799,18 @@ def compute_split_core(cfg: PFAConfig, tiling: Dict[str, Any]) -> Dict[str, Any]
     }
 
 
-def build_load_balance(core_weights: List[int], candidate_cube_cores: int, target: float) -> Dict[str, Any]:
-    used = len(core_weights)
+def build_load_balance(
+    core_weights: List[int], candidate_cube_cores: int, target: float, used_cube_cores: int | None = None
+) -> Dict[str, Any]:
+    used = used_cube_cores if used_cube_cores is not None else len([w for w in core_weights if w > 0])
     total = sum(core_weights)
-    mean = total / used if used else 0.0
+    measured_cores = len(core_weights)
+    mean = total / measured_cores if measured_cores else 0.0
     max_weight = max(core_weights) if core_weights else 0
     min_weight = min(core_weights) if core_weights else 0
     max_core = core_weights.index(max_weight) if core_weights else -1
     min_core = core_weights.index(min_weight) if core_weights else -1
-    variance = sum((w - mean) ** 2 for w in core_weights) / used if used else 0.0
+    variance = sum((w - mean) ** 2 for w in core_weights) / measured_cores if measured_cores else 0.0
     stddev = math.sqrt(variance)
     cv = stddev / mean if mean > 0 else 0.0
     max_over_mean = max_weight / mean if mean > 0 else 0.0
@@ -824,8 +829,8 @@ def build_load_balance(core_weights: List[int], candidate_cube_cores: int, targe
         rating = "poor"
 
     interpretation = [
-        f"Used {used}/{candidate_cube_cores} cube cores; {idle_candidate_cores} candidate cube cores are idle.",
-        f"Task blocks total={total}, mean={mean:.2f}, max={max_weight} on core {max_core}, min={min_weight} on core {min_core}.",
+        f"Used {used}/{candidate_cube_cores} cube cores; {idle_candidate_cores} candidate cube cores are idle and shown as zero bars.",
+        f"Task blocks total={total}, candidate-core mean={mean:.2f}, max={max_weight} on core {max_core}, min={min_weight} on core {min_core}.",
         f"Max/mean={max_over_mean:.3f}, min/mean={min_over_mean:.3f}, coefficient_of_variation={cv:.3f}; rating={rating}.",
         "Task blocks are the same effective inner-block weights used by the split-core estimator.",
     ]
@@ -852,7 +857,7 @@ def build_load_balance(core_weights: List[int], candidate_cube_cores: int, targe
 
 def render_load_balance_svg(result: Dict[str, Any], path: str) -> None:
     split_core = result["splitCore"]
-    weights = split_core.get("coreTaskBlocks", [])
+    weights = split_core.get("candidateCoreTaskBlocks") or split_core.get("coreTaskBlocks", [])
     load_balance = split_core.get("loadBalance", {})
     if not weights:
         raise SystemExit("No core task weights are available for plotting.")
@@ -912,8 +917,16 @@ def render_load_balance_svg(result: Dict[str, Any], path: str) -> None:
         y = y_of(weight)
         h = margin_top + plot_h - y
         ratio = weight / mean if mean > 0 else 0
-        fill = "#0f766e" if ratio <= 1.10 else "#f59e0b" if ratio <= 1.35 else "#dc2626"
-        parts.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{bar_w:.2f}" height="{h:.2f}" rx="2" fill="{fill}"/>')
+        if weight == 0:
+            fill = "#cbd5e1"
+        else:
+            fill = "#0f766e" if ratio <= 1.10 else "#f59e0b" if ratio <= 1.35 else "#dc2626"
+        display_y = margin_top + plot_h - 2 if weight == 0 else y
+        display_h = 2 if weight == 0 else h
+        parts.append(
+            f'<rect x="{x:.2f}" y="{display_y:.2f}" width="{bar_w:.2f}" '
+            f'height="{display_h:.2f}" rx="2" fill="{fill}"/>'
+        )
         parts.append(f'<text x="{x + bar_w / 2:.2f}" y="{max(y - 6, margin_top - 8):.2f}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">{weight}</text>')
         label_y = margin_top + plot_h + 18
         label = str(idx)
@@ -923,16 +936,28 @@ def render_load_balance_svg(result: Dict[str, Any], path: str) -> None:
 
     legend_y = height - 44
     legend = [
-        ("#0f766e", "<=110% mean"),
-        ("#f59e0b", "<=135% mean"),
-        ("#dc2626", ">135% mean"),
-        ("#dc2626", "mean line"),
-        ("#2563eb", "target line"),
+        {"kind": "box", "color": "#0f766e", "text": "<=110% mean"},
+        {"kind": "box", "color": "#f59e0b", "text": "<=135% mean"},
+        {"kind": "box", "color": "#dc2626", "text": ">135% mean"},
+        {"kind": "box", "color": "#cbd5e1", "text": "idle core"},
+        {"kind": "line", "color": "#dc2626", "dash": "6 5", "text": "mean line"},
+        {"kind": "line", "color": "#2563eb", "dash": "3 5", "text": "target line"},
     ]
     x = margin_left
-    for color, text in legend:
-        parts.append(f'<rect x="{x}" y="{legend_y - 10}" width="12" height="12" fill="{color}"/>')
-        parts.append(f'<text x="{x + 18}" y="{legend_y}" font-family="Arial, sans-serif" font-size="12" fill="#475569">{html.escape(text)}</text>')
+    for item in legend:
+        if item["kind"] == "line":
+            parts.append(
+                f'<line x1="{x}" y1="{legend_y - 4}" x2="{x + 24}" y2="{legend_y - 4}" '
+                f'stroke="{item["color"]}" stroke-width="2" stroke-dasharray="{item["dash"]}"/>'
+            )
+            text_x = x + 32
+        else:
+            parts.append(f'<rect x="{x}" y="{legend_y - 10}" width="12" height="12" fill="{item["color"]}"/>')
+            text_x = x + 18
+        parts.append(
+            f'<text x="{text_x}" y="{legend_y}" font-family="Arial, sans-serif" '
+            f'font-size="12" fill="#475569">{html.escape(item["text"])}</text>'
+        )
         x += 128
 
     parts.append(f'<text x="{margin_left}" y="{height - 18}" font-family="Arial, sans-serif" font-size="12" fill="#64748b">x-axis: cube core id; each cube core maps to two AIV cores in SPLIT_NBS_CUBE.</text>')
@@ -976,10 +1001,10 @@ def simulate(cfg: PFAConfig) -> Dict[str, Any]:
 def example_input() -> Dict[str, Any]:
     return {
         "shape": {
-            "batch_size": 2,
-            "head_num_size": 16,
-            "seq_size": 64,
-            "seq_inner_size": 2048,
+            "batch_size": 1,
+            "head_num_size": 32,
+            "seq_size": 1024,
+            "seq_inner_size": 1024,
             "qk_head_size": 128,
             "v_head_size": 128,
         },
@@ -991,15 +1016,15 @@ def example_input() -> Dict[str, Any]:
             "sparse_mode": 0,
             "pre_tokens": 2147483647,
             "next_tokens": 2147483647,
-            "actual_seq_lengths": [64, 64],
-            "actual_seq_lengths_kv": [2048, 2048],
+            "actual_seq_lengths": [1024],
+            "actual_seq_lengths_kv": [1024],
             "actual_shared_prefix_len": 0,
             "g_size": 1,
             "head_num_ratio": 1,
         },
         "platform": {
-            "core_num": 48,
-            "aic_num": 24,
+            "core_num": 64,
+            "aic_num": 32,
             "l1_size": 1048576,
             "l0c_size": 262144,
         },
