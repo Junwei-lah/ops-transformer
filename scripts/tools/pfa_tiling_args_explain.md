@@ -210,3 +210,111 @@ splitCore           # 分核结果
 notes               # 命中的切分路径说明
 limitations         # 脚本模拟限制
 ```
+
+建议必填字段
+
+{
+  "shape": {
+    "batch_size": 1,
+    "head_num_size": 1,
+    "seq_size": 1024,
+    "seq_inner_size": 1024,
+    "qk_head_size": 128,
+    "v_head_size": 128
+  },
+  "attrs": {
+    "input_dtype": "fp16",
+    "layout": "BNSD"
+  },
+  "platform": {
+    "core_num": 64,
+    "aic_num": 32
+  }
+}
+必填含义：
+
+字段	说明
+shape.batch_size	B
+shape.head_num_size	Q head 数
+shape.seq_size	S1 / query seq
+shape.seq_inner_size	S2 / KV seq
+shape.qk_head_size	Q/K head dim
+shape.v_head_size	V head dim
+attrs.input_dtype	fp16 / bf16 / int8 等
+attrs.layout	BSH / BSND / BNSD / TND
+platform.core_num	AIV 核数，分核主要依赖它
+platform.aic_num	AIC 核数，部分策略/对齐分析会用
+shape 也支持别名：
+
+batch_size      -> b
+head_num_size   -> n
+seq_size        -> s1
+seq_inner_size  -> s2
+qk_head_size    -> d
+v_head_size     -> dv
+条件必填字段
+
+这些字段不是每个 case 都必须填，但相关功能打开时建议填：
+
+字段	什么时候需要
+attrs.actual_seq_lengths	有实际 S1 长度，或 batch 内长度不一致时
+attrs.actual_seq_lengths_kv	有实际 S2 长度，或 batch 内长度不一致时
+attrs.pre_tokens / attrs.next_tokens	分析 sparse/mask 裁剪逻辑时
+attrs.sparse_mode	开启 mask/sparse 相关分析时
+attrs.actual_shared_prefix_len	KV prefix 场景
+attrs.g_size	GQA / PFA merge / IFA / MLA 场景
+attrs.head_num_ratio	Q/KV head ratio 不为 1 时
+attrs.pa_layout_type / attrs.block_size	PA 场景
+flags.enable_mask	有 attention mask 时
+flags.enable_pa	Page Attention 场景
+flags.enable_pfa_merge	PFA merge 场景
+flags.enable_ifa / flags.enable_ifa_mla	IFA / MLA 场景
+flags.enable_pfa_rope	rope 场景
+flags.enable_perblock_quant	perblock quant 场景
+flags.enable_matmul_norm	matmul norm 模板分析
+非必填字段及默认值
+
+字段	默认值
+shape.q_head_size	默认等于 qk_head_size
+attrs.output_dtype	fp16
+attrs.inner_precise	high_performance
+attrs.sparse_mode	0
+attrs.pre_tokens	2147483647
+attrs.next_tokens	2147483647
+attrs.actual_seq_lengths	默认 [seq_size] * batch_size
+attrs.actual_seq_lengths_kv	默认 [seq_inner_size] * batch_size
+attrs.actual_shared_prefix_len	0
+attrs.g_size	1
+attrs.head_num_ratio	1
+attrs.pa_layout_type	0
+attrs.block_size	128
+attrs.aligned_head_size	默认按 qk_head_size 16 对齐
+platform.core_num	48
+platform.aic_num	24
+platform.l1_size	0
+platform.l0c_size	0
+flags.fa_run_flag	true
+flags.split_s2	1
+flags.normalize_gs1_merge	true
+其他 enable_xxx	false
+最小推荐模板
+
+{
+  "shape": {
+    "batch_size": 1,
+    "head_num_size": 1,
+    "seq_size": 1024,
+    "seq_inner_size": 1024,
+    "qk_head_size": 128,
+    "v_head_size": 128
+  },
+  "attrs": {
+    "input_dtype": "fp16",
+    "layout": "BNSD"
+  },
+  "platform": {
+    "core_num": 64,
+    "aic_num": 32
+  }
+}
+这个最小模板可以跑出基本的 Souter/Sinner/SoftmaxSouter/splitS2 和分核结果。需要精确复现源码 case 时，再补齐 actual_seq_lengths、mask/sparse、PA/IFA/merge 等相关字段。
