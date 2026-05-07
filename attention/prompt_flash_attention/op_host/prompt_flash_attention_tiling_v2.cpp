@@ -3825,6 +3825,7 @@ void PromptFlashAttentionTilingV2::ComputeSplitNBSeq(PromptFlashAttentionTilingD
     std::vector<int64_t> sparseStartIdx(tilingElementArrayLen, 0L);
     std::vector<uint32_t> bnStartIdx(tilingElementArrayLen, 0U);
     std::vector<int64_t> gS1StartIdx(tilingElementArrayLen, 0L);
+    std::vector<int64_t> coreTaskBlocks(tilingElementArrayLen, 0L);
     // Temporary algorithm to be optimized
     int64_t curWight = 0;
     curCore = 0;
@@ -3880,6 +3881,7 @@ void PromptFlashAttentionTilingV2::ComputeSplitNBSeq(PromptFlashAttentionTilingD
                 tmpCoreSidEnd = sIdx + 1;
                 tmpCoreSposEnd = sOuterIndex + 1;
 
+                coreTaskBlocks[curCore] += actualInnerBlockNums;
                 curWight += actualInnerBlockNums;
                 preTokensLeftUp -= sOuterSize;
                 nextTokensLeftUp += sOuterSize;
@@ -3901,6 +3903,29 @@ void PromptFlashAttentionTilingV2::ComputeSplitNBSeq(PromptFlashAttentionTilingD
     seqParams->set_coreSeqPosEnd(coreSposEnd.data());
     faTilingAdapter.multiCoreParamsRegbase.set_bnStartIdx(bnStartIdx.data());
     faTilingAdapter.multiCoreParamsRegbase.set_sparseStartIdx(gS1StartIdx.data());
+
+    for (uint32_t coreIdx = 0; coreIdx <= curCore; coreIdx++) {
+        if (splitCoreMode == SplitCoreMode::SPLIT_NBS_CUBE) {
+            OP_LOGI(context_->GetNodeName(),
+                "[PFA_TILING_DUMP][coreRange] cubeCore=%u aivCorePair=[%u,%u] nStart=%u nEnd=%u "
+                "batchStart=%u batchEnd=%u sOuterStart=%u sOuterEnd=%u bnStartIdx=%u bnEndIdx=%u "
+                "sparseStartIdx=%ld sparseEndIdx=%ld taskBlocks=%ld",
+                coreIdx, coreIdx * CV_RATIO, coreIdx * CV_RATIO + 1U,
+                coreNidStart[coreIdx], coreNidEnd[coreIdx], coreSidStart[coreIdx], coreSidEnd[coreIdx],
+                coreSposStart[coreIdx], coreSposEnd[coreIdx], bnStartIdx[coreIdx], bnStartIdx[coreIdx + 1U],
+                static_cast<long>(gS1StartIdx[coreIdx]), static_cast<long>(gS1StartIdx[coreIdx + 1U]),
+                static_cast<long>(coreTaskBlocks[coreIdx]));
+        } else {
+            OP_LOGI(context_->GetNodeName(),
+                "[PFA_TILING_DUMP][coreRange] core=%u nStart=%u nEnd=%u batchStart=%u batchEnd=%u "
+                "sOuterStart=%u sOuterEnd=%u bnStartIdx=%u bnEndIdx=%u sparseStartIdx=%ld sparseEndIdx=%ld "
+                "taskBlocks=%ld",
+                coreIdx, coreNidStart[coreIdx], coreNidEnd[coreIdx], coreSidStart[coreIdx], coreSidEnd[coreIdx],
+                coreSposStart[coreIdx], coreSposEnd[coreIdx], bnStartIdx[coreIdx], bnStartIdx[coreIdx + 1U],
+                static_cast<long>(gS1StartIdx[coreIdx]), static_cast<long>(gS1StartIdx[coreIdx + 1U]),
+                static_cast<long>(coreTaskBlocks[coreIdx]));
+        }
+    }
 }
 
 void PromptFlashAttentionTilingV2::SetMultiCoreParamsRegbase(int64_t totalSize, int64_t actualUsedCoreNum)
@@ -3967,6 +3992,24 @@ void PromptFlashAttentionTilingV2::PromptFlashAttentionSplitNBSeq(PromptFlashAtt
     singleCoreParams->set_actualCoreNums(actualCoreNums);
     int64_t sinnerBlocknum = (baseParams->get_seqInnerSize() + sInnerSize - 1) / sInnerSize;
     SetMultiCoreParamsRegbase((totalBlockNumsOneHead / sinnerBlocknum) * baseParams->get_headNumSize(), static_cast<int64_t>((curIndx + 1)));
+    OP_LOGI(context_->GetNodeName(),
+        "[PFA_TILING_DUMP][summary] splitCoreMode=%d originalCoreNum=%u candidateCoreNum=%u usedCoreNum=%u "
+        "actualCoreNums=%u batchSize=%u headNumSize=%u seqSize=%lu seqInnerSize=%lu "
+        "singleProcessSOuterSize=%u cubeSOuterSize=%u singleProcessSInnerSize=%u softmaxOuterSize=%u "
+        "splitS2=%u totalBlockNumsOneHead=%ld multiSmaxsInnerLoopTimes=%u coreWeightTarget=%f "
+        "multiCore.coreNum=%d multiCore.totalSize=%ld multiCore.s1OuterSize=%ld "
+        "multiCore.splitFactorSize=%ld multiCore.splitFactorTailSize=%ld",
+        static_cast<int32_t>(splitCoreMode), coreNum, curCoreNum, curIndx + 1U, actualCoreNums, batchSize,
+        baseParams->get_headNumSize(), static_cast<unsigned long>(baseParams->get_seqSize()),
+        static_cast<unsigned long>(baseParams->get_seqInnerSize()),
+        singleCoreParams->get_singleProcessSOuterSize(), sOuterSize,
+        singleCoreParams->get_singleProcessSInnerSize(), baseParams->get_softmaxOuterSize(),
+        baseParams->get_splitS2(), static_cast<long>(totalBlockNumsOneHead), multiSmaxsInnerLoopTimes,
+        coreWightTarget, faTilingAdapter.multiCoreParamsRegbase.get_coreNum(),
+        static_cast<long>(faTilingAdapter.multiCoreParamsRegbase.get_totalSize()),
+        static_cast<long>(faTilingAdapter.multiCoreParamsRegbase.get_s1OuterSize()),
+        static_cast<long>(faTilingAdapter.multiCoreParamsRegbase.get_splitFactorSize()),
+        static_cast<long>(faTilingAdapter.multiCoreParamsRegbase.get_splitFactorTailSize()));
 }
 
 void PromptFlashAttentionTilingV2::PromptFlashAttentionInitSoftmaxLseOutputSplit(int64_t totalSize,
