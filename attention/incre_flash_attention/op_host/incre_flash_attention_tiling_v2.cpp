@@ -3325,6 +3325,7 @@ void IFATilingV2::ComputeSplitNBSeqfaRun(std::vector<int64_t> sOuterLoopTimes, s
   std::vector<int64_t> sparseStartIdx(tilingElementArrayLen, 0L);
   std::vector<uint32_t> bnStartIdx(tilingElementArrayLen, 0U);
   std::vector<int64_t> gS1StartIdx(tilingElementArrayLen, 0L);
+  std::vector<int64_t> coreTaskBlocks(tilingElementArrayLen, 0L);
   // Temporary algorithm to be optimized
   int64_t curWight = 0;
   uint32_t tmpCoreNidEnd = 0; // actual seq为0时不分配核
@@ -3370,6 +3371,7 @@ void IFATilingV2::ComputeSplitNBSeqfaRun(std::vector<int64_t> sOuterLoopTimes, s
         tmpCoreSposEnd = sOuterIndex + 1;
 
         curWight += actualInnerBlockNums;
+        coreTaskBlocks[curCore] += actualInnerBlockNums;
         preTokensLeftUp -= sOuterSize_;
         nextTokensLeftUp += sOuterSize_;
       }
@@ -3380,6 +3382,15 @@ void IFATilingV2::ComputeSplitNBSeqfaRun(std::vector<int64_t> sOuterLoopTimes, s
 
   faRunTilingAdapter.multiCoreParamsRegbase.set_bnStartIdx(bnStartIdx.data());
   faRunTilingAdapter.multiCoreParamsRegbase.set_sparseStartIdx(gS1StartIdx.data());
+
+  for (uint32_t coreIdx = 0; coreIdx <= curCore; coreIdx++) {
+    OP_LOGI(ifaContext_->opName,
+      "[IFA_TILING_DUMP][coreRange] cubeCore=%u aivCorePair=[%u,%u] bnStartIdx=%u bnEndIdx=%u "
+      "sparseStartIdx=%ld sparseEndIdx=%ld taskBlocks=%ld",
+      coreIdx, coreIdx * NUM2, coreIdx * NUM2 + 1U, bnStartIdx[coreIdx], bnStartIdx[coreIdx + 1U],
+      static_cast<long>(gS1StartIdx[coreIdx]), static_cast<long>(gS1StartIdx[coreIdx + 1U]),
+      static_cast<long>(coreTaskBlocks[coreIdx]));
+  }
 }
 
 void IFATilingV2::FlashAttentionCubeSplitBNSeq()   //这里我们只用Cube视角分核
@@ -3419,6 +3430,20 @@ void IFATilingV2::FlashAttentionCubeSplitBNSeq()   //这里我们只用Cube视�
   ComputeSplitNBSeqfaRun(sOuterLoopTimes, sInnerLoopTimes, sInnerLoopTimesPrefix, coreWightTarget, curIndx, tilingElementArrayLen);
   int64_t sinnerBlocknum = (sMax_ + sInnerSize_ - 1) / sInnerSize_;
   SetMultiCoreParamsRegbase((totalBlockNumsOneHead / sinnerBlocknum) * SplitNumHeads, static_cast<int64_t>((curIndx + 1)));
+  OP_LOGI(ifaContext_->opName,
+    "[IFA_TILING_DUMP][summary] candidateCoreNum=%u usedCoreNum=%u actualCoreNums=%u batchSize=%u "
+    "qHeads=%u kvHeads=%u qSeq=%u kvSeq=%u headDim=%u splitHeads=%ld sOuterSize=%u sInnerSize=%u "
+    "s1OuterSize=%ld totalBlockNumsOneHead=%ld prefixInnerLoopTimes=%ld "
+    "coreWeightTarget=%f multiCore.coreNum=%d multiCore.totalSize=%ld multiCore.s1OuterSize=%ld "
+    "multiCore.splitFactorSize=%ld multiCore.splitFactorTailSize=%ld",
+    aicNum_, curIndx + 1U, (curIndx + 1U) * NUM2, batchSize_, numHeads_, numKvHeads_, sOfQuery_, sMax_,
+    headDim_, static_cast<long>(SplitNumHeads), sOuterSize_, sInnerSize_, static_cast<long>(s1OuterSize),
+    static_cast<long>(totalBlockNumsOneHead), static_cast<long>(sInnerLoopTimesPrefix), coreWightTarget,
+    faRunTilingAdapter.multiCoreParamsRegbase.get_coreNum(),
+    static_cast<long>(faRunTilingAdapter.multiCoreParamsRegbase.get_totalSize()),
+    static_cast<long>(faRunTilingAdapter.multiCoreParamsRegbase.get_s1OuterSize()),
+    static_cast<long>(faRunTilingAdapter.multiCoreParamsRegbase.get_splitFactorSize()),
+    static_cast<long>(faRunTilingAdapter.multiCoreParamsRegbase.get_splitFactorTailSize()));
   if (needInit_) {
     PromptFlashAttentionInitOutputSplit();
   }

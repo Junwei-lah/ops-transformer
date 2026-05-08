@@ -996,19 +996,20 @@ def main() -> int:
         print(json.dumps(example_input(), indent=2, ensure_ascii=False))
         return 0
 
-    if args.input or args.config or not any(
+    has_cli_shape = any(
         getattr(args, key, None) is not None for key in ("batch_size", "q_heads", "kv_heads", "head_dim")
-    ):
-        raw_data = load_input(args.input or args.config)
-        cfg_data = merge_args(args) if any(vars(args).values()) else raw_data
-        cfg = IFATilingInput.from_dict(cfg_data)
-    else:
+    )
+    if args.input or args.config:
+        cfg = IFATilingInput.from_dict(merge_args(args))
+    elif has_cli_shape:
         data = merge_args(args)
         required = ["batch_size", "q_heads", "kv_heads", "head_dim"]
         missing = [key for key in required if key not in data]
         if missing:
             parser.error(f"missing required fields: {', '.join(missing)}")
         cfg = IFATilingInput(**data)
+    else:
+        cfg = IFATilingInput.from_dict(load_input(None))
 
     result = IFATilingV2Simulator(cfg).run()
 
