@@ -87,6 +87,134 @@ flowchart LR
 - `FlashDecodeInfo`：IFA FlashDecode `splitS2`、workspace 和分裂信息。
 - `Diff`：compare 脚本中的单字段对比结果。
 
+### 3.3 4+1 视图
+
+4+1 视图用于从不同关注点描述 `tiling_sim` 的软件架构。其中 4 个基础视图分别覆盖逻辑结构、开发组织、运行过程和部署形态，`+1` 场景视图用于串联典型使用流程。
+
+#### 3.3.1 逻辑视图
+
+逻辑视图关注系统对外提供的能力，以及能力之间的依赖关系。
+
+```mermaid
+flowchart TB
+    A["CLI / 调度层"] --> B["输入解析与归一化"]
+    B --> C["PFA v2 模拟服务"]
+    B --> D["IFA v2 模拟服务"]
+    C --> E["分核与负载均衡分析"]
+    D --> E
+    C --> F["BMM / Softmax / FlashDecode 信息"]
+    D --> F
+    E --> G["JSON / SVG 报告"]
+    H["C++ dump 对比服务"] --> I["Diff 报告"]
+    G --> H
+```
+
+逻辑上，系统分为输入层、核心模拟层、分析层和报告层：
+
+- 输入层负责将 JSON、stdin 或 CLI 参数转换为标准配置对象。
+- 核心模拟层分别实现 PFA v2 和 IFA v2 的 host 侧 tiling 决策。
+- 分析层统一计算 task blocks、candidate core、负载均衡指标和 core range。
+- 报告层输出 JSON、SVG 或 dump diff。
+
+#### 3.3.2 开发视图
+
+开发视图关注代码组织和维护边界。
+
+```text
+scripts/tools/
+├── pfa_tiling_sim.py              # PFA v2 模拟主脚本
+├── ifa_tiling_sim.py              # IFA v2 模拟主脚本
+├── pfa_compare_tiling_dump.py     # PFA C++ dump 对比
+├── ifa_compare_tiling_dump.py     # IFA C++ dump 对比
+├── pfa_tiling_sim_README.md       # PFA 使用说明
+├── ifa_tiling_sim_README.md       # IFA 使用说明
+├── pfa_tiling_args_explain.md     # PFA 入参说明
+└── tiling_sim_software_design.md  # 软件设计说明书
+```
+
+开发边界如下：
+
+- `pfa_tiling_sim.py` 与 `ifa_tiling_sim.py` 以源码可对照性为优先，核心函数不强行合并。
+- compare 脚本只承担 dump 解析和字段对比，不承载 tiling 计算逻辑。
+- README 和参数说明面向使用者，设计说明书面向维护者和评审者。
+- 后续若抽取公共模块，建议只抽取数学工具、负载均衡统计和 SVG 渲染等稳定逻辑。
+
+#### 3.3.3 进程视图
+
+进程视图关注脚本一次执行过程中的控制流和数据流。`tiling_sim` 当前是单进程、同步执行模型，不引入后台服务或并发任务。
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant CLI as CLI入口
+    participant Parser as 输入解析
+    participant Sim as 模拟器
+    participant Report as 报告输出
+
+    U->>CLI: 执行 pfa/ifa_tiling_sim.py
+    CLI->>Parser: 读取 JSON/stdin/CLI 参数
+    Parser->>Parser: 字段归一化与合法性校验
+    Parser->>Sim: 构造配置对象
+    Sim->>Sim: 计算切块、分核、负载指标
+    Sim->>Report: 返回 result dict
+    Report->>Report: 可选生成 SVG
+    Report->>U: 输出 JSON / compact JSON / summary
+```
+
+该视图下的关键约束：
+
+- 所有计算在本地 Python 进程内完成。
+- 输入解析失败、shape 非法或分核数组越界时直接终止当前执行。
+- `--plot` 是主结果生成后的附加动作，不影响 JSON 主体计算。
+
+#### 3.3.4 物理视图
+
+物理视图关注工具在实际环境中的部署和依赖。
+
+```mermaid
+flowchart LR
+    A["开发机 / CI 环境"] --> B["Python 3 标准库"]
+    A --> C["ops-transformer 仓库"]
+    C --> D["scripts/tools/tiling_sim 脚本"]
+    D --> E["本地 JSON 输入"]
+    D --> F["本地 JSON/SVG 输出"]
+    D --> G["C++ dump 日志"]
+```
+
+物理部署特征：
+
+- 脚本随仓库源码交付，无单独安装步骤。
+- 运行依赖为 Python 3 标准库，包括 `argparse`、`json`、`dataclasses`、`math`、`re` 等。
+- 不依赖 CANN 运行环境，不访问网络，不启动常驻服务。
+- 输出文件由用户指定路径落盘，适合在开发机、流水线或问题定位脚本中直接调用。
+
+#### 3.3.5 场景视图
+
+场景视图用典型用例验证上述 4 个视图是否能够闭环。
+
+**场景一：分析一个 PFA case 的切块与分核**
+
+1. 用户通过 `--example` 生成 PFA JSON 模板。
+2. 用户修改 shape、attrs、platform 和 flags。
+3. `pfa_tiling_sim.py` 读取 JSON 并构造 `PFAConfig`。
+4. 脚本计算 `Souter`、`Sinner`、BMM check plan 和 N-B-S 分核。
+5. 用户查看 `splitCore.loadBalance`，必要时通过 `--plot` 生成 SVG。
+
+**场景二：分析一个 IFA FlashDecode case**
+
+1. 用户输入 Q/KV heads、actual KV length、head dim 和平台核数。
+2. `ifa_tiling_sim.py` 推导 GQA group、`Sinner`、softmax tmp shape。
+3. 脚本根据 `force_flash_decode` 或自动判定逻辑计算 `splitS2`。
+4. 输出 `flashDecodeSplitS2` 和 `splitCore`，用于判断分裂是否合理。
+
+**场景三：校验 Python 模拟与 C++ dump 是否一致**
+
+1. 用户开启 C++ 侧 tiling dump 并获得日志。
+2. 用户用同一 case 运行 `pfa_tiling_sim.py` 或 `ifa_tiling_sim.py` 生成 JSON。
+3. compare 脚本解析 dump 中的 summary 和 coreRange。
+4. compare 脚本按字段映射生成 diff 报告。
+5. 若出现 `DIFF` 或 `MISSING`，开发者回到对应模拟函数或字段映射中修正。
+
 ## 4. 第二层设计描述
 
 ### 4.1 UI / 调度模块
