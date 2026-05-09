@@ -221,31 +221,24 @@ flowchart LR
 
 #### 职责
 
-- 提供命令行入口 `main()`。
-- 支持 JSON 文件输入、stdin 输入、示例输入生成和紧凑输出。
-- 支持 IFA legacy 单参数输入，便于快速构造小 case。
-- 负责在核心模拟完成后调用 SVG 渲染函数。
+- 提供统一的命令行访问入口，屏蔽 PFA 与 IFA 模拟流程在参数组织上的差异。
+- 支持配置文件输入、标准输入、示例配置生成、紧凑结果输出和可视化结果输出。
+- 支持 IFA 单参数快速输入方式，便于开发者快速构造小规模验证样例。
+- 负责组织“输入读取、参数归一化、核心模拟、报告生成”的完整执行链路。
 
-#### 关键接口
+#### 功能划分
 
-PFA：
+- 示例配置生成能力：输出可直接运行的 PFA 或 IFA 示例配置，降低首次使用成本。
+- 输入装载能力：从本地配置文件或标准输入中读取 JSON，并完成基本格式解析。
+- 参数合并能力：将配置文件参数与命令行覆盖参数合并为统一的内部配置。
+- 输出编排能力：根据用户选择输出标准 JSON、紧凑 JSON、摘要文本或 SVG 可视化文件。
+- 执行调度能力：在输入准备完成后调用对应的 PFA 或 IFA 核心模拟流程。
 
-- `example_input()`：生成 PFA 示例 JSON。
-- `load_input(path)`：从文件或 stdin 读取 JSON。
-- `main()`：处理 `--input`、`--example`、`--compact`、`--plot`。
+#### 输入校验
 
-IFA：
-
-- `build_arg_parser()`：定义 IFA CLI 参数。
-- `merge_args(args)`：合并 JSON 输入和 CLI 覆盖参数。
-- `print_summary(result)`：输出 legacy summary 文本。
-- `main()`：处理 JSON / legacy CLI / summary / compact / plot。
-
-#### 异常处理
-
-- 输入为空时直接提示用户使用 `--example`。
-- IFA 中 `q_heads`、`kv_heads` 非正或不可整除时抛出 `ValueError`。
-- 解析 actual lens 时校验长度必须为 1 或 `batch_size`。
+- 当输入为空时，应提示用户先生成示例配置或提供配置文件。
+- 当注意力头数、KV 头数等核心张量形状参数非法时，应阻断执行并给出明确错误。
+- 当实际序列长度列表的长度不符合批次数量时，应提示期望长度和实际长度。
 
 ### 4.2 核心功能模块一：PFA v2 Tiling 模拟
 
@@ -253,27 +246,27 @@ IFA：
 
 模拟 PFA v2 host 侧关键路径：
 
-- 归一化输入 shape、dtype、layout 和 G/S1 merge 行为。
-- 计算 `Souter`、`CubeSouter`、`Sinner`、`SoftmaxSouter`、`splitS2`。
+- 归一化输入张量形状、数据类型、输入布局和 G/S1 合并行为。
+- 计算查询序列外层切块、矩阵计算外层切块、KV 序列内层切块、softmax 外层切块和 KV 序列二次拆分因子。
 - 按源码规则执行 DN 相关二次调整。
-- 构造 BMM1 / BMM2 check plan。
-- 估算 `SPLIT_NBS_CUBE` 分核结果。
+- 构造第一阶段和第二阶段矩阵计算的检查参数计划。
+- 估算按批次、注意力头、序列块维度展开后的多核任务分配结果。
 
-#### 关键函数
+#### 功能划分
 
-- `PFAConfig.from_dict()` / `normalize()`：配置构造与归一化。
-- `adjust_cv_tiling(cfg)`：选择基础切块参数并返回命中路径说明。
-- `apply_dn_adjustment(cfg, tiling)`：模拟 DN 对 `Sinner` 等参数的调整。
-- `bmm1_check_plan()` / `bmm2_check_plan()`：输出 BMM shape、orgShape、fixSplit 计划。
-- `compute_split_core(cfg, tiling)`：计算 N-B-S 分核、core range、task blocks。
-- `simulate(cfg)`：PFA 模拟总入口。
+- 配置归一化能力：补齐缺省配置，统一数据类型、布局名称、平台核数和实际序列长度。
+- 基础切块选择能力：根据输入维度、精度模式、PFA/IFA/MLA/PA 等开关选择初始切块方案。
+- DN 调整能力：在满足 DN 路径条件时，对 KV 内层切块等关键参数进行二次修正。
+- 矩阵计算检查能力：给出两阶段矩阵计算的输入形状、原始形状和固定切分计划。
+- 多核分配能力：按候选 cube 计算核估算任务起止范围、有效任务块数量和实际使用核数。
+- 结果汇总能力：将归一化输入、切块结果、分核结果、负载均衡指标和说明信息组装为统一报告。
 
 #### 设计要点
 
-- `actual_seq_lengths`、`actual_seq_lengths_kv` 缺省时按 batch 填充默认长度。
-- PFA merge / IFA / IFA MLA 路径在 `normalize_gs1_merge=true` 时模拟源码中的 G/S1 归一化：`head_num_size = head_num_size / g_size`，`seq_size = seq_size * g_size`。
-- BMM check 输出表示 Python 侧“尝试设置”的参数计划，不表示真实 CANN tiling 成功或失败。
-- 分核权重以有效 inner block 数作为 task block 估计，用于解释 host 侧分核策略。
+- 实际查询序列长度和实际 KV 序列长度缺省时，按批次数量自动填充默认长度。
+- 当 PFA merge、IFA 或 IFA MLA 路径开启时，需模拟源码中的分组归一化行为，即减少有效注意力头维度并扩展查询序列维度。
+- 矩阵计算检查输出仅表示 host 侧准备提交给底层 tiling 接口的参数计划，不表示真实平台计算结果。
+- 分核权重以有效内层块数量作为估算依据，用于解释 host 侧分核策略，而非预测真实 kernel 耗时。
 
 ### 4.3 核心功能模块二：IFA v2 Tiling 模拟
 
@@ -281,30 +274,29 @@ IFA：
 
 模拟 IFA v2 faRun 主路径：
 
-- 根据 `q_seq`、GQA、PSE、head dim 选择基础 `Souter` / `Sinner`。
-- 计算 `sInnerLoopTimes`、tail、align 和 tiling key 使用的 `Sinner`。
-- 计算 softmax tmp shape、AscendC API 公式和 arch35 regbase UB 布局。
-- 根据 sparse mode、mask、prefix 计算每个 batch/head/outer row 的有效 inner block。
-- 计算 FlashDecode 是否启用及 `splitS2` workspace。
-- 生成 `multiCoreParamsRegbase`、core range 和 per-row assignment。
+- 根据查询序列长度、GQA 分组、PSE 开关和注意力头维度选择基础外层/内层切块。
+- 计算内层循环次数、尾块大小、对齐大小和用于切分键值的内层切块值。
+- 计算 softmax 临时空间形状、AscendC 接口公式和 regbase 路径下的 UB 空间布局。
+- 根据稀疏模式、mask、prefix 计算每个批次、注意力头、外层序列行对应的有效内层块数量。
+- 判断 FlashDecode 是否启用，并估算 KV 序列二次拆分因子和临时工作空间规模。
+- 生成 regbase 多核参数、核间任务范围和逐行任务归属关系。
 
-#### 关键函数
+#### 功能划分
 
-- `IFATilingInput.from_dict()`：配置解析。
-- `IFATilingV2Simulator.set_fa_run_base_size()`：选择基础切块。
-- `calc_inner_size()`：计算 block size、loop、tail 和 align。
-- `softmax_info()`：输出 softmax 临时空间信息。
-- `calc_block_nums_one_head()`：计算单 head task block 数。
-- `compute_split_nb_seq_farun()`：按 N-B-S 维度切分到 cube core。
-- `is_flash_decode_farun()` / `split_s2_info()`：FlashDecode 判定和 workspace 估算。
-- `run()`：IFA 模拟总入口。
+- 配置解析能力：从统一 JSON 或快速命令行参数中提取批次、注意力头数、序列长度、平台核数和路径开关。
+- 分组推导能力：根据查询头数与 KV 头数推导 GQA 分组规模，并确定是否按 GQA 路径处理。
+- 基础切块能力：按 faRun 主路径规则选择查询序列外层切块和 KV 序列内层切块。
+- softmax 空间估算能力：输出临时空间形状、对齐粒度、公式说明和固定 UB 布局。
+- 有效任务块计算能力：在 mask、prefix、稀疏模式影响下计算每个任务行实际需要处理的内层块数量。
+- FlashDecode 拆分能力：按自动判定或用户强制策略确定是否启用，并估算拆分后的临时工作空间。
+- 多核分配能力：按批次、注意力头、序列块维度将任务分配到候选计算核。
 
 #### 设计要点
 
-- `group = q_heads / kv_heads`，缺省 `is_gqa` 由 `group > 1` 推导。
-- `kv_seq` 为 0 时从 `actual_kv_lens` 推导最大值。
-- `force_flash_decode` 支持 `true`、`false`、`null` 三态；`null` 时由源码风格逻辑自动判定。
-- softmax tmp size 只输出公式字符串，因为真实 `GetSoftMaxFlashV2MinTmpSize` 在 AscendC 内部。
+- 分组规模由查询头数与 KV 头数的比例决定；如果用户没有显式指定 GQA 模式，则由该比例自动推导。
+- KV 序列长度未显式给出时，从实际 KV 序列长度列表中推导可用最大值。
+- FlashDecode 控制支持强制开启、强制关闭和自动判定三种模式；自动模式应保持与源码判定逻辑一致。
+- softmax 临时空间大小只输出可解释公式，因为真实空间申请结果由 AscendC 内部实现决定。
 
 ### 4.4 核心功能模块三：Dump 对比与一致性校验
 
@@ -314,67 +306,67 @@ IFA：
 
 #### 输入输出
 
-- 输入一：C++ dump 日志，包含 `[PFA_TILING_DUMP][summary]` / `[PFA_TILING_DUMP][coreRange]` 或 IFA 对应 tag。
-- 输入二：`tiling_sim` 输出的 JSON 文件。
-- 输出：字段级 diff，包含字段路径、C++ 值、Python 值、状态和差异说明。
+- 输入一：C++ dump 日志，包含汇总信息和各核任务范围信息。
+- 输入二：模拟脚本输出的 JSON 文件。
+- 输出：字段级差异报告，包含字段路径、C++ 值、Python 值、状态和差异说明。
 
-#### 关键函数
+#### 功能划分
 
-- `parse_cpp_dump(path)`：提取 summary 和 coreRange。
-- `parse_kv_line(line)`：解析 `key=value` 和 `key=[a,b]`。
-- `compare_summary()`：比较 summary 字段映射。
-- `compare_core_ranges()`：比较每个 core 的范围信息。
-- `compare_task_arrays()`：比较 `coreTaskBlocks` 和 `candidateCoreTaskBlocks`。
-- `build_report()`：聚合对比结果。
+- 日志解析能力：从 C++ 日志中提取汇总信息、各核任务范围和任务量字段。
+- 键值解析能力：支持普通键值字段和区间类字段的统一解析。
+- 汇总字段对比能力：比较切块、核数、总任务量、均衡目标等关键摘要信息。
+- 核范围对比能力：逐核比较批次、注意力头、序列块起止位置和对应任务量。
+- 任务数组对比能力：比较实际使用核任务量和候选核任务量，并对空闲候选核补齐零任务量。
+- 报告聚合能力：生成包含通过、差异和缺失字段的对比报告。
 
 #### 设计要点
 
-- 浮点字段使用 `math.isclose`，允许通过 `float_tol` 调整容忍度。
+- 浮点字段对比应支持可配置容忍度，避免因小数精度造成误报。
 - 字段映射显式写在脚本中，新增 dump 字段时需要同步补充映射。
-- `candidateCoreTaskBlocks` 会把 C++ 使用 core 后面的 idle candidate core 补 0，以便与 SVG 和负载均衡分析一致。
+- 候选核任务量需要包含空闲核，空闲核任务量按 0 处理，以便与 SVG 和负载均衡分析一致。
 
 ### 4.5 报告 / 输出模块
 
 #### JSON 输出
 
-核心字段包括：
+核心内容包括：
 
-- `normalizedInput`：归一化后的输入。
-- `tiling`：切块结果、路径说明和关键 tiling 参数。
-- `softmax`：IFA softmax 空间信息。
-- `batchLoopInfo`：IFA 每个 batch 的 loop 和 mask 修正信息。
-- `splitCore`：分核结果、任务权重、core range、负载均衡。
-- `flashDecodeSplitS2`：IFA FlashDecode 拆分和 workspace 信息。
-- `notes` / `limitations`：模拟边界说明。
+- 归一化输入信息：展示经过默认值补齐和路径归一化后的实际计算输入。
+- 切块结果信息：展示查询序列、KV 序列、softmax 和二次拆分相关的核心切分结果。
+- softmax 空间信息：展示 IFA 路径下的临时空间形状、对齐要求和公式说明。
+- 批次循环信息：展示每个批次在实际序列长度、mask 和 prefix 影响下的循环规模。
+- 分核结果信息：展示使用核数、候选核数、任务权重、核任务范围和负载均衡结果。
+- FlashDecode 信息：展示 IFA 路径下的拆分因子、每份 KV 长度和临时工作空间估算。
+- 说明信息：展示当前模拟边界、估算口径和与真实 CANN API 的差异。
 
 #### SVG 输出
 
-`render_load_balance_svg(result, path)` 根据 `candidateCoreTaskBlocks` 生成柱状图：
+SVG 可视化根据候选核任务量生成柱状图：
 
-- 横轴是 cube core id。
-- 一个 cube core 对应两个 AIV core。
-- 柱高表示 task blocks。
-- idle candidate core 以 0 任务灰色柱显示。
-- 红色虚线表示 mean line，蓝色虚线表示 target line。
-- 柱颜色按相对 mean 的比例区分负载程度。
+- 横轴表示 cube 计算核编号。
+- 一个 cube 计算核对应两个 AIV 计算核。
+- 柱高表示该核承载的有效任务块数量。
+- 空闲候选核以灰色零任务柱显示。
+- 红色虚线表示候选核平均任务量，蓝色虚线表示目标任务量。
+- 柱颜色按相对平均任务量的比例区分负载程度。
 
 #### 负载均衡指标
 
-`build_load_balance()` 生成如下指标：
+负载均衡报告包含如下指标：
 
-- `usedCubeCores`
-- `candidateCubeCores`
-- `idleCandidateCubeCores`
-- `totalTaskBlocks`
-- `meanTaskBlocks`
-- `targetTaskBlocks`
-- `maxTaskBlocks`
-- `minTaskBlocks`
-- `coefficientOfVariation`
-- `maxOverMean`
-- `minOverMean`
-- `rating`
-- `interpretation`
+- 实际使用的 cube 计算核数量。
+- 候选 cube 计算核总数量。
+- 空闲候选 cube 计算核数量。
+- 总有效任务块数量。
+- 候选核平均任务块数量。
+- 分核算法期望的目标任务块数量。
+- 单核最大任务块数量及对应核编号。
+- 单核最小任务块数量及对应核编号。
+- 任务量标准差和变异系数。
+- 最大任务量与平均任务量的比值。
+- 最小任务量与平均任务量的比值。
+- 负载均衡评级。
+- 面向人工分析的解释文本。
 
 ## 5. 非功能需求
 
