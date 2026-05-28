@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="72" y="34" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">IFA v2 split-core task blocks per cube core</text>
+<text x="72" y="60" font-family="Arial, sans-serif" font-size="13" fill="#475569">rating=moderate | used=24/24 cube cores | max/mean=1.286 | cv=0.163</text>
+<line x1="72" y1="428" x2="872" y2="428" stroke="#334155" stroke-width="1"/>
+<line x1="72" y1="86" x2="72" y2="428" stroke="#334155" stroke-width="1"/>
+<line x1="72" y1="428.00" x2="872" y2="428.00" stroke="#e2e8f0" stroke-width="1"/>
+<text x="62" y="432.00" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">0</text>
+<line x1="72" y1="342.50" x2="872" y2="342.50" stroke="#e2e8f0" stroke-width="1"/>
+<text x="62" y="346.50" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">3</text>
+<line x1="72" y1="257.00" x2="872" y2="257.00" stroke="#e2e8f0" stroke-width="1"/>
+<text x="62" y="261.00" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">6</text>
+<line x1="72" y1="171.50" x2="872" y2="171.50" stroke="#e2e8f0" stroke-width="1"/>
+<text x="62" y="175.50" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">9</text>
+<line x1="72" y1="86.00" x2="872" y2="86.00" stroke="#e2e8f0" stroke-width="1"/>
+<text x="62" y="90.00" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#64748b">12</text>
+<line x1="72" y1="162.00" x2="872" y2="162.00" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="872" y="155.00" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#dc2626">mean 9.3</text>
+<line x1="72" y1="162.00" x2="872" y2="162.00" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 5"/>
+<text x="872" y="178.00" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#2563eb">target 9.3</text>
+<rect x="72.00" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="84.83" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="84.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">0</text>
+<rect x="105.67" y="86.00" width="25.67" height="342.00" rx="2" fill="#f59e0b"/>
+<text x="118.50" y="80.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">12</text>
+<text x="118.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">1</text>
+<rect x="139.33" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="152.17" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="152.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">2</text>
+<rect x="173.00" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="185.83" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="185.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">3</text>
+<rect x="206.67" y="86.00" width="25.67" height="342.00" rx="2" fill="#f59e0b"/>
+<text x="219.50" y="80.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">12</text>
+<text x="219.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">4</text>
+<rect x="240.33" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="253.17" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="253.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">5</text>
+<rect x="274.00" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="286.83" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="286.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">6</text>
+<rect x="307.67" y="86.00" width="25.67" height="342.00" rx="2" fill="#f59e0b"/>
+<text x="320.50" y="80.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">12</text>
+<text x="320.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">7</text>
+<rect x="341.33" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="354.17" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="354.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">8</text>
+<rect x="375.00" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="387.83" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="387.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">9</text>
+<rect x="408.67" y="86.00" width="25.67" height="342.00" rx="2" fill="#f59e0b"/>
+<text x="421.50" y="80.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">12</text>
+<text x="421.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">10</text>
+<rect x="442.33" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="455.17" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="455.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">11</text>
+<rect x="476.00" y="200.00" width="25.67" height="228.00" rx="2" fill="#0f766e"/>
+<text x="488.83" y="194.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">8</text>
+<text x="488.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">12</text>
+<rect x="509.67" y="114.50" width="25.67" height="313.50" rx="2" fill="#f59e0b"/>
+<text x="522.50" y="108.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">11</text>
+<text x="522.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">13</text>
+<rect x="543.33" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="556.17" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="556.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">14</text>
+<rect x="577.00" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="589.83" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="589.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">15</text>
+<rect x="610.67" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="623.50" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="623.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">16</text>
+<rect x="644.33" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="657.17" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="657.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">17</text>
+<rect x="678.00" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="690.83" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="690.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">18</text>
+<rect x="711.67" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="724.50" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="724.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">19</text>
+<rect x="745.33" y="86.00" width="25.67" height="342.00" rx="2" fill="#f59e0b"/>
+<text x="758.17" y="80.00" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">12</text>
+<text x="758.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">20</text>
+<rect x="779.00" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="791.83" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="791.83" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">21</text>
+<rect x="812.67" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="825.50" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="825.50" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">22</text>
+<rect x="846.33" y="171.50" width="25.67" height="256.50" rx="2" fill="#0f766e"/>
+<text x="859.17" y="165.50" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#334155">9</text>
+<text x="859.17" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#475569">23</text>
+<rect x="72" y="466" width="12" height="12" fill="#0f766e"/>
+<text x="90" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">&lt;=110% mean</text>
+<rect x="200" y="466" width="12" height="12" fill="#f59e0b"/>
+<text x="218" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">&lt;=135% mean</text>
+<rect x="328" y="466" width="12" height="12" fill="#dc2626"/>
+<text x="346" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">&gt;135% mean</text>
+<rect x="456" y="466" width="12" height="12" fill="#cbd5e1"/>
+<text x="474" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">idle core</text>
+<line x1="584" y1="472" x2="608" y2="472" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="616" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">mean line</text>
+<line x1="712" y1="472" x2="736" y2="472" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 5"/>
+<text x="744" y="476" font-family="Arial, sans-serif" font-size="12" fill="#475569">target line</text>
+<text x="72" y="502" font-family="Arial, sans-serif" font-size="12" fill="#64748b">x-axis: cube core id; each cube core maps to two AIV cores in the regbase SPLIT_NBS_CUBE path.</text>
+</svg>

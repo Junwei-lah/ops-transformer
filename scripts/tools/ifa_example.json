@@ -1,0 +1,39 @@
+{
+  "shape": {
+    "batch_size": 2,
+    "q_heads": 32,
+    "kv_heads": 4,
+    "q_seq": 1,
+    "kv_seq": 4096,
+    "head_dim": 64
+  },
+  "attrs": {
+    "input_dtype": "fp16",
+    "block_type_size": 2,
+    "sparse_mode": 0,
+    "pre_tokens": 0,
+    "next_tokens": 0,
+    "actual_q_lens": [
+      1,
+      1
+    ],
+    "actual_kv_lens": [
+      4096,
+      3072
+    ],
+    "actual_shared_prefix_len": 0
+  },
+  "platform": {
+    "aic_num": 24,
+    "aiv_num": 48,
+    "core_num": 48
+  },
+  "flags": {
+    "enable_pse_shift": false,
+    "is_gqa": true,
+    "fa_run_gs": false,
+    "enable_mask": false,
+    "is_pfa": false,
+    "force_flash_decode": null
+  }
+}

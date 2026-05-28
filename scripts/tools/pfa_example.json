@@ -1,0 +1,48 @@
+{
+  "shape": {
+    "batch_size": 1,
+    "head_num_size":10,
+    "seq_size": 1024,
+    "seq_inner_size": 1024,
+    "qk_head_size": 128,
+    "v_head_size": 128
+  },
+  "attrs": {
+    "input_dtype": "fp16",
+    "output_dtype": "fp16",
+    "inner_precise": "high_precision",
+    "layout": "BNSD",
+    "sparse_mode": 0,
+    "pre_tokens": 2147483647,
+    "next_tokens": 2147483647,
+    "actual_seq_lengths": [
+      1024
+    ],
+    "actual_seq_lengths_kv": [
+      1024
+    ],
+    "actual_shared_prefix_len": 0,
+    "g_size": 1,
+    "head_num_ratio": 1
+  },
+  "platform": {
+    "core_num": 56,
+    "aic_num": 28,
+    "l1_size": 1048576,
+    "l0c_size": 262144
+  },
+  "flags": {
+    "enable_mask": false,
+    "enable_pse_shift": false,
+    "enable_alibi_pse": false,
+    "enable_pa": false,
+    "enable_pfa_mla": false,
+    "enable_pfa_rope": false,
+    "enable_pfa_merge": false,
+    "enable_ifa": false,
+    "enable_ifa_mla": false,
+    "enable_perblock_quant": false,
+    "fa_run_flag": true,
+    "split_s2": 0
+  }
+}
