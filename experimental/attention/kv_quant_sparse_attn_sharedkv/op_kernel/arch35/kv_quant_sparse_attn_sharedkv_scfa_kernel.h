@@ -162,6 +162,15 @@ __aicore__ inline void KvQuantSparseAttnSharedkvScfa<CubeBlockType, VecBlockType
     cubeBlock.InitCubeBlock(pipe, l1BufferManager, query);
     this->ComputeConstexpr();
     this->InitLocalBuffer();
+    if ASCEND_IS_AIV {
+        if constexpr (TEMPLATE_MODE == SASTemplateMode::SCFA_TEMPLATE_MODE && !IS_VEC_S2PHYADDR) {
+            if (hasLoad != 0) {
+                int64_t qSNumInOneBlock = (constInfo.gSize <= 64) ? (constInfo.s1BaseSize / constInfo.gSize) : 1;
+                int64_t initS1oIdx = static_cast<int64_t>(gS1StartIdx) * qSNumInOneBlock;
+                this->vecBlock.InitCmpSparseCache(bN2StartIdx, initS1oIdx, constInfo);
+            }
+        }
+    }
 }
 
 template <typename CubeBlockType, typename VecBlockType>
