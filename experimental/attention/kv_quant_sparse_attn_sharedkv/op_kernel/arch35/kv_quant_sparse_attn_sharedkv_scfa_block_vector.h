@@ -84,6 +84,7 @@ public:
     __aicore__ inline void ProcessVec2(mm2ResPos &bmm2ResBuf, RunInfo &runInfo,
         ConstInfo &constInfo);
     __aicore__ inline void InitCmpSparseCache(int64_t boIdx, int64_t s1oIdx, ConstInfo &constInfo);
+    __aicore__ inline void WaitCmpSparseCacheReady();
     __aicore__ inline void GetKVPhyAddr(
          uint32_t hasLoad, uint32_t bN2StartIdx, uint32_t bN2EndIdx, uint32_t gS1StartIdx, uint32_t nextGs1Idx,
         __gm__ int32_t *actualSeqQlenAddr, __gm__ int32_t *cuSeqlensQAddr,
@@ -169,6 +170,7 @@ private:
     TEventID mte3ToVV0Id[2];
     TEventID mte2ToVCmpCacheId;
     TEventID vToMte2CmpCacheId;
+    uint32_t cmpSparseCachePending = 0;
     TBuf<> softmaxMaxBuf[2];
     TBuf<> softmaxSumBuf[2];
     TBuf<> softmaxExpBuf[2]; 
@@ -247,7 +249,16 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitCmpSparseCache(
     WaitFlag<HardEvent::V_MTE2>(vToMte2CmpCacheId);
     LoadCmpSparseCache(cmpSparseIdxUb, cmpBlockTableUb, boIdx, s1oIdx, constInfo);
     SetFlag<HardEvent::MTE2_V>(mte2ToVCmpCacheId);
-    WaitFlag<HardEvent::MTE2_V>(mte2ToVCmpCacheId);
+    cmpSparseCachePending = 1U;
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::WaitCmpSparseCacheReady()
+{
+    if (cmpSparseCachePending != 0U) {
+        WaitFlag<HardEvent::MTE2_V>(mte2ToVCmpCacheId);
+        cmpSparseCachePending = 0U;
+    }
 }
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -753,6 +764,9 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessSparseKv(
 {
     if (procSize == 0) {
         return;
+    }
+    if constexpr (!IS_VEC_S2PHYADDR) {
+        WaitCmpSparseCacheReady();
     }
     LocalTensor<int32_t> cmpSparseIdxUb = cmpSparseIdxBuf.template Get<int32_t>();
     LocalTensor<int32_t> cmpBlockTableUb = cmpBlockTableBuf.template Get<int32_t>();
@@ -1537,6 +1551,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe,
         mte2ToVCmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>();
         vToMte2CmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::V_MTE2>();
         SetFlag<HardEvent::V_MTE2>(vToMte2CmpCacheId);
+        cmpSparseCachePending = 0U;
     }
 
     if (this->isSinks) {
@@ -1562,6 +1577,7 @@ public:
     __aicore__ inline void InitVecBlock(TPipe *pipe, __gm__ uint8_t *cuSeqlensQ, __gm__ uint8_t *sequsedKv) {};
     __aicore__ inline void InitLocalBuffer(TPipe *pipe, ConstInfo &constInfo) {}
     __aicore__ inline void InitCmpSparseCache(int64_t boIdx, int64_t s1oIdx, ConstInfo &constInfo) {}
+    __aicore__ inline void WaitCmpSparseCacheReady() {}
     __aicore__ inline void ProcessVec1(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputBuf,
         Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &bmm1ResBuf, RunInfo &runInfo,
         ConstInfo &constInfo) {}

@@ -150,7 +150,7 @@ __aicore__ inline void KvQuantSparseAttnSharedkvScfa<CubeBlockType, VecBlockType
     this->InitGlobalBuffer(query, oriKV, cmpKV, cmpSparseIndices, oriBlockTable, cmpBlockTable, cuSeqlensQ, sequsedQ, sequsedKv, sinks,
         workspace, tiling, tPipe); // gm设置
     vecBlock.InitVecBlock(tPipe, cuSeqlensQ, sequsedKv);
-    vecBlock.CleanOutput(attentionOut, constInfo);
+    this->ComputeConstexpr();
     if ASCEND_IS_AIV {
         if constexpr (TEMPLATE_MODE == SASTemplateMode::SCFA_TEMPLATE_MODE && IS_VEC_S2PHYADDR) {
             this->vecBlock.GetKVPhyAddr(hasLoad, bN2StartIdx, bN2EndIdx, gS1StartIdx, nextGs1Idx,
@@ -159,8 +159,6 @@ __aicore__ inline void KvQuantSparseAttnSharedkvScfa<CubeBlockType, VecBlockType
     }
     /* cube侧不依赖sharedParams的scalar前置 */
     InitMMResBuf(workspace);
-    cubeBlock.InitCubeBlock(pipe, l1BufferManager, query);
-    this->ComputeConstexpr();
     this->InitLocalBuffer();
     if ASCEND_IS_AIV {
         if constexpr (TEMPLATE_MODE == SASTemplateMode::SCFA_TEMPLATE_MODE && !IS_VEC_S2PHYADDR) {
@@ -171,6 +169,8 @@ __aicore__ inline void KvQuantSparseAttnSharedkvScfa<CubeBlockType, VecBlockType
             }
         }
     }
+    vecBlock.CleanOutput(attentionOut, constInfo);
+    cubeBlock.InitCubeBlock(pipe, l1BufferManager, query);
 }
 
 template <typename CubeBlockType, typename VecBlockType>
