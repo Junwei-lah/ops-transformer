@@ -171,8 +171,8 @@ private:
     TEventID vToMte2V0Id[2];
     TEventID vToMte3V0Id[2];
     TEventID mte3ToVV0Id[2];
-    TEventID mte2ToVCmpCacheId;
-    TEventID vToMte2CmpCacheId;
+    TEventID mte2ToSCmpCacheId;
+    TEventID sToMte2CmpCacheId;
     uint32_t cmpSparseCachePending = 0;
     TBuf<> softmaxMaxBuf[2];
     TBuf<> softmaxSumBuf[2];
@@ -265,9 +265,9 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitCmpSparseCache(
 {
     LocalTensor<int32_t> cmpSparseIdxUb = cmpSparseIdxBuf.template Get<int32_t>();
     LocalTensor<int32_t> cmpBlockTableUb = cmpBlockTableBuf.template Get<int32_t>();
-    WaitFlag<HardEvent::V_MTE2>(vToMte2CmpCacheId);
+    WaitFlag<HardEvent::S_MTE2>(sToMte2CmpCacheId);
     LoadCmpSparseCache(cmpSparseIdxUb, cmpBlockTableUb, boIdx, s1oIdx, constInfo);
-    SetFlag<HardEvent::MTE2_V>(mte2ToVCmpCacheId);
+    SetFlag<HardEvent::MTE2_S>(mte2ToSCmpCacheId);
     cmpSparseCachePending = 1U;
 }
 
@@ -275,7 +275,7 @@ TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::WaitCmpSparseCacheReady()
 {
     if (cmpSparseCachePending != 0U) {
-        WaitFlag<HardEvent::MTE2_V>(mte2ToVCmpCacheId);
+        WaitFlag<HardEvent::MTE2_S>(mte2ToSCmpCacheId);
         cmpSparseCachePending = 0U;
     }
 }
@@ -1575,9 +1575,9 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe,
     SetFlag<HardEvent::MTE3_V>(mte3ToVV0Id[0]);
     SetFlag<HardEvent::MTE3_V>(mte3ToVV0Id[1]);
     if constexpr (TEMPLATE_MODE == SASTemplateMode::SCFA_TEMPLATE_MODE) {
-        mte2ToVCmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::MTE2_V>();
-        vToMte2CmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::V_MTE2>();
-        SetFlag<HardEvent::V_MTE2>(vToMte2CmpCacheId);
+        mte2ToSCmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::MTE2_S>();
+        sToMte2CmpCacheId = GetTPipePtr()->AllocEventID<HardEvent::S_MTE2>();
+        SetFlag<HardEvent::S_MTE2>(sToMte2CmpCacheId);
         cmpSparseCachePending = 0U;
     }
 
