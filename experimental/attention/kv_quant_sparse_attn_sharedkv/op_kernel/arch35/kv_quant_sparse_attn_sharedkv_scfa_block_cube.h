@@ -47,6 +47,7 @@ public:
     static constexpr uint32_t s2BaseSize = 128;
     static constexpr uint32_t dBaseSize = 512;
     static constexpr uint32_t dBaseMatmulSize = 128;
+    static constexpr uint32_t SPLIT_G_V0_CHUNK_ROWS = 16;
 
     __aicore__ inline SCFABlockCube() {};
     __aicore__ inline void InitCubeBlock(TPipe *pipe, BufferManager<BufferType::L1> &l1BufferManager, \
@@ -71,6 +72,12 @@ private:
     __aicore__ inline void InitGmTensor(__gm__ uint8_t *cuSeqlensQ, const ConstInfo &constInfo);
 
     __aicore__ inline void CopyQGmToL1(RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void GetSplitGVecRange(int64_t s2RealSize, uint32_t vecIdx,
+        int64_t &vecStart, int64_t &vecSize);
+    __aicore__ inline void CopySplitGRemoteHalf(LocalTensor<Q_T> dst, GlobalTensor<Q_T> src,
+        int64_t remoteStart, int64_t remoteSize, int64_t s2RealSize, ConstInfo &constInfo);
+    __aicore__ inline void CopySplitGLocalChunk(LocalTensor<Q_T> dst, GlobalTensor<Q_T> src,
+        uint32_t chunkRound, int64_t s2RealSize, ConstInfo &constInfo);
     __aicore__ inline void IterateBmm1SCFA(Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &outputBuf,
         Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &inputRightBuf,
         Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm,
@@ -172,9 +179,69 @@ __aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::InitGmTensor(__gm__ uint8_t
 }
 
 TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::GetSplitGVecRange(
+    int64_t s2RealSize, uint32_t vecIdx, int64_t &vecStart, int64_t &vecSize)
+{
+    int64_t firstAicSize = CeilDiv(s2RealSize, 2);
+    int64_t secondAicSize = s2RealSize - firstAicSize;
+    int64_t halfStart = (vecIdx < 2U) ? 0 : firstAicSize;
+    int64_t halfSize = (vecIdx < 2U) ? firstAicSize : secondAicSize;
+    int64_t firstVecSize = CeilDiv(halfSize, 2);
+    if ((vecIdx & 1U) == 0U) {
+        vecStart = halfStart;
+        vecSize = firstVecSize;
+    } else {
+        vecStart = halfStart + firstVecSize;
+        vecSize = halfSize - firstVecSize;
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::CopySplitGRemoteHalf(
+    LocalTensor<Q_T> dst, GlobalTensor<Q_T> src, int64_t remoteStart, int64_t remoteSize,
+    int64_t s2RealSize, ConstInfo &constInfo)
+{
+    if (remoteSize <= 0) {
+        return;
+    }
+    static constexpr uint32_t blockElementNum = 16;
+    DataCopyParams dataCopyParams;
+    dataCopyParams.blockCount = constInfo.dSize / blockElementNum;
+    dataCopyParams.blockLen = static_cast<uint16_t>(remoteSize);
+    dataCopyParams.srcGap = static_cast<uint16_t>(Align16Func(s2RealSize) - remoteSize);
+    dataCopyParams.dstGap = static_cast<uint16_t>(Align16Func(s2RealSize) - remoteSize);
+    DataCopy(dst[remoteStart * blockElementNum], src[remoteStart * blockElementNum], dataCopyParams);
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::CopySplitGLocalChunk(
+    LocalTensor<Q_T> dst, GlobalTensor<Q_T> src, uint32_t chunkRound, int64_t s2RealSize, ConstInfo &constInfo)
+{
+    uint32_t firstLocalVecIdx = ((GetBlockIdx() & 1U) == 0U) ? 0U : 2U;
+    for (uint32_t localIdx = 0; localIdx < 2U; ++localIdx) {
+        int64_t vecStart = 0;
+        int64_t vecSize = 0;
+        GetSplitGVecRange(s2RealSize, firstLocalVecIdx + localIdx, vecStart, vecSize);
+        int64_t chunkOffset = static_cast<int64_t>(chunkRound) * SPLIT_G_V0_CHUNK_ROWS;
+        if (chunkOffset >= vecSize) {
+            continue;
+        }
+        int64_t copyRows = Min(static_cast<int64_t>(SPLIT_G_V0_CHUNK_ROWS), vecSize - chunkOffset);
+        int64_t rowStart = vecStart + chunkOffset;
+        static constexpr uint32_t blockElementNum = 16;
+        DataCopyParams dataCopyParams;
+        dataCopyParams.blockCount = constInfo.dSize / blockElementNum;
+        dataCopyParams.blockLen = static_cast<uint16_t>(copyRows);
+        dataCopyParams.srcGap = static_cast<uint16_t>(Align16Func(s2RealSize) - copyRows);
+        dataCopyParams.dstGap = static_cast<uint16_t>(Align16Func(s2RealSize) - copyRows);
+        DataCopy(dst[rowStart * blockElementNum], src[rowStart * blockElementNum], dataCopyParams);
+    }
+}
+
+TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::IterateBmm1(
     Buffer<BufferType::UB, SyncType::CROSS_CORE_SYNC_BOTH> &outputBuf,
-    Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &inputRightBuf, 
+    Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &inputRightBuf,
     Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm,
     bool notLastTwoLoop, RunInfo &runInfoNext,
     RunInfo &runInfo, ConstInfo &constInfo)
@@ -221,12 +288,21 @@ __aicore__ inline void SCFABlockCube<TEMPLATE_ARGS>::IterateLoadQK(
     if constexpr (IS_SPLIT_G) {
         WaitFlag<HardEvent::MTE1_MTE2>(l1KMte1ToMte2FlagId + l1KLoadBufId);
         LocalTensor<Q_T> dst = inputRightBuf.GetTensor<Q_T>();
-        v0ResGm.WaitCrossCore();
+        GlobalTensor<Q_T> v0ResGmTensor = v0ResGm.template GetTensor<Q_T>();
+        uint32_t chunkRounds = static_cast<uint32_t>(
+            CeilDiv(CeilDiv(runInfo.s2RealSize, 4), static_cast<int64_t>(SPLIT_G_V0_CHUNK_ROWS)));
+        for (uint32_t chunkRound = 0; chunkRound < chunkRounds; ++chunkRound) {
+            v0ResGm.WaitCrossCore();
+            CopySplitGLocalChunk(dst, v0ResGmTensor, chunkRound, runInfo.s2RealSize, constInfo);
+        }
         CrossCoreSetFlag<0, PIPE_MTE2>(10);
         CrossCoreWaitFlag<0, PIPE_MTE2>(10);
 
-        GlobalTensor<Q_T> v0ResGmTensor = v0ResGm.template GetTensor<Q_T>();
-        DataCopy(dst, v0ResGmTensor, Align16Func(runInfo.s2RealSize) * constInfo.dSize);
+        int64_t firstAicSize = CeilDiv(runInfo.s2RealSize, 2);
+        int64_t remoteStart = ((GetBlockIdx() & 1U) == 0U) ? firstAicSize : 0;
+        int64_t remoteSize = ((GetBlockIdx() & 1U) == 0U) ?
+            (runInfo.s2RealSize - firstAicSize) : firstAicSize;
+        CopySplitGRemoteHalf(dst, v0ResGmTensor, remoteStart, remoteSize, runInfo.s2RealSize, constInfo);
         SetFlag<HardEvent::MTE2_MTE1>(l1KMte2ToMte1FlagId + l1KLoadBufId);
         l1KLoadBufId = (l1KLoadBufId + 1) % 3;
     } else {

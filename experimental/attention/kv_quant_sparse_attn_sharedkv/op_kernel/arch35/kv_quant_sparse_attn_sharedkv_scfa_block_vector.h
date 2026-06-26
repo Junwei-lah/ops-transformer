@@ -50,6 +50,7 @@ public:
     static constexpr uint32_t dVTemplateTypeInput = 640;
     static constexpr float R0 = 1.0f;
     static constexpr uint64_t SYNC_SINKS_BUF_FLAG = 6;
+    static constexpr uint32_t SPLIT_G_V0_CHUNK_ROWS = 16;
 
     // ==================== Functions ======================
     __aicore__ inline SCFABlockVec() {};
@@ -95,6 +96,8 @@ private:
         Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm, const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void ProcessNotSparseKv(Buffer<BufferType::L1, SyncType::CROSS_CORE_SYNC_FORWARD> &outputL1,
         Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm, const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline uint32_t GetSplitGV0ChunkRounds(const RunInfo &runInfo);
+    __aicore__ inline void SetSplitGV0ChunkReady(Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm);
     __aicore__ inline void CalProcSize(const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline int64_t GetkeyOffset(
         int64_t s2Idx, LocalTensor<int32_t> cmpBlockTableUb, const RunInfo &runInfo, ConstInfo &constInfo);
@@ -188,7 +191,23 @@ private:
     int64_t procSize;
     int64_t procS2Start;
     int64_t procS2End;
+    uint32_t splitGV0ChunkReadyCount = 0;
 };
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline uint32_t SCFABlockVec<TEMPLATE_ARGS>::GetSplitGV0ChunkRounds(const RunInfo &runInfo)
+{
+    int64_t maxRowsPerVec = CeilDiv(runInfo.s2RealSize, 4);
+    return static_cast<uint32_t>(CeilDiv(maxRowsPerVec, static_cast<int64_t>(SPLIT_G_V0_CHUNK_ROWS)));
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::SetSplitGV0ChunkReady(
+    Buffer<BufferType::GM, SyncType::CROSS_CORE_SYNC_BACKWARD> &v0ResGm)
+{
+    v0ResGm.SetCrossCore();
+    ++splitGV0ChunkReadyCount;
+}
 
 TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealCmpS2Idx(int64_t *tokenData,
@@ -629,6 +648,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessNotSparseKv(Buffer<Bu
         WaitFlag<HardEvent::V_MTE3>(vToMte3V0Id[pingPongV0]);
         if constexpr (IS_SPLIT_G) {
             CopyOutKvUb2Gm(v0ResGm, kvDequantOutUb, v0ProcessSize, s2StartIdx, runInfo, constInfo);
+            SetSplitGV0ChunkReady(v0ResGm);
         } else {
             CopyOutKvUb2L1(outputL1, kvDequantOutUb, v0ProcessSize, s2StartIdx, runInfo, constInfo);
         }
@@ -739,6 +759,9 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessVec0(
         maxBlockNumPerBatch = constInfo.oriMaxBlockNumPerBatch;
     }
     CalProcSize(runInfo, constInfo);
+    if constexpr (IS_SPLIT_G) {
+        splitGV0ChunkReadyCount = 0;
+    }
     if constexpr (TEMPLATE_MODE == SASTemplateMode::SCFA_TEMPLATE_MODE) {
         if (isCmp) {
             ProcessSparseKv(outputL1, v0ResGm, runInfo, constInfo);
@@ -750,7 +773,10 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessVec0(
     }
 
     if constexpr (IS_SPLIT_G) {
-        v0ResGm.SetCrossCore();
+        uint32_t splitGV0ChunkRounds = GetSplitGV0ChunkRounds(runInfo);
+        while (splitGV0ChunkReadyCount < splitGV0ChunkRounds) {
+            SetSplitGV0ChunkReady(v0ResGm);
+        }
     } else {
         outputL1.SetCrossCore(); // 核间同步
     }
@@ -820,6 +846,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessSparseKv(
         WaitFlag<HardEvent::V_MTE3>(vToMte3V0Id[pingPongV0]);
         if constexpr (IS_SPLIT_G) {
             CopyOutKvUb2Gm(v0ResGm, kvDequantOutUb, dealRow, s2Start, runInfo, constInfo);
+            SetSplitGV0ChunkReady(v0ResGm);
         } else {
             CopyOutKvUb2L1(outputL1, kvDequantOutUb, dealRow, s2Start, runInfo, constInfo);
         }
