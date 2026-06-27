@@ -35,6 +35,14 @@ using namespace optiling::detail;
 using namespace regbaseutil;
 using namespace matmul;
 
+#ifndef SAS_DEBUG_CMP_IDX_FROM_GM
+#define SAS_DEBUG_CMP_IDX_FROM_GM 0
+#endif
+
+#ifndef SAS_DEBUG_CMP_PA_FROM_GM
+#define SAS_DEBUG_CMP_PA_FROM_GM 0
+#endif
+
 namespace BaseApi {
 TEMPLATES_DEF
 class SCFABlockVec {
@@ -215,10 +223,24 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealCmpS2Idx(int64_t *tok
 {
     int64_t cmpS2LoopCnt = runInfo.s2LoopCount - runInfo.oriKvLoopEndIdx;
     uint64_t topkKIdx = s2IdxInBase + cmpS2LoopCnt * constInfo.s2BaseSize;
+#if SAS_DEBUG_CMP_IDX_FROM_GM
+    uint64_t topkBS1Idx = 0;
+    if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
+        uint64_t actualSeqQPrefixSum = cuSeqlensQGm.GetValue(runInfo.boIdx);
+        topkBS1Idx += (actualSeqQPrefixSum + runInfo.s1oIdx) * constInfo.sparseBlockCount; // T, N2(1), K
+    } else {
+        topkBS1Idx += runInfo.boIdx * constInfo.s1Size * constInfo.sparseBlockCount +
+            runInfo.s1oIdx * constInfo.sparseBlockCount; // B, S1, N2(1), K
+    }
+#endif
     for (uint64_t i = 0; i < 8; ++i) {
         uint64_t idx = runInfo.s2StartIdx + topkKIdx + i;
         if (likely((idx < constInfo.sparseBlockCount) && (s2IdxInBase + i < procS2End))) {
+#if SAS_DEBUG_CMP_IDX_FROM_GM
+            tokenData[i] = cmpSparseIndicesGm.GetValue(topkBS1Idx + idx);
+#else
             tokenData[i] = cmpSparseIdxUb.GetValue(idx);
+#endif
         } else {
             break;
         }
@@ -324,9 +346,13 @@ __aicore__ inline int64_t SCFABlockVec<TEMPLATE_ARGS>::GetkeyOffset(
             blkTableOffset = s2Idx % blockSize;
         }
         int64_t paBlockStride = runInfo.isCmp ? constInfo.cmpKvStride : constInfo.oriKvStride;
+#if SAS_DEBUG_CMP_PA_FROM_GM
+        uint64_t blockTableValue = blockTableGm.GetValue(runInfo.boIdx * maxBlockNumPerBatch + blkTableIdx);
+#else
         uint64_t blockTableValue = runInfo.isCmp ?
             cmpBlockTableUb.GetValue(blkTableIdx) :
             blockTableGm.GetValue(runInfo.boIdx * maxBlockNumPerBatch + blkTableIdx);
+#endif
         realkeyOffset = blockTableValue * paBlockStride +
             blkTableOffset * constInfo.dSizeVInput; // BlockNum, BlockSize, N(1), D
     } else {
