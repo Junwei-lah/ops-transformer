@@ -176,7 +176,6 @@ private:
     TBuf<> dequantScaleBuff;
     TBuf<> stage0InBuf[2];
     TBuf<> stage0OutBuf[2];
-    TBuf<> kvPhyAddrPreloadBuf;
     uint32_t pingPongV0 = 0;
 
     T negativeFloatScalar;
@@ -270,13 +269,13 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrUbDebug(ConstIn
     uint64_t stage0OutSize = dVTemplateTypeInput * (16ULL + 1ULL) * sizeof(Q_T);
     uint64_t stage1OutSize = vec1Srcstride * s2BaseSize * sizeof(Q_T);
     uint64_t stage2OutSize = (s1BaseSize / CV_RATIO) * dTemplateAlign64 * sizeof(T);
-    uint64_t vecTBufTotal = dequantSize + softmaxSize * 6ULL + commonSize + sinksSize + kvPhyAddrSize +
+    uint64_t vecTBufTotal = dequantSize + softmaxSize * 6ULL + commonSize + sinksSize +
         stage0InSize * 2ULL + stage0OutSize * 2ULL + stage1OutSize * 2ULL + stage2OutSize;
 
     uint64_t dequantAddr = dequantScaleBuff.Get<float>().GetPhyAddr();
     uint64_t commonAddr = commonTBuf.Get<uint8_t>().GetPhyAddr();
     uint64_t sinksAddr = sinksBuf.Get<uint8_t>().GetPhyAddr();
-    uint64_t kvAddr = kvPhyAddrPreloadBuf.Get<int64_t>().GetPhyAddr();
+    uint64_t kvAddr = dequantScaleBuff.Get<int64_t>().GetPhyAddr();
     uint64_t stage0In0Addr = stage0InBuf[0].Get<KV_T>().GetPhyAddr();
     uint64_t stage0In1Addr = stage0InBuf[1].Get<KV_T>().GetPhyAddr();
     uint64_t stage0Out0Addr = stage0OutBuf[0].Get<Q_T>().GetPhyAddr();
@@ -288,11 +287,11 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrUbDebug(ConstIn
     printf("[KVP_UB] aiv=%u sub=%u sparseBlockCount=%u kvPhyAddrSize=%llu vecTBufTotal=%llu\n",
         constInfo.aivIdx, GetSubBlockIdx(), constInfo.sparseBlockCount,
         static_cast<unsigned long long>(kvPhyAddrSize), static_cast<unsigned long long>(vecTBufTotal));
-    printf("[KVP_UB] dequant=[%llu,%llu) common=[%llu,%llu) sinks=[%llu,%llu) kvPhy=[%llu,%llu)\n",
+    printf("[KVP_UB] dequant/kvPhyReuse=[%llu,%llu) kvPhyUsed=[%llu,%llu) common=[%llu,%llu) sinks=[%llu,%llu)\n",
         static_cast<unsigned long long>(dequantAddr), static_cast<unsigned long long>(dequantAddr + dequantSize),
+        static_cast<unsigned long long>(kvAddr), static_cast<unsigned long long>(kvAddr + kvPhyAddrSize),
         static_cast<unsigned long long>(commonAddr), static_cast<unsigned long long>(commonAddr + commonSize),
-        static_cast<unsigned long long>(sinksAddr), static_cast<unsigned long long>(sinksAddr + sinksSize),
-        static_cast<unsigned long long>(kvAddr), static_cast<unsigned long long>(kvAddr + kvPhyAddrSize));
+        static_cast<unsigned long long>(sinksAddr), static_cast<unsigned long long>(sinksAddr + sinksSize));
     printf("[KVP_UB] stage0In0=[%llu,%llu) stage0In1=[%llu,%llu) stage0Out0=[%llu,%llu) stage0Out1=[%llu,%llu)\n",
         static_cast<unsigned long long>(stage0In0Addr), static_cast<unsigned long long>(stage0In0Addr + stage0InSize),
         static_cast<unsigned long long>(stage0In1Addr), static_cast<unsigned long long>(stage0In1Addr + stage0InSize),
@@ -319,7 +318,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealS2Addr(int64_t *token
 
     uint32_t copyCount = static_cast<uint32_t>(Min(8LL,
         Min(static_cast<int64_t>(constInfo.sparseBlockCount - topkKIdx), procS2End - s2IdxInBase)));
-    LocalTensor<int64_t> kvPhyAddrUb = kvPhyAddrPreloadBuf.Get<int64_t>();
+    LocalTensor<int64_t> kvPhyAddrUb = dequantScaleBuff.Get<int64_t>();
     for (uint32_t i = 0; i < copyCount; ++i) {
         tokenData[i] = kvPhyAddrUb.GetValue(topkKIdx + i);
     }
@@ -758,7 +757,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::PreloadKVPhyAddr(const RunIn
             return;
         }
 
-        LocalTensor<int64_t> kvPhyAddrUb = kvPhyAddrPreloadBuf.Get<int64_t>();
+        LocalTensor<int64_t> kvPhyAddrUb = dequantScaleBuff.Get<int64_t>();
         GlobalTensor<int64_t> kvPhyAddrGm64 = kvPhyAddrGm.template ReinterpretCast<int64_t>();
 
         DataCopyExtParams dataCopyParams;
@@ -1598,11 +1597,6 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe,
 
     tPipe->InitBuffer(commonTBuf, 512); // commonTBuf内存申请512B
     tPipe->InitBuffer(sinksBuf, 512); // sinksBuf内存申请512B
-    if constexpr (IS_VEC_S2PHYADDR) {
-        tPipe->InitBuffer(kvPhyAddrPreloadBuf,
-            CeilAlign(constInfo.sparseBlockCount * sizeof(int64_t), BUFFER_SIZE_BYTE_32B));
-    }
-
     tPipe->InitBuffer(stage0InBuf[0], dVTemplateTypeInput * 16 * sizeof(KV_T)); // V0阶段每次处理16个seq, 开2 buffer
     tPipe->InitBuffer(stage0InBuf[1], dVTemplateTypeInput * 16 * sizeof(KV_T));
     // kv输入D轴640, V0阶段每次处理16个seq, 开2 buffer
