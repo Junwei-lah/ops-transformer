@@ -110,6 +110,7 @@ private:
         const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void DumpKVPhyAddrBuildDebug(int64_t bS1Idx, int64_t s1Idx, int64_t validS2,
         int64_t bIdx, ConstInfo &constInfo);
+    __aicore__ inline void DumpKVPhyAddrUbDebug(ConstInfo &constInfo);
     __aicore__ inline void PreloadKVPhyAddr(const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void GetRealS2Addr(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
@@ -253,6 +254,56 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrBuildDebug(int6
         constInfo.aivIdx, GetSubBlockIdx(), static_cast<long long>(bIdx), static_cast<long long>(s1Idx),
         static_cast<long long>(bS1Idx), static_cast<long long>((bS1Idx + s1Idx) * constInfo.sparseBlockCount),
         static_cast<long long>(validS2), constInfo.sparseBlockCount);
+#endif
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrUbDebug(ConstInfo &constInfo)
+{
+#if KV_PHY_ADDR_DEBUG
+    uint64_t dequantSize = 64ULL * 16ULL * 2ULL * sizeof(float);
+    uint64_t softmaxSize = 256ULL;
+    uint64_t commonSize = 512ULL;
+    uint64_t sinksSize = 512ULL;
+    uint64_t kvPhyAddrSize = CeilAlign(constInfo.sparseBlockCount * sizeof(int64_t), BUFFER_SIZE_BYTE_32B);
+    uint64_t stage0InSize = dVTemplateTypeInput * 16ULL * sizeof(KV_T);
+    uint64_t stage0OutSize = dVTemplateTypeInput * (16ULL + 1ULL) * sizeof(Q_T);
+    uint64_t stage1OutSize = vec1Srcstride * s2BaseSize * sizeof(Q_T);
+    uint64_t stage2OutSize = (s1BaseSize / CV_RATIO) * dTemplateAlign64 * sizeof(T);
+    uint64_t vecTBufTotal = dequantSize + softmaxSize * 6ULL + commonSize + sinksSize + kvPhyAddrSize +
+        stage0InSize * 2ULL + stage0OutSize * 2ULL + stage1OutSize * 2ULL + stage2OutSize;
+
+    uint64_t dequantAddr = dequantScaleBuff.Get<float>().GetPhyAddr();
+    uint64_t commonAddr = commonTBuf.Get<uint8_t>().GetPhyAddr();
+    uint64_t sinksAddr = sinksBuf.Get<uint8_t>().GetPhyAddr();
+    uint64_t kvAddr = kvPhyAddrPreloadBuf.Get<int64_t>().GetPhyAddr();
+    uint64_t stage0In0Addr = stage0InBuf[0].Get<KV_T>().GetPhyAddr();
+    uint64_t stage0In1Addr = stage0InBuf[1].Get<KV_T>().GetPhyAddr();
+    uint64_t stage0Out0Addr = stage0OutBuf[0].Get<Q_T>().GetPhyAddr();
+    uint64_t stage0Out1Addr = stage0OutBuf[1].Get<Q_T>().GetPhyAddr();
+    uint64_t stage1Out0Addr = stage1OutBuf[0].Get<Q_T>().GetPhyAddr();
+    uint64_t stage1Out1Addr = stage1OutBuf[1].Get<Q_T>().GetPhyAddr();
+    uint64_t stage2OutAddr = stage2OutBuf.Get<T>().GetPhyAddr();
+
+    printf("[KVP_UB] aiv=%u sub=%u sparseBlockCount=%u kvPhyAddrSize=%llu vecTBufTotal=%llu\n",
+        constInfo.aivIdx, GetSubBlockIdx(), constInfo.sparseBlockCount,
+        static_cast<unsigned long long>(kvPhyAddrSize), static_cast<unsigned long long>(vecTBufTotal));
+    printf("[KVP_UB] dequant=[%llu,%llu) common=[%llu,%llu) sinks=[%llu,%llu) kvPhy=[%llu,%llu)\n",
+        static_cast<unsigned long long>(dequantAddr), static_cast<unsigned long long>(dequantAddr + dequantSize),
+        static_cast<unsigned long long>(commonAddr), static_cast<unsigned long long>(commonAddr + commonSize),
+        static_cast<unsigned long long>(sinksAddr), static_cast<unsigned long long>(sinksAddr + sinksSize),
+        static_cast<unsigned long long>(kvAddr), static_cast<unsigned long long>(kvAddr + kvPhyAddrSize));
+    printf("[KVP_UB] stage0In0=[%llu,%llu) stage0In1=[%llu,%llu) stage0Out0=[%llu,%llu) stage0Out1=[%llu,%llu)\n",
+        static_cast<unsigned long long>(stage0In0Addr), static_cast<unsigned long long>(stage0In0Addr + stage0InSize),
+        static_cast<unsigned long long>(stage0In1Addr), static_cast<unsigned long long>(stage0In1Addr + stage0InSize),
+        static_cast<unsigned long long>(stage0Out0Addr), static_cast<unsigned long long>(stage0Out0Addr + stage0OutSize),
+        static_cast<unsigned long long>(stage0Out1Addr), static_cast<unsigned long long>(stage0Out1Addr + stage0OutSize));
+    printf("[KVP_UB] stage1Out0=[%llu,%llu) stage1Out1=[%llu,%llu) stage2Out=[%llu,%llu)\n",
+        static_cast<unsigned long long>(stage1Out0Addr),
+        static_cast<unsigned long long>(stage1Out0Addr + stage1OutSize),
+        static_cast<unsigned long long>(stage1Out1Addr),
+        static_cast<unsigned long long>(stage1Out1Addr + stage1OutSize),
+        static_cast<unsigned long long>(stage2OutAddr), static_cast<unsigned long long>(stage2OutAddr + stage2OutSize));
 #endif
 }
 
@@ -1561,6 +1612,10 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe,
     tPipe->InitBuffer(stage1OutBuf[0], vec1Srcstride * s2BaseSize * sizeof(Q_T));
     tPipe->InitBuffer(stage1OutBuf[1], vec1Srcstride * s2BaseSize * sizeof(Q_T));
     tPipe->InitBuffer(stage2OutBuf, (s1BaseSize / CV_RATIO) * dTemplateAlign64 * sizeof(T));
+
+    if constexpr (IS_VEC_S2PHYADDR) {
+        DumpKVPhyAddrUbDebug(constInfo);
+    }
 
     if (this->isSinks) {
         InitSinksBuffer(constInfo);
