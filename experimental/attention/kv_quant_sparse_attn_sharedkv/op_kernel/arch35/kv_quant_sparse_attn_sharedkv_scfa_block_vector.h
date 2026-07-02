@@ -179,7 +179,6 @@ private:
     int64_t procS2End;
     int64_t kvPhyAddrCacheRowBase = -1;
     int64_t kvPhyAddrCacheS2End = -1;
-    int64_t kvPhyAddrCacheFullBlockSize = 0;
 };
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -218,10 +217,9 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealS2Addr(int64_t *token
 
     uint32_t copyCount = static_cast<uint32_t>(Min(8LL,
         Min(static_cast<int64_t>(constInfo.sparseBlockCount - topkKIdx), procS2End - s2IdxInBase)));
-    int64_t cacheOffset = cmpS2LoopCnt * kvPhyAddrCacheFullBlockSize + s2IdxInBase - procS2Start;
     LocalTensor<int64_t> kvPhyAddrUb = kvPhyAddrPreloadBuf.Get<int64_t>();
     for (uint32_t i = 0; i < copyCount; ++i) {
-        tokenData[i] = kvPhyAddrUb.GetValue(cacheOffset + i);
+        tokenData[i] = kvPhyAddrUb.GetValue(topkKIdx + i);
     }
 }
 
@@ -668,37 +666,13 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::PreloadKVPhyAddr(const RunIn
         LocalTensor<int64_t> kvPhyAddrUb = kvPhyAddrPreloadBuf.Get<int64_t>();
         GlobalTensor<int64_t> kvPhyAddrGm64 = kvPhyAddrGm.template ReinterpretCast<int64_t>();
 
-        int64_t fullProcS2Start = 0;
-        int64_t fullProcS2End = 0;
-        CalProcS2Range(constInfo.s2BaseSize, fullProcS2Start, fullProcS2End, constInfo);
-        kvPhyAddrCacheFullBlockSize = fullProcS2End - fullProcS2Start;
-
-        int64_t dstOffset = 0;
-        for (int64_t cmpLoopIdx = 0; cmpLoopIdx < runInfo.cmpKvLoopEndIdx; ++cmpLoopIdx) {
-            int64_t cmpBlockStart = cmpLoopIdx * constInfo.s2BaseSize;
-            int64_t curS2RealSize = Min(static_cast<int64_t>(constInfo.s2BaseSize),
-                runInfo.s2EndIdx - cmpBlockStart);
-            if (curS2RealSize <= 0) {
-                break;
-            }
-            int64_t curProcS2Start = 0;
-            int64_t curProcS2End = 0;
-            CalProcS2Range(curS2RealSize, curProcS2Start, curProcS2End, constInfo);
-            int64_t curProcSize = curProcS2End - curProcS2Start;
-            if (curProcSize <= 0) {
-                continue;
-            }
-
-            DataCopyExtParams dataCopyParams;
-            dataCopyParams.blockCount = 1U;
-            dataCopyParams.blockLen = curProcSize * sizeof(int64_t);
-            dataCopyParams.srcStride = 0U;
-            dataCopyParams.dstStride = 0U;
-            DataCopyPadExtParams<int64_t> padParams{false, 0U, 0U, 0};
-            DataCopyPad(kvPhyAddrUb[dstOffset], kvPhyAddrGm64[rowBase + cmpBlockStart + curProcS2Start],
-                dataCopyParams, padParams);
-            dstOffset += curProcSize;
-        }
+        DataCopyExtParams dataCopyParams;
+        dataCopyParams.blockCount = 1U;
+        dataCopyParams.blockLen = constInfo.sparseBlockCount * sizeof(int64_t);
+        dataCopyParams.srcStride = 0U;
+        dataCopyParams.dstStride = 0U;
+        DataCopyPadExtParams<int64_t> padParams{false, 0U, 0U, 0};
+        DataCopyPad(kvPhyAddrUb, kvPhyAddrGm64[rowBase], dataCopyParams, padParams);
 
         event_t eventMte2ToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_S));
         SetFlag<HardEvent::MTE2_S>(eventMte2ToS);
@@ -1528,7 +1502,8 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::InitLocalBuffer(TPipe *pipe,
     tPipe->InitBuffer(commonTBuf, 512); // commonTBuf内存申请512B
     tPipe->InitBuffer(sinksBuf, 512); // sinksBuf内存申请512B
     if constexpr (IS_VEC_S2PHYADDR) {
-        tPipe->InitBuffer(kvPhyAddrPreloadBuf, constInfo.sparseBlockCount * sizeof(int64_t));
+        tPipe->InitBuffer(kvPhyAddrPreloadBuf,
+            CeilAlign(constInfo.sparseBlockCount * sizeof(int64_t), BUFFER_SIZE_BYTE_32B));
     }
 
     tPipe->InitBuffer(stage0InBuf[0], dVTemplateTypeInput * 16 * sizeof(KV_T)); // V0阶段每次处理16个seq, 开2 buffer
