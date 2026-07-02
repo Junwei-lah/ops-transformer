@@ -99,8 +99,8 @@ private:
     __aicore__ inline int64_t GetkeyOffset(int64_t s2Idx, const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void GetRealCmpS2Idx(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
-    __aicore__ inline void GetRealS2Addr(int64_t *tokenData, int64_t s2IdxInBase,
-        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void GetRealS2Addr(int64_t *tokenData, LocalTensor<int64_t> kvPhyAddrUb,
+        int64_t s2IdxInBase, const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void CopyInKvNotSparse(LocalTensor<KV_T> kvMergUb, int64_t dealRow,
         int64_t s2StartIdx, const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline uint32_t CopyInKvSparse(LocalTensor<KV_T> kvInUb, int64_t startRow, int64_t *tokenData,
@@ -200,7 +200,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealCmpS2Idx(int64_t *tok
 
 TEMPLATES_DEF_NO_DEFAULT
 __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealS2Addr(int64_t *tokenData,
-    int64_t s2IdxInBase, const RunInfo &runInfo, ConstInfo &constInfo)
+    LocalTensor<int64_t> kvPhyAddrUb, int64_t s2IdxInBase, const RunInfo &runInfo, ConstInfo &constInfo)
 {
     uint64_t topkBS1Idx = 0;
     if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
@@ -213,14 +213,29 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealS2Addr(int64_t *token
     int64_t cmpS2LoopCnt = runInfo.s2LoopCount - runInfo.oriKvLoopEndIdx;
     uint64_t topkKIdx = s2IdxInBase + cmpS2LoopCnt * constInfo.s2BaseSize;
     GlobalTensor<int64_t> kvPhyAddrGm64 = kvPhyAddrGm.template ReinterpretCast<int64_t>();
-    for (uint64_t i = 0; i < 8; ++i) {
-        uint64_t idx = topkBS1Idx + runInfo.s2StartIdx + topkKIdx + i;
-        if (likely((topkKIdx + i < constInfo.sparseBlockCount) && (s2IdxInBase + i < procS2End))) {
-            tokenData[i] = kvPhyAddrGm64.GetValue(idx);
-        } else {
-            break;
-        }
+    if (unlikely(topkKIdx >= constInfo.sparseBlockCount || s2IdxInBase >= procS2End)) {
+        return;
     }
+
+    uint32_t copyCount = static_cast<uint32_t>(Min(8LL,
+        Min(static_cast<int64_t>(constInfo.sparseBlockCount - topkKIdx), procS2End - s2IdxInBase)));
+    DataCopyExtParams dataCopyParams;
+    dataCopyParams.blockCount = 1U;
+    dataCopyParams.blockLen = copyCount * sizeof(int64_t);
+    dataCopyParams.srcStride = 0U;
+    dataCopyParams.dstStride = 0U;
+    DataCopyPadExtParams<int64_t> padParams{false, 0U, 0U, 0};
+    DataCopyPad(kvPhyAddrUb, kvPhyAddrGm64[topkBS1Idx + runInfo.s2StartIdx + topkKIdx], dataCopyParams, padParams);
+
+    event_t eventMte2ToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_S));
+    SetFlag<HardEvent::MTE2_S>(eventMte2ToS);
+    WaitFlag<HardEvent::MTE2_S>(eventMte2ToS);
+    for (uint32_t i = 0; i < copyCount; ++i) {
+        tokenData[i] = kvPhyAddrUb.GetValue(i);
+    }
+    event_t eventSToMte2 = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::S_MTE2));
+    SetFlag<HardEvent::S_MTE2>(eventSToMte2);
+    WaitFlag<HardEvent::S_MTE2>(eventSToMte2);
 }
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -690,10 +705,11 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::ProcessSparseKv(
         get_buf(PIPE_MTE2, stage0InBufBufId[pingPongV0], false);
         rls_buf(PIPE_MTE2, stage0InBufBufId[pingPongV0], false);
         LocalTensor<KV_T> kvInUb = stage0InBuf[pingPongV0].Get<KV_T>();
+        LocalTensor<int64_t> kvPhyAddrUb = commonTBuf.Get<int64_t>();
         while (dealRow < Min(16, procSize) && s2 < procS2End) { // 拷贝满16行或者遇到-1
             int64_t tokenData[8] = {-1, -1, -1, -1, -1, -1, -1, -1}; // 拷贝进入的8个token的index
             if constexpr (IS_VEC_S2PHYADDR) {
-                GetRealS2Addr(tokenData, s2, runInfo, constInfo);
+                GetRealS2Addr(tokenData, kvPhyAddrUb, s2, runInfo, constInfo);
             } else {
                 GetRealCmpS2Idx(tokenData, s2, runInfo, constInfo);
             }
