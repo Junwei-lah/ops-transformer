@@ -101,6 +101,7 @@ private:
     __aicore__ inline int64_t GetkeyOffset(int64_t s2Idx, const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void GetRealCmpS2Idx(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline int64_t GetKVPhyAddrRowBase(const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void PreloadKVPhyAddr(const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void GetRealS2Addr(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
@@ -178,7 +179,6 @@ private:
     int64_t procS2Start;
     int64_t procS2End;
     int64_t kvPhyAddrCacheRowBase = -1;
-    int64_t kvPhyAddrCacheS2End = -1;
 };
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -203,6 +203,19 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetRealCmpS2Idx(int64_t *tok
             break;
         }
     }
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline int64_t SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddrRowBase(
+    const RunInfo &runInfo, ConstInfo &constInfo)
+{
+    int64_t bS1Idx = 0;
+    if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
+        bS1Idx = cuSeqlensQGm.GetValue(runInfo.boIdx);
+    } else {
+        bS1Idx = constInfo.s1Size * runInfo.boIdx;
+    }
+    return (bS1Idx + runInfo.s1oIdx) * constInfo.sparseBlockCount;
 }
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -651,15 +664,8 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::PreloadKVPhyAddr(const RunIn
             return;
         }
 
-        int64_t rowBase = 0;
-        if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
-            uint64_t actualSeqQPrefixSum = cuSeqlensQGm.GetValue(runInfo.boIdx);
-            rowBase = (actualSeqQPrefixSum + runInfo.s1oIdx) * constInfo.sparseBlockCount;
-        } else {
-            rowBase = (runInfo.boIdx * constInfo.s1Size + runInfo.s1oIdx) * constInfo.sparseBlockCount;
-        }
-        if (kvPhyAddrCacheValid && kvPhyAddrCacheRowBase == rowBase &&
-            kvPhyAddrCacheS2End == runInfo.s2EndIdx) {
+        int64_t rowBase = GetKVPhyAddrRowBase(runInfo, constInfo);
+        if (kvPhyAddrCacheValid && kvPhyAddrCacheRowBase == rowBase) {
             return;
         }
 
@@ -679,7 +685,6 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::PreloadKVPhyAddr(const RunIn
         WaitFlag<HardEvent::MTE2_S>(eventMte2ToS);
 
         kvPhyAddrCacheRowBase = rowBase;
-        kvPhyAddrCacheS2End = runInfo.s2EndIdx;
         kvPhyAddrCacheValid = true;
     }
 }
@@ -1271,6 +1276,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddr(
     __gm__ int32_t *actualSeqQlenAddr, __gm__ int32_t *cuSeqlensQAddr,
     __gm__ int32_t *actualSeqKvlenAddr, __gm__ uint8_t *workspace, ConstInfo &constInfo)
 {
+    this->kvPhyAddrCacheValid = false;
     if (hasLoad == 0) {
         SyncAll();
         tPipe->Reset();
@@ -1359,7 +1365,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddr(
         int32_t actualS1Size = GetActualS1Size(bIdx, actualSeqQlenAddr, cuSeqlensQAddr, constInfo);
         int64_t bS1Idx = 0;
         if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
-            bS1Idx = (actualSeqQlenAddr == nullptr) ? cuSeqlensQAddr[bIdx] : constInfo.s1Size * bIdx;
+            bS1Idx = cuSeqlensQAddr[bIdx];
         } else {
             bS1Idx = constInfo.s1Size * bIdx;
         }
