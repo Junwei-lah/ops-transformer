@@ -27,6 +27,10 @@
 #include "vf/vf_mul_sel_softmaxflashv2_cast_nz_scfa.h"
 #include "vf/vf_flashupdate_new_scfa.h"
 
+#ifndef KV_PHY_ADDR_DEBUG
+#define KV_PHY_ADDR_DEBUG 1
+#endif
+
 using namespace AscendC;
 using namespace SCFaVectorApi;
 using namespace AscendC::Impl::Detail;
@@ -102,6 +106,10 @@ private:
     __aicore__ inline void GetRealCmpS2Idx(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline int64_t GetKVPhyAddrRowBase(const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void DumpKVPhyAddrPreloadDebug(int64_t rowBase,
+        const RunInfo &runInfo, ConstInfo &constInfo);
+    __aicore__ inline void DumpKVPhyAddrBuildDebug(int64_t bS1Idx, int64_t s1Idx, int64_t validS2,
+        int64_t bIdx, ConstInfo &constInfo);
     __aicore__ inline void PreloadKVPhyAddr(const RunInfo &runInfo, ConstInfo &constInfo);
     __aicore__ inline void GetRealS2Addr(int64_t *tokenData, int64_t s2IdxInBase,
         const RunInfo &runInfo, ConstInfo &constInfo);
@@ -216,6 +224,36 @@ __aicore__ inline int64_t SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddrRowBase(
         bS1Idx = constInfo.s1Size * runInfo.boIdx;
     }
     return (bS1Idx + runInfo.s1oIdx) * constInfo.sparseBlockCount;
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrPreloadDebug(int64_t rowBase,
+    const RunInfo &runInfo, ConstInfo &constInfo)
+{
+#if KV_PHY_ADDR_DEBUG
+    printf("[KVP_PRELOAD] aiv=%u sub=%u b=%lld s1=%lld rowBase=%lld sparseBlockCount=%u\n",
+        constInfo.aivIdx, GetSubBlockIdx(), static_cast<long long>(runInfo.boIdx),
+        static_cast<long long>(runInfo.s1oIdx), static_cast<long long>(rowBase),
+        constInfo.sparseBlockCount);
+    printf("[KVP_PRELOAD] s2Start=%llu s2End=%lld s2Loop=%lld oriEnd=%lld cmpEnd=%lld proc=[%lld,%lld) cacheRow=%lld valid=%d\n",
+        static_cast<unsigned long long>(runInfo.s2StartIdx), static_cast<long long>(runInfo.s2EndIdx),
+        static_cast<long long>(runInfo.s2LoopCount), static_cast<long long>(runInfo.oriKvLoopEndIdx),
+        static_cast<long long>(runInfo.cmpKvLoopEndIdx), static_cast<long long>(procS2Start),
+        static_cast<long long>(procS2End), static_cast<long long>(kvPhyAddrCacheRowBase),
+        kvPhyAddrCacheValid ? 1 : 0);
+#endif
+}
+
+TEMPLATES_DEF_NO_DEFAULT
+__aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::DumpKVPhyAddrBuildDebug(int64_t bS1Idx, int64_t s1Idx,
+    int64_t validS2, int64_t bIdx, ConstInfo &constInfo)
+{
+#if KV_PHY_ADDR_DEBUG
+    printf("[KVP_BUILD] aiv=%u sub=%u b=%lld s1=%lld bS1Idx=%lld rowBase=%lld validS2=%lld sparseBlockCount=%u\n",
+        constInfo.aivIdx, GetSubBlockIdx(), static_cast<long long>(bIdx), static_cast<long long>(s1Idx),
+        static_cast<long long>(bS1Idx), static_cast<long long>((bS1Idx + s1Idx) * constInfo.sparseBlockCount),
+        static_cast<long long>(validS2), constInfo.sparseBlockCount);
+#endif
 }
 
 TEMPLATES_DEF_NO_DEFAULT
@@ -678,6 +716,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::PreloadKVPhyAddr(const RunIn
         dataCopyParams.srcStride = 0U;
         dataCopyParams.dstStride = 0U;
         DataCopyPadExtParams<int64_t> padParams{false, 0U, 0U, 0};
+        DumpKVPhyAddrPreloadDebug(rowBase, runInfo, constInfo);
         DataCopyPad(kvPhyAddrUb, kvPhyAddrGm64[rowBase], dataCopyParams, padParams);
 
         event_t eventMte2ToS = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_S));
@@ -1365,7 +1404,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddr(
         int32_t actualS1Size = GetActualS1Size(bIdx, actualSeqQlenAddr, cuSeqlensQAddr, constInfo);
         int64_t bS1Idx = 0;
         if constexpr (LAYOUT_T == SAS_LAYOUT::TND) {
-            bS1Idx = cuSeqlensQAddr[bIdx];
+            bS1Idx = (actualSeqQlenAddr == nullptr) ? cuSeqlensQAddr[bIdx] : constInfo.s1Size * bIdx;
         } else {
             bS1Idx = constInfo.s1Size * bIdx;
         }
@@ -1420,6 +1459,7 @@ __aicore__ inline void SCFABlockVec<TEMPLATE_ARGS>::GetKVPhyAddr(
             rls_buf(PIPE_V, kvPhyAddrBufId, true);
             get_buf(PIPE_MTE3, kvPhyAddrBufId, false);
             rls_buf(PIPE_MTE3, kvPhyAddrBufId, false);
+            DumpKVPhyAddrBuildDebug(bS1Idx, s1Idx, curValidS2, bIdx, constInfo);
             CopyPhyAddrToGm(kvPhyAddrUb, bS1Idx, s1Idx, curValidS2, s2NumPerLoop, constInfo);
             get_buf(PIPE_MTE3, kvPhyAddrBufId, true);
             rls_buf(PIPE_MTE3, kvPhyAddrBufId, true);
